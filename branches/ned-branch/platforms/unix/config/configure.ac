@@ -42,7 +42,7 @@
 AC_INIT([config.h.in],1)
 AM_INIT_AUTOMAKE
 
-AC_VM_VERSION(3,7a,0, 3,7a,5816)
+AC_VM_VERSION(3,7b,6,3,7b,5989)
 
 topdir=`cd ${srcdir}/../../..; pwd`
 cfgdir=`cd ${srcdir}; pwd`
@@ -65,7 +65,7 @@ AC_SUBST(blddir)
 
 SQ_VERSION=${SQ_MAJOR}.${SQ_MINOR}-${SQ_UPDATE}
 
-AC_DEFINE_UNQUOTED(SQ_VERSION, "${SQ_VERSION}")
+AC_DEFINE_UNQUOTED(SQ_VERSION, ["${SQ_VERSION}"])
 
 AC_SUBST(SQ_MAJOR)
 AC_SUBST(SQ_MINOR)
