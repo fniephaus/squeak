@@ -35,11 +35,11 @@
  *   changes these copyright conditions.  Read the file `COPYING' in the
  *   directory `platforms/unix/doc' before proceeding with any such use.
  * 
- * Last edited: 2004-09-20 17:10:47 by piumarta on margaux.hpl.hp.com
+ * Last edited: 2003-09-30 04:50:04 by piumarta on emilia.inria.fr
  */
 
 #if !defined(__MACH__)
-# include "sqMemoryAccess.h"
+# include "config.h"
 #endif
 #include "sqUnixCharConv.h"
 
@@ -68,7 +68,6 @@ static int convertCopy(char *from, int fromLen, char *to, int toLen, int term)
 // ho hum dee dumb
 
 # include <CoreFoundation/CoreFoundation.h>
-# include "sqMemoryAccess.h"
 
 typedef struct
 {
@@ -337,10 +336,10 @@ Convert(ux,sq, UTF8, uxUTF8Encoding, sqTextEncoding, 0, 1);
 
 
 
-void sqFilenameFromString(char *uxName, sqInt sqNameIndex, int sqNameLength)
+void sqFilenameFromString(char *uxName, int sqNameIndex, int sqNameLength)
 {
   /*xxx BUG: lots of code generate from the image assumes 1000 chars max path len */
-  sq2uxPath(pointerForOop(sqNameIndex), sqNameLength, uxName, 1000, 1);
+  sq2uxPath((char *)sqNameIndex, sqNameLength, uxName, 1000, 1);
 }
 
 
