@@ -4,6 +4,10 @@
  *     as listed elsewhere in this file.
  *   All rights reserved.
  *   
+ *     You are NOT ALLOWED to distribute modified versions of this file
+ *     under its original name.  If you want to modify it and then make
+ *     your modifications available publicly, rename the file first.
+ * 
  *   This file is part of Unix Squeak.
  * 
  *   This file is distributed in the hope that it will be useful, but WITHOUT
@@ -12,7 +16,7 @@
  *   
  *   You may use and/or distribute this file ONLY as part of Squeak, under
  *   the terms of the Squeak License as described in `LICENSE' in the base of
- *   this distribution, subject to the following restrictions:
+ *   this distribution, subject to the following additional restrictions:
  * 
  *   1. The origin of this software must not be misrepresented; you must not
  *      claim that you wrote the original software.  If you use this software
@@ -20,20 +24,19 @@
  *      other contributors mentioned herein) in the product documentation
  *      would be appreciated but is not required.
  * 
- *   2. This notice must not be removed or altered in any source distribution.
+ *   2. You must not distribute (or make publicly available by any
+ *      means) a modified copy of this file unless you first rename it.
+ * 
+ *   3. This notice must not be removed or altered in any source distribution.
  * 
  *   Using (or modifying this file for use) in any context other than Squeak
  *   changes these copyright conditions.  Read the file `COPYING' in the
  *   directory `platforms/unix/doc' before proceeding with any such use.
- * 
- *   You are not allowed to distribute a modified version of this file
- *   under its original name without explicit permission to do so.  If
- *   you change it, rename it.
  */
 
 /* Author: Ian.Piumarta@inria.fr
  *
- * Last edited: 2002-07-17 23:13:49 by piumarta on emilia.inria.fr
+ * Last edited: 2003-02-11 05:08:36 by piumarta on emilia.inria.fr
  *
  * NOTES:
  *	this file is #included IN PLACE OF sq.h
@@ -41,9 +44,18 @@
 
 #include "sq.h"
 
-#define CASE(N)	case N: _##N:
-#define BREAK		goto *jumpTablePtr[currentBytecode]
+#define CASE(N)		case N: _##N:
+
+#if defined(__powerpc__) || defined(PPC) || defined(_POWER) || defined(_IBMR2) || defined(__ppc__)
+# define JUMP_TABLE_PTR	; register void **jumpTableP JP_REG; jumpTableP= &jumpTable[0]
+# define BREAK		goto *jumpTableP[currentBytecode]
+#else
+# define JUMP_TABLE_PTR
+# define BREAK		goto *jumpTable[currentBytecode]
+#endif
+
 #define PRIM_DISPATCH	goto *jumpTable[primitiveIndex]
+
 #define JUMP_TABLE \
   static void *jumpTable[256]= { \
       &&_0,   &&_1,   &&_2,   &&_3,   &&_4,   &&_5,   &&_6,   &&_7,   &&_8,   &&_9, \
@@ -72,7 +84,7 @@
     &&_230, &&_231, &&_232, &&_233, &&_234, &&_235, &&_236, &&_237, &&_238, &&_239, \
     &&_240, &&_241, &&_242, &&_243, &&_244, &&_245, &&_246, &&_247, &&_248, &&_249, \
     &&_250, &&_251, &&_252, &&_253, &&_254, &&_255 \
-  }
+  } JUMP_TABLE_PTR
 
 #define PRIM_TABLE \
   static void *jumpTable[700]= { \
@@ -178,7 +190,8 @@
 #   define CB_REG /* avoid undue register pressure */
 # endif
 #endif
-#if defined(__powerpc__) || defined(PPC) || defined(_POWER) || defined(_IBMR2)
+#if defined(__powerpc__) || defined(PPC) || defined(_POWER) || defined(_IBMR2) || defined(__ppc__)
+# define GP_REG asm("24")
 # define JP_REG asm("25")
 # define IP_REG asm("26")
 # define SP_REG asm("27")
