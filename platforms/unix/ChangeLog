@@ -1,3 +1,8 @@
+2004-01-13  Ned Konz <ned@bike-nomad.com>
+
+	* platforms/unix/vm/sqGnu.h: Changed GP_REG from asm() to __asm__()
+	to fix compilation on gcc 3.1 on Darwin
+
 2003-09-16  Ian Piumarta  <ian.piumarta@inria.fr>
 
 	* platforms/unix/doc/squeak.1: Updated for '-nointl',
