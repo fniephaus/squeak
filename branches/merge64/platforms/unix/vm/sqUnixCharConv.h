@@ -35,7 +35,7 @@
  *   changes these copyright conditions.  Read the file `COPYING' in the
  *   directory `platforms/unix/doc' before proceeding with any such use.
  * 
- * Last edited: 2003-03-03 03:52:52 by piumarta on emilia.inria.fr
+ * Last edited: 2004-08-04 12:09:57 by piumarta on margaux.hpl.hp.com
  */
 
 #ifndef __sqUnixCharConv_h

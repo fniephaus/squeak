@@ -36,13 +36,15 @@
 
 /* Author: Ian.Piumarta@inria.fr
  *
- * Last edited: 2004-04-02 14:51:09 by piumarta on emilia.local
+ * Last edited: 2004-09-22 14:30:24 by piumarta on margaux.hpl.hp.com
  *
  * NOTES:
  *	this file is #included IN PLACE OF sq.h
  */
 
 #include "sq.h"
+
+static int bytecodeCount= 0;
 
 #define CASE(N)		case N: _##N:
 
