@@ -1,3 +1,4 @@
+# Wish I could do this:
 # AC_PLUGIN_CHECK_LIB(db4,db_create)
 AC_CHECK_HEADERS(db.h)
 AC_TRY_LINK(#include "db.h", void *xx = (void*)(&db_create);,
