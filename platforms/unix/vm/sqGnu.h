@@ -174,7 +174,7 @@
 # define SP_REG asm("%edi")
 # define CB_REG	/* asm("%ebx") ; avoid undue register pressure */
 #endif
-#if defined(PPC) || defined(_POWER) || defined(_IBMR2) || defined (__APPLE__)
+#if defined(PPC) || defined(_POWER) || defined(_IBMR2)
 # define IP_REG asm("26")
 # define SP_REG asm("27")
 # define CB_REG asm("28")
