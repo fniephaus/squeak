@@ -36,7 +36,7 @@
 
 /* Author: Ian.Piumarta@INRIA.Fr
  *
- * Last edited: 2004-09-22 15:01:28 by piumarta on margaux.hpl.hp.com
+ * Last edited: 2005-03-28 02:01:17 by piumarta on graves.hpl.hp.com
  */
 
 #define DEBUG 0
@@ -286,7 +286,7 @@ void *ioLoadModule(char *pluginName)
 #  ifdef HAVE_SNPRINTF
     snprintf(pluginDir, sizeof(pluginDir), "%s%s/.libs/", vmPath, pluginName);
 #  else
-    sprintf(buf, "%s%s/.libs/", vmPath, pluginDir);
+    sprintf(pluginDir, "%s%s/.libs/", vmPath, pluginName);
 #  endif
     if ((handle= tryLoading(pluginDir, pluginName)))
       return handle;
@@ -313,7 +313,7 @@ void *ioFindExternalFunctionIn(char *lookupName, void *moduleHandle)
   sprintf(buf, "%s", lookupName);
 #endif
 
-  fn= dlsym((void *)moduleHandle, buf);
+  fn= dlsym(moduleHandle, buf);
 
   dprintf((stderr, "ioFindExternalFunctionIn(%s, %d)\n",
 	   lookupName, moduleHandle));
@@ -323,7 +323,7 @@ void *ioFindExternalFunctionIn(char *lookupName, void *moduleHandle)
       && strcmp(lookupName, "shutdownModule")
       && strcmp(lookupName, "setInterpreter")
       && strcmp(lookupName, "getModuleName"))
-    fprintf(stderr, "ioFindExternalFunctionIn(%s, %d):\n  %s\n",
+    fprintf(stderr, "ioFindExternalFunctionIn(%s, %p):\n  %s\n",
 	    lookupName, moduleHandle, dlerror());
 
   return fn;
