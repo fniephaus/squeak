@@ -37,11 +37,11 @@
 # 
 # Author: Ian.Piumarta@SqueakLand.org
 # 
-# Last edited: 2005-03-17 22:32:51 by piumarta on squeak.hpl.hp.com
+# Last edited: 2005-03-28 22:55:22 by piumarta on emilia.local
 
 AC_INIT([config.h.in])
 
-AC_VM_VERSION(3,8a,1, 3,7,5989)
+AC_VM_VERSION(3,8a,1, 3,8g,6548)
 
 topdir=`cd ${srcdir}/../../..; pwd`
 cfgdir=`cd ${srcdir}; pwd`
@@ -161,7 +161,7 @@ AC_PROG_LIBTOOL
 
 # Configured headers (pretty much everybody needs blddir and vm)
 
-INCLUDES="-I${blddir} -I${topdir}/platforms/unix/vm -I${topdir}/platforms/Cross/vm"
+INCLUDES="-I${blddir} -I${topdir}/platforms/unix/vm -I${topdir}/platforms/Cross/vm -I${vmmdir}/vm"
 
 AC_SUBST(INCLUDES)
 
@@ -173,8 +173,14 @@ AC_STDC_HEADERS
 AC_HAVE_HEADERS(unistd.h string.h fcntl.h sys/file.h sys/param.h)
 AC_HAVE_HEADERS(sys/time.h sys/filio.h sys/select.h)
 AC_HAVE_HEADERS(features.h)
+AC_HAVE_HEADERS(alloca.h) # SunOS5
 AC_HEADER_TIME
 AC_HEADER_DIRENT
+
+if test -f "${vmmdir}/vm/interp.h"; then
+  AC_DEFINE(HAVE_INTERP_H, 1)
+fi
+AC_SUBST(HAVE_INTERP_H)
 
 AC_STRUCT_TIMEZONE
 
@@ -230,6 +236,7 @@ AC_CHECK_FUNC(_dyld_present, [
 AC_CHECK_FUNCS(snprintf __snprintf,[break])
 
 AC_FUNC_MMAP
+AC_FUNC_ALLOCA
 
 #AC_ARG_ENABLE(jit,
 #[  --enable-jit            enable J4 support [default=no]],
