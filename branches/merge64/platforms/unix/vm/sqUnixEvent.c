@@ -36,7 +36,7 @@
 
 /* Author: Ian Piumarta <ian.piumarta@squeakland.org>
  *
- * Last edited: 2005-03-17 21:16:39 by piumarta on squeak.hpl.hp.com
+ * Last edited: 2005-03-17 21:19:36 by piumarta on squeak.hpl.hp.com
  *
  * NOTE: this file is included by the window support files that need it.
  */
@@ -116,7 +116,7 @@ static sqInputEvent *allocateInputEvent(int eventType)
 )
 
 
-static int getButtonState(void)
+static sqInt getButtonState(void)
 {
   /* red button honours the modifiers:
    *	red+ctrl    = yellow button
@@ -222,7 +222,7 @@ static void recordDragEvent(int dragType, int numFiles)
 
 /* retrieve the next input event from the queue */
 
-static int display_ioGetNextEvent(sqInputEvent *evt)
+static sqInt display_ioGetNextEvent(sqInputEvent *evt)
 {
   if (iebEmptyP())
     ioProcessEvents();
@@ -278,7 +278,7 @@ static void recordKeystroke(int keyCode)			/* DEPRECATED */
 
 
 
-static int display_ioPeekKeystroke(void)			/* DEPRECATED */
+static sqInt display_ioPeekKeystroke(void)			/* DEPRECATED */
 {
   int keystate;
 
@@ -290,7 +290,7 @@ static int display_ioPeekKeystroke(void)			/* DEPRECATED */
 }
 
 
-static int display_ioGetKeystroke(void)			/* DEPRECATED */
+static sqInt display_ioGetKeystroke(void)			/* DEPRECATED */
 {
   int keystate;
 
@@ -303,14 +303,14 @@ static int display_ioGetKeystroke(void)			/* DEPRECATED */
 }
 
 
-static int display_ioGetButtonState(void)
+static sqInt display_ioGetButtonState(void)
 {
   ioProcessEvents();  /* process all pending events */
   return getButtonState();
 }
 
 
-static int display_ioMousePoint(void)
+static sqInt display_ioMousePoint(void)
 {
   ioProcessEvents();  /* process all pending events */
   /* x is high 16 bits; y is low 16 bits */
