@@ -1,105 +1,129 @@
 #############################################################################
-# Makefile for Win32 Squeak using gcc-3.3.1 and MingW32
-# Modified from Andreas Raab's
-# 	"Makefile for Win32 Squeak using gcc-2.95.2 and MingW32"
-# 	by Ned Konz 
+# Makefile for Win32 Squeak using gcc-3.3.3 and MingW32
+# $Id: Makefile.mingw.gcc33,v 1.1.2.2 2004/07/16 17:35:57 nedkonz Exp $
+#
+# Expects to be invoked from
+# platforms/win32/release directory; i.e., if it lives in the platforms/win32
+# directory, then build like this:
+#
+# FOR CMD:
+#
+# make -f %PWD%/Makefile -C release SRCDIR=%PWD% %@%
+#
+# OR (for bash):
+#
+# #!/bin/sh
+# make -f $PWD/Makefile -C release SRCDIR=$PWD "$@"
+#
 #############################################################################
-# Assumes standard VMMaker platform tree:
-#
-# <squeak root>		=> ROOTDIR (where makefile is called from)
-#	build			=> BLDDIR 
-# 	platforms/		
-# 		Cross/		=> CROSSDIR
-# 			plugins/
-# 				Mpeg3Plugin
-# 					libmpeg	
-# 			vm/
-# 		win32/		=> PLATDIR
-# 			misc/	=> MISCDIR	(location of this makefile)
-# 			plugins/
-# 			vm/
-# 	src				=> SRCDIR
-# 		plugins/
-# 		vm/			=> VMDIR
-# 		plugins.ext	
-# 		plugins.int
-#
-#
 
 #############################################################################
-# Default commands
+# Default locations; can be overridden
+#
+
+
+# SRCDIR can be set automatically if the current directory is either the
+# platforms/win32/misc or the platforms/win32 directory
+
+ifndef SRCDIR
+
+# try platforms/win32 first
+ifneq ($(wildcard misc/gnuify*),)
+SRCDIR := $(CURDIR)
+else
+# then platforms/win32/*
+ifneq ($(wildcard ../misc/gnuify*),)
+SRCDIR := $(dir $(CURDIR)).
+SRCDIR := $(SRCDIR:/.=)
+else
+# then toplevel
+ifneq ($(wildcard platforms/win32/misc/gnuify*),)
+SRCDIR := $(CURDIR)/platforms/win32
+else
+$(error Can\'t find SRCDIR)
+endif
+endif
+endif
+$(warning SRCDIR set to $(SRCDIR))
+endif
+
+BLDDIR ?= $(SRCDIR)/release
+OBJDIR ?= $(BLDDIR)
+VMDIR ?= $(SRCDIR)/vm
+MISCDIR ?= $(SRCDIR)/misc
+UTILDIR ?= $(SRCDIR)/util
+
+export SRCDIR BLDDIR OBJDIR VMDIR MISCDIR UTILDIR
+
+DXDIR ?= c:/dx7sdk
+GNUDIR ?= c:/GNUTools
+
+export DXDIR GNUDIR
+
+# now find the Makefile
+ifndef THISMAKE
+THISMAKE = $(MISCDIR)/Makefile.mingw.gcc33
+$(warning THISMAKE set to $(THISMAKE))
+endif
+
+#############################################################################
+
 AR = ar rc
 CP = cp
 RM = rm
-# Note: AWK is only necessary for building gnu-interp.c
-AWK = gawk
+MD = mkdir
 
-#############################################################################
-# Default locations
-#
-ifdef SRCDIR
-ROOTDIR := $(SRCDIR)/..
-else
-ROOTDIR := $(CURDIR)
-SRCDIR := $(ROOTDIR)/src
-endif
-PLATDIR := $(ROOTDIR)/platforms/win32
-CROSSDIR := $(ROOTDIR)/platforms/Cross
-MISCDIR := $(PLATDIR)/misc
-BLDDIR := $(ROOTDIR)/build
-OBJDIR := $(BLDDIR)
-VMDIR := $(SRCDIR)/vm
-THISFILE := $(MISCDIR)/Makefile
-
-
-vpath %.o $(OBJDIR)
-vpath %.exe $(BLDDIR)
-
-xx := $(warning ROOTDIR=$(ROOTDIR) MISCDIR=$(MISCDIR) PLATDIR=$(PLATDIR) SRCDIR=$(SRCDIR) BLDDIR=$(BLDDIR))
-
-# DirectX 7.0 SDK 
-DXDIR ?= c:/dx7sdk
-DXINC := $(DXDIR)/include
-
-#############################################################################
-# Definitions of plugins
-#
-include $(SRCDIR)/plugins.ext
-include $(SRCDIR)/plugins.int
-
-INTERNAL_LIBS = $(addsuffix .lib, $(INTERNAL_PLUGINS))
-EXTERNAL_LIBS = $(addsuffix .dll, $(EXTERNAL_PLUGINS))
-
-Mpeg3Plugin_DIR := $(CROSSDIR)/plugins/Mpeg3Plugin
 
 #############################################################################
 # Default targets
 #
-VM = $(BLDDIR)/Squeak.exe
+VM=	Squeak.exe
+
+ifndef EXTERNAL_PLUGINS
+include $(SRCDIR)/plugins/plugins.ext
+endif
+
+ifndef INTERNAL_PLUGINS
+include $(SRCDIR)/plugins/plugins.int
+endif
+
+INTERNAL_LIBS = $(addsuffix .lib, $(INTERNAL_PLUGINS))
+EXTERNAL_LIBS = $(addsuffix .dll, $(EXTERNAL_PLUGINS))
 
 
 #############################################################################
 # VM definitions
 #
-VMDEF=	$(BLDDIR)/Squeak.def
-VMEXP=	$(BLDDIR)/Squeak.exp
-VMLIB=	$(BLDDIR)/Squeak.lib
-VMRES=	$(BLDDIR)/Squeak.res
-VMDEFIN = $(MISCDIR)/Squeak.def.in
+VMDEF=	Squeak.def
+VMEXP=	Squeak.exp
+VMLIB=	Squeak.lib
+VMRES=	Squeak.res
+VMDEFIN=$(MISCDIR)/Squeak.def.in
 
 #############################################################################
 # Generic VM source file definitions
 #
-VMSRC= $(notdir $(wildcard $(VMDIR)/*.c)) $(VMDIR)/gnu-interp.c
+VMSRC= $(notdir $(wildcard $(VMDIR)/*.c)) gnu-interp.c
 VMOBJ:=	$(VMSRC:.c=.o)
 VMOBJ:=	$(filter-out interp.o sqFilePrims.o, $(VMOBJ))
+# VMOBJ:=$(addprefix $(OBJDIR)/,$(VMOBJ))
 
 LIBSRC = $(wildcard *.c)
 LIBOBJ = $(LIBSRC:.c=.o)
+# LIBOBJ = $(addprefix $(OBJDIR)/,$(LIBOBJ))
 
-.PRECIOUS: $(VMDIR)/gnu-interp.c 
+.PRECIOUS: gnu-interp.c 
 #BBCopy-i386.cc
 
+#############################################################################
+# DirectX definitions
+#
+DXINCDIR=$(DXDIR)/include
+DXLIBDIR=$(DXDIR)/lib
+
+# MinGW definitions
+GNUINCDIR=$(GNUDIR)/include
+GNULIBDIR=$(GNUDIR)/lib
 
 #############################################################################
 # Plugin (DLL) file definitions
@@ -121,28 +145,45 @@ ALLOBJ=		$(VMOBJ)
 #############################################################################
 # Where go the intermediate files?
 #
-VMOUTDIR=		$(BLDDIR)
-PLUGINOUTDIR=	$(BLDDIR)
+VMOUTDIR=	$(BLDDIR)
 
 #############################################################################
 # And where to look for files?
 #
-vpath %.c $(SRCDIR) $(VMDIR) $(VMOUTDIR) $(PLUGINOUTDIR)
+vpath %.c $(SRCDIR);$(VMDIR);$(VMOUTDIR)
+vpath %.h $(SRCDIR);$(VMDIR);$(VMOUTDIR)
+
+vpath %.o $(BLDDIR)
+vpath %.lib $(BLDDIR)
+vpath Mpeg%.o $(VMOUTDIR)
+vpath $(VM) $(VMOUTDIR)
+vpath plugins.% $(SRCDIR)/plugins
+vpath sqNamedPrims.% $(VMDIR)
 
 #############################################################################
-# C compiler settings (for egcs-1.1.2)
+# C compiler settings (for gcc-3.3.3)
 #
 CC=		gcc
 CXX=		g++
-CFLAGS=		-g -mpentium -mwindows -O3 -fomit-frame-pointer -funroll-loops -fschedule-insns2
-CXXFLAGS= $(CFLAGS) -felide-constructors
-WFLAGS=		
-DEFS=		-DWIN32_FILE_SUPPORT -DNO_STD_FILE_SUPPORT -DNDEBUG -DLSB_FIRST -DX86 $(XDEFS)
+
+DEFS=		-DWIN32_FILE_SUPPORT -DNO_STD_FILE_SUPPORT -DLSB_FIRST -DX86 $(XDEFS)
+# DEFS=		-DWIN32_FILE_SUPPORT -DNO_STD_FILE_SUPPORT -DNDEBUG -DLSB_FIRST -DX86 $(XDEFS)
+# DEFS=		-DMINIMAL -DNDEBUG -DLSB_FIRST -DX86 $(XDEFS)
 #-DUSE_DIB_SECTIONS
 #-DPROFILE
 XDEFS=		-DSQUEAK_BUILTIN_PLUGIN
-INCS=		-I. -I$(SRCDIR) -I$(VMDIR) -I$(DXINC) $(XINC)
-MD=			mkdir
+
+INCS=		-I. -I$(SRCDIR) -I$(VMDIR) -I$(GNUINCDIR) -I$(DXINCDIR) $(XINC)
+# INCS=		-I. -I$(SRCDIR) -I$(VMDIR) -I$(GNUINCDIR) $(XINC)
+
+# WFLAGS=		-Wall -Wno-unknown-pragmas
+WFLAGS=
+
+CPPFLAGS=	$(DEFS) $(INCS)
+CFLAGS=		-ggdb3 -mwindows -O3 $(WFLAGS)
+INTERPCFLAGS=	-fno-gcse
+
+CXXFLAGS= $(CFLAGS) -felide-constructors
 
 #############################################################################
 # Linker settings
@@ -150,12 +191,22 @@ MD=			mkdir
 # Note: I had to use 'gcc' instead of 'ld' to prevent unresolved symbols
 #       The switch '-mwindows' gives us a GUI app instead of a console app.
 #
-LD=			gcc
-LDFLAGS=	-mwindows
-STDLIBS=	-lddraw -ldinput -lopengl32 -lwsock32 -lcomdlg32 -lole32 -lwinmm -luser32 -lgdi32 -lkernel32
+# LD=		ld
+LD=		gcc
+LDFLAGS=	-mwindows -ggdb3 --enable-extra-pe-debug --enable-auto-import
+# LDFLAGS=	
+DXLIBS=		-ldxguid -lddraw -ldinput 
+STDLIBS=	-lopengl32 -lwsock32 -lcomdlg32 -lole32 -lwinmm -luser32 -lgdi32 -lkernel32
 CRTLIB =	-lcrtdll
-LIBS=		$(STDLIBS) $(CRTLIB)
+LDFLAGS=	-L$(GNULIBDIR) -L$(DXLIBDIR)
+LIBS=		$(CRTLIB) $(STDLIBS) $(DXLIBS)
 
+#############################################################################
+# AWK settings
+#
+# Note: AWK is only necessary for building gnu-interp.c
+#
+AWK=		gawk
 
 #############################################################################
 # DLL settings
@@ -172,24 +223,25 @@ DLLWRAP=	dllwrap
 #       !!!WARNING!!! windres can break if you have MacAfee VShield running!!!
 #
 RC=			windres
-RCFLAGS=	--include-dir $(SRCDIR)/misc
+RCFLAGS=	--include-dir $(MISCDIR)
 
 .SUFFIXES:
 .SUFFIXES:	.ccg .cc .c .o .s .i .rc .res .cg .hg .ccg
 
-all: $(BLDDIR) $(VMDIR)/gnu-interp.c $(VM) $(EXTERNAL_LIBS)
+all: 	setup $(VM) $(EXTERNAL_LIBS)
 
-$(BLDDIR):
-	mkdir $(BLDDIR)
+.PHONY: setup
+
+setup:
 
 #############################################################################
 # Compiling Squeak itself
 #
 #  Mpeg3Plugin.o sqOpenGLRenderer.o sqWin32FilePrims.o 
 
+#		strip --strip-all $(VMOUTDIR)/$(VM)
 $(VM):	$(ALLOBJ) $(INTERNAL_LIBS) $(VMEXP) resource.o
-		$(LD) $(LDFLAGS) -o $(VMOUTDIR)/$(VM) $(addprefix $(VMOUTDIR)/,$(ALLOBJ)) $(VMOUTDIR)/$(VMEXP) $(VMOUTDIR)/resource.o $(addprefix $(VMOUTDIR)/,$(INTERNAL_LIBS)) $(LIBS)
-		strip --strip-all $(VMOUTDIR)/$(VM)
+	$(LD) $(LDFLAGS) -o $(VMOUTDIR)/$(VM) $(addprefix $(VMOUTDIR)/,$(ALLOBJ)) $(VMOUTDIR)/$(VMEXP) $(VMOUTDIR)/resource.o $(addprefix $(VMOUTDIR)/,$(INTERNAL_LIBS)) $(LIBS)
 
 #############################################################################
 # The exports for named primitives from Squeak (required by VM)
@@ -206,6 +258,7 @@ makelib: $(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RM) $(LIBOBJ)
 
+#	strip --strip-all $(OBJDIR)/$(LIB).dll
 makedll: $(LIBOBJ)
 	$(DLLTOOL) \
 		--output-def $(OBJDIR)/$(LIB).def \
@@ -218,37 +271,26 @@ makedll: $(LIBOBJ)
 		$(LIBS) \
 		$(OBJDIR)/$(LIB).exp \
 		$(LIBOBJ)
-	strip --strip-all $(OBJDIR)/$(LIB).dll
 	-$(RM) -f $(LIBOBJ) $(LIB).lib $(LIB).exp $(LIB).def
 
 Mpeg3Plugin.lib:
-	@$(MAKE) -C $(DLLDIR)/Mpeg3Plugin -f Makefile.win32 XDEFS=-DSQUEAK_BUILTIN_PLUGIN makelib
-	$(CP) $(DLLDIR)/Mpeg3Plugin/Mpeg3Plugin.lib release/Mpeg3Plugin.lib
+	@$(MAKE) -C$(DLLDIR)/Mpeg3Plugin -f Makefile.win32 XDEFS=-DSQUEAK_BUILTIN_PLUGIN makelib
+	$(CP) $(DLLDIR)/Mpeg3Plugin/Mpeg3Plugin.lib $(BLDDIR)
 	-$(RM) $(DLLDIR)/Mpeg3Plugin/Mpeg3Plugin.lib
 
 Mpeg3Plugin.dll:
-	@$(MAKE) -C $(DLLDIR)/Mpeg3Plugin -f Makefile.win32 makedll
-	$(CP) $(DLLDIR)/Mpeg3Plugin/Mpeg3Plugin.dll release/Mpeg3Plugin.dll
+	@$(MAKE) -C$(DLLDIR)/Mpeg3Plugin -f Makefile.win32 makedll
+	$(CP) $(DLLDIR)/Mpeg3Plugin/Mpeg3Plugin.dll $(BLDDIR)
 	-$(RM) $(DLLDIR)/Mpeg3Plugin/Mpeg3Plugin.dll
 
 %.lib:
-	@$(MAKE) -C $(DLLDIR)/% -f Makefile.win32 XDEFS=-DSQUEAK_BUILTIN_PLUGIN makelib
-	$(CP) $(DLLDIR)/%/Mpeg3Plugin.lib release/Mpeg3Plugin.lib
-	-$(RM) $(DLLDIR)/%/Mpeg3Plugin.lib
-
-%.dll:
-	@$(MAKE) -C $(DLLDIR)/% -f Makefile.win32 makedll
-	$(CP) $(DLLDIR)/%/Mpeg3Plugin.dll release/Mpeg3Plugin.dll
-	-$(RM) $(DLLDIR)/%/Mpeg3Plugin.dll
-
-%.lib:
-	@$(MAKE) -C $(DLLDIR)/$* -f $(THISFILE) SRCDIR=../../ LIB=$*.lib OBJDIR=. XDEFS=-DSQUEAK_BUILTIN_PLUGIN makelib
-	$(CP) $(DLLDIR)/$*/$*.lib release/$*.lib
+	@$(MAKE) -C $(DLLDIR)/$* -f $(THISMAKE) SRCDIR=../../ LIB=$*.lib OBJDIR=. XDEFS=-DSQUEAK_BUILTIN_PLUGIN makelib
+	$(CP) $(DLLDIR)/$*/$*.lib $(BLDDIR)
 	-$(RM) $(DLLDIR)/$*/$*.lib
 
 %.dll:
-	@$(MAKE) -C $(DLLDIR)/$* -f $(THISFILE) SRCDIR=../../ LIB=$* OBJDIR=.  XDEFS=-DNIX makedll
-	$(CP) $(DLLDIR)/$*/$*.dll release/$*.dll
+	@$(MAKE) -C $(DLLDIR)/$* -f $(THISMAKE) SRCDIR=../../ LIB=$* OBJDIR=.  XDEFS=-DNIX makedll
+	$(CP) $(DLLDIR)/$*/$*.dll $(BLDDIR)
 	-$(RM) $(DLLDIR)/$*/$*.dll
 
 
@@ -257,13 +299,7 @@ Mpeg3Plugin.dll:
 #
 
 Mpeg%.o:
-		$(CC) -o $(VMOUTDIR)/$@ $(CFLAGS) -I$(Mpeg3Plugin_DIR) -I$(DLLDIR)/Mpeg3Plugin -I$(Mpeg3Plugin_DIR)/audio -I$(Mpeg3Plugin_DIR)/video $(INCS) $(DEFS) -c $<
-
-.c.o:
-		$(CC) -o $(OBJDIR)/$@ $(CFLAGS) $(INCS) $(DEFS) -c $<
-
-.cc.o:
-		$(CXX) -o $(OBJDIR)/$@ $(CXXFLAGS) $(INCS) $(DEFS) -c $<
+		$(CC) -o $(VMOUTDIR)/$@ $(CFLAGS) -I$(VMDIR)/libmpeg -I$(DLLDIR)/Mpeg3Plugin -I$(VMDIR)/libmpeg/audio -I$(VMDIR)/libmpeg/video $(INCS) $(DEFS) -c $<
 
 .c.s:
 		$(CC) -S -o $@ -fverbose-asm -Wa,ah $(CFLAGS) $(INCS) $(DEFS) -c $<
@@ -298,20 +334,29 @@ resource.o:	$(VMRES)
 
 sqNamedPrims.o:	sqNamedPrims.c sqNamedPrims.h
 
+gnu-interp.c: interp.c $(MISCDIR)/gnuify
+
+gnu-interp.o: CFLAGS+=$(INTERPCFLAGS)
+
 Mpeg3Plugin.o:	Mpeg3Plugin.c
 
-$(VMRES): $(MISCDIR)/Squeak.rc
-	$(RC) $(RCFLAGS) -i $< -o $(OBJDIR)/$@
+Squeak.res: $(MISCDIR)/Squeak.rc
+	$(RC) $(RCFLAGS) -i $< -o $@
 
 #############################################################################
 # sync-ing sqNamedPrims.h with plugins.int
 #
-MAKEPRIMS=util/makeprims.exe
+MAKEPRIMS=$(UTILDIR)/makeprims.exe
 
-$(MAKEPRIMS): util/makeprims.c
-	gcc -o $(MAKEPRIMS) util/makeprims.c
+$(MAKEPRIMS): $(UTILDIR)/makeprims.c
+	gcc -o $(MAKEPRIMS) $(UTILDIR)/makeprims.c
 
-sqNamedPrims.h: $(SRCDIR)/plugins.int $(MAKEPRIMS)
-	$(MAKEPRIMS) vm\\sqNamedPrims.h $(INTERNAL_PLUGINS)
+$(VMDIR)/sqNamedPrims.h: plugins.int $(MAKEPRIMS)
+	$(MAKEPRIMS) $@ $(INTERNAL_PLUGINS)
 
+.PHONY: clean
+clean:
+	-$(RM) -f $(VM) $(EXTERNAL_LIBS) $(ALLOBJ)
 
+tags:
+	ctags -R $(SRCDIR)/../..
