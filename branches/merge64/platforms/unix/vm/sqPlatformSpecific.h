@@ -1,6 +1,6 @@
 /* sqPlatformSpecific.h -- platform-specific modifications to sq.h
  * 
- *   Copyright (C) 1996-2004 by Ian Piumarta and other authors/contributors
+ *   Copyright (C) 1996-2005 by Ian Piumarta and other authors/contributors
  *                              listed elsewhere in this file.
  *   All rights reserved.
  *   
@@ -33,9 +33,9 @@
  *   changes these copyright conditions.  Read the file `COPYING' in the
  *   directory `platforms/unix/doc' before proceeding with any such use.
  * 
- * Author: ian.piumarta@inria.fr
+ * Author: ian.piumarta@squeakland.org
  * 
- * Last edited: 2004-04-17 02:45:14 by piumarta on emilia.local
+ * Last edited: 2005-03-17 21:06:26 by piumarta on squeak.hpl.hp.com
  */
 
 /* undefine clock macros (these are implemented as functions) */
@@ -49,6 +49,13 @@
 #undef sqShrinkMemoryBy
 #undef sqMemoryExtraBytesLeft
 
+#include "sqMemoryAccess.h"
+
+extern void *sqAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize);
+extern sqInt sqGrowMemoryBy(sqInt oldLimit, sqInt delta);
+extern sqInt sqShrinkMemoryBy(sqInt oldLimit, sqInt delta);
+extern sqInt sqMemoryExtraBytesLeft(sqInt includingSwap);
+
 #include <sys/types.h>
 
 typedef off_t squeakFileOffsetType;
@@ -57,7 +64,7 @@ typedef off_t squeakFileOffsetType;
 #undef	sqFilenameFromStringOpen
 #define sqFilenameFromStringOpen sqFilenameFromString
 
-extern void sqFilenameFromString(char *uxName, int stNameIndex, int sqNameLength);
+extern void sqFilenameFromString(char *uxName, sqInt stNameIndex, int sqNameLength);
 
 #include <unistd.h>
 
