@@ -36,14 +36,12 @@
 
 /* Author: Ian.Piumarta@INRIA.Fr
  *
- * Last edited: 2003-09-03 18:06:25 by piumarta on emilia.inria.fr
+ * Last edited: 2003-09-07 15:38:59 by piumarta on emilia.inria.fr
  */
 
-#define DEBUG 0
- 
 #include "sq.h"		/* sqUnixConfig.h */
 
-#if DEBUG
+#if defined(DEBUG) && DEBUG>0
 # define dprintf(ARGS) fprintf ARGS
 #else
 # define dprintf(ARGS)
@@ -304,13 +302,23 @@ int ioLoadModule(char *pluginName)
  */
 int ioFindExternalFunctionIn(char *lookupName, int moduleHandle)
 {
-  void *fn= dlsym((void *)moduleHandle, lookupName);
+  char buf[256];
+  void *fn;
+
+#ifdef HAVE_SNPRINTF
+  snprintf(buf, sizeof(buf), "%s", lookupName);
+#else
+  sprintf(buf, "%s", lookupName);
+#endif
+
+  fn= dlsym((void *)moduleHandle, buf);
 
   dprintf((stderr, "ioFindExternalFunctionIn(%s, %d)\n",
 	   lookupName, moduleHandle));
 
   if ((fn == 0) && (!sqIgnorePluginErrors)
       && strcmp(lookupName, "initialiseModule")
+      && strcmp(lookupName, "shutdownModule")
       && strcmp(lookupName, "setInterpreter")
       && strcmp(lookupName, "getModuleName"))
     fprintf(stderr, "ioFindExternalFunctionIn(%s, %d):\n  %s\n",

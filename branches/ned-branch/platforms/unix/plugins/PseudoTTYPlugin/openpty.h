@@ -35,7 +35,7 @@
  * 
  * Author: Ian.Piumarta@inria.fr
  * 
- * Last edited: 2002-07-11 21:07:37 by piumarta on emilia.inria.fr
+ * Last edited: 2003-09-03 17:42:22 by piumarta on emilia.inria.fr
  */
 
 #if defined(HAVE_OPENPTY)

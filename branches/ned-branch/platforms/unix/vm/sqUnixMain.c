@@ -67,9 +67,14 @@
 # include <sys/proc.h>
 #endif
 
+/*
 #undef	DEBUG_MODULES
+*/
 
-#undef	IMAGE_DUMP				/* define to enable SIGHUP and SIGQUIT handling */
+/* define to enable SIGHUP and SIGQUIT handling */
+/*
+#undef	IMAGE_DUMP
+*/
 
 #define IMAGE_NAME_SIZE MAXPATHLEN
 
@@ -452,12 +457,14 @@ int ioFormPrint(int bitsAddr, int width, int height, int depth, double hScale, d
 int ioRelinquishProcessorForMicroseconds(int us)
 {
   int nwt= getNextWakeupTick();
-  int now= (ioMSecs() & 0x1fffffff);
   int ms=  0;
-  if (nwt <= now)
-    ms= (nwt ? 0 : (1000/60));
-  else
-    ms= nwt - now;
+
+  if (nwt)
+    {
+      int now= (ioMSecs() & 0x1fffffff);
+      ms= ((nwt <= now) ? (1000/60) : nwt - now);
+    }
+
   if (ms < (1000/60))		/* < 1 timeslice? */
     {
 #    if defined(__MACH__)	/* can sleep with 1ms resolution */
