@@ -1,8 +1,8 @@
 /* sqMemoryAccess.h -- memory accessors (and associated type definitions)
  * 
- * Author: Ian.Piumarta [chez] hp.com
+ * Author: Ian.Piumarta@squeakland.org
  * 
- * Last edited: 2004-09-22 16:11:08 by piumarta on margaux.hpl.hp.com
+ * Last edited: 2005-03-17 22:15:34 by piumarta on squeak.hpl.hp.com
  */
 
 /* Systematic use of the macros defined in this file within the
@@ -16,7 +16,12 @@
 #ifndef __sqMemoryAccess_h
 #define __sqMemoryAccess_h
 
-#include "interp.h"
+#if defined(HAVE_INTERP_H)
+# include "interp.h"
+#else
+# define SQ_VI_BYTES_PER_WORD 4		/* build a 32-bit VM */
+#endif
+
 #include "config.h"
 
 #if (SQ_VI_BYTES_PER_WORD == 4)
