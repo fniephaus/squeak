@@ -1,0 +1,19 @@
+$Id: README,v 1.1.2.1 2002/10/07 20:32:54 cdegroot Exp $
+
+This code is support code for an - experimental - RFB server implementation
+in Squeak. The idea is to use this for server-side Squeak.
+
+Copied from the VNC Xserver source code. This is the basis for a Squeak
+built-in RFB server. Plan of attack:
+- Make sqXwindow bitmap (stImage) available to rfb server;
+- Start RFB server;
+- See whether we can connect and view a snapshot;
+- Add updating;
+- Add event processing;
+- Iterate until perfect;
+- Remove unneeded code (everything in sqXWindow.c that talks to X :-)).
+This way, we can slowly move in while always being able to work/test
+in Squeak. In fact, in version 2 I'd like to simply share the bitmap
+image and update list with Smalltalk and code the RFB server over there...
+
+cg@cdegroot.com
