@@ -1,0 +1,2 @@
+AC_PLUGIN_CHECK_LIB(spread,SP_connect)
+AC_CHECK_HEADERS(sp.h)

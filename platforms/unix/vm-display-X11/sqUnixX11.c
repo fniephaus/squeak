@@ -4170,6 +4170,7 @@ static void printVisual(XVisualInfo* visinfo)
       DPRINTF(3, (fp,"stencilBits = %i\r", stencil));
       DPRINTF(3, (fp,"depthBits = %i\r", depth));
     }
+  glGetError();	/* reset error flag */
 }
 
 static void listVisuals(void)
@@ -4276,6 +4277,10 @@ static void display_printUsage(void)
   printf("  -swapbtn              swap yellow (middle) and blue (right) buttons\n");
   printf("  -xasync               don't serialize display updates\n");
   printf("  -xshm                 use X shared memory extension\n");
+#if (USE_X11_GLX)
+  printf("  -glxVerbosity <n>     set GLX verbosity level to <n>\n");
+#endif
+
 }
 
 static void display_printUsageNotes(void)
@@ -4362,6 +4367,12 @@ static int display_parseArgument(int argc, char **argv)
 #	 endif
 	  return 3;
 	}
+#if (USE_X11_GLX)
+    else if (!strcmp(arg, "-glxVerbosity"))
+      {
+	  sscanf(argv[1], "%d", &verboseLevel);
+      }
+#endif
       else
 	n= 0;	/* not recognised */
     }
