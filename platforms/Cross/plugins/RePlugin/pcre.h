@@ -17,7 +17,6 @@ make changes to pcre.in. */
 /* Win32 uses DLL by default */
 
 #ifdef _WIN32
-#define STATIC
 # ifdef STATIC
 #  define PCRE_DL_IMPORT
 # else

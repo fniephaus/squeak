@@ -1138,9 +1138,9 @@ int mpeg3video_ditherframeFastRGB555(mpeg3video_t *video, unsigned char **src, u
                     *data++ =   clipArray_ptr16r[r_l] | 
                 		        clipArray_ptr16g[g_l] | 
                 		        clipArray_ptr16b[b_l];
+                   }
                 }
-            }
-        } 
+            } 
             
      
     return 0;
@@ -1271,4 +1271,3 @@ int mpeg3video_display_second_field(mpeg3video_t *video)
 /* Not used */
 	return 0;
 }
-

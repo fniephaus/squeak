@@ -6,7 +6,7 @@
 *   AUTHOR:  John McIntosh, and others.
 *   ADDRESS: 
 *   EMAIL:   johnmci@smalltalkconsulting.com
-*   RCSID:   $Id: changesForSqueak.c,v 1.7 2003/02/08 18:23:30 johnmci Exp $
+*   RCSID:   $Id: changesForSqueak.c,v 1.5 2002/06/01 05:23:00 johnmci Exp $
 *
 *   NOTES: See change log below.
 *	12/27/2001 JMM added support to build as a OS-X Bundle, a bit werid because its a mixture of unix and mac OS

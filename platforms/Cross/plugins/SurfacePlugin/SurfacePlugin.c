@@ -40,12 +40,7 @@ static SqueakSurface *surfaceArray = NULL;
 static int numSurfaces = 0;
 static int maxSurfaces = 0;
 
-#ifdef SQUEAK_BUILTIN_PLUGIN
-static const char *moduleName = "SurfacePlugin "__DATE__" (i)";
-#else
-static const char *moduleName = "SurfacePlugin "__DATE__" (e)";
-#endif
-
+static const char *moduleName = "SurfacePlugin";
 static VirtualMachine *interpreterProxy;
 #define FAIL { interpreterProxy->primitiveFail(); return 0; }
 
