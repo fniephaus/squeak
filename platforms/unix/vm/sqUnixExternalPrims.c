@@ -36,7 +36,7 @@
 
 /* Author: Ian.Piumarta@INRIA.Fr
  *
- * Last edited: 2004-04-03 22:12:38 by piumarta on cartman.inria.fr
+ * Last edited: 2004-09-22 15:01:28 by piumarta on margaux.hpl.hp.com
  */
 
 #define DEBUG 0
@@ -191,7 +191,7 @@ static void *tryLoadingPath(char *varName, char *pluginName)
 /*  Find and load the named module.  Answer 0 if not found (do NOT fail
  *  the primitive!).
  */
-int ioLoadModule(char *pluginName)
+void *ioLoadModule(char *pluginName)
 {
   void *handle= 0;
 
@@ -203,7 +203,7 @@ int ioLoadModule(char *pluginName)
       else
 	{
 	  dprintf((stderr, "loaded: <intrinsic>\n"));
-	  return (int)handle;
+	  return handle;
 	}
     }
 
@@ -226,11 +226,11 @@ int ioLoadModule(char *pluginName)
 	dprintf((stderr, "ioLoadModule plugins = %s\n                path = %s\n",
 		 squeakPlugins, path));
 	if ((handle= tryLoading("", path)))
-	  return (int)handle;
+	  return handle;
 	*out++= '/';
 	*out= '\0';
 	if ((handle= tryLoading(path, pluginName)))
-	  return (int)handle;
+	  return handle;
       }
 
   if ((   handle= tryLoading(    "./",			pluginName))
@@ -242,7 +242,7 @@ int ioLoadModule(char *pluginName)
       || (handle= tryLoading(VM_X11DIR"/",		pluginName))
 #    endif
       )
-    return (int)handle;
+    return handle;
 
 #if defined(DARWIN)
   // look in the bundle contents dir
@@ -256,7 +256,7 @@ int ioLoadModule(char *pluginName)
 	  delim[1]= '\0';
       }
     if ((handle= tryLoading(contents, pluginName)))
-      return (int)handle;
+      return handle;
   }
   // the following is needed so that, for example, the FFI can pick up
   // things like <cdecl: 'xyz' module: 'CoreServices'>
@@ -275,7 +275,7 @@ int ioLoadModule(char *pluginName)
 	char path[NAME_MAX];
 	sprintf(path, "%s/%s.framework/", *framework, pluginName);
 	if ((handle= tryLoading(path, pluginName)))
-	  return (int)handle;
+	  return handle;
       }
   }
 #endif
@@ -289,7 +289,7 @@ int ioLoadModule(char *pluginName)
     sprintf(buf, "%s%s/.libs/", vmPath, pluginDir);
 #  endif
     if ((handle= tryLoading(pluginDir, pluginName)))
-      return (int)handle;
+      return handle;
   }
 
 #if DEBUG
@@ -302,7 +302,7 @@ int ioLoadModule(char *pluginName)
 /*  Find a function in a loaded module.  Answer 0 if not found (do NOT
  *  fail the primitive!).
  */
-int ioFindExternalFunctionIn(char *lookupName, int moduleHandle)
+void *ioFindExternalFunctionIn(char *lookupName, void *moduleHandle)
 {
   char buf[256];
   void *fn;
@@ -326,7 +326,7 @@ int ioFindExternalFunctionIn(char *lookupName, int moduleHandle)
     fprintf(stderr, "ioFindExternalFunctionIn(%s, %d):\n  %s\n",
 	    lookupName, moduleHandle, dlerror());
 
-  return (int)fn;
+  return fn;
 }
 
 
@@ -334,9 +334,9 @@ int ioFindExternalFunctionIn(char *lookupName, int moduleHandle)
 /*  Free the module with the associated handle.  Answer 0 on error (do
  *  NOT fail the primitive!).
 */
-int ioFreeModule(int moduleHandle)
+sqInt ioFreeModule(void *moduleHandle)
 {
-  if (dlclose((void *)moduleHandle))
+  if (dlclose(moduleHandle))
     {
       dprintf((stderr, "ioFreeModule(%d): %s\n", moduleHandle, dlerror()));
       return 0;
@@ -349,17 +349,17 @@ int ioFreeModule(int moduleHandle)
 
 
 
-int ioLoadModule(char *pluginName)
+void *ioLoadModule(char *pluginName)
 {
   return 0;
 }
 
-int ioFindExternalFunctionIn(char *lookupName, int moduleHandle)
+void *ioFindExternalFunctionIn(char *lookupName, void *moduleHandle)
 {
   return 0;
 }
 
-int ioFreeModule(int moduleHandle)
+sqInt ioFreeModule(void *moduleHandle)
 {
   return 0;
 }

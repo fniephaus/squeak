@@ -218,8 +218,9 @@ int aioPoll(int microSeconds)
       n= select(maxFd, &rd, &wr, &ex, &tv);
       if (n  > 0) break;
       if (n == 0) return 0;
-      if (EINTR != errno)
+      if (errno && (EINTR != errno))
 	{
+	  fprintf(stderr, "errno %d\n", errno);
 	  perror("select");
 	  return 0;
 	}
