@@ -44,8 +44,8 @@ typedef struct VirtualMachine {
 	int (*fetchClassOf)(int oop);
 	double (*fetchFloatofObject)(int fieldIndex, int objectPointer);
 	int (*fetchIntegerofObject)(int fieldIndex, int objectPointer);
-	int (*fetchPointerofObject)(int index, int oop);
-	int (*fetchWordofObject)(int fieldIndex, int oop);
+	int (*fetchPointerofObject)(int fieldIndex, int oop);
+	int (*fetchWordofObject)(int fieldFieldIndex, int oop);
 	void * (*firstFixedField)(int oop);
 	void * (*firstIndexableField)(int oop);
 	int (*literalofMethod)(int offset, int methodPointer);
@@ -55,11 +55,11 @@ typedef struct VirtualMachine {
 	int (*primitiveIndexOf)(int methodPointer);
 	int (*sizeOfSTArrayFromCPrimitive)(void *cPtr);
 	int (*slotSizeOf)(int oop);
-	int (*stObjectat)(int array, int index);
-	int (*stObjectatput)(int array, int index, int value);
+	int (*stObjectat)(int array, int fieldIndex);
+	int (*stObjectatput)(int array, int fieldIndex, int value);
 	int (*stSizeOf)(int oop);
-	int (*storeIntegerofObjectwithValue)(int index, int oop, int integer);
-	int (*storePointerofObjectwithValue)(int index, int oop, int valuePointer);
+	int (*storeIntegerofObjectwithValue)(int fieldIndex, int oop, int integer);
+	int (*storePointerofObjectwithValue)(int fieldIndex, int oop, int valuePointer);
 	
 
 	/* InterpreterProxy methodsFor: 'testing' */
