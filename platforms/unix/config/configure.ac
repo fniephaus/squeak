@@ -37,7 +37,7 @@
 # 
 # Author: Ian.Piumarta@SqueakLand.org
 # 
-# Last edited: 2005-03-28 22:55:22 by piumarta on emilia.local
+# Last edited: 2005-03-28 19:16:36 by piumarta on pauillac.hpl.hp.com
 
 AC_INIT([config.h.in])
 
@@ -48,17 +48,19 @@ cfgdir=`cd ${srcdir}; pwd`
 
 AC_ARG_WITH(src,
 [  --with-src=dir          generated src directory [default=src]],
-[ vmmdir="${topdir}/${with_src}"],
-[ vmmdir="${topdir}/src"])
+[ vmmsrc="${with_src}"],
+[ vmmsrc="src"])
 
-if test "${vmmdir}" = "${topdir}/src"; then
-  if test ! -d "${vmmdir}"; then
-    if test -d "${topdir}/platforms/unix/src"; then
-      vmmdir="${topdir}/platforms/unix/src"
-      AC_MSG_RESULT([using built-in src directory])
-    fi
+vmmdir="${topdir}/${vmmsrc}"
+
+if test ! -d "${topdir}/${vmmsrc}"; then
+  if test -d "${topdir}/platforms/unix/${vmmsrc}"; then
+    vmmdir="${topdir}/platforms/unix/${vmmsrc}"
+    AC_MSG_RESULT([using built-in src directory])
   fi
 fi
+
+AC_MSG_RESULT(${vmmdir})
 
 # Check the generated src dir looks sane
 
