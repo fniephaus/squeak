@@ -1,7 +1,7 @@
 /* Definitions for "gnuified" interp.c
  * 
- *   Copyright (C) 1996 1997 1998 1999 2000 2001 Ian Piumarta and individual
- *      authors/contributors listed elsewhere in this file.
+ *   Copyright (C) 1996-2002 Ian Piumarta and other authors/contributors
+ *     as listed elsewhere in this file.
  *   All rights reserved.
  *   
  *   This file is part of Unix Squeak.
@@ -20,20 +20,20 @@
  *      other contributors mentioned herein) in the product documentation
  *      would be appreciated but is not required.
  * 
- *   2. This notice may not be removed or altered in any source distribution.
+ *   2. This notice must not be removed or altered in any source distribution.
  * 
- *   Using or modifying this file for use in any context other than Squeak
- *   changes these copyright conditions.  Read the file `COPYING' in the base
- *   of the distribution before proceeding with any such use.
+ *   Using (or modifying this file for use) in any context other than Squeak
+ *   changes these copyright conditions.  Read the file `COPYING' in the
+ *   directory `platforms/unix/doc' before proceeding with any such use.
  * 
- *   You are STRONGLY DISCOURAGED from distributing a modified version of
- *   this file under its original name without permission.  If you must
- *   change it, rename it first.
+ *   You are not allowed to distribute a modified version of this file
+ *   under its original name without explicit permission to do so.  If
+ *   you change it, rename it.
  */
 
 /* Author: Ian.Piumarta@inria.fr
  *
- * Last edited: Fri Aug 11 08:20:28 2000 by piumarta (Ian Piumarta) on emilia
+ * Last edited: 2002-07-17 23:13:49 by piumarta on emilia.inria.fr
  *
  * NOTES:
  *	this file is #included IN PLACE OF sq.h
@@ -42,7 +42,7 @@
 #include "sq.h"
 
 #define CASE(N)	case N: _##N:
-#define BREAK		goto *jumpTable[currentBytecode]
+#define BREAK		goto *jumpTablePtr[currentBytecode]
 #define PRIM_DISPATCH	goto *jumpTable[primitiveIndex]
 #define JUMP_TABLE \
   static void *jumpTable[256]= { \
@@ -172,9 +172,14 @@
 #if defined(__i386__)
 # define IP_REG asm("%esi")
 # define SP_REG asm("%edi")
-# define CB_REG	/* asm("%ebx") ; avoid undue register pressure */
+# if (__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 95))
+#   define CB_REG asm("%ebx")
+# else
+#   define CB_REG /* avoid undue register pressure */
+# endif
 #endif
-#if defined(PPC) || defined(_POWER) || defined(_IBMR2) || defined (__APPLE__)
+#if defined(__powerpc__) || defined(PPC) || defined(_POWER) || defined(_IBMR2)
+# define JP_REG asm("25")
 # define IP_REG asm("26")
 # define SP_REG asm("27")
 # define CB_REG asm("28")
@@ -188,4 +193,17 @@
 # define IP_REG asm("a5")
 # define SP_REG asm("a4")
 # define CB_REG asm("d7")
+#endif
+
+#ifndef JP_REG
+# define JP_REG
+#endif
+#ifndef IP_REG
+# define IP_REG
+#endif
+#ifndef SP_REG
+# define SP_REG
+#endif
+#ifndef CB_REG
+# define CB_REG
 #endif
