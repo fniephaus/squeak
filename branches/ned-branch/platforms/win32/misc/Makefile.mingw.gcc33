@@ -1,6 +1,6 @@
 #############################################################################
 # Makefile for Win32 Squeak using gcc-3.3.3 and MingW32
-# $Id: Makefile.mingw.gcc33,v 1.1.2.2 2004/07/16 17:35:57 nedkonz Exp $
+# $Id: Makefile.mingw.gcc33,v 1.1.2.3 2004/09/15 23:13:04 nedkonz Exp $
 #
 # Expects to be invoked from
 # platforms/win32/release directory; i.e., if it lives in the platforms/win32
@@ -20,7 +20,6 @@
 #############################################################################
 # Default locations; can be overridden
 #
-
 
 # SRCDIR can be set automatically if the current directory is either the
 # platforms/win32/misc or the platforms/win32 directory
@@ -109,7 +108,7 @@ VMOBJ:=	$(filter-out interp.o sqFilePrims.o, $(VMOBJ))
 # VMOBJ:=$(addprefix $(OBJDIR)/,$(VMOBJ))
 
 LIBSRC = $(wildcard *.c)
-LIBOBJ = $(LIBSRC:.c=.o)
+LIBOBJ ?= $(LIBSRC:.c=.o)
 # LIBOBJ = $(addprefix $(OBJDIR)/,$(LIBOBJ))
 
 .PRECIOUS: gnu-interp.c 
@@ -150,15 +149,23 @@ VMOUTDIR=	$(BLDDIR)
 #############################################################################
 # And where to look for files?
 #
-vpath %.c $(SRCDIR);$(VMDIR);$(VMOUTDIR)
-vpath %.h $(SRCDIR);$(VMDIR);$(VMOUTDIR)
+vpath %.c $(VMDIR);$(VMOUTDIR)
+vpath %.h $(VMDIR);$(VMOUTDIR)
 
-vpath %.o $(BLDDIR)
-vpath %.lib $(BLDDIR)
+vpath %.o $(VMOUTDIR)
+vpath %.dll $(BLDDIR)
+
+vpath %.def $(VMOUTDIR)
+vpath %.exp $(VMOUTDIR)
+vpath %.lib $(VMOUTDIR)
+vpath %.res $(VMOUTDIR)
+
 vpath Mpeg%.o $(VMOUTDIR)
 vpath $(VM) $(VMOUTDIR)
 vpath plugins.% $(SRCDIR)/plugins
+
 vpath sqNamedPrims.% $(VMDIR)
+vpath gnu-interp.* $(BLDDIR)
 
 #############################################################################
 # C compiler settings (for gcc-3.3.3)
@@ -166,24 +173,29 @@ vpath sqNamedPrims.% $(VMDIR)
 CC=		gcc
 CXX=		g++
 
-DEFS=		-DWIN32_FILE_SUPPORT -DNO_STD_FILE_SUPPORT -DLSB_FIRST -DX86 $(XDEFS)
+DEFS ?=		-DWIN32_FILE_SUPPORT -DNO_STD_FILE_SUPPORT -DLSB_FIRST -DX86 -DHAVE_LSTAT=0 $(XDEFS)
 # DEFS=		-DWIN32_FILE_SUPPORT -DNO_STD_FILE_SUPPORT -DNDEBUG -DLSB_FIRST -DX86 $(XDEFS)
 # DEFS=		-DMINIMAL -DNDEBUG -DLSB_FIRST -DX86 $(XDEFS)
 #-DUSE_DIB_SECTIONS
 #-DPROFILE
-XDEFS=		-DSQUEAK_BUILTIN_PLUGIN
 
-INCS=		-I. -I$(SRCDIR) -I$(VMDIR) -I$(GNUINCDIR) -I$(DXINCDIR) $(XINC)
+
+XDEFS ?=	-DSQUEAK_BUILTIN_PLUGIN
+
+INCS?=		-I. -I$(SRCDIR) -I$(VMDIR) -I$(GNUINCDIR) -I$(DXINCDIR) $(XINC)
 # INCS=		-I. -I$(SRCDIR) -I$(VMDIR) -I$(GNUINCDIR) $(XINC)
 
 # WFLAGS=		-Wall -Wno-unknown-pragmas
-WFLAGS=
+WFLAGS?=
 
-CPPFLAGS=	$(DEFS) $(INCS)
-CFLAGS=		-ggdb3 -mwindows -O3 $(WFLAGS)
-INTERPCFLAGS=	-fno-gcse
+CPPFLAGS ?=	$(DEFS) $(INCS)
+# OPTFLAGS ?= -O3 -fleading-underscore -msse -mmmx -minline-all-stringops 
+# OPTFLAGS ?= -O3 -fleading-underscore 
+OPTFLAGS ?= -O2 
+CFLAGS ?= -ggdb3 -mwindows -mwin32 -mno-cygwin $(WFLAGS) $(OPTFLAGS)
+INTERPCFLAGS?=	-fno-gcse
 
-CXXFLAGS= $(CFLAGS) -felide-constructors
+CXXFLAGS?= $(CFLAGS) -felide-constructors
 
 #############################################################################
 # Linker settings
@@ -193,13 +205,13 @@ CXXFLAGS= $(CFLAGS) -felide-constructors
 #
 # LD=		ld
 LD=		gcc
-LDFLAGS=	-mwindows -ggdb3 --enable-extra-pe-debug --enable-auto-import
-# LDFLAGS=	
 DXLIBS=		-ldxguid -lddraw -ldinput 
 STDLIBS=	-lopengl32 -lwsock32 -lcomdlg32 -lole32 -lwinmm -luser32 -lgdi32 -lkernel32
 CRTLIB =	-lcrtdll
-LDFLAGS=	-L$(GNULIBDIR) -L$(DXLIBDIR)
-LIBS=		$(CRTLIB) $(STDLIBS) $(DXLIBS)
+# LDFLAGS=	-mwindows -ggdb3 -L$(DXLIBDIR) -L$(GNULIBDIR) 
+LDFLAGS=	-ggdb3 -L$(DXLIBDIR) -L$(GNULIBDIR) 
+LIBS=		$(DXLIBS) $(STDLIBS) $(CRTLIB) 
+
 
 #############################################################################
 # AWK settings
@@ -252,6 +264,8 @@ $(VMDEF) $(VMEXP) $(VMLIB):	$(ALLOBJ)
 #############################################################################
 # Building plugins
 
+-include pMakefile.win32
+
 DLL: $(DLLOBJ)
 
 makelib: $(LIBOBJ)
@@ -268,30 +282,27 @@ makedll: $(LIBOBJ)
 	$(DLLWRAP) -mwindows \
 		-def $(OBJDIR)/$(LIB).def \
 		-o   $(OBJDIR)/$(LIB).dll \
-		$(LIBS) \
 		$(OBJDIR)/$(LIB).exp \
-		$(LIBOBJ)
-	-$(RM) -f $(LIBOBJ) $(LIB).lib $(LIB).exp $(LIB).def
+		$(LIBOBJ) \
+		$(LIBS)
+
+#	-$(RM) -f $(LIBOBJ) $(LIB).lib $(LIB).exp $(LIB).def
 
 Mpeg3Plugin.lib:
-	@$(MAKE) -C$(DLLDIR)/Mpeg3Plugin -f Makefile.win32 XDEFS=-DSQUEAK_BUILTIN_PLUGIN makelib
+	$(MAKE) -C$(DLLDIR)/Mpeg3Plugin -f Makefile.win32 XDEFS=-DSQUEAK_BUILTIN_PLUGIN makelib
 	$(CP) $(DLLDIR)/Mpeg3Plugin/Mpeg3Plugin.lib $(BLDDIR)
 	-$(RM) $(DLLDIR)/Mpeg3Plugin/Mpeg3Plugin.lib
 
 Mpeg3Plugin.dll:
-	@$(MAKE) -C$(DLLDIR)/Mpeg3Plugin -f Makefile.win32 makedll
+	$(MAKE) -C$(DLLDIR)/Mpeg3Plugin -f Makefile.win32 makedll
 	$(CP) $(DLLDIR)/Mpeg3Plugin/Mpeg3Plugin.dll $(BLDDIR)
 	-$(RM) $(DLLDIR)/Mpeg3Plugin/Mpeg3Plugin.dll
 
 %.lib:
-	@$(MAKE) -C $(DLLDIR)/$* -f $(THISMAKE) SRCDIR=../../ LIB=$*.lib OBJDIR=. XDEFS=-DSQUEAK_BUILTIN_PLUGIN makelib
-	$(CP) $(DLLDIR)/$*/$*.lib $(BLDDIR)
-	-$(RM) $(DLLDIR)/$*/$*.lib
+	$(MAKE) -C $(DLLDIR)/$* -f $(THISMAKE) LIB=$(BLDDIR)/$@ XDEFS=-DSQUEAK_BUILTIN_PLUGIN makelib
 
 %.dll:
-	@$(MAKE) -C $(DLLDIR)/$* -f $(THISMAKE) SRCDIR=../../ LIB=$* OBJDIR=.  XDEFS=-DNIX makedll
-	$(CP) $(DLLDIR)/$*/$*.dll $(BLDDIR)
-	-$(RM) $(DLLDIR)/$*/$*.dll
+	$(MAKE) -C $(DLLDIR)/$* -f $(THISMAKE) LIB=$* XDEFS=-DNO_SQUEAK_BUILTIN_PLUGIN makedll
 
 
 #############################################################################
@@ -336,12 +347,13 @@ sqNamedPrims.o:	sqNamedPrims.c sqNamedPrims.h
 
 gnu-interp.c: interp.c $(MISCDIR)/gnuify
 
-gnu-interp.o: CFLAGS+=$(INTERPCFLAGS)
+gnu-interp.o: CFLAGS?=$(INTERPCFLAGS)
 
 Mpeg3Plugin.o:	Mpeg3Plugin.c
 
 Squeak.res: $(MISCDIR)/Squeak.rc
 	$(RC) $(RCFLAGS) -i $< -o $@
+
 
 #############################################################################
 # sync-ing sqNamedPrims.h with plugins.int
@@ -356,7 +368,10 @@ $(VMDIR)/sqNamedPrims.h: plugins.int $(MAKEPRIMS)
 
 .PHONY: clean
 clean:
-	-$(RM) -f $(VM) $(EXTERNAL_LIBS) $(ALLOBJ)
+	-$(RM) -f $(VM) $(EXTERNAL_LIBS) $(INTERNAL_LIBS) $(LIBOBJ) $(DLLOBJ) $(ALLOBJ) $(DLLDIR)/*/*.o Squeak.* *.o gnu-interp.* $(DLLDIR)/*/*.lib
+
+realclean: clean
+	-$(RM) -f 
 
 tags:
 	ctags -R $(SRCDIR)/../..
