@@ -34,7 +34,7 @@ int sqSpreadConnect(SpreadConnection *s,	/*OUT*/
 int sqSpreadDisconnect(SpreadConnection * s);
 
 /* returns msg length (0..n) or error code (<0) */
-int sqSpreadReceive(SpreadConnection const * s,
+int sqSpreadReceive(SpreadConnection * s,
 		int *serviceType,	/*OUT*/
 		char *sender,		/*OUT*/
 		int maxGroups,
@@ -58,7 +58,7 @@ int sqSpreadError(int n);
 	SAFE_MESS
    possibly or'd with SELF_DISCARD if desired.
 */
-int sqSpreadMultigroupMulticast(SpreadConnection const *s,
+int sqSpreadMultigroupMulticast(SpreadConnection *s,
 		int service_type,
 		int num_groups,
 		char const *groups,
@@ -70,10 +70,10 @@ int sqSpreadMultigroupMulticast(SpreadConnection const *s,
 int sqSpreadPoll(SpreadConnection const *s);
 
 /* return 0 on success, or error (<0) */
-int sqSpreadJoin(SpreadConnection const *s, char const* group, int groupLength);
+int sqSpreadJoin(SpreadConnection *s, char const* group, int groupLength);
 
 /* return 0 on success, or error (<0) */
-int sqSpreadLeave(SpreadConnection const *s, char const* group, int groupLength);
+int sqSpreadLeave(SpreadConnection *s, char const* group, int groupLength);
 
 /* return 1 if connection is still valid */
 int sqSpreadIsValid(SpreadConnection const *s);

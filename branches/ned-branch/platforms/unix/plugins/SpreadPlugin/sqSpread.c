@@ -14,6 +14,9 @@
 
 #define _GNU_SOURCE		/* required for strndup */
 #include <string.h>
+
+extern char* strndup(const char*, size_t);	/* just in case? */
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -84,6 +87,7 @@ int sqSpreadShutdown(void)
 	return 1;
 }
 
+
 /* returns error code */
 int sqSpreadConnect(
 	SpreadConnection *s,	/*OUT*/
@@ -144,7 +148,7 @@ int sqSpreadDisconnect(SpreadConnection * s)
 
 /* returns msg length (0..n) or error code (<0) */
 int sqSpreadReceive(
-	SpreadConnection const * s,
+	SpreadConnection * s,
 	int *serviceType,		/*OUT*/
 	char *sender,			/*OUT*/
 	int maxGroups,
@@ -191,7 +195,7 @@ int sqSpreadError(int n)
 }
 
 int sqSpreadMultigroupMulticast(
-		SpreadConnection const *s,
+		SpreadConnection *s,
 		int service_type,
 		int num_groups,
 		char const *groups,
@@ -221,7 +225,7 @@ int sqSpreadPoll(SpreadConnection const *s)
 }
 
 /* return 0 on success, or error (<0) */
-int sqSpreadJoin(SpreadConnection const *s, char const* group, int groupLength)
+int sqSpreadJoin(SpreadConnection *s, char const* group, int groupLength)
 {
 	char *groupString;
 	int retval;
@@ -236,7 +240,7 @@ int sqSpreadJoin(SpreadConnection const *s, char const* group, int groupLength)
 }
 
 /* return 0 on success, or error (<0) */
-int sqSpreadLeave(SpreadConnection const *s, char const* group, int groupLength)
+int sqSpreadLeave(SpreadConnection *s, char const* group, int groupLength)
 {
 	char *groupString;
 	int retval;
