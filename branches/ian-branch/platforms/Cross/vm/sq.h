@@ -6,7 +6,7 @@
 *   AUTHOR:  
 *   ADDRESS: 
 *   EMAIL:   
-*   RCSID:   $Id: sq.h,v 1.5 2002/03/06 10:13:50 bertf Exp $
+*   RCSID:   $Id: sq.h,v 1.5.4.1 2003/05/12 07:00:34 asparagi Exp $
 *
 *	01/28/02	Tim add macro default for sqFilenameFromStringOpen
 *		and sqFTruncate
@@ -176,7 +176,7 @@ int fullDisplayUpdate(void);
 int initializeInterpreter(int bytesToShift);
 int interpret(void);
 int primitiveFail(void);
-int signalSemaphoreWithIndex(int index);
+int signalSemaphoreWithIndex(int semaIndex);
 int success(int);
 
 /* display, mouse, keyboard, time i/o */
@@ -341,7 +341,7 @@ int clipboardWriteFromAt(int count, int byteArrayIndex, int startIndex);
 
 /* browser plug-in support */
 void plugInForceTimeToReturn(void);
-int plugInInit(char *imageName);
+int plugInInit(char *sqImageName);
 int plugInNotifyUser(char *msg);
 void plugInSetStartTime(void);
 int plugInShutdown(void);
