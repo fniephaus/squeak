@@ -4,7 +4,7 @@
  * 
  * Author:  Bert Freudenberg <bert@isg.cs.uni-magdeburg.de>
  *
- * Last edited: Wed 02 Oct 2002 14:43:26 by bert on balloon
+ * Last edited: 2003-08-22 23:50:01 by piumarta on emilia.inria.fr
  *
  * History:
  *          Oct 2002 - system-wide install

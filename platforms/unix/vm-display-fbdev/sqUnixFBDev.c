@@ -67,7 +67,9 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#define DEBUG	0
+#if !defined(DEBUG)
+# define DEBUG	0
+#endif
 
 
 static void dprintf(const char *fmt, ...)
