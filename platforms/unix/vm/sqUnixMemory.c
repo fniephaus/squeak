@@ -35,7 +35,7 @@
  *   changes these copyright conditions.  Read the file `COPYING' in the
  *   directory `platforms/unix/doc' before proceeding with any such use.
  * 
- * Last edited: 2005-03-28 02:01:53 by piumarta on graves.hpl.hp.com
+ * Last edited: 2005-03-31 15:53:07 by piumarta on margaux.hpl.hp.com
  */
 
 /* Note:
@@ -282,9 +282,9 @@ sqInt sqMemoryExtraBytesLeft(sqInt includingSwap)
 
 #else
 
-sqInt sqAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize)	{ return (sqInt)uxAllocateMemory(minHeapSize, desiredHeapSize); }
-sqInt sqGrowMemoryBy(sqInt oldLimit, sqInt delta)			{ return (sqInt)uxGrowMemoryBy((char *)oldLimit, delta); }
-sqInt sqShrinkMemoryBy(sqInt oldLimit, sqInt delta)			{ return (sqInt)uxShrinkMemoryBy((char *)oldLimit, delta); }
+sqInt sqAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize)	{ return (sqInt)(long)uxAllocateMemory(minHeapSize, desiredHeapSize); }
+sqInt sqGrowMemoryBy(sqInt oldLimit, sqInt delta)			{ return (sqInt)(long)uxGrowMemoryBy((char *)(long)oldLimit, delta); }
+sqInt sqShrinkMemoryBy(sqInt oldLimit, sqInt delta)			{ return (sqInt)(long)uxShrinkMemoryBy((char *)(long)oldLimit, delta); }
 sqInt sqMemoryExtraBytesLeft(sqInt includingSwap)			{ return uxMemoryExtraBytesLeft(includingSwap); }
 
 #endif
