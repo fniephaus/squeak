@@ -1,5 +1,16 @@
 ----------------------------------------------------------------
 
+2005-03-31  Ian Piumarta  <ian.piumarta@squeakland.org>
+
+	* 3.8a-2 released.
+
+2005-03-31  Ian Piumarta  <ian.piumarta@squeakland.org>
+
+	* platforms/Cross/plugins/SocketPlugin/SocketPlugin.h: 64-bit clean.
+	* plugins/SocketPlugin/sqUnixSocket.c: 64-bit clean.
+
+----------------------------------------------------------------
+
 2005-03-29  Ian Piumarta  <ian.piumarta@squeakland.org>
 
 	* Initial 64-bit merge complete.
