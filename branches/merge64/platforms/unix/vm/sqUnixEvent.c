@@ -36,7 +36,7 @@
 
 /* Author: Ian Piumarta <ian.piumarta@inria.fr>
  *
- * Last edited: 2004-09-02 09:03:13 by piumarta on emilia.local
+ * Last edited: 2005-03-09 03:08:42 by piumarta on emilia.local
  *
  * NOTE: this file is included by the window support files that need it.
  */
@@ -116,7 +116,7 @@ static sqInputEvent *allocateInputEvent(int eventType)
 )
 
 
-static sqInt getButtonState(void)
+static int getButtonState(void)
 {
   /* red button honours the modifiers:
    *	red+ctrl    = yellow button
@@ -163,7 +163,7 @@ static void recordMouseEvent(void)
   evt->buttons= (state & 0x7);
   evt->modifiers= (state >> 3);
   evt->reserved1=
-    evt->reserved2= 0;
+    evt->windowIndex= 0;
   signalInputEvent();
 #ifdef DEBUG_EVENTS
   printf("EVENT: mouse (%d,%d)", mousePosition.x, mousePosition.y);
@@ -182,7 +182,7 @@ static void recordKeyboardEvent(int keyCode, int pressCode, int modifiers)
   evt->modifiers= modifiers;
   evt->reserved1=
     evt->reserved2=
-    evt->reserved3= 0;
+    evt->windowIndex= 0;
   signalInputEvent();
 #ifdef DEBUG_EVENTS
   printf("EVENT: key");
@@ -209,7 +209,7 @@ static void recordDragEvent(int dragType, int numFiles)
   evt->y= mousePosition.y;
   evt->modifiers= (state >> 3);
   evt->numFiles= numFiles;
-  evt->reserved1= 0;
+  evt->windowIndex= 0;
   signalInputEvent();
 #ifdef DEBUG_EVENTS
   printf("EVENT: drag (%d,%d)", mousePosition.x, mousePosition.y);
@@ -222,7 +222,7 @@ static void recordDragEvent(int dragType, int numFiles)
 
 /* retrieve the next input event from the queue */
 
-static sqInt display_ioGetNextEvent(sqInputEvent *evt)
+static int display_ioGetNextEvent(sqInputEvent *evt)
 {
   if (iebEmptyP())
     ioProcessEvents();
@@ -278,7 +278,7 @@ static void recordKeystroke(int keyCode)			/* DEPRECATED */
 
 
 
-static sqInt display_ioPeekKeystroke(void)			/* DEPRECATED */
+static int display_ioPeekKeystroke(void)			/* DEPRECATED */
 {
   int keystate;
 
@@ -290,7 +290,7 @@ static sqInt display_ioPeekKeystroke(void)			/* DEPRECATED */
 }
 
 
-static sqInt display_ioGetKeystroke(void)			/* DEPRECATED */
+static int display_ioGetKeystroke(void)			/* DEPRECATED */
 {
   int keystate;
 
@@ -303,14 +303,14 @@ static sqInt display_ioGetKeystroke(void)			/* DEPRECATED */
 }
 
 
-static sqInt display_ioGetButtonState(void)
+static int display_ioGetButtonState(void)
 {
   ioProcessEvents();  /* process all pending events */
   return getButtonState();
 }
 
 
-static sqInt display_ioMousePoint(void)
+static int display_ioMousePoint(void)
 {
   ioProcessEvents();  /* process all pending events */
   /* x is high 16 bits; y is low 16 bits */

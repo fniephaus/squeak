@@ -35,7 +35,7 @@
  * 
  * Author: ian.piumarta@inria.fr
  * 
- * Last edited: 2004-08-04 12:10:53 by piumarta on margaux.hpl.hp.com
+ * Last edited: 2004-04-17 02:45:14 by piumarta on emilia.local
  */
 
 /* undefine clock macros (these are implemented as functions) */
@@ -49,13 +49,6 @@
 #undef sqShrinkMemoryBy
 #undef sqMemoryExtraBytesLeft
 
-#include "sqMemoryAccess.h"
-
-extern void *sqAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize);
-extern sqInt sqGrowMemoryBy(sqInt oldLimit, sqInt delta);
-extern sqInt sqShrinkMemoryBy(sqInt oldLimit, sqInt delta);
-extern sqInt sqMemoryExtraBytesLeft(sqInt includingSwap);
-
 #include <sys/types.h>
 
 typedef off_t squeakFileOffsetType;
@@ -64,7 +57,7 @@ typedef off_t squeakFileOffsetType;
 #undef	sqFilenameFromStringOpen
 #define sqFilenameFromStringOpen sqFilenameFromString
 
-extern void sqFilenameFromString(char *uxName, sqInt stNameIndex, int sqNameLength);
+extern void sqFilenameFromString(char *uxName, int stNameIndex, int sqNameLength);
 
 #include <unistd.h>
 
