@@ -64,6 +64,7 @@ int isWeak(int oop);
 int isWords(int oop);
 int isWordsOrBytes(int oop);
 int includesBehaviorThatOf(int aClass, int aSuperClass);
+int isArray(int oop);
 
 /* InterpreterProxy methodsFor: 'converting' */
 int booleanValueOf(int obj);
@@ -309,5 +310,8 @@ struct VirtualMachine* sqGetInterpreterProxy(void)
 	VM->signed64BitValueOf = signed64BitValueOf;
 #endif
 
+#if VM_PROXY_MINOR > 5
+	VM->isArray = isArray;
+#endif
 	return VM;
 }
