@@ -1,261 +1,267 @@
-/* sqUnixMemory -- low-level routines to obtain space for Squeak's
-   object memory */
+/* sqUnixMemory.c -- dynamic memory management
+ * 
+ * Author: Ian.Piumarta@INRIA.Fr
+ * 
+ *   Copyright (C) 1996-2002 Ian Piumarta and other authors/contributors
+ *     as listed elsewhere in this file.
+ *   All rights reserved.
+ *   
+ *     You are NOT ALLOWED to distribute modified versions of this file
+ *     under its original name.  If you want to modify it and then make
+ *     your modifications available publicly, rename the file first.
+ * 
+ *   This file is part of Unix Squeak.
+ * 
+ *   This file is distributed in the hope that it will be useful, but WITHOUT
+ *   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ *   FITNESS FOR A PARTICULAR PURPOSE.
+ *   
+ *   You may use and/or distribute this file ONLY as part of Squeak, under
+ *   the terms of the Squeak License as described in `LICENSE' in the base of
+ *   this distribution, subject to the following additional restrictions:
+ * 
+ *   1. The origin of this software must not be misrepresented; you must not
+ *      claim that you wrote the original software.  If you use this software
+ *      in a product, an acknowledgment to the original author(s) (and any
+ *      other contributors mentioned herein) in the product documentation
+ *      would be appreciated but is not required.
+ * 
+ *   2. You must not distribute (or make publicly available by any
+ *      means) a modified copy of this file unless you first rename it.
+ * 
+ *   3. This notice must not be removed or altered in any source distribution.
+ * 
+ *   Using (or modifying this file for use) in any context other than Squeak
+ *   changes these copyright conditions.  Read the file `COPYING' in the
+ *   directory `platforms/unix/doc' before proceeding with any such use.
+ * 
+ * Last edited: 2003-02-11 14:36:21 by piumarta on emilia.inria.fr
+ */
+
+/* Note:
+ * 
+ *   The code allows memory to be overallocated; i.e., the initial
+ *   block is reserved via mmap() and then the unused portion
+ *   munmap()ped from the top end.  This is INHERENTLY DANGEROUS since
+ *   malloc() may randomly map new memory in the block we "reserved"
+ *   and subsequently unmap()ped.  Enabling this causes crashes in
+ *   Croquet, which makes heavy use of the FFI and thus calls malloc()
+ *   all over the place.
+ *   
+ *   For this reason, overallocateMemory is DISABLED by default.
+ *   
+ *   The upshot of all this is that Squeak will claim (and hold on to)
+ *   ALL of the available virtual memory (or at least 75% of it) when
+ *   it starts up.  If you can't live with that, use the -memory
+ *   option to allocate a fixed size heap.
+ */
 
 
+#include "sq.h"
+#include "config.h"
+#define DEBUG 1
+#include "debug.h"
 
-#include <sq.h>
-
-
-#ifdef  USE_MEMORY_MMAP
-
-/* This mmap-based allocator will initially mmap a huge region on
-   /dev/zero.  To free memory, it will re-mmap over the original map.
-   It's a complicated hack, but sometimes it actually works.  This
-   allocator can handle extending and shrinking squeak's effective
-   heap size at run-time.
-*/
+#if defined(HAVE_MMAP)
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <fcntl.h>
-#include <assert.h>
-#include <errno.h>
 
-#undef DEBUG
-
-/* Amount of the memory map to try reserve for Squeak.  The startup
-   code will try and reserve this much of the address space for
-   Squeak's heap.  Larger spaces mean that the maximum size of the
-   heap is larger, but that less address space is available for other
-   purposes such as malloc().  Also, on some OS's, allocating the
-   address space may in fact allocate real swap space or memory, and
-   so on such OS's the maximum should be reduced.  */
-
-#ifndef MEMORY_TO_TRY
-# define MEMORY_TO_TRY (1024*1024*1024)   /* 1 gig */
+#if !defined(MAP_ANON)
+# if defined(MAP_ANONYMOUS)
+#   define MAP_ANON MAP_ANONYMOUS
+# else
+#   define MAP_ANON 0
+# endif
 #endif
 
+#define MAP_PROT	(PROT_READ | PROT_WRITE)
+#define MAP_FLAGS	(MAP_ANON | MAP_PRIVATE)
 
-static int devZeroFd = -1;    /* fd for /dev/zero */
-static char *heap = NULL;  /* location of the heap */
-static int heapSize = 0;  /* amount of space currently mmap-ed */
-static int maxHeapSize;   /* amount of address space available for the
-			     heap */
+extern int useMmap;
+
+/*xxx THESE SHOULD BE COMMAND-LINE/ENVIRONMENT OPTIONS */
+int overallocateMemory	= 0;	/* see notes above */
+
+static int   devZero	= -1;
+static char *heap	=  0;
+static int   heapSize	=  0;
+static int   heapLimit	=  0;
+
+static int	    pageSize = 0;
+static unsigned int pageMask = 0;
+
+#define valign(x)	((x) & pageMask)
+
+static int min(int x, int y) { return (x < y) ? x : y; }
+static int max(int x, int y) { return (x > y) ? x : y; }
 
 
+/* answer the address of (minHeapSize <= N <= desiredHeapSize) bytes of memory. */
 
-/* return the granularity at which to run mmap() */
-static int mmapGranularity() 
+void *sqAllocateMemory(int minHeapSize, int desiredHeapSize)
 {
-  return getpagesize();
-}
+  if (!useMmap)
+    return malloc(desiredHeapSize);
 
-
-/* return the first byte past the end of the heap */
-static void *heapLimit() 
-{
-  return heap + heapSize;
-}
-
-
-/* internal routine: adjust the size of the heap to at least the
-   requested size.  This both shrinks and grows.  When shrinking, the
-   memory will attempt to be freed by re-running mmap() over the
-   now-unused region
-*/
-static void adjustHeapSize(int newHeapSize) 
-{
-  /* enforce a little sanity */
-  if(newHeapSize > maxHeapSize)
-    newHeapSize = maxHeapSize;
-  if(newHeapSize < 0)
-    newHeapSize = 0;
-
-  
-  /* first, round up newHeapSize so that the heap will end an
-     mmapGranularity() boundary */
-  {
-    char *realEnd;
-    int newHeapSizeToUse;
-  
-    realEnd = (char *)
-      (((int)heap + newHeapSize + (mmapGranularity() - 1)) /
-       mmapGranularity() * mmapGranularity());
-
-    newHeapSizeToUse = realEnd - heap;
-    
-    assert(newHeapSizeToUse >= newHeapSize);
-    newHeapSize = newHeapSizeToUse;
-
-    assert(newHeapSize >= 0);
-    assert(newHeapSize <= maxHeapSize);
-    assert(((int)heap + newHeapSize) % mmapGranularity() == 0);
-  }
-
-  
-  if(newHeapSize == heapSize) {
-    /* no change in size */
-    return;
-  }
-  
-  if(newHeapSize < heapSize) {
-    /* heap is shrinking */
-    void *result;
-    
-    /* first, munmap pages past the end of the new heap */
-#if 0  /* LEX don't bother: on Linux, at least, you can mmap() on top of the region, anyway.  Plus, it REALLY sucks if we munmap, some other process grabs memory, and then suddenly our mmap() fails.... */
-    munmap(heap + newHeapSize, maxHeapSize - newHeapSize);
-#endif
-    heapSize = newHeapSize;
-
-    
-    /* now remap them, so that the heap area remains contiguous. */
-    /* (This won't actually waste memory on most Unices.) */
-    result = mmap(heap+newHeapSize, maxHeapSize - newHeapSize,
-		  PROT_READ|PROT_WRITE, MAP_FIXED|MAP_PRIVATE,
-		  devZeroFd, newHeapSize);
-    if(result == MAP_FAILED) {
-      perror("mmap");
+  if (heap)
+    {
+      fprintf(stderr, "sqAllocateMemory: already called\n");
+      exit(1);
     }
-  }
-  else {
-    /* heap is growing.  The memory is already allocated, so just
-       updated the bookkeeping */
-    heapSize = newHeapSize ;
-  }
-}
+  pageSize= getpagesize();
+  pageMask= ~(pageSize - 1);
 
+  dprintf(("sqAllocateMemory: pageSize 0x%x (%d), mask 0x%x\n", pageSize, pageSize, pageMask));
 
-
-/* initial allocation routine */
-void * sqAllocateMemory(int minHeapSize, int desiredHeapSize)  {
-  /* sanity checks */
-  if(heap != NULL) {
-    fprintf(stderr, "sqAllocateMemory called twice!\n");
-    exit(1);
-  }
-  if(desiredHeapSize > MEMORY_TO_TRY) {
-    fprintf(stderr, "requested %d memory for heap!  Giving up.\n", desiredHeapSize);
-    return NULL;
-  }
-
-  /* open /dev/zero */
-  devZeroFd = open("/dev/zero", O_RDWR);
-  if(devZeroFd < 0) {
-    perror("open(\"/dev/zero\")");
-    return NULL;
-  }
-
-  /* mmap() a large chunk.  If it fails, try smaller sizes */
-  maxHeapSize = MEMORY_TO_TRY / mmapGranularity() * mmapGranularity();
-
-  while(heap==NULL && maxHeapSize > (10*mmapGranularity())) {
-#ifdef DEBUG
-    printf("trying size %d.\n", maxHeapSize);
-#endif
-    heap = mmap(NULL, maxHeapSize,
-		PROT_READ|PROT_WRITE, MAP_PRIVATE,
-		devZeroFd, 0);
-
-    if(heap == MAP_FAILED) {
-      heap = NULL;
-      
-      /* try again with a smaller heap */
-      maxHeapSize = maxHeapSize / 4 * 3;
-
-      /* make sure we are still a multipple of mmapGranularity() */
-      maxHeapSize = maxHeapSize / mmapGranularity() * mmapGranularity();
+#if (!MAP_ANON)
+  if ((devZero= open("/dev/zero", O_RDWR)) < 0)
+    {
+      perror("sqAllocateMemory: /dev/zero");
+      return 0;
     }
-  }
+#endif
 
-  if(heap == NULL) {
-    /* failure */
-    return NULL;
-  }
+  dprintf(("sqAllocateMemory: /dev/zero descriptor %d\n", devZero));
+  dprintf(("sqAllocateMemory: min heap %d, desired %d\n", minHeapSize, desiredHeapSize));
 
-  /* success */
-  heapSize = maxHeapSize;
+  heapLimit= valign(max(desiredHeapSize, useMmap));
 
-  /* double check that we got enough */
-  if(maxHeapSize < minHeapSize) {
-    printf("could not allocate but %d for the heap, but %d was requested\n", maxHeapSize, minHeapSize);
-    return NULL;
-  }
-  
+  while ((!heap) && (heapLimit >= minHeapSize))
+    {
+      dprintf(("sqAllocateMemory: mapping 0x%08x bytes (%d Mbytes)\n", heapLimit, heapLimit >> 20));
+      if (MAP_FAILED == (heap= mmap(0, heapLimit, MAP_PROT, MAP_FLAGS, devZero, 0)))
+	{
+	  heap= 0;
+	  heapLimit= valign(heapLimit / 4 * 3);
+	}
+    }
 
-  
-  /* adjust the size of the mapping */
-  adjustHeapSize(desiredHeapSize);
-  if(heapSize == 0) {
-    return NULL;
-  }
+  if (!heap)
+    {
+      fprintf(stderr, "sqAllocateMemory: failed to allocate at least %d bytes)\n", minHeapSize);
+      useMmap= 0;
+      return malloc(desiredHeapSize);
+    }
 
+  heapSize= heapLimit;
 
-  /* all done */
+  if (overallocateMemory)
+    sqShrinkMemoryBy(heap + heapLimit, heapLimit - desiredHeapSize);
+
   return heap;
 }
 
 
-/* external interface: increase the size of memory */
-int sqGrowMemoryBy(int oldLimit, int delta) {
-#ifdef DEBUG
-  printf("growing by %d...\n", delta);
-#endif
-  
+/* grow the heap by delta bytes.  answer the new end of memory. */
 
-  adjustHeapSize((char *)oldLimit - heap + delta);
-
-#ifdef DEBUG
-  printf("new heap size is %d\n", heapSize);
-#endif
-  
-  return (int) heapLimit();
-}
-
-
-/* external interface: decrease the size of memory */
-int sqShrinkMemoryBy(int oldLimit, int delta) {
-#ifdef DEBUG
-  printf("shrinking by %d...\n", delta);
-#endif
-  
-  adjustHeapSize((char *)oldLimit - heap - delta);
-  
-#ifdef DEBUG
-  printf("new heap size is %d\n", heapSize);
-#endif
-  return (int) heapLimit();
-}
-
-
-/* ask how much space can possibly be allocated */
-int sqMemoryExtraBytesLeft(int includingSwap) {
-  return maxHeapSize - heapSize;
-}
-
-
-#else  
-
-/* The default memory allocator just uses malloc(), and makes no
-    attempts to resize the heap */
-
-
-void * sqAllocateMemory(int minHeapSize, int desiredHeapSize) {
-  return malloc(desiredHeapSize);
-}
-
-int sqGrowMemoryBy(int oldLimit, int delta) {
+int sqGrowMemoryBy(int oldLimit, int delta)
+{
+  if (useMmap)
+    {
+      int newSize=  min(valign((char *)oldLimit - heap + delta), heapLimit);
+      int newDelta= newSize - heapSize;
+      dprintf(("sqGrowMemory: %p By: %d(%d) (%d -> %d)\n", oldLimit, newDelta, delta, heapSize, newSize));
+      assert(0 == (newDelta & ~pageMask));
+      assert(0 == (newSize  & ~pageMask));
+      assert(newDelta >= 0);
+      if (newDelta)
+	{
+	  dprintf(("was: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
+	  if (overallocateMemory)
+	    {
+	      char *base= heap + heapSize;
+	      dprintf(("remap: %p + 0x%x (%d)\n", base, newDelta, newDelta));
+	      if (MAP_FAILED == mmap(base, newDelta, MAP_PROT, MAP_FLAGS | MAP_FIXED, devZero, heapSize))
+		{
+		  perror("mmap");
+		  return oldLimit;
+		}
+	    }
+	  heapSize += newDelta;
+	  dprintf(("now: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
+	  assert(0 == (heapSize  & ~pageMask));
+	}
+      return (int)heap + heapSize;
+    }
   return oldLimit;
 }
 
-int sqShrinkMemoryBy(int oldLimit, int delta) {
+
+/* shrink the heap by delta bytes.  answer the new end of memory. */
+
+int sqShrinkMemoryBy(int oldLimit, int delta)
+{
+  if (useMmap)
+    {
+      int newSize=  max(0, valign((char *)oldLimit - heap - delta));
+      int newDelta= heapSize - newSize;
+      dprintf(("sqGrowMemory: %p By: %d(%d) (%d -> %d)\n", oldLimit, newDelta, delta, heapSize, newSize));
+      assert(0 == (newDelta & ~pageMask));
+      assert(0 == (newSize  & ~pageMask));
+      assert(newDelta >= 0);
+      if (newDelta)
+	{
+	  dprintf(("was: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
+	  if (overallocateMemory)
+	    {
+	      char *base= heap + heapSize - newDelta;
+	      dprintf(("unmap: %p + 0x%x (%d)\n", base, newDelta, newDelta));
+	      if (munmap(base, newDelta) < 0)
+		{
+		  perror("unmap");
+		  return oldLimit;
+		}
+	    }
+	  heapSize -= newDelta;
+	  dprintf(("now: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
+	  assert(0 == (heapSize  & ~pageMask));
+	}
+      return (int)heap + heapSize;
+    }
   return oldLimit;
 }
 
-int sqMemoryExtraBytesLeft(int includingSwap) {
+
+/* answer the number of bytes available for growing the heap. */
+
+int sqMemoryExtraBytesLeft(int includingSwap)
+{
+  return useMmap ? (heapLimit - heapSize) : 0;
+}
+
+
+#else  /* !HAVE_MMAP */
+
+void *sqAllocateMemory(int minHeapSize, int desiredHeapSize)	{ return malloc(desiredHeapSize); }
+int   sqGrowMemoryBy(int oldLimit, int delta)			{ return oldLimit; }
+int   sqShrinkMemoryBy(int oldLimit, int delta)			{ return oldLimit; }
+int   sqMemoryExtraBytesLeft(int includingSwap)			{ return 0; }
+
+#endif
+
+
+
+
+#if defined(TEST_MEMORY)
+
+#define MBytes	*1024*1024
+
+int main()
+{
+  char *mem= sqAllocateMemory(4 MBytes, 40 MBytes);
+  printf("memory allocated at %p\n", mem);
+  sqShrinkMemoryBy((int)heap + heapSize, 5 MBytes);
+  sqGrowMemoryBy((int)heap + heapSize, 1 MBytes);
+  sqGrowMemoryBy((int)heap + heapSize, 1 MBytes);
+  sqGrowMemoryBy((int)heap + heapSize, 1 MBytes);
+  sqGrowMemoryBy((int)heap + heapSize, 100 MBytes);
+  sqShrinkMemoryBy((int)heap + heapSize, 105 MBytes);
   return 0;
 }
 
-
-#endif
+#endif /* defined(TEST_MEMORY) */
