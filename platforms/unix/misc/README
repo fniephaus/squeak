@@ -21,7 +21,7 @@ VMM38b4-64bit-vm1-ikp.1.cs
     Interpreter, and the three essential plugins: BitBlt, Balloon and
     FilePlugin.  You must file this in on top of VMMaker-tpr.14.
 
-VMM38b4-64bit-vm2-ikp.1.cs
+VMM38b4-64bit-vm2-ikp.2.cs
 
     Contains 64-bit support for the SocketPlugin, and for the
     SmartSyntaxInterperterPlugin (and its variant of the
