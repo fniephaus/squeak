@@ -5,10 +5,11 @@
 *
 *   AUTHOR:  
 *   ADDRESS: 
-*   EMAIL:   ]
-*   RCSID:   $Id: sqFilePluginBasicPrims.c,v 1.6 2002/04/23 22:37:31 rowledge Exp $
+*   EMAIL:   
+*   RCSID:   $Id$
 *
 *   NOTES: See change log below.
+* 	2004-06-10 IKP 64-bit cleanliness
 * 	1/28/02    Tim remove non-ansi stuff
 *				unistd.h
 				ftello
@@ -75,14 +76,14 @@ int thisSession = 0;
 extern struct VirtualMachine * interpreterProxy;
 
 
-int sqFileAtEnd(SQFile *f) {
+sqInt sqFileAtEnd(SQFile *f) {
 	/* Return true if the file's read/write head is at the end of the file. */
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
 	return ftell(f->file) == f->fileSize;
 }
 
-int sqFileClose(SQFile *f) {
+sqInt sqFileClose(SQFile *f) {
 	/* Close the given file. */
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
@@ -94,7 +95,7 @@ int sqFileClose(SQFile *f) {
 	f->lastOp = UNCOMMITTED;
 }
 
-int sqFileDeleteNameSize(int sqFileNameIndex, int sqFileNameSize) {
+sqInt sqFileDeleteNameSize(sqInt sqFileNameIndex, sqInt sqFileNameSize) {
 	char cFileName[1000];
 	int err;
 
@@ -122,7 +123,7 @@ squeakFileOffsetType sqFileGetPosition(SQFile *f) {
 	return position;
 }
 
-int sqFileInit(void) {
+sqInt sqFileInit(void) {
 	/* Create a session ID that is unlikely to be repeated.
 	   Zero is never used for a valid session number.
 	   Should be called once at startup time.
@@ -133,11 +134,11 @@ int sqFileInit(void) {
 	return 1;
 }
 
-int sqFileShutdown(void) {
+sqInt sqFileShutdown(void) {
 	return 1;
 }
 
-int sqFileOpen(SQFile *f, int sqFileNameIndex, int sqFileNameSize, int writeFlag) {
+sqInt sqFileOpen(SQFile *f, sqInt sqFileNameIndex, sqInt sqFileNameSize, sqInt writeFlag) {
 	/* Opens the given file using the supplied sqFile structure
 	   to record its state. Fails with no side effects if f is
 	   already open. Files are always opened in binary mode;
@@ -165,9 +166,9 @@ int sqFileOpen(SQFile *f, int sqFileNameIndex, int sqFileNameSize, int writeFlag
 			f->file = fopen(cFileName, "w+b");
 			if (f->file != NULL) {
 			    char type[4],creator[4];
-				dir_GetMacFileTypeAndCreator((char *)sqFileNameIndex, sqFileNameSize, type, creator);
-				if (strncmp(type,"BINA",4) == 0 || strncmp(type,"????",4) == 0 || *(long *)type == 0 ) 
-				    dir_SetMacFileTypeAndCreator((char *)sqFileNameIndex, sqFileNameSize,"TEXT","R*ch");	
+				dir_GetMacFileTypeAndCreator(pointerForOop(sqFileNameIndex), sqFileNameSize, type, creator);
+				if (strncmp(type,"BINA",4) == 0 || strncmp(type,"????",4) == 0 || *(int *)type == 0 ) 
+				    dir_SetMacFileTypeAndCreator(pointerForOop(sqFileNameIndex), sqFileNameSize,"TEXT","R*ch");	
 			}
 		}
 		f->writable = true;
@@ -190,7 +191,7 @@ int sqFileOpen(SQFile *f, int sqFileNameIndex, int sqFileNameSize, int writeFlag
 	f->lastOp = UNCOMMITTED;
 }
 
-size_t sqFileReadIntoAt(SQFile *f, size_t count, int byteArrayIndex, size_t startIndex) {
+size_t sqFileReadIntoAt(SQFile *f, size_t count, sqInt byteArrayIndex, size_t startIndex) {
 	/* Read count bytes from the given file into byteArray starting at
 	   startIndex. byteArray is the address of the first byte of a
 	   Squeak bytes object (e.g. String or ByteArray). startIndex
@@ -203,13 +204,13 @@ size_t sqFileReadIntoAt(SQFile *f, size_t count, int byteArrayIndex, size_t star
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
 	if (f->writable && (f->lastOp == WRITE_OP)) fseek(f->file, 0, SEEK_CUR);  /* seek between writing and reading */
-	dst = (char *) (byteArrayIndex + startIndex);
+	dst = pointerForOop(byteArrayIndex) + startIndex;
 	bytesRead = fread(dst, 1, count, f->file);
 	f->lastOp = READ_OP;
 	return bytesRead;
 }
 
-int sqFileRenameOldSizeNewSize(int oldNameIndex, int oldNameSize, int newNameIndex, int newNameSize) {
+sqInt sqFileRenameOldSizeNewSize(sqInt oldNameIndex, sqInt oldNameSize, sqInt newNameIndex, sqInt newNameSize) {
 	char cOldName[1000], cNewName[1000];
 	int err;
 
@@ -228,7 +229,7 @@ int sqFileRenameOldSizeNewSize(int oldNameIndex, int oldNameSize, int newNameInd
 	}
 }
 
-int sqFileSetPosition(SQFile *f, squeakFileOffsetType position) {
+sqInt sqFileSetPosition(SQFile *f, squeakFileOffsetType position) {
 	/* Set the file's read/write head to the given position. */
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
@@ -243,7 +244,7 @@ squeakFileOffsetType sqFileSize(SQFile *f) {
 	return f->fileSize;
 }
 
-int sqFileFlush(SQFile *f) {
+sqInt sqFileFlush(SQFile *f) {
 	/* Return the length of the given file. */
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
@@ -251,7 +252,7 @@ int sqFileFlush(SQFile *f) {
 	return 1;
 }
 
-int sqFileTruncate(SQFile *f,squeakFileOffsetType offset) {
+sqInt sqFileTruncate(SQFile *f,squeakFileOffsetType offset) {
 	/* Truncate the file*/
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
@@ -263,14 +264,14 @@ int sqFileTruncate(SQFile *f,squeakFileOffsetType offset) {
 }
 
 
-int sqFileValid(SQFile *f) {
+sqInt sqFileValid(SQFile *f) {
 	return (
 		(f != NULL) &&
 		(f->file != NULL) &&
 		(f->sessionID == thisSession));
 }
 
-size_t sqFileWriteFromAt(SQFile *f, size_t count, int byteArrayIndex, size_t startIndex) {
+size_t sqFileWriteFromAt(SQFile *f, size_t count, sqInt byteArrayIndex, size_t startIndex) {
 	/* Write count bytes to the given writable file starting at startIndex
 	   in the given byteArray. (See comment in sqFileReadIntoAt for interpretation
 	   of byteArray and startIndex).
@@ -282,7 +283,7 @@ size_t sqFileWriteFromAt(SQFile *f, size_t count, int byteArrayIndex, size_t sta
 
 	if (!(sqFileValid(f) && f->writable)) return interpreterProxy->success(false);
 	if (f->lastOp == READ_OP) fseek(f->file, 0, SEEK_CUR);  /* seek between reading and writing */
-	src = (char *) (byteArrayIndex + startIndex);
+	src = pointerForOop(byteArrayIndex + startIndex);
 	bytesWritten = fwrite(src, 1, count, f->file);
 
 	position = ftell(f->file);
@@ -297,7 +298,7 @@ size_t sqFileWriteFromAt(SQFile *f, size_t count, int byteArrayIndex, size_t sta
 	return bytesWritten;
 }
 
-int sqFileThisSession() {
+sqInt sqFileThisSession() {
 	return thisSession;
 }
 
