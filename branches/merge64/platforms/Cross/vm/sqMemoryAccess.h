@@ -2,7 +2,7 @@
  * 
  * Author: Ian.Piumarta@squeakland.org
  * 
- * Last edited: 2005-03-17 22:15:34 by piumarta on squeak.hpl.hp.com
+ * Last edited: 2005-03-28 23:02:04 by piumarta on emilia.local
  */
 
 /* Systematic use of the macros defined in this file within the
@@ -16,13 +16,23 @@
 #ifndef __sqMemoryAccess_h
 #define __sqMemoryAccess_h
 
+#include "config.h"
+
 #if defined(HAVE_INTERP_H)
 # include "interp.h"
 #else
 # define SQ_VI_BYTES_PER_WORD 4		/* build a 32-bit VM */
+# warning 
+# warning ***************************************************
+# warning *
+# warning * interp.h not found -- defaulting to a 32-bit VM
+# warning *
+# warning * update your image-side VM sources to the latest
+# warning * version to avoid this message
+# warning *
+# warning ***************************************************
+# warning 
 #endif
-
-#include "config.h"
 
 #if (SQ_VI_BYTES_PER_WORD == 4)
 # define SQ_IMAGE32 1
