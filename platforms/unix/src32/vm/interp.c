@@ -19084,8 +19084,8 @@ register struct foo * foo = &fum;
     sqInt sp2;
 
 	mem = memory;
+	paramsArraySize = 27;
 	if (foo->argumentCount == 0) {
-		paramsArraySize = 27;
 		result = instantiateClassindexableSize(longAt((foo->specialObjectsOop + BaseHeaderSize) + (ClassArray << ShiftForWord)), paramsArraySize);
 		for (i = 0; i <= (paramsArraySize - 1); i += 1) {
 			/* begin storePointer:ofObject:withValue: */

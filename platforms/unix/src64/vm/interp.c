@@ -4185,11 +4185,14 @@ l4:	/* end lastPointerOf: */;
 	for (i = firstField; i <= lastField; i += BytesPerWord) {
 		weakOop = longAt(oop + i);
 		if (!((weakOop == foo->nilObj) || ((weakOop & 1)))) {
-			if (weakOop < oop) {
+		  if (weakOop < oop) {
 				chunk = weakOop - (headerTypeBytes[(longAt(weakOop)) & TypeMask]);
 				oopGone = ((longAt(chunk)) & TypeMask) == HeaderTypeFree;
 			} else {
+				static int count= 0;
 				oopGone = ((longAt(weakOop)) & MarkBit) == 0;
+				printf("%d %p %llx %lld\n", count++, (void *)longAt(weakOop), (longAt(weakOop)) & MarkBit, oopGone);
+				fflush(stdout);
 			}
 			if (oopGone) {
 				longAtput(oop + i, foo->nilObj);
