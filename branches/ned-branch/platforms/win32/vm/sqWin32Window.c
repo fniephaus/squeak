@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id: sqWin32Window.c,v 1.15 2003/08/14 21:31:55 andreasraab Exp $
+*   RCSID:   $Id: sqWin32Window.c,v 1.15.2.1 2004/07/16 18:14:28 nedkonz Exp $
 *
 *   NOTES:
 *    1) Currently supported Squeak color depths include 1,4,8,16,32 bits
@@ -29,7 +29,7 @@
 #include "sqWin32Prefs.h"
 
 #ifndef NO_RCSID
-static TCHAR RCSID[]= TEXT("$Id: sqWin32Window.c,v 1.15 2003/08/14 21:31:55 andreasraab Exp $");
+static TCHAR RCSID[]= TEXT("$Id: sqWin32Window.c,v 1.15.2.1 2004/07/16 18:14:28 nedkonz Exp $");
 #endif
 
 /****************************************************************************/
@@ -2135,7 +2135,7 @@ int ioShowDisplay(int dispBits, int width, int height, int depth,
       reverse_image_bytes((unsigned int*) dispBits, (unsigned int*) dispBits,
 			  depth, width, &updateRect);
   PROFILE_END(ticksForReversal)
-#endif NO_BYTE_REVERSAL
+#endif /* NO_BYTE_REVERSAL */
 
   bmi->bmiHeader.biWidth = width;
   bmi->bmiHeader.biHeight = -height;
