@@ -1,0 +1,21 @@
+# default Makefile for Unix Squeak plugins
+
+[make_cfg]
+[make_plg]
+
+FREETYPE_CONFIG = [freetype_config]
+XINCLUDES       = [includes] `$(FREETYPE_CONFIG) --cflags`
+OBJS            = [targets]
+TARGET          = [target]
+PLIBS           = [plibs] 
+
+# `$(FREETYPE_CONFIG) --libs`
+
+[make_inc]
+
+$(TARGET) : $(OBJS) Makefile
+	$(LINK) $(TARGET) $(OBJS) $(PLIBS)
+
+[make_targets]
+
+.force : 

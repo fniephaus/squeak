@@ -64,7 +64,7 @@ static char *glErrString(void) {
 extern int verboseLevel;
 
 /* define forceFlush if we should fflush() before closing file */
-#define forceFlush 1
+#define forceFlush 0
 
 /* Note: Print this stuff into a file in case we lock up*/
 #undef DPRINTF

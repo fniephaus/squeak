@@ -39,9 +39,10 @@
 # 
 # Last edited: 2003-09-16 20:08:09 by piumarta on emilia.inria.fr
 
-AC_INIT([config.h.in])
+AC_INIT([config.h.in],1)
+AM_INIT_AUTOMAKE
 
-AC_VM_VERSION(3,6g,2, 3,6g,5420)
+AC_VM_VERSION(3,7a,0, 3,7a,5816)
 
 topdir=`cd ${srcdir}/../../..; pwd`
 cfgdir=`cd ${srcdir}; pwd`
