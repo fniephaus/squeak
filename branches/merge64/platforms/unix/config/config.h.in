@@ -36,11 +36,15 @@
 
 /* Author: Ian.Piumarta@INRIA.Fr
  *
- * Last edited: 2003-09-03 17:43:23 by piumarta on emilia.inria.fr
+ * Last edited: 2004-09-02 15:25:23 by piumarta on margaux.hpl.hp.com
  */
 
 #ifndef __sq_config_h
 #define __sq_config_h
+
+/* explicit image width */
+
+#undef	HAVE_INTERP_H
 
 /* package options */
 
@@ -113,6 +117,13 @@
 #undef	HAVE_DYLD
 
 #undef	HAVE_LANGINFO_CODESET
+
+/* widths of primitive types */
+
+#undef	SIZEOF_INT
+#undef	SIZEOF_LONG
+#undef	SIZEOF_LONG_LONG
+#undef	SIZEOF_VOID_P
 
 /* structures */
 

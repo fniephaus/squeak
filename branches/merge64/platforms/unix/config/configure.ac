@@ -37,7 +37,7 @@
 # 
 # Author: Ian.Piumarta@SqueakLand.org
 # 
-# Last edited: 2005-03-17 12:57:38 by piumarta on squeak.hpl.hp.com
+# Last edited: 2005-03-17 20:30:05 by piumarta on squeak.hpl.hp.com
 
 AC_INIT([config.h.in])
 
@@ -145,9 +145,14 @@ AC_CHECK_PROG(LN, ln, ln)
 # Check size assumptions of basic data types
 
 AC_REQUIRE_SIZEOF(int,    4)
-# AC_REQUIRE_SIZEOF(time_t, 4)
 AC_REQUIRE_SIZEOF(double, 8)
+
 AC_CHECK_INT64_T
+
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(void *)
 
 # libtool configuration
 
