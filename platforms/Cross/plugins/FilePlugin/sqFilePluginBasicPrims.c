@@ -79,7 +79,7 @@ extern struct VirtualMachine * interpreterProxy;
 static void setFile(SQFile *f, FILE *file)
 {
   void *in= (void *)&file;
-  void *out= (void *)&f->unalignedFile;
+  void *out= (void *)&f->file;
   memcpy(out, in, sizeof(FILE *));
 }
 
@@ -93,7 +93,7 @@ static void setSize(SQFile *f, squeakFileOffsetType size)
 static FILE *getFile(SQFile *f)
 {
   FILE *file;
-  void *in= (void *)&f->unalignedFile;
+  void *in= (void *)&f->file;
   void *out= (void *)&file;
   memcpy(out, in, sizeof(FILE *));
   return file;
