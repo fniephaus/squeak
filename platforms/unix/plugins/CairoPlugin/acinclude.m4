@@ -1,6 +1,6 @@
 AC_MSG_CHECKING([for Cairo library])
 AC_CHECK_HEADERS([cairo.h],AC_PLUGIN_CHECK_LIB(cairo,cairo_create),[
-  AC_MSG_RESULT([******* not adding Freetype2 support to Cairo plugin])
+  AC_MSG_RESULT([******* Not building Cairo plugin])
   AC_PLUGIN_DISABLE])
 
 AC_MSG_CHECKING([for Cairo library Freetype and Fontconfig support])
