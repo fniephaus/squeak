@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: Impara GmbH, Magdeburg, Germany
 *   EMAIL:   Andreas.Raab@impara.de
-*   RCSID:   $Id: sqWin32DirectInput.c,v 1.3 2003/11/12 22:36:55 andreasraab Exp $
+*   RCSID:   $Id: sqWin32DirectInput.c,v 1.3.2.1 2004/07/16 18:21:35 nedkonz Exp $
 *
 *   NOTES:
 *     The function enclosed here provide direct support to the
@@ -24,13 +24,10 @@
 #ifndef NO_DIRECTINPUT
 
 #define DIRECTINPUT_VERSION 0x700 /* restrict to DX7 */
+
 #include <windows.h>
 #include <ole2.h>
 #include "sq.h"
-#ifdef __MINGW32__
-#define HMONITOR_DECLARED
-#undef WINNT
-#endif
 
 #include <dinput.h>
 #include <stdio.h>

@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: Walt Disney Imagineering, Glendale, CA
 *   EMAIL:   Andreas.Raab@disney.com
-*   RCSID:   $Id: sqWin32D3D.c,v 1.8 2002/09/05 19:30:45 andreasraab Exp $
+*   RCSID:   $Id: sqWin32D3D.c,v 1.8.2.1 2004/07/16 18:21:34 nedkonz Exp $
 *
 *   NOTES:
 *
@@ -14,10 +14,6 @@
 #define DIRECTDRAW_VERSION 0x700 /* restrict to DX7 */
 #include <windows.h>
 #include <ole2.h>
-#ifdef __MINGW32__
-#define HMONITOR_DECLARED
-#undef WINNT
-#endif
 
 #include <ddraw.h>
 #include <d3d.h>

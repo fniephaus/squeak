@@ -173,20 +173,20 @@ typedef int (*messageHook)(void *, unsigned int, unsigned int, long);
 /********************************************************/
 /* Several setup functions                              */
 /********************************************************/
-void SetupFilesAndPath();
-void SetupKeymap();
-void SetupWindows();
-void SetupPixmaps();
-void SetupPrinter();
-void SetupTimer();
-void SetupPreferences();
-void SetupMIDI();
+void SetupFilesAndPath(void);
+void SetupKeymap(void);
+void SetupWindows(void);
+void SetupPixmaps(void);
+void SetupPrinter(void);
+void SetupTimer(void);
+void SetupPreferences(void);
+void SetupMIDI(void);
 
 /********************************************************/
 /* Startup helper functions                             */
 /********************************************************/
-int findImageFile();
-int openImageFile();
+int findImageFile(void);
+int openImageFile(void);
 
 /********************************************************/
 /* external SYNCHRONIZED signaling of semaphores        */
@@ -202,8 +202,8 @@ char *GetVMOption(int id);
 /********************************************************/
 /* Misc functions                                       */
 /********************************************************/
-void SetWindowSize();
-void ReleaseTimer();
+void SetWindowSize(void);
+void ReleaseTimer(void);
 int printUsage(int level);
 
 /********************************************************/
@@ -212,9 +212,9 @@ int printUsage(int level);
 #ifndef NO_SERVICE
 /* The external startup point for installing squeak as NT service */
 void sqServiceInstall(void);
-/* The main() function used by NT services */
+/* The main(void) function used by NT services */
 int sqServiceMain(void);
-/* The generic main() function for starting squeak */
+/* The generic main(void) function for starting squeak */
 int sqMain(char *lpCmdLine, int nCmdShow);
 #endif
 
@@ -415,6 +415,7 @@ typedef struct _NOTIFYICONDATAA {
 #ifndef WM_MOUSEWHEEL
 #define WM_MOUSEWHEEL 0x020A
 #endif
+
 
 /******************************************************/
 /* Profiling support                                  */

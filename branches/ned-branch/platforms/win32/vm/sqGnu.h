@@ -175,62 +175,62 @@
 
 #define PROFILE_BYTECODE(x) __asm__("movl %0, _bcProfileCurrent" : : "i" (x))
 
-#define PROFILE_BYTECODE_END __asm__("
-	cmpl $0, _profilerActive;\
-	je 0f;\
-	pushl %ebx;\
-	pushl %edx;\
-	movl _bcProfileCurrent, %ebx;\
-	pushl %eax; \
-	rdtsc; \
-	subl _bcProfileLow, %eax; \
-	sbbl _bcProfileHigh, %edx; \
-	incl _bcProfileCountTable(, %ebx, 4);\
-	leal _bcProfileTable(, %%ebx, 8), %ebx;\
-	addl %eax, 0(%ebx);\
-	adcl %edx, 4(%ebx);\
-	addl %eax, _bcProfileLow; \
-	adcl %edx, _bcProfileHigh; \
-	popl %eax;\
-	popl %edx;\
-	popl %ebx;\
-	0:\
-	");
+#define PROFILE_BYTECODE_END __asm__( \
+	 "	cmpl $0, _profilerActive;\n" \
+	 "	je 0f;\n" \
+	 "	pushl %ebx;\n" \
+	 "	pushl %edx;\n" \
+	 "	movl _bcProfileCurrent, %ebx;\n" \
+	 "	pushl %eax;\n" \
+	 "	rdtsc;\n" \
+	 "	subl _bcProfileLow, %eax;\n" \
+	 "	sbbl _bcProfileHigh, %edx;\n" \
+	 "	incl _bcProfileCountTable(, %ebx, 4);\n" \
+	 "	leal _bcProfileTable(, %%ebx, 8), %ebx;\n" \
+	 "	addl %eax, 0(%ebx);\n" \
+	 "	adcl %edx, 4(%ebx);\n" \
+	 "	addl %eax, _bcProfileLow;\n" \
+	 "	adcl %edx, _bcProfileHigh;\n" \
+	 "	popl %eax;\n" \
+	 "	popl %edx;\n" \
+	 "	popl %ebx;\n" \
+	 "	0:\n" \
+	);
 
-#define PROFILE_PRIMITIVE(x) __asm__("\
-	cmpl $0, _profilerActive;\
-	je 0f;\
-	pushl %%edx;\
-	pushl %%eax;\
-	rdtsc;\
-	movl %0, _primProfileCurrent;\
-	movl %%eax, _primProfileLow;\
-	movl %%edx, _primProfileHigh;\
-	popl %%eax;\
-	popl %%edx;\
-	0:\
-	" : /* no return */ : "i" (x));
+#define PROFILE_PRIMITIVE(x) __asm__(\
+	"	cmpl $0, _profilerActive;\n" \
+	"	je 0f;\n" \
+	"	pushl %%edx;\n" \
+	"	pushl %%eax;\n" \
+	"	rdtsc;\n" \
+	"	movl %0, _primProfileCurrent;\n" \
+	"	movl %%eax, _primProfileLow;\n" \
+	"	movl %%edx, _primProfileHigh;\n" \
+	"	popl %%eax;\n" \
+	"	popl %%edx;\n" \
+	"	0:\n" \
+	: /* no return */ : "i" (x));
 
-#define PROFILE_PRIMITIVE_END __asm__("\
-	cmpl $0, _profilerActive;\
-	je 0f;\
-	pushl %ebx;\
-	pushl %eax;\
-	pushl %edx;\
-	movl _primProfileCurrent, %ebx;\
-	rdtsc;\
-	subl _primProfileLow, %eax;\
-	sbbl _primProfileHigh, %edx;\
-	incl _primProfileCountTable(, %ebx, 4);\
-	leal _primProfileTable(, %ebx, 8), %ebx;\
-	addl %eax, 0(%ebx);\
-	adcl %edx, 4(%ebx);\
-	subl %eax, _bcProfileLow;\
-	sbbl %edx, _bcProfileHigh;\
-	popl %edx;\
-	popl %eax;\
-	popl %ebx;\
-	0:\
-	");
+#define PROFILE_PRIMITIVE_END __asm__( \
+	"	cmpl $0, _profilerActive;\n" \
+	"	je 0f;\n" \
+	"	pushl %ebx;\n" \
+	"	pushl %eax;\n" \
+	"	pushl %edx;\n" \
+	"	movl _primProfileCurrent, %ebx;\n" \
+	"	rdtsc;\n" \
+	"	subl _primProfileLow, %eax;\n" \
+	"	sbbl _primProfileHigh, %edx;\n" \
+	"	incl _primProfileCountTable(, %ebx, 4);\n" \
+	"	leal _primProfileTable(, %ebx, 8), %ebx;\n" \
+	"	addl %eax, 0(%ebx);\n" \
+	"	adcl %edx, 4(%ebx);\n" \
+	"	subl %eax, _bcProfileLow;\n" \
+	"	sbbl %edx, _bcProfileHigh;\n" \
+	"	popl %edx;\n" \
+	"	popl %eax;\n" \
+	"	popl %ebx;\n" \
+	"	0:\n" \
+	);
 
 #endif
