@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: Walt Disney Imagineering, Glendale, CA
 *   EMAIL:   Andreas.Raab@disney.com
-*   RCSID:   $Id: sqOpenGLRenderer.c,v 1.9 2003/09/01 23:05:55 andreasraab Exp $
+*   RCSID:   $Id: sqOpenGLRenderer.c,v 1.9.2.1 2004/02/21 21:34:07 nedkonz Exp $
 *
 *   NOTES: 
 *
@@ -389,8 +389,10 @@ int glFlushRenderer(int handle) /* return true on success, false on error */
 int glSwapRendererBuffers(int handle) /* return true on success, false on error */
 {
 	struct glRenderer *renderer = glRendererFromHandle(handle);
+	ERROR_CHECK_1("(before glSwapBuffers)");
 	if(!renderer || !glMakeCurrentRenderer(renderer)) return 0;
 	DPRINTF(5, (fp, "### Swapping renderer buffers\n"));
+	ERROR_CHECK_1("(before glSwapBuffers)");
 	glSwapBuffers(renderer);
 	ERROR_CHECK;
 	return 1;
