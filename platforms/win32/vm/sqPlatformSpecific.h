@@ -61,6 +61,7 @@ __declspec(dllimport) unsigned long __stdcall GetTickCount(void);
 
 extern int _lowResMSecs;
 #define ioLowResMSecs() _lowResMSecs
-#else error!
+#else 
+#error "WIN32 not defined"
 #endif /* WIN32 */
 

@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id: sqWin32NewNet.c,v 1.9 2004/01/19 22:25:51 andreasraab Exp $
+*   RCSID:   $Id: sqWin32NewNet.c,v 1.9.2.1 2004/07/16 18:21:34 nedkonz Exp $
 *
 *   NOTES:
 *	1) TCP & UDP are now fully supported.
@@ -26,10 +26,8 @@
 #ifndef NO_NETWORK
 
 #ifndef NO_RCSID
-  static char RCSID[]="$Id: sqWin32NewNet.c,v 1.9 2004/01/19 22:25:51 andreasraab Exp $";
+  static char RCSID[]="$Id: sqWin32NewNet.c,v 1.9.2.1 2004/07/16 18:21:34 nedkonz Exp $";
 #endif
-
-#if 0
 
 #ifdef __MINGW32__
 /*
@@ -64,22 +62,6 @@
 #define SIO_ADDRESS_LIST_CHANGE       _WSAIO(IOC_WS2,23)
 #define SIO_QUERY_TARGET_PNP_HANDLE   _WSAIOR(IOC_WS2,24)
 #define SIO_ADDRESS_LIST_SORT         _WSAIORW(IOC_WS2,25)
-
-
-int
-FAR PASCAL
-WSAIoctl(
-    SOCKET s,
-    DWORD dwIoControlCode,
-    LPVOID lpvInBuffer,
-    DWORD cbInBuffer,
-    LPVOID lpvOutBuffer,
-    DWORD cbOutBuffer,
-    LPDWORD lpcbBytesReturned,
-    LPOVERLAPPED lpOverlapped,
-    void *lpCompletionRoutine
-    );
-#endif
 
 #endif
 
@@ -1539,21 +1521,23 @@ static socketOption socketOptions[]= {
   { "SO_KEEPALIVE",		SOL_SOCKET,	SO_KEEPALIVE,      1 },
   { "SO_OOBINLINE",		SOL_SOCKET,	SO_OOBINLINE,      1 },
   { "SO_LINGER",		SOL_SOCKET,	SO_LINGER,         1 },
+#ifndef _WINSOCK2_H
   { "IP_MULTICAST_IF",		SOL_IP,		IP_MULTICAST_IF,   1 },
   { "IP_MULTICAST_TTL",		SOL_IP,		IP_MULTICAST_TTL,  1 },
   { "IP_MULTICAST_LOOP",	SOL_IP,		IP_MULTICAST_LOOP, 1 },
+#endif
   { "TCP_NODELAY",		SOL_TCP,	TCP_NODELAY,       1 },
   { "SO_RCVLOWAT",		SOL_SOCKET,	SO_RCVLOWAT,       1 },
   { "SO_SNDLOWAT",		SOL_SOCKET,	SO_SNDLOWAT,       1 },
 
+#ifndef _WINSOCK2_H
   /* multicast support */
   {"IP_ADD_MEMBERSHIP",         SOL_IP,         IP_ADD_MEMBERSHIP,  100},
   {"IP_DROP_MEMBERSHIP",        SOL_IP,         IP_DROP_MEMBERSHIP, 100},
+#endif
 
-#if 0
   /* WSAIoctl() support */
   {"SIO_GET_BROADCAST_ADDRESS",	0,	SIO_GET_BROADCAST_ADDRESS, 200},
-#endif
   { (char *)0,			0,		0,                  0 }
 };
 

@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: Walt Disney Imagineering, Glendale, CA
 *   EMAIL:   andreasr@wdi.disney.com
-*   RCSID:   $Id: sqWin32FFI.c,v 1.2 2002/06/01 11:44:39 andreasraab Exp $
+*   RCSID:   $Id: sqWin32FFI.c,v 1.2.2.1 2004/07/16 18:21:35 nedkonz Exp $
 *
 *   NOTES:
 *
@@ -321,45 +321,43 @@ int ffiCallAddress(int fn)
 	}
 #endif
 #ifdef __GNUC__
-	asm("
-	  movl %%ebp, _oldBP
-	  movl %%esp, _oldSP
-		pushl %%ebx;
-		pushl %%ecx;
-		pushl %%edx;
-		pushl %%edi;
-		pushl %%esi;
-		pushl %%ebp;
-		/* mark the frame */
-		movl %%esp, %%ebp
-		/* alloca() ffiStackIndex size bytes */
-		movl _ffiArgIndex, %%ecx;
-		shll $2, %%ecx;
-		subl %%ecx, %%esp
-		/* copy stack */
-		movl %%esp, %%edi;
-		leal _ffiArgs, %%esi;
-		shrl $2, %%ecx;
-		cld;
-		rep movsl;
-		/* go calling */
-		call *%%ebx
-		/* restore frame */
-		movl %%ebp, %%esp
-		/* store the return values */
-		movl %%eax, _intReturnValue
-		movl %%edx, _intReturnValue2
-		fstpl _floatReturnValue
-		/* restore register values */
-		popl %%ebp
-		popl %%esi
-		popl %%edi
-		popl %%edx
-		popl %%ecx
-		popl %%ebx
-movl %%ebp, _newBP
-movl %%esp, _newSP
-		": /* no outputs */ : "ebx" (fn) : "eax" /* clobbered registers */);
+	asm("	 movl %%ebp, _oldBP\n"
+	    "    movl %%esp, _oldSP\n"
+	    "    pushl %%ebx;\n"
+	    "    pushl %%ecx;\n"
+	    "    pushl %%edx;\n"
+	    "    pushl %%edi;\n"
+	    "    pushl %%esi;\n"
+	    "    pushl %%ebp;\n"
+	    "    /* mark the frame */\n"
+	    "    movl %%esp, %%ebp\n"
+	    "    /* alloca() ffiStackIndex size bytes */\n"
+	    "    movl _ffiArgIndex, %%ecx;\n"
+	    "    shll $2, %%ecx;\n"
+	    "    subl %%ecx, %%esp\n"
+	    "    /* copy stack */\n"
+	    "    movl %%esp, %%edi;\n"
+	    "    leal _ffiArgs, %%esi;\n"
+	    "    shrl $2, %%ecx;\n"
+	    "    cld;\n"
+	    "    rep movsl;\n"
+	    "    /* go calling */\n"
+	    "    call *%%ebx\n"
+	    "    /* restore frame */\n"
+	    "    movl %%ebp, %%esp\n"
+	    "    /* store the return values */\n"
+	    "    movl %%eax, _intReturnValue\n"
+	    "    movl %%edx, _intReturnValue2\n"
+	    "    fstpl _floatReturnValue\n"
+	    "    /* restore register values */\n"
+	    "    popl %%ebp\n"
+	    "    popl %%esi\n"
+	    "    popl %%edi\n"
+	    "    popl %%edx\n"
+	    "    popl %%ecx\n"
+	    "    popl %%ebx\n"
+	    "movl %%ebp, _newBP\n"
+	    "movl %%esp, _newSP\n" : /* no outputs */ : "ebx" (fn) : "eax" /* clobbered registers */ );
 		/* done */
 #endif
 #if 0

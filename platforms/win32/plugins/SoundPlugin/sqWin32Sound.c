@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id: sqWin32Sound.c,v 1.5 2003/11/02 19:52:40 andreasraab Exp $
+*   RCSID:   $Id: sqWin32Sound.c,v 1.5.2.1 2004/07/16 18:21:35 nedkonz Exp $
 *
 *   NOTES:   For now we're supporting both, the DirectSound and the win32
 *            based interface. In the future we'll switch to DSound exclusively.
@@ -27,7 +27,7 @@
 #ifndef NO_SOUND
 
 #ifndef NO_RCSID
-  static char RCSID[]="$Id: sqWin32Sound.c,v 1.5 2003/11/02 19:52:40 andreasraab Exp $";
+  static char RCSID[]="$Id: sqWin32Sound.c,v 1.5.2.1 2004/07/16 18:21:35 nedkonz Exp $";
 #endif
 
 /***************************************************************************/
@@ -39,9 +39,6 @@
 #define _LPCWAVEFORMATEX_DEFINED
 #undef WINNT
 #define DIRECTSOUND_VERSION 0x0600	/* use DirectSound 6.0 */
-#ifdef __MINGW32__
-#define HMONITOR_DECLARED
-#endif
 #include <dsound.h>
 
 static int fUsingDirectSound = 0; /* when we're in direct sound */
