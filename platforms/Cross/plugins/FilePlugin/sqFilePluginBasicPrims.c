@@ -5,10 +5,11 @@
 *
 *   AUTHOR:  
 *   ADDRESS: 
-*   EMAIL:   
+*   EMAIL:   ]
 *   RCSID:   $Id$
 *
 *   NOTES: See change log below.
+*	2005-03-26 IKP fix unaligned accesses to file[Size] members
 * 	2004-06-10 IKP 64-bit cleanliness
 * 	1/28/02    Tim remove non-ansi stuff
 *				unistd.h
@@ -75,23 +76,55 @@
 int thisSession = 0;
 extern struct VirtualMachine * interpreterProxy;
 
+static void setFile(SQFile *f, FILE *file)
+{
+  void *in= (void *)&file;
+  void *out= (void *)&f->unalignedFile;
+  memcpy(out, in, sizeof(FILE *));
+}
+
+static void setSize(SQFile *f, squeakFileOffsetType size)
+{
+  void *in= (void *)&size;
+  void *out= (void *)&f->fileSize;
+  memcpy(out, in, sizeof(squeakFileOffsetType));
+}
+
+static FILE *getFile(SQFile *f)
+{
+  FILE *file;
+  void *in= (void *)&f->unalignedFile;
+  void *out= (void *)&file;
+  memcpy(out, in, sizeof(FILE *));
+  return file;
+}
+
+static squeakFileOffsetType getSize(SQFile *f)
+{
+  squeakFileOffsetType size;
+  void *in= (void *)&f->fileSize;
+  void *out= (void *)&size;
+  memcpy(out, in, sizeof(squeakFileOffsetType));
+  return size;
+}
+
 
 sqInt sqFileAtEnd(SQFile *f) {
 	/* Return true if the file's read/write head is at the end of the file. */
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
-	return ftell(f->file) == f->fileSize;
+	return ftell(getFile(f)) == getSize(f);
 }
 
 sqInt sqFileClose(SQFile *f) {
 	/* Close the given file. */
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
-	fclose(f->file);
-	f->file = NULL;
+	fclose(getFile(f));
+	setFile(f, 0);
 	f->sessionID = 0;
 	f->writable = false;
-	f->fileSize = 0;
+	setSize(f, 0);
 	f->lastOp = UNCOMMITTED;
 }
 
@@ -118,7 +151,7 @@ squeakFileOffsetType sqFileGetPosition(SQFile *f) {
 	squeakFileOffsetType position;
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
-	position = ftell(f->file);
+	position = ftell(getFile(f));
 	if (position == -1) return interpreterProxy->success(false);
 	return position;
 }
@@ -158,13 +191,13 @@ sqInt sqFileOpen(SQFile *f, sqInt sqFileNameIndex, sqInt sqFileNameSize, sqInt w
 
 	if (writeFlag) {
 		/* First try to open an existing file read/write: */
-		f->file = fopen(cFileName, "r+b");
-		if (f->file == NULL) {
+		setFile(f, fopen(cFileName, "r+b"));
+		if (getFile(f) == NULL) {
 			/* Previous call fails if file does not exist. In that case,
 			   try opening it in write mode to create a new, empty file.
 			*/
-			f->file = fopen(cFileName, "w+b");
-			if (f->file != NULL) {
+			setFile(f, fopen(cFileName, "w+b"));
+			if (getFile(f) != NULL) {
 			    char type[4],creator[4];
 				dir_GetMacFileTypeAndCreator(pointerForOop(sqFileNameIndex), sqFileNameSize, type, creator);
 				if (strncmp(type,"BINA",4) == 0 || strncmp(type,"????",4) == 0 || *(int *)type == 0 ) 
@@ -173,20 +206,21 @@ sqInt sqFileOpen(SQFile *f, sqInt sqFileNameIndex, sqInt sqFileNameSize, sqInt w
 		}
 		f->writable = true;
 	} else {
-		f->file = fopen(cFileName, "rb");
+		setFile(f, fopen(cFileName, "rb"));
 		f->writable = false;
 	}
 
-	if (f->file == NULL) {
+	if (getFile(f) == NULL) {
 		f->sessionID = 0;
-		f->fileSize = 0;
+		setSize(f, 0);
 		return interpreterProxy->success(false);
 	} else {
+		FILE *file= getFile(f);
 		f->sessionID = thisSession;
 		/* compute and cache file size */
-		fseek(f->file, 0, SEEK_END);
-		f->fileSize = ftell(f->file);
-		fseek(f->file, 0, SEEK_SET);
+		fseek(file, 0, SEEK_END);
+		setSize(f, ftell(file));
+		fseek(file, 0, SEEK_SET);
 	}
 	f->lastOp = UNCOMMITTED;
 }
@@ -201,11 +235,13 @@ size_t sqFileReadIntoAt(SQFile *f, size_t count, sqInt byteArrayIndex, size_t st
 
 	char *dst;
 	size_t bytesRead;
+	FILE *file;
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
-	if (f->writable && (f->lastOp == WRITE_OP)) fseek(f->file, 0, SEEK_CUR);  /* seek between writing and reading */
+	file= getFile(f);
+	if (f->writable && (f->lastOp == WRITE_OP)) fseek(file, 0, SEEK_CUR);  /* seek between writing and reading */
 	dst = pointerForOop(byteArrayIndex) + startIndex;
-	bytesRead = fread(dst, 1, count, f->file);
+	bytesRead = fread(dst, 1, count, file);
 	f->lastOp = READ_OP;
 	return bytesRead;
 }
@@ -233,7 +269,7 @@ sqInt sqFileSetPosition(SQFile *f, squeakFileOffsetType position) {
 	/* Set the file's read/write head to the given position. */
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
-	fseek(f->file, position, SEEK_SET);
+	fseek(getFile(f), position, SEEK_SET);
 	f->lastOp = UNCOMMITTED;
 }
 
@@ -241,14 +277,14 @@ squeakFileOffsetType sqFileSize(SQFile *f) {
 	/* Return the length of the given file. */
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
-	return f->fileSize;
+	return getSize(f);
 }
 
 sqInt sqFileFlush(SQFile *f) {
 	/* Return the length of the given file. */
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
-	fflush(f->file);
+	fflush(getFile(f));
 	return 1;
 }
 
@@ -256,10 +292,10 @@ sqInt sqFileTruncate(SQFile *f,squeakFileOffsetType offset) {
 	/* Truncate the file*/
 
 	if (!sqFileValid(f)) return interpreterProxy->success(false);
- 	if (sqFTruncate(f->file,offset)) {
+ 	if (sqFTruncate(getFile(f), offset)) {
             return interpreterProxy->success(false);
         } 
-	f->fileSize = ftell(f->file);
+	setSize(f, ftell(getFile(f)));
 	return 1;
 }
 
@@ -267,7 +303,7 @@ sqInt sqFileTruncate(SQFile *f,squeakFileOffsetType offset) {
 sqInt sqFileValid(SQFile *f) {
 	return (
 		(f != NULL) &&
-		(f->file != NULL) &&
+		(getFile(f) != NULL) &&
 		(f->sessionID == thisSession));
 }
 
@@ -280,15 +316,17 @@ size_t sqFileWriteFromAt(SQFile *f, size_t count, sqInt byteArrayIndex, size_t s
 	char *src;
 	size_t bytesWritten;
 	squeakFileOffsetType position;
+	FILE *file;
 
 	if (!(sqFileValid(f) && f->writable)) return interpreterProxy->success(false);
-	if (f->lastOp == READ_OP) fseek(f->file, 0, SEEK_CUR);  /* seek between reading and writing */
+	file= getFile(f);
+	if (f->lastOp == READ_OP) fseek(file, 0, SEEK_CUR);  /* seek between reading and writing */
 	src = pointerForOop(byteArrayIndex + startIndex);
-	bytesWritten = fwrite(src, 1, count, f->file);
+	bytesWritten = fwrite(src, 1, count, file);
 
-	position = ftell(f->file);
-	if (position > f->fileSize) {
-		f->fileSize = position;  /* update file size */
+	position = ftell(file);
+	if (position > getSize(f)) {
+		setSize(f, position);  /* update file size */
 	}
 
 	if (bytesWritten != count) {
