@@ -8,6 +8,7 @@
 *   EMAIL:   
 *   RCSID:   $Id$
 *
+*	2005-03-26 IKP fix unaligned accesses to file member
 *	2004-06-10 IKP 64-bit cleanliness
 *	01/22/2002 JMM change off_t to squeakOffsetFileType
 */
@@ -18,7 +19,7 @@
 /* squeak file record; see sqFilePrims.c for details */
 typedef struct {
 	int			 sessionID;	/* ikp: must be first */
-	FILE			*file;
+	void			*unalignedFile;
 	int			 writable;
 	squeakFileOffsetType	 fileSize;
 	int			 lastOp;	/* 0 = uncommitted, 1 = read, 2 = write */
