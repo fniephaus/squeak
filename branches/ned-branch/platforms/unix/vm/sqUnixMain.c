@@ -246,7 +246,6 @@ static void pathCopyAbs(char *target, const char *src, size_t targetSize)
     }
 }
 
-
 static void recordFullPathForVmName(const char *localVmName)
 {
 #if defined(__linux__)
@@ -287,6 +286,12 @@ static void recordFullPathForImageName(const char *localImageName)
 }
 
 /* vm access */
+
+/* Report the current image name. Should be encoded properly. */
+char * getImageName(void)
+{
+	return imageName;
+}
 
 int imageNameSize(void)
 {

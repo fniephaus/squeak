@@ -1,14 +1,14 @@
 /* sqUnixX11.c -- support for display via the X Window System.
  * 
- *   Copyright (C) 1996-2003 Ian Piumarta and other authors/contributors
- *     as listed elsewhere in this file.
+ *   Copyright (C) 1996-2004 by Ian Piumarta and other authors/contributors
+ *                              listed elsewhere in this file.
  *   All rights reserved.
  *   
- *     You are NOT ALLOWED to distribute modified versions of this file
- *     under its original name.  If you want to modify it and then make
- *     your modifications available publicly, rename the file first.
- * 
  *   This file is part of Unix Squeak.
+ * 
+ *      You are NOT ALLOWED to distribute modified versions of this file
+ *      under its original name.  If you modify this file then you MUST
+ *      rename it before making your modifications available publicly.
  * 
  *   This file is distributed in the hope that it will be useful, but WITHOUT
  *   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -36,7 +36,7 @@
 
 /* Author: Ian Piumarta <ian.piumarta@inria.fr>
  *
- * Last edited: 2003-09-16 06:53:35 by piumarta on emilia.inria.fr
+ * Last edited: 2004-04-03 22:19:32 by piumarta on cartman.inria.fr
  *
  * Support for more intelligent CLIPBOARD selection handling contributed by:
  *	Ned Konz <ned@bike-nomad.com>
@@ -218,6 +218,8 @@ Window           browserWindow= 0;      /* parent window */
 int		 browserPipes[]= {-1, -1}; /* read/write fd for browser communication */
 int		 headless= 0;
 
+int		 useXdnd= 1;		/* true if we should handle XDND protocol messages */
+
 typedef int (*x2sqKey_t)(XKeyEvent *xevt);
 
 static int x2sqKeyPlain(XKeyEvent *xevt);
@@ -397,7 +399,7 @@ static unsigned char X_to_Squeak[256] =
 
 unsigned char Squeak_to_X[256];
 
-void initCharmap()
+void initCharmap(void)
 {
   int i;
   for(i= 0; i < 256; i++)
@@ -1056,7 +1058,7 @@ static int x2sqKeyInput(XKeyEvent *xevt)
       initialised= 1;
       if (!setlocale(LC_CTYPE, ""))
 	{
-	  fprintf(stderr, "setlocale() failed\n");
+	  fprintf(stderr, "setlocale() failed (check values of LC_CTYPE, LANG and LC_ALL)\n");
 	  goto revertInput;
 	}
       if (!(im= XOpenIM(stDisplay, 0, 0, 0)))
@@ -1237,6 +1239,9 @@ static void waitForCompletions(void)
 }
 
 
+#include "sqUnixXdnd.c"
+
+
 static void handleEvent(XEvent *evt)
 {
 #if defined(DEBUG_EVENTS)
@@ -1376,6 +1381,16 @@ static void handleEvent(XEvent *evt)
 	  stOwnsClipboard= 0;
 	  usePrimaryFirst= 1;
 	}
+      break;
+
+    case SelectionNotify:
+      if (useXdnd)
+	dndHandleSelectionNotify(&evt->xselection);
+      break;
+
+    case ClientMessage:
+      if (useXdnd)
+	dndHandleClientMessage(&evt->xclient);
       break;
 
     case Expose:
@@ -1835,6 +1850,9 @@ void initWindow(char *displayName)
     attributes.event_mask= WM_EVENTMASK;
     attributes.backing_store= NotUseful;
 
+    if (useXdnd)
+      attributes.event_mask |= EnterWindowMask;
+
     valuemask= CWEventMask | CWBackingStore | CWBorderPixel | CWBackPixel;
     parentValuemask= CWEventMask | CWBackingStore | CWBorderPixel;
 
@@ -1979,6 +1997,9 @@ void initWindow(char *displayName)
 # endif
 
   XInternAtoms(stDisplay, selectionAtomNames, SELECTION_ATOM_COUNT, False, selectionAtoms);
+
+  if (useXdnd)
+    dndInitialise();
 }
 
 
@@ -4273,14 +4294,14 @@ static void display_printUsage(void)
   printf("  -mapdelbs             map Delete key onto Backspace\n");
   printf("  -nointl               disable international keyboard support\n");
   printf("  -notitle              disable the Squeak window title bar\n");
+  printf("  -noxdnd               disable X drag-and-drop protocol support\n");
   printf("  -optmod <n>           map Mod<n> to the Option key\n");
   printf("  -swapbtn              swap yellow (middle) and blue (right) buttons\n");
   printf("  -xasync               don't serialize display updates\n");
   printf("  -xshm                 use X shared memory extension\n");
 #if (USE_X11_GLX)
-  printf("  -glxVerbosity <n>     set GLX verbosity level to <n>\n");
+  printf("  -glxdebug <n>         set GLX debug verbosity level to <n>\n");
 #endif
-
 }
 
 static void display_printUsageNotes(void)
@@ -4301,6 +4322,7 @@ static void display_parseEnvironment(void)
   if (getenv("SQUEAK_SPY"))		withSpy= 1;
   if (getenv("SQUEAK_NOINTL"))		x2sqKey= x2sqKeyPlain;
   if (getenv("SQUEAK_NOTITLE"))		noTitle= 1;
+  if (getenv("SQUEAK_NOXDND"))		useXdnd= 0;
   if (getenv("SQUEAK_FULLSCREEN"))	fullScreen= 1;
   if (getenv("SQUEAK_ICONIC"))		iconified= 1;
   if (getenv("SQUEAK_MAPDELBS"))	mapDelBs= 1;
@@ -4332,6 +4354,7 @@ static int display_parseArgument(int argc, char **argv)
   else if (!strcmp(arg, "-fullscreen"))	fullScreen= 1;
   else if (!strcmp(arg, "-iconic"))	iconified= 1;
   else if (!strcmp(arg, "-nointl"))	x2sqKey= x2sqKeyPlain;
+  else if (!strcmp(arg, "-noxdnd"))	useXdnd= 0;
   else if (argv[1])	/* option requires an argument */
     {
       n= 2;
@@ -4367,12 +4390,12 @@ static int display_parseArgument(int argc, char **argv)
 #	 endif
 	  return 3;
 	}
-#if (USE_X11_GLX)
-    else if (!strcmp(arg, "-glxVerbosity"))
-      {
+#    if (USE_X11_GLX)
+      else if (!strcmp(arg, "-glxdebug"))
+	{
 	  sscanf(argv[1], "%d", &verboseLevel);
-      }
-#endif
+	}
+#    endif
       else
 	n= 0;	/* not recognised */
     }
