@@ -35,7 +35,7 @@
  *   changes these copyright conditions.  Read the file `COPYING' in the
  *   directory `platforms/unix/doc' before proceeding with any such use.
  * 
- * Last edited: 2005-03-17 21:12:04 by piumarta on squeak.hpl.hp.com
+ * Last edited: 2005-03-17 22:28:40 by piumarta on squeak.hpl.hp.com
  */
 
 /* Note:
@@ -283,8 +283,8 @@ sqInt sqMemoryExtraBytesLeft(sqInt includingSwap)
 #else
 
 void *sqAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize)	{ return uxAllocateMemory(minHeapSize, desiredHeapSize); }
-sqInt sqGrowMemoryBy(sqInt oldLimit, sqInt delta)			{ return uxGrowMemoryBy(oldLimit, delta); }
-sqInt sqShrinkMemoryBy(sqInt oldLimit, sqInt delta)			{ return uxShrinkMemoryBy(oldLimit, delta); }
+sqInt sqGrowMemoryBy(sqInt oldLimit, sqInt delta)			{ return uxGrowMemoryBy((char *)oldLimit, delta); }
+sqInt sqShrinkMemoryBy(sqInt oldLimit, sqInt delta)			{ return uxShrinkMemoryBy((char *)oldLimit, delta); }
 sqInt sqMemoryExtraBytesLeft(sqInt includingSwap)			{ return uxMemoryExtraBytesLeft(includingSwap); }
 
 #endif
