@@ -1,4 +1,4 @@
-AC_HAVE_HEADERS(util.h libutil.h pty.h stropts.h)
+AC_CHECK_HEADERS(util.h libutil.h pty.h stropts.h)
 
 AC_SEARCH_LIBS(openpty, util,
   AC_DEFINE(HAVE_OPENPTY, 1),[

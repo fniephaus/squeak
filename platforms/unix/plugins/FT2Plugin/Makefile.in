@@ -3,13 +3,10 @@
 [make_cfg]
 [make_plg]
 
-FREETYPE_CONFIG = [freetype_config]
-XINCLUDES       = [includes] `$(FREETYPE_CONFIG) --cflags`
+XINCLUDES       = [includes] $(FT2_CFLAGS)
 OBJS            = [targets]
 TARGET          = [target]
-PLIBS           = [plibs] 
-
-# `$(FREETYPE_CONFIG) --libs`
+PLIBS           = [plibs] $(FT2_LIBS)
 
 [make_inc]
 
