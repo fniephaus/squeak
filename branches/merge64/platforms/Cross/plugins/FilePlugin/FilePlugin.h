@@ -19,7 +19,7 @@
 /* squeak file record; see sqFilePrims.c for details */
 typedef struct {
 	int			 sessionID;	/* ikp: must be first */
-	void			*unalignedFile;
+	void			*file;
 	int			 writable;
 	squeakFileOffsetType	 fileSize;
 	int			 lastOp;	/* 0 = uncommitted, 1 = read, 2 = write */
