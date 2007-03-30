@@ -1414,8 +1414,7 @@ sqInt sqGetFilenameFromString(char *aCharBuffer, char *aFilenameString, sqInt fi
   int numLinks= 0;
   struct stat st;
 
-  memcpy(aCharBuffer, aFilenameString, filenameLength);
-  aCharBuffer[filenameLength]= 0;
+  sq2uxPath(aFilenameString, filenameLength, aCharBuffer, MAXPATHLEN, 1);
 
   if (resolveAlias)
     for (;;)	/* aCharBuffer might refer to link or alias */
