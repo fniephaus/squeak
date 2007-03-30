@@ -49,6 +49,7 @@
 
 #undef	HAVE_LIBX11
 #undef	HAVE_LIBXEXT
+#undef	HAVE_LIBXRENDER
 #undef	HAVE_LIBDL
 #undef	HAVE_DYLD
 #undef	HAVE_LIBFFI

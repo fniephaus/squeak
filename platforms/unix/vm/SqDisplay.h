@@ -32,6 +32,7 @@ struct SqDisplay
   sqInt (*ioScreenDepth)(void);
   sqInt (*ioScreenSize)(void);
   sqInt (*ioSetCursorWithMask)(sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY);
+  sqInt (*ioSetCursorARGB)(sqInt cursorBitsIndex, sqInt extentX, sqInt extentY, sqInt offsetX, sqInt offsetY);
   sqInt (*ioSetFullScreen)(sqInt fullScreen);
   sqInt (*ioForceDisplayUpdate)(void);
   sqInt (*ioShowDisplay)(sqInt dispBitsIndex, sqInt width, sqInt height, sqInt depth, sqInt l, sqInt r, sqInt t, sqInt b);
@@ -82,6 +83,7 @@ static struct SqDisplay display_##NAME##_itf= {	\
   display_ioScreenDepth,			\
   display_ioScreenSize,				\
   display_ioSetCursorWithMask,			\
+  display_ioSetCursorARGB,			\
   display_ioSetFullScreen,			\
   display_ioForceDisplayUpdate,			\
   display_ioShowDisplay,			\

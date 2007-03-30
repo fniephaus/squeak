@@ -48,6 +48,11 @@ static sqInt display_ioSetCursorWithMask(sqInt bits, sqInt mask, sqInt x, sqInt 
   return 0;
 }
 
+static sqInt display_ioSetCursorARGB(sqInt bits, sqInt w, sqInt h, sqInt x, sqInt y)
+{
+  return 0;
+}
+
 static sqInt display_ioSetFullScreen(sqInt fullScreen)
 {
   return 0;

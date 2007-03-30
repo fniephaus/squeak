@@ -44,8 +44,9 @@
  * Support for European accented characters in selections, and
  * Support for displays shallower than 8 bits contributed, and
  * Support for browser plugins, and
+ * Support for ARGB cursors, and
  * Support for accelerated OpenGL contributed by:
- *	Bert Freudenberg <bert@isg.cs.uni-magdeburg.de>
+ *	Bert Freudenberg <bert@freudenbergs.de>
  *
  * Support for 24bpp TrueColour X display devices contributed by:
  *	Tim Rowledge <tim@sumeru.stanford.edu>
@@ -111,6 +112,9 @@
 #  include <sys/ipc.h>
 #  include <sys/shm.h>
 #  include <X11/extensions/XShm.h>
+#endif
+#ifdef HAVE_LIBXRENDER
+#  include <X11/extensions/Xrender.h>
 #endif
 #if !defined(NO_ICON)
 #  include "squeakIcon.bitmap"
@@ -2451,6 +2455,45 @@ sqInt ioSetCursor(sqInt cursorBitsIndex, sqInt offsetX, sqInt offsetY)
   return 0;
 }
 #endif
+
+
+static sqInt display_ioSetCursorARGB(sqInt cursorBitsIndex, sqInt extentX, sqInt extentY, sqInt offsetX, sqInt offsetY)
+{
+#if defined(HAVE_LIBXRENDER) && (RENDER_MAJOR>0 || RENDER_MINOR >= 5)
+  int eventbase, errorbase;
+  if(!XRenderQueryExtension(stDisplay, &eventbase, &errorbase))
+    return 0;
+
+  int major = 0;
+  int minor = 0; 
+  XRenderQueryVersion(stDisplay, &major, &minor);
+  if (!(major > 0 || minor >= 5))
+    return 0;
+
+  // Okay, we do have at least Render 0.5. Great. Let's make a 
+  // Cursor from a Picture from a Pixmap from an Image from our bits
+  XImage *image = XCreateImage(stDisplay, DefaultVisual(stDisplay, DefaultScreen(stDisplay)),
+			       32, ZPixmap, 0, (char*)cursorBitsIndex, extentX, extentY, 32, 0);
+  Pixmap pixmap = XCreatePixmap (stDisplay, DefaultRootWindow(stDisplay), extentX, extentY, 32);
+  GC gc = XCreateGC(stDisplay, pixmap, 0, 0);
+  XPutImage(stDisplay, pixmap, gc, image, 0, 0, 0, 0, extentX, extentY);
+  image->data = 0; //otherwise, XDestroyImage tries to free this
+  XRenderPictFormat *pictformat = XRenderFindStandardFormat(stDisplay, PictStandardARGB32);
+  Picture picture = XRenderCreatePicture(stDisplay, pixmap, pictformat, 0, 0);
+  Cursor cursor = XRenderCreateCursor(stDisplay, picture, -offsetX, -offsetY);
+
+  // Yay, we got a cursor. Show it, and clean up.
+  XDefineCursor(stDisplay, stWindow, cursor);
+  XDestroyImage(image);
+  XFreeGC(stDisplay, gc);
+  XFreeCursor(stDisplay, cursor);
+  XRenderFreePicture(stDisplay, picture);
+  XFreePixmap(stDisplay, pixmap);
+  return 1;
+#else
+  return 0;
+#endif
+}
 
 
 static void overrideRedirect(Display *dpy, Window win, int flag)
