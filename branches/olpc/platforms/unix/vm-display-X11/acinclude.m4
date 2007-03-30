@@ -34,6 +34,9 @@ if test "$have_x" = "yes"; then
       AC_DEFINE(USE_X11_GLX, [1])
       AC_CHECK_LIB(GL,glIsEnabled)
     ])
+    AC_CHECK_HEADERS(X11/extensions/Xrender.h, [
+      AC_CHECK_LIB(Xrender, XRenderQueryVersion)
+    ])
   ],[
     AC_PLUGIN_DISABLE
   ])
