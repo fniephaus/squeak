@@ -96,6 +96,12 @@ static sqInt display_ioSetCursorWithMask(sqInt cursorBitsIndex, sqInt cursorMask
   return 0;
 }
 
+static sqInt display_ioSetCursorARGB(sqInt cursorBitsIndex, sqInt extentX, sqInt extentY, sqInt offsetX, sqInt offsetY)
+{
+  trace();
+  return 0;
+}
+
 static sqInt display_ioSetFullScreen(sqInt fullScreen)
 {
   trace();
