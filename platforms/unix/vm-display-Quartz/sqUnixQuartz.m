@@ -722,7 +722,43 @@ static sqInt display_ioSetCursorWithMask(sqInt cursorBitsIndex, sqInt cursorMask
 
 static sqInt display_ioSetCursorARGB(sqInt cursorBitsIndex, sqInt extentX, sqInt extentY, sqInt offsetX, sqInt offsetY)
 {
-  return 0;
+  if (headless)
+    return 0;
+
+  if ([view lockFocusIfCanDraw])
+    {
+      NSAutoreleasePool *pool= [[NSAutoreleasePool alloc] init];
+      NSBitmapImageRep *bitmap= 0;
+      NSImage          *image=  0;
+      NSCursor         *cursor= 0;
+
+      bitmap= [[NSBitmapImageRep alloc]
+		initWithBitmapDataPlanes: 0 pixelsWide: extentX pixelsHigh: extentY
+		bitsPerSample: 8 samplesPerPixel: 4
+		hasAlpha: YES isPlanar: NO
+		colorSpaceName: NSCalibratedRGBColorSpace
+		bytesPerRow: extentX * 4
+		bitsPerPixel: 0];
+      {
+	unsigned *planes[5];
+	[bitmap getBitmapDataPlanes: planes];
+	unsigned* src= (unsigned*)cursorBitsIndex;
+	unsigned* dst= planes[0];
+	int i;
+	for (i= 0; i < extentX * extentY; ++i, ++dst, ++src)
+		*dst= (*src & 0xFF00FF00) | ((*src & 0x000000FF) << 16) | ((*src & 0x00FF0000) >> 16);
+      }
+      image= [[NSImage alloc] init];
+      [image addRepresentation: bitmap];
+      {
+	NSPoint hotSpot= { -offsetX, -offsetY };
+	cursor= [[NSCursor alloc] initWithImage: image hotSpot: hotSpot];
+      }
+      [cursor set];
+      [pool release];
+      [view unlockFocus];
+    }
+  return 1;
 }
 
 #if 0
