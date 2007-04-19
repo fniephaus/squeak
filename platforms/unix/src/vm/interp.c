@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:24 pm) */
+/* Automatically generated from Squeak on an Array(19 April 2007 2:28:24 pm) */
 
 #define SQ_USE_GLOBAL_STRUCT 1
 
@@ -12453,12 +12453,18 @@ register struct foo * foo = &fum;
     sqInt successValue11;
     sqInt successValue12;
 
+	flag("Dan");
+	if (BytesPerWord == 8) {
+		/* begin pop: */
+		foo->stackPointer -= foo->argumentCount * BytesPerWord;
+		return null;
+	}
 	if (foo->argumentCount == 0) {
 		cursorObj = longAt(foo->stackPointer);
 		maskBitsIndex = null;
 	}
 	if (foo->argumentCount == 1) {
-		cursorObj = longAt(foo->stackPointer - (1 * 4));
+		cursorObj = longAt(foo->stackPointer - (1 * BytesPerWord));
 		maskObj = longAt(foo->stackPointer);
 	}
 	/* begin success: */
@@ -12467,11 +12473,11 @@ register struct foo * foo = &fum;
 	successValue11 = (((cursorObj & 1) == 0) && (((((usqInt) (longAt(cursorObj))) >> 8) & 15) <= 4)) && ((lengthOf(cursorObj)) >= 5);
 	foo->successFlag = successValue11 && foo->successFlag;
 	if (foo->successFlag) {
-		bitsObj = longAt((cursorObj + BaseHeaderSize) + (0 << 2));
+		bitsObj = longAt((cursorObj + BaseHeaderSize) + (0 << ShiftForWord));
 		extentX = fetchIntegerofObject(1, cursorObj);
 		extentY = fetchIntegerofObject(2, cursorObj);
 		depth = fetchIntegerofObject(3, cursorObj);
-		offsetObj = longAt((cursorObj + BaseHeaderSize) + (4 << 2));
+		offsetObj = longAt((cursorObj + BaseHeaderSize) + (4 << ShiftForWord));
 	}
 	/* begin success: */
 	successValue12 = (((offsetObj & 1) == 0) && (((((usqInt) (longAt(offsetObj))) >> 8) & 15) <= 4)) && ((lengthOf(offsetObj)) >= 2);
@@ -12516,7 +12522,7 @@ register struct foo * foo = &fum;
 		successValue10 = (((maskObj & 1) == 0) && (((((usqInt) (longAt(maskObj))) >> 8) & 15) <= 4)) && ((lengthOf(maskObj)) >= 5);
 		foo->successFlag = successValue10 && foo->successFlag;
 		if (foo->successFlag) {
-			bitsObj = longAt((maskObj + BaseHeaderSize) + (0 << 2));
+			bitsObj = longAt((maskObj + BaseHeaderSize) + (0 << ShiftForWord));
 			extentX = fetchIntegerofObject(1, maskObj);
 			extentY = fetchIntegerofObject(2, maskObj);
 			depth = fetchIntegerofObject(3, maskObj);
@@ -12546,9 +12552,10 @@ register struct foo * foo = &fum;
 			ioSetCursorWithMask(cursorBitsIndex, maskBitsIndex, offsetX, offsetY);
 		}
 		/* begin pop: */
-		foo->stackPointer -= foo->argumentCount * 4;
+		foo->stackPointer -= foo->argumentCount * BytesPerWord;
 	}
 }
+
 
 /*	Record the system Display object in the specialObjectsTable. */
 
@@ -23218,12 +23225,12 @@ void* vm_exports[][3] = {
 	{"", "primitiveIsYoung", (void*)primitiveIsYoung},
 	{"", "primitiveByteArrayNByteIntegerAt", (void*)primitiveByteArrayNByteIntegerAt},
 	{"", "primitiveRootTableAt", (void*)primitiveRootTableAt},
-	{"", "primitiveByteArrayNByteIIntegerAtPut", (void*)primitiveByteArrayNByteIIntegerAtPut},
+	{"", "primitiveSetGCSemaphore", (void*)primitiveSetGCSemaphore},
 	{"", "primitiveByteArrayDoubleAt", (void*)primitiveByteArrayDoubleAt},
 	{"", "primitiveRootTable", (void*)primitiveRootTable},
-	{"", "primitiveSetGCSemaphore", (void*)primitiveSetGCSemaphore},
-	{"", "primitiveByteArrayDoubleAtPut", (void*)primitiveByteArrayDoubleAtPut},
+	{"", "primitiveByteArrayNByteIIntegerAtPut", (void*)primitiveByteArrayNByteIIntegerAtPut},
 	{"", "primitiveIsRoot", (void*)primitiveIsRoot},
+	{"", "primitiveByteArrayDoubleAtPut", (void*)primitiveByteArrayDoubleAtPut},
 	{"", "primitiveForceTenure", (void*)primitiveForceTenure},
 	{"", "moduleUnloaded", (void*)moduleUnloaded},
 	{"", "primitiveDisablePowerManager", (void*)primitiveDisablePowerManager},
