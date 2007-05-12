@@ -349,6 +349,11 @@ static char *getSelection(void);
 static char *getSelectionFrom(Atom source);
 static int   translateCode(KeySym symbolic);
 
+char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * event);
+Atom inputSelection= None; /* CLIPBOARD or XdndSelection */
+Atom * inputTargets= NULL; /* All targets in clipboard */
+Window inputSelectionSource= 0; /* Source window of last notify */
+
 #if defined(USE_XSHM)
 int    XShmGetEventBase(Display *);
 #endif
@@ -742,7 +747,6 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
   return notifyEv.property != None;
 }
 
-
 static char *getSelection(void)
 {
   char *data;
@@ -771,26 +775,82 @@ static char *getSelection(void)
   return data;
 }
 
-
 static char *getSelectionFrom(Atom source)
 {
-  XEvent  ev;
-  fd_set  fdMask;
-  Time	  timestamp= getXTimestamp();
-
-  XDeleteProperty(stDisplay, stWindow, selectionAtom);
+  char * data= NULL;
+  size_t bytes= 0;
 
   /* request the selection */
-  if (textEncodingUTF8)
-    XConvertSelection(stDisplay, source, xaUTF8String, selectionAtom, stWindow, timestamp);
+  Atom target= textEncodingUTF8 ? xaUTF8String : XA_STRING;
+  data= getSelectionData(source, target, &bytes, NULL);
+
+  if (data == NULL)
+    return stEmptySelection;
+  
+  /* convert the encoding if necessary */
+  if (bytes && allocateSelectionBuffer(bytes))
+    {
+      if (textEncodingUTF8)
+	bytes= ux2sqUTF8(data, bytes, stPrimarySelection, bytes + 1, 1);
+      else
+	bytes= ux2sqText(data, bytes, stPrimarySelection, bytes + 1, 1);
+      /* wrong type check was omitted */
+    }
   else
-    XConvertSelection(stDisplay, source, XA_STRING, selectionAtom, stWindow, timestamp);
+    {
+#     if defined(DEBUG_SELECTIONS)
+      fprintf(stderr, "no bytes\n");
+#     endif
+    }
+#  if defined(DEBUG_SELECTIONS)
+  fprintf(stderr, "selection=");
+  dumpSelectionData(stPrimarySelection, bytes, 1);
+#  endif
+
+  XFree((void *)data);
+  return stPrimarySelection;
+}
+
+void destroyInputTargets()
+{
+  if (inputTargets == NULL)
+    return;
+  free(inputTargets);
+  inputTargets= NULL;
+}
+
+void updateInputTargets(Atom * newTargets, int targetSize)
+{
+  int i;
+  destroyInputTargets();
+  inputTargets= (Atom *)calloc(targetSize + 1, sizeof(Atom));
+  for (i= 0; i < targetSize;  ++i)
+    inputTargets[i]= newTargets[i];
+  inputTargets[targetSize]= None;
+}
+
+/* Get selection data from the target in the selection.  if event is
+ * not NULL, the event handled here is set (this event can be used to
+ * finish drag event).
+ * Return NULL if there is no selection data.
+ * Otherwise, caller must free the return address.
+ */
+char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * event)
+{
+  fd_set  fdMask;
+  unsigned char *data= NULL;
+  Time	  timestamp= getXTimestamp();
+  XEvent  event0;
+  XEvent * ev= (event != NULL) ? event : &event0;
+
+  XDeleteProperty(stDisplay, stWindow, selectionAtom);
+  XConvertSelection(stDisplay, selection, target, selectionAtom, stWindow, timestamp);
 
   /* wait for selection notification, ignoring (most) other events. */
   FD_ZERO(&fdMask);
   if (stXfd >= 0)
     FD_SET(stXfd, &fdMask);
-
+  
   do
     {
       if (XPending(stDisplay) == 0)
@@ -804,7 +864,8 @@ static char *getSelectionFrom(Atom source)
 	  if (status < 0)
 	    {
 	      perror("select(stDisplay)");
-	      return stEmptySelection;
+	      return NULL;
+/* 	      return stEmptySelection; */
 	    }
 	  if (status == 0)
 	    {
@@ -813,15 +874,15 @@ static char *getSelectionFrom(Atom source)
 #	     endif
 	      if (isConnectedToXServer)
 		XBell(stDisplay, 0);
-	      return stEmptySelection;
+	      return NULL;
 	    }
 	}
 
-      XNextEvent(stDisplay, &ev);
-      switch (ev.type)
+      XNextEvent(stDisplay, ev);
+      switch (ev->type)
 	{
 	case ConfigureNotify:
-	  noteResize(ev.xconfigure.width, ev.xconfigure.height);
+	  noteResize(ev->xconfigure.width, ev->xconfigure.height);
 	  break;
 
         /* this is necessary so that we can supply our own selection when we
@@ -831,27 +892,27 @@ static char *getSelectionFrom(Atom source)
 #	 if defined(DEBUG_SELECTIONS)
 	  fprintf(stderr, "getSelection: sending own selection\n");
 #	 endif
-	  sendSelection(&ev.xselectionrequest, 0);
+	  sendSelection(&ev->xselectionrequest, 0);
 	  break;
 
 #       if defined(USE_XSHM)
 	default:
-	  if (ev.type == completionType)
+	  if (ev->type == completionType)
 	    --completions;
 #       endif
 	}
     }
-  while (ev.type != SelectionNotify);
+  while (ev->type != SelectionNotify);
 
   /* check if the selection was refused */
-  if (None == ev.xselection.property)
+  if (None == ev->xselection.property)
     {
 #    if defined(DEBUG_SELECTIONS)
       fprintf(stderr, "getSelection: xselection.property == None\n");
 #    endif
       if (isConnectedToXServer)
 	XBell(stDisplay, 0);
-      return stEmptySelection;
+      return NULL;
     }
 
   /* get the value of the selection from the containing property */
@@ -859,14 +920,12 @@ static char *getSelectionFrom(Atom source)
     Atom	 type;
     int		 format;
     unsigned	 long nitems=0, bytesAfter= 0;
-    int		 bytes;
-    char	*data= NULL;
 
-    XGetWindowProperty(stDisplay, ev.xselection.requestor, ev.xselection.property,
+    XGetWindowProperty(stDisplay, ev->xselection.requestor, ev->xselection.property,
 		       (long)0, (long)(MAX_SELECTION_SIZE/4),
 		       True, AnyPropertyType,
 		       &type, &format, &nitems, &bytesAfter,
-		       (unsigned char **)&data);
+		       &data);
 
 #  if defined(DEBUG_SELECTIONS)
     fprintf(stderr, "getprop type ");
@@ -879,46 +938,10 @@ static char *getSelectionFrom(Atom source)
     if (bytesAfter > 0)
       XBell(stDisplay, 0);
 
-    /* convert the encoding if necessary */
-    bytes= min(nitems, MAX_SELECTION_SIZE - 1) * (format / 8);
-    if (bytes && allocateSelectionBuffer(bytes))
-      {
-	if (xaUTF8String == type)
-	  bytes= ux2sqUTF8(data, bytes, stPrimarySelection, bytes + 1, 1);
-	else if (XA_STRING == type)
-	  bytes= ux2sqText(data, bytes, stPrimarySelection, bytes + 1, 1);
-	else
-	  {
-	    char* atomName;
-
-	    bytes= 0;
-	    atomName= XGetAtomName(stDisplay, type);
-	    if (atomName != NULL)
-	      {
-		fprintf(stderr, "selection data is of wrong type (%s)\n", atomName);
-		XFree((void *)atomName);
-	      }
-	  }
-      }
-    else
-      {
-#      if defined(DEBUG_SELECTIONS)
-	fprintf(stderr, "no bytes\n");
-#      endif
-      }
-#  if defined(DEBUG_SELECTIONS)
-    fprintf(stderr, "selection=");
-    dumpSelectionData(stPrimarySelection, bytes, 1);
-#  endif
-    if (data != NULL)
-      {
-	XFree((void *)data);
-      }
+    *bytes= min(nitems, MAX_SELECTION_SIZE - 1) * (format / 8);
   }
-
-  return stPrimarySelection;
+  return (char *) data;
 }
-
 
 /* claim ownership of the X selection, providing the given string to requestors */
 

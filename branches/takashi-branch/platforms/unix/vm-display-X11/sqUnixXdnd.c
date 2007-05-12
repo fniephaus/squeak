@@ -61,7 +61,7 @@
 #include <X11/Xatom.h>
 
 
-#define DEBUG_XDND	0
+#define DEBUG_XDND	1
 
 
 static	Atom	  XdndVersion= (Atom)3;
@@ -84,8 +84,22 @@ static	Atom	  XdndTextUriList;
 static	Atom	  XdndSelectionAtom;
 
 static	Window	  xdndSourceWindow= 0;
-static	Atom	 *xdndTypeList= 0;
+/* Atom	 *xdndTypeList= 0; */
+
+/* 1 if input targets includes "text/uri-list".
+ *
+ * To keep backword compatibitily, xdndWillAccept is always 1.  But
+ * isUrlList is 1 only if the dropped type includes "text/uri-list".
+ * 
+ * case isUrlList == 1:
+ *   Get url list and send dndFinished immediately. Then record drag event.
+ * case isUrlList == 0:
+ *   Record drag event anyway (uxDropFileCount= 0).
+ *   The image will get the data and send dndFinished.
+ */
+
 static	int	  xdndWillAccept= 0;
+static	int	  isUrlList= 0;
 
 enum XdndState {
   XdndStateIdle,
@@ -100,6 +114,7 @@ static enum XdndState xdndState= XdndStateIdle;
 #define xdndEnter_version(evt)			( (evt)->data.l[1] >> 24)
 #define xdndEnter_hasThreeTypes(evt)		(((evt)->data.l[1] & 0x1UL) == 0)
 #define xdndEnter_typeAt(evt, idx)		( (evt)->data.l[2 + (idx)])
+#define xdndEnter_targets(evt)			( (evt)->data.l + 2)
 
 #define xdndPosition_sourceWindow(evt)		((Window)((evt)->data.l[0]))
 #define xdndPosition_rootX(evt)			((evt)->data.l[2] >> 16)
@@ -202,28 +217,20 @@ static char *uri2string(const char *uri)
 
 static void dndGetTypeList(XClientMessageEvent *evt)
 {
-  if (xdndTypeList)
-    {
-      free(xdndTypeList);
-      xdndTypeList= 0;
-    }
-
+  inputSelection= XdndSelection;
   xdndWillAccept= 0;
+  isUrlList= 0;
 
   if (xdndEnter_hasThreeTypes(evt))
     {
-      int i;
       dprintf((stderr, "  3 types\n"));
-      xdndTypeList= (Atom *)xcalloc(3 + 1, sizeof(Atom));
-      for (i= 0;  i <  3;  ++i)
-	xdndTypeList[i]= xdndEnter_typeAt(evt, i);
-      xdndTypeList[3]= 0;
+      updateInputTargets((Atom *) xdndEnter_targets(evt), 3);
     }
   else
     {
-      Atom type, *atoms;
+      Atom type;
       int format;
-      unsigned long i, count, remaining;
+      unsigned long count, remaining;
       unsigned char *data= 0;
 
       XGetWindowProperty(stDisplay, xdndSourceWindow, XdndTypeList, 0, 0x8000000L, False, XA_ATOM,
@@ -236,11 +243,7 @@ static void dndGetTypeList(XClientMessageEvent *evt)
 	  return;
 	}
 
-      xdndTypeList= (Atom *)xcalloc(count + 1, sizeof(Atom));
-      atoms= (Atom *)data;
-      for (i= 0;  i < count;  ++i)
-	xdndTypeList[i]= atoms[i];
-      xdndTypeList[count]= 0;
+      updateInputTargets((Atom *) data, count);
       XFree(data);
       dprintf((stderr, "  %ld types\n", count));
     }
@@ -248,15 +251,18 @@ static void dndGetTypeList(XClientMessageEvent *evt)
   /* We only accept filenames (MIME type "text/uri-list"). */
   {
     int i;
-    for (i= 0;  xdndTypeList[i];  ++i)
+    for (i= 0; inputTargets[i]; ++i)
       {
-	dprintf((stderr, "  type %d == %ld %s\n", i, xdndTypeList[i], XGetAtomName(stDisplay, xdndTypeList[i])));
-	if (XdndTextUriList == xdndTypeList[i])
-	  xdndWillAccept= 1;
+	dprintf((stderr, "  type %d == %ld %s\n", i, inputTargets[i], XGetAtomName(stDisplay, inputTargets[i])));
+	if (XdndTextUriList == inputTargets[i])
+	  {
+	    isUrlList= 1;
+	    xdndWillAccept= 1;
+	  }
       }
   }
+  xdndWillAccept= 1;
 }
-
 
 static void dndSendStatus(Window target, int willAccept, Atom action)
 {
@@ -280,7 +286,6 @@ static void dndSendStatus(Window target, int willAccept, Atom action)
 	   xdndSourceWindow, willAccept, evt.data.l[1], action, XGetAtomName(stDisplay, action)));
 }
 
-
 static void dndSendFinished(Window target)
 {
     XClientMessageEvent evt;
@@ -296,7 +301,7 @@ static void dndSendFinished(Window target)
 
     XSendEvent(stDisplay, xdndSourceWindow, 0, 0, (XEvent *)&evt);
 
-    dprintf((stderr, "sent finished to %ld\n", xdndSourceWindow));
+    dprintf((stderr, "sent finished to %ld(%ld)\n", xdndSourceWindow, target));
 }
 
 
@@ -379,6 +384,13 @@ static void dndDrop(XClientMessageEvent *evt)
 {
   dprintf((stderr, "dndDrop\n"));
 
+  if (isUrlList == 0)
+    {
+      dprintf((stderr, "dndDrop: no url list\n"));
+      recordDragEvent(DragDrop, 0);
+      return;
+    }
+
   if (xdndSourceWindow != xdndDrop_sourceWindow(evt))
     dprintf((stderr, "dndDrop: wrong source window\n"));
   else if (xdndWillAccept)
@@ -449,13 +461,19 @@ static void dndGetSelection(Window owner, Atom property)
 }
 
 
+void finishDrop (XSelectionEvent * evt)
+{
+  dndSendFinished(evt->requestor);
+  dndLeave((XClientMessageEvent *)evt);
+}
+
+
 int dndHandleSelectionNotify(XSelectionEvent *evt)
 {
   if (evt->property == XdndSelectionAtom)
     {
       dndGetSelection(evt->requestor, evt->property);
-      dndSendFinished(evt->requestor);
-      dndLeave((XClientMessageEvent *)evt);
+      finishDrop(evt);
       return 1;
     }
   return 0;
