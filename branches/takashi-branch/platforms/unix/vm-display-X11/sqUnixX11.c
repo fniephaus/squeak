@@ -1036,7 +1036,7 @@ static void redrawDisplay(int l, int r, int t, int b)
 }
 
 
-static void getMousePosition(void)
+void getMousePosition(void)
 {
   Window root, child;
   int rootX, rootY, winX, winY;

@@ -337,14 +337,7 @@ static void dndPosition(XClientMessageEvent *evt)
       return;
     }
 
-  {
-    Window root;
-    int x, y;
-    unsigned int w, h, b, d;
-    XGetGeometry(stDisplay, stWindow, &root, &x, &y, &w, &h, &b, &d);
-    mousePosition.x= xdndPosition_rootX(evt) - x;
-    mousePosition.y= xdndPosition_rootY(evt) - y;
-  }
+  getMousePosition();
 
   if (xdndState == XdndStateEntered)
     {
