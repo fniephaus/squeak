@@ -1094,7 +1094,7 @@ static int x2sqKeyInput(XKeyEvent *xevt)
       else
 	{
 	  if (!(ic= XCreateIC(im, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-			      XNClientWindow, stWindow, 0)))
+			      XNClientWindow, stWindow, NULL)))
 	    {
 	      fprintf(stderr, "XCreateIC() failed\n");
 	      goto revertInput;
@@ -1123,7 +1123,7 @@ static int x2sqKeyInput(XKeyEvent *xevt)
 #endif
 
   {
-    unsigned char string[128];	/* way too much */
+    char string[128];	/* way too much */
     KeySym symbolic;
     Status status;
     int count= XmbLookupString(ic, (XKeyPressedEvent *)xevt,
@@ -1782,9 +1782,9 @@ static int xError(Display *dpy, XErrorEvent *evt)
   XGetErrorText(dpy, evt->error_code, buf, sizeof(buf));
   fprintf(stderr,
 	  "X Error: %s\n"
-	  "  Major opcode of failed request:  %lu\n"
-	  "  Minor opcode of failed request:  %lu\n"
-	  "  Serial number of failed request: %d\n",
+	  "  Major opcode of failed request:  %u\n"
+	  "  Minor opcode of failed request:  %u\n"
+	  "  Serial number of failed request: %lu\n",
 	  buf,
 	  evt->request_code,
 	  evt->minor_code,

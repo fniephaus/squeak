@@ -58,7 +58,7 @@ void sqPasteboardClear( sqInt inPasteboard )
 }
 
 /* Return a number of types.
- * Update it if selection is CLIPBOARD
+ * Update it only if the selection is CLIPBOARD
  */
 int sqPasteboardGetItemCount(sqInt inPasteboard)
 {
