@@ -378,12 +378,18 @@ static void dndDrop(XClientMessageEvent *evt)
 {
   dprintf((stderr, "dndDrop\n"));
 
+  /* If there is "text/url-list" in inputTargets, the selection is
+   * processed only in DropFilesEvent. But if none (file count == 0),
+   * the selection is handled ClipboardExtendedPlugin.
+   */
   if (isUrlList == 0)
     {
       dprintf((stderr, "dndDrop: no url list\n"));
       recordDragEvent(DragDrop, 0);
       return;
     }
+  destroyInputTargets();
+  inputSelection= None;
 
   if (xdndSourceWindow != xdndDrop_sourceWindow(evt))
     dprintf((stderr, "dndDrop: wrong source window\n"));
