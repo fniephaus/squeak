@@ -168,6 +168,7 @@ int sqPasteboardCopyItemFlavorDataformatformatLength ( sqInt inPasteboard, char*
   outData = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classByteArray(), bytes);
   dest = interpreterProxy->firstIndexableField(outData);
   memcpy(dest, buffer, bytes);
+  free(buffer);
   free(formatString);
 
   return outData;

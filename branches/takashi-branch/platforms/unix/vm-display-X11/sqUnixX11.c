@@ -176,7 +176,7 @@ XColor		 stColorBlack;		/* black pixel value in stColormap */
 XColor		 stColorWhite;		/* white pixel value in stColormap */
 int		 savedWindowOrigin= -1;	/* initial origin of window */
 
-#define		 SELECTION_ATOM_COUNT  8
+#define		 SELECTION_ATOM_COUNT  9
 /* http://www.freedesktop.org/standards/clipboards-spec/clipboards.txt */
 Atom		 selectionAtoms[SELECTION_ATOM_COUNT];
 char		*selectionAtomNames[SELECTION_ATOM_COUNT]= {
@@ -196,6 +196,8 @@ char		*selectionAtomNames[SELECTION_ATOM_COUNT]= {
 #define xaTimestamp     selectionAtoms[6]
 	 "SQUEAK_SELECTION",		/* used for XGetSelectionOwner() data */
 #define selectionAtom   selectionAtoms[7]
+	 "INCR",
+#define xaINCR   selectionAtoms[8]
 };
 
 #if defined(USE_XSHM)
@@ -753,9 +755,9 @@ static char *getSelection(void)
 
   if (stOwnsClipboard)
     {
-#    if defined(DEBUG_SELECTIONS)
+#     if defined(DEBUG_SELECTIONS)
       fprintf(stderr, "getSelection: returning own selection\n");
-#    endif
+#     endif
       return stPrimarySelection;
     }
 
@@ -829,23 +831,13 @@ void updateInputTargets(Atom * newTargets, int targetSize)
   inputTargets[targetSize]= None;
 }
 
-/* Get selection data from the target in the selection.  if event is
- * not NULL, the event handled here is set (this event can be used to
- * finish drag event).
- * Return NULL if there is no selection data.
- * Otherwise, caller must free the return address.
+
+/* Wait specific event to get property change.
+ * Return 1 if success.
  */
-char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * event)
+int waitNotify(XEvent * ev, int (*condition) (XEvent * ev))
 {
   fd_set  fdMask;
-  unsigned char *data= NULL;
-  Time	  timestamp= getXTimestamp();
-  XEvent  event0;
-  XEvent * ev= (event != NULL) ? event : &event0;
-
-  XDeleteProperty(stDisplay, stWindow, selectionAtom);
-  XConvertSelection(stDisplay, selection, target, selectionAtom, stWindow, timestamp);
-
   /* wait for selection notification, ignoring (most) other events. */
   FD_ZERO(&fdMask);
   if (stXfd >= 0)
@@ -864,7 +856,7 @@ char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * ev
 	  if (status < 0)
 	    {
 	      perror("select(stDisplay)");
-	      return NULL;
+	      return 0;
 /* 	      return stEmptySelection; */
 	    }
 	  if (status == 0)
@@ -874,7 +866,7 @@ char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * ev
 #	     endif
 	      if (isConnectedToXServer)
 		XBell(stDisplay, 0);
-	      return NULL;
+	      return 0;
 	    }
 	}
 
@@ -902,45 +894,185 @@ char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * ev
 #       endif
 	}
     }
-  while (ev->type != SelectionNotify);
+  while (!condition(ev));
+  return 1;
+}
+
+
+int waitSelectionNotify(XEvent * ev)
+{
+/*   fprintf(stderr, "expected = SelectionNotify, result = %i\n", ev->type); */
+  return ev->type == SelectionNotify;
+}
+
+int waitPropertyNotify(XEvent * ev)
+{
+/*   fprintf(stderr, "expected = PropertyNotify, result = %i\n", ev->type); */
+  return (ev->type == PropertyNotify)
+    && (ev->xproperty.state == PropertyNewValue);
+}
+
+
+/* SelectionChunk remembers (not copies) buffers from selections.
+ */
+struct SelectionChunk
+{
+  unsigned char * data;
+  size_t size;
+  struct SelectionChunk * next;
+  struct SelectionChunk * last;
+};
+
+static struct SelectionChunk * newSelectionChunk()
+{
+  struct SelectionChunk * chunk= malloc(sizeof(struct SelectionChunk));
+  chunk->data= NULL;
+  chunk->size= 0;
+  chunk->next= NULL;
+  chunk->last=chunk;
+  return chunk;
+}
+
+
+static void destroySelectionChunk(struct SelectionChunk * chunk)
+{
+  struct SelectionChunk * i;
+  for (i= chunk; i != NULL;) {
+    struct SelectionChunk * next= i->next;
+    XFree(i->data);
+    free(i);
+    i= next;
+  }
+}
+
+static void addSelectionChunk(struct SelectionChunk * chunk,
+		       unsigned char * src, size_t size)
+{
+  chunk->last->data= src;
+  chunk->last->size= size;
+  chunk->last->next= newSelectionChunk();
+  chunk->last= chunk->last->next;
+}
+
+static char * copySelectionChunk(struct SelectionChunk * chunk, size_t * size)
+{
+  struct SelectionChunk * i;
+  char * data;
+  char * j;
+  size_t totalSize= 0;
+
+  for (i= chunk; i != NULL; i= i->next)
+    totalSize += i->size;
+
+  j= data= malloc(totalSize);
+  for (i= chunk; i != NULL; j += i->size, i= i->next)
+    memcpy(j, i->data, i->size);
+  *size= totalSize;
+  return data;
+}
+
+/* get the value of the selection from the containing property */
+size_t getSelectionProperty(struct SelectionChunk * chunk,
+			    Window requestor, Atom property,
+			    Atom * actualType)
+{
+  unsigned long bytesAfter= 0, nitems= 0, nread= 0;
+  unsigned char *data= NULL;
+  size_t size;
+  int format;
+  
+  do
+    {
+      XGetWindowProperty(stDisplay, requestor, property,
+			 nread, (MAX_SELECTION_SIZE/4),
+			 True, AnyPropertyType,
+			 actualType, &format, &nitems, &bytesAfter,
+			 &data);
+      
+      size= nitems * format / 8;
+      nread += size / 4;
+      
+#     if defined(DEBUG_SELECTIONS)
+      fprintf(stderr, "getprop type ");
+      printAtomName(*actualType);
+      fprintf(stderr, " format %d nitems %ld bytesAfter %ld\ndata=",
+	      format, nitems, bytesAfter);
+      dumpSelectionData((char *) data, nitems, 1);
+#     endif
+
+/*       fprintf(stderr, "bytesAfter=%lu, ", bytesAfter); */
+/*       fprintf(stderr, "format=%i, nitems=%lu, ", format, nitems); */
+/*       fprintf(stderr, "\n"); */
+
+      addSelectionChunk(chunk, data, size);
+    }
+  while (bytesAfter != 0);
+  return size;
+}
+
+void getSelectionIncr(struct SelectionChunk * chunk, Window requestor, Atom property)
+{
+  XEvent ev;
+  size_t size;
+  Atom actualType;
+  do {
+/*     fprintf(stderr, "getSelectionIncr: wait next chunk\n"); */
+
+    waitNotify(&ev, waitPropertyNotify);
+    size= getSelectionProperty(chunk, requestor, property, &actualType);
+  } while (size > 0);
+}
+
+/* Get selection data from the target in the selection.  if event is
+ * not NULL, the event handled here is set (this event can be used to
+ * finish drag event).
+ * Return NULL if there is no selection data.
+ * Otherwise, caller must free the return address.
+ */
+char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * event)
+{
+  char *data= NULL;
+  Time	  timestamp= getXTimestamp();
+  XEvent  event0;
+  XEvent * ev= (event != NULL) ? event : &event0;
+  int success;
+  struct SelectionChunk * chunk;
+  Atom actualType;
+  Window requestor;
+  Atom property;
+  *bytes= 0;
+
+  XDeleteProperty(stDisplay, stWindow, selectionAtom);
+  XConvertSelection(stDisplay, selection, target, selectionAtom, stWindow, timestamp);
+
+  success= waitNotify(ev, waitSelectionNotify);
+  if (success == 0) return NULL;
+  requestor= ev->xselection.requestor;
+  property= ev->xselection.property;
 
   /* check if the selection was refused */
-  if (None == ev->xselection.property)
+  if (None == property)
     {
-#    if defined(DEBUG_SELECTIONS)
+#     if defined(DEBUG_SELECTIONS)
       fprintf(stderr, "getSelection: xselection.property == None\n");
-#    endif
+#     endif
       if (isConnectedToXServer)
 	XBell(stDisplay, 0);
       return NULL;
     }
 
-  /* get the value of the selection from the containing property */
-  {
-    Atom	 type;
-    int		 format;
-    unsigned	 long nitems=0, bytesAfter= 0;
+  chunk= newSelectionChunk();
+  getSelectionProperty(chunk, requestor, property, &actualType);
 
-    XGetWindowProperty(stDisplay, ev->xselection.requestor, ev->xselection.property,
-		       (long)0, (long)(MAX_SELECTION_SIZE/4),
-		       True, AnyPropertyType,
-		       &type, &format, &nitems, &bytesAfter,
-		       &data);
-
-#  if defined(DEBUG_SELECTIONS)
-    fprintf(stderr, "getprop type ");
-    printAtomName(type);
-    fprintf(stderr, " format %d nitems %ld bytesAfter %ld\ndata=",
-	    format, nitems, bytesAfter);
-    dumpSelectionData(data, nitems, 1);
-#  endif
-
-    if (bytesAfter > 0)
-      XBell(stDisplay, 0);
-
-    *bytes= min(nitems, MAX_SELECTION_SIZE - 1) * (format / 8);
+  if (actualType == xaINCR) {
+    destroySelectionChunk(chunk);
+    chunk= newSelectionChunk();
+    getSelectionIncr(chunk, requestor, property);
   }
-  return (char *) data;
+
+  data= copySelectionChunk(chunk, bytes);
+  destroySelectionChunk(chunk);
+  return data;
 }
 
 /* claim ownership of the X selection, providing the given string to requestors */
