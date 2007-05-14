@@ -913,19 +913,21 @@ int waitPropertyNotify(XEvent * ev)
 }
 
 
-/* SelectionChunk remembers (not copies) buffers from selections.
+/* SelectionChunk functions.
+ * SelectionChunk remembers (not copies) buffers from selections.
+ * It is useful to handle partial data transfar with XGetWindowProperty.
  */
-struct SelectionChunk
+typedef struct _SelectionChunk
 {
   unsigned char * data;
   size_t size;
-  struct SelectionChunk * next;
-  struct SelectionChunk * last;
-};
+  struct _SelectionChunk * next;
+  struct _SelectionChunk * last;
+} SelectionChunk;
 
-static struct SelectionChunk * newSelectionChunk()
+SelectionChunk * newSelectionChunk()
 {
-  struct SelectionChunk * chunk= malloc(sizeof(struct SelectionChunk));
+  SelectionChunk * chunk= malloc(sizeof(SelectionChunk));
   chunk->data= NULL;
   chunk->size= 0;
   chunk->next= NULL;
@@ -933,19 +935,18 @@ static struct SelectionChunk * newSelectionChunk()
   return chunk;
 }
 
-
-static void destroySelectionChunk(struct SelectionChunk * chunk)
+void destroySelectionChunk(SelectionChunk * chunk)
 {
-  struct SelectionChunk * i;
+  SelectionChunk * i;
   for (i= chunk; i != NULL;) {
-    struct SelectionChunk * next= i->next;
+    SelectionChunk * next= i->next;
     XFree(i->data);
     free(i);
     i= next;
   }
 }
 
-static void addSelectionChunk(struct SelectionChunk * chunk,
+void addSelectionChunk(SelectionChunk * chunk,
 		       unsigned char * src, size_t size)
 {
   chunk->last->data= src;
@@ -954,9 +955,26 @@ static void addSelectionChunk(struct SelectionChunk * chunk,
   chunk->last= chunk->last->next;
 }
 
-static char * copySelectionChunk(struct SelectionChunk * chunk, size_t * size)
+size_t sizeSelectionChunk(SelectionChunk * chunk)
 {
-  struct SelectionChunk * i;
+  size_t totalSize= 0;
+  SelectionChunk * i;
+  for (i= chunk; i != NULL; i= i->next)
+    totalSize += i->size;
+  return totalSize;
+}
+
+void copySelectionChunk(SelectionChunk * chunk, char * dest)
+{
+  SelectionChunk * i;
+  char * j= dest;
+  for (i= chunk; i != NULL; j+= i->size, i= i->next)
+    memcpy(j, i->data, i->size);
+}
+
+char * _copySelectionChunk(SelectionChunk * chunk, size_t * size)
+{
+  SelectionChunk * i;
   char * data;
   char * j;
   size_t totalSize= 0;
@@ -972,7 +990,7 @@ static char * copySelectionChunk(struct SelectionChunk * chunk, size_t * size)
 }
 
 /* get the value of the selection from the containing property */
-size_t getSelectionProperty(struct SelectionChunk * chunk,
+size_t getSelectionProperty(SelectionChunk * chunk,
 			    Window requestor, Atom property,
 			    Atom * actualType)
 {
@@ -1000,9 +1018,9 @@ size_t getSelectionProperty(struct SelectionChunk * chunk,
       dumpSelectionData((char *) data, nitems, 1);
 #     endif
 
-/*       fprintf(stderr, "bytesAfter=%lu, ", bytesAfter); */
-/*       fprintf(stderr, "format=%i, nitems=%lu, ", format, nitems); */
-/*       fprintf(stderr, "\n"); */
+      fprintf(stderr, "bytesAfter=%lu, ", bytesAfter);
+      fprintf(stderr, "format=%i, nitems=%lu, ", format, nitems);
+      fprintf(stderr, "\n");
 
       addSelectionChunk(chunk, data, size);
     }
@@ -1010,13 +1028,13 @@ size_t getSelectionProperty(struct SelectionChunk * chunk,
   return size;
 }
 
-void getSelectionIncr(struct SelectionChunk * chunk, Window requestor, Atom property)
+void getSelectionIncr(SelectionChunk * chunk, Window requestor, Atom property)
 {
   XEvent ev;
   size_t size;
   Atom actualType;
   do {
-/*     fprintf(stderr, "getSelectionIncr: wait next chunk\n"); */
+    fprintf(stderr, "getSelectionIncr: wait next chunk\n");
 
     waitNotify(&ev, waitPropertyNotify);
     size= getSelectionProperty(chunk, requestor, property, &actualType);
@@ -1036,7 +1054,7 @@ char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * ev
   XEvent  event0;
   XEvent * ev= (event != NULL) ? event : &event0;
   int success;
-  struct SelectionChunk * chunk;
+  SelectionChunk * chunk;
   Atom actualType;
   Window requestor;
   Atom property;
@@ -1070,7 +1088,12 @@ char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * ev
     getSelectionIncr(chunk, requestor, property);
   }
 
-  data= copySelectionChunk(chunk, bytes);
+  *bytes= sizeSelectionChunk(chunk);
+  data= malloc(*bytes);
+  copySelectionChunk(chunk, data);
+
+/*  data= _copySelectionChunk(chunk, bytes);*/
+
   destroySelectionChunk(chunk);
   return data;
 }
