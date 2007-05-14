@@ -2112,6 +2112,16 @@ static int translateCode(KeySym symbolic)
     case XK_Home:	return  1;
     case XK_End:	return  4;
 
+    case XK_KP_Left:	return 28;
+    case XK_KP_Up:	return 30;
+    case XK_KP_Right:	return 29;
+    case XK_KP_Down:	return 31;
+    case XK_KP_Insert:	return  5;
+    case XK_KP_Prior:	return 11;	/* page up */
+    case XK_KP_Next:	return 12;	/* page down */
+    case XK_KP_Home:	return  1;
+    case XK_KP_End:	return  4;
+
     /* "aliases" for Sun keyboards */
     case XK_R9:		return 11;	/* page up */
     case XK_R15:	return 12;	/* page down */
