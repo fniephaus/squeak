@@ -346,15 +346,32 @@ declareCopyFunction(copyImage32To32Same);
 
 static void  redrawDisplay(int l, int r, int t, int b);
 
+/* Selection functions */
 static int   sendSelection(XSelectionRequestEvent *requestEv, int isMultiple);
 static char *getSelection(void);
 static char *getSelectionFrom(Atom source);
 static int   translateCode(KeySym symbolic);
 
-char * getSelectionData(Atom selection, Atom target, size_t * bytes);
 Atom inputSelection= None; /* CLIPBOARD or XdndSelection */
 Atom * inputTargets= NULL; /* All targets in clipboard */
 Window inputSelectionSource= 0; /* Source window of last notify */
+
+typedef struct _SelectionChunk
+{
+  unsigned char * data;
+  size_t size;
+  struct _SelectionChunk * next;
+  struct _SelectionChunk * last;
+} SelectionChunk;
+
+SelectionChunk * newSelectionChunk();
+void destroySelectionChunk(SelectionChunk * chunk);
+void addSelectionChunk(SelectionChunk * chunk,
+		       unsigned char * src, size_t size);
+size_t sizeSelectionChunk(SelectionChunk * chunk);
+void copySelectionChunk(SelectionChunk * chunk, char * dest);
+void getSelectionChunk(SelectionChunk * chunk, Atom selection, Atom target);
+char * getSelectionData(Atom selection, Atom target, size_t * bytes);
 
 #if defined(USE_XSHM)
 int    XShmGetEventBase(Display *);
@@ -784,9 +801,10 @@ static char *getSelectionFrom(Atom source)
 
   /* request the selection */
   Atom target= textEncodingUTF8 ? xaUTF8String : XA_STRING;
+
   data= getSelectionData(source, target, &bytes);
 
-  if (data == NULL)
+  if (bytes == 0)
     return stEmptySelection;
   
   /* convert the encoding if necessary */
@@ -917,13 +935,6 @@ int waitPropertyNotify(XEvent * ev)
  * SelectionChunk remembers (not copies) buffers from selections.
  * It is useful to handle partial data transfar with XGetWindowProperty.
  */
-typedef struct _SelectionChunk
-{
-  unsigned char * data;
-  size_t size;
-  struct _SelectionChunk * next;
-  struct _SelectionChunk * last;
-} SelectionChunk;
 
 SelectionChunk * newSelectionChunk()
 {
@@ -1041,23 +1052,20 @@ void getSelectionIncr(SelectionChunk * chunk, Window requestor, Atom property)
  * Return NULL if there is no selection data.
  * Caller must free the return data.
  */
-char * getSelectionData(Atom selection, Atom target, size_t * bytes)
+void getSelectionChunk(SelectionChunk * chunk, Atom selection, Atom target)
 {
-  char *data= NULL;
   Time	  timestamp= getXTimestamp();
   XEvent evt;
   int success;
-  SelectionChunk * chunk;
   Atom actualType;
   Window requestor;
   Atom property;
-  *bytes= 0;
 
   XDeleteProperty(stDisplay, stWindow, selectionAtom);
   XConvertSelection(stDisplay, selection, target, selectionAtom, stWindow, timestamp);
 
   success= waitNotify(&evt, waitSelectionNotify);
-  if (success == 0) return NULL;
+  if (success == 0) return;
   requestor= evt.xselection.requestor;
   property= evt.xselection.property;
 
@@ -1069,10 +1077,9 @@ char * getSelectionData(Atom selection, Atom target, size_t * bytes)
 #     endif
       if (isConnectedToXServer)
 	XBell(stDisplay, 0);
-      return NULL;
+      return;
     }
 
-  chunk= newSelectionChunk();
   getSelectionProperty(chunk, requestor, property, &actualType);
 
   if (actualType == xaINCR) {
@@ -1080,7 +1087,17 @@ char * getSelectionData(Atom selection, Atom target, size_t * bytes)
     chunk= newSelectionChunk();
     getSelectionIncr(chunk, requestor, property);
   }
+}
 
+/* Get selection data from the target in the selection.
+ * Return NULL if there is no selection data.
+ * Caller must free the return data.
+ */
+char * getSelectionData(Atom selection, Atom target, size_t * bytes)
+{
+  char * data;
+  SelectionChunk * chunk= newSelectionChunk();
+  getSelectionChunk(chunk, selection, target);
   *bytes= sizeSelectionChunk(chunk);
   data= malloc(*bytes);
   copySelectionChunk(chunk, data);

@@ -41,9 +41,25 @@
 
 extern	Atom	 inputSelection;
 extern	Atom	 *inputTargets;
+extern Display * stDisplay;
+
+typedef struct _SelectionChunk
+{
+  unsigned char * data;
+  size_t size;
+  struct _SelectionChunk * next;
+  struct _SelectionChunk * last;
+} SelectionChunk;
+
+SelectionChunk * newSelectionChunk();
+void destroySelectionChunk(SelectionChunk * chunk);
+void addSelectionChunk(SelectionChunk * chunk,
+		       unsigned char * src, size_t size);
+size_t sizeSelectionChunk(SelectionChunk * chunk);
+void copySelectionChunk(SelectionChunk * chunk, char * dest);
+void getSelectionChunk(SelectionChunk * chunk, Atom selection, Atom target);
 char * getSelectionData(Atom selection, Atom target, size_t * bytes);
 
-Display * ioGetDisplay();
 void updateInputTargets(Atom * newTargets, int targetSize);
 void destroyInputTargets();
 void finishDrop();
@@ -51,7 +67,7 @@ void finishDrop();
 /* Convert string to Atom */
 static Atom atom (char * name)
 {
-  return XInternAtom(ioGetDisplay(), name, False);
+  return XInternAtom(stDisplay, name, False);
 }
 
 /* Get available media types in current clipboard */
@@ -65,6 +81,7 @@ static void getItemFravors()
 				     atom("TARGETS"),
 				     &bytes);
   updateInputTargets(targets, bytes / sizeof(Atom));
+  free(targets);
 }
 
 #ifndef CLIPBOARD_TEST
@@ -113,7 +130,7 @@ int sqPasteboardCopyItemFlavorsitemNumber (sqInt inPasteboard, int formatNumber)
     target= inputTargets[i];
   }
     
-  itemFlavor= XGetAtomName(ioGetDisplay(), target);
+  itemFlavor= XGetAtomName(stDisplay, target);
   length= strlen(itemFlavor);
   outData = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classString(), length);
 
@@ -139,7 +156,6 @@ void sqPasteboardPutItemFlavordatalengthformatTypeformatLength ( sqInt inPastebo
 int sqPasteboardCopyItemFlavorDataformatformatLength (sqInt inPasteboard, char* format, int formatLength)
 {
   char * formatString;
-  char * buffer;
   size_t bytes;
   Atom target;
   int outData;
@@ -148,12 +164,15 @@ int sqPasteboardCopyItemFlavorDataformatformatLength (sqInt inPasteboard, char* 
   memcpy(formatString, format, formatLength);
   formatString[formatLength]= 0;
 
-  if (inputSelection == None) {
+  if (inputSelection == None)
     inputSelection= atom("CLIPBOARD");
-  }
-
+  
   target= atom(formatString);
-  buffer= (char *) getSelectionData(inputSelection, target, &bytes);
+  free(formatString);
+
+  SelectionChunk * chunk= newSelectionChunk();
+  getSelectionChunk(chunk, inputSelection, target);
+  bytes= sizeSelectionChunk(chunk);
 
   if (inputSelection == atom("XdndSelection"))
     {
@@ -162,13 +181,15 @@ int sqPasteboardCopyItemFlavorDataformatformatLength (sqInt inPasteboard, char* 
       finishDrop();
     }
   
-  if (buffer == NULL)
-    return interpreterProxy->nilObject();
+  if (bytes == 0)
+    {
+      destroySelectionChunk(chunk);
+      return interpreterProxy->nilObject();
+    }
 
   outData = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classByteArray(), bytes);
-  memcpy(interpreterProxy->firstIndexableField(outData), buffer, bytes);
-  free(buffer);
-  free(formatString);
+  copySelectionChunk(chunk, interpreterProxy->firstIndexableField(outData));
+  destroySelectionChunk(chunk);
 
   return outData;
 }
