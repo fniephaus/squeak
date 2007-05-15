@@ -61,7 +61,7 @@
 #include <X11/Xatom.h>
 
 
-#define DEBUG_XDND	1
+#define DEBUG_XDND	0
 
 
 static	Atom	  XdndVersion= (Atom)3;
@@ -84,7 +84,6 @@ static	Atom	  XdndTextUriList;
 static	Atom	  XdndSelectionAtom;
 
 static	Window	  xdndSourceWindow= 0;
-/* Atom	 *xdndTypeList= 0; */
 
 /* 1 if input targets includes "text/uri-list".
  *
@@ -264,7 +263,7 @@ static void dndGetTypeList(XClientMessageEvent *evt)
   xdndWillAccept= 1;
 }
 
-static void dndSendStatus(Window target, int willAccept, Atom action)
+static void dndSendStatus(int willAccept, Atom action)
 {
   XClientMessageEvent evt;
   memset(&evt, 0, sizeof(evt));
@@ -275,7 +274,7 @@ static void dndSendStatus(Window target, int willAccept, Atom action)
   evt.message_type = XdndStatus;
   evt.format	   = 32;
 
-  xdndStatus_targetWindow(&evt)= target;
+  xdndStatus_targetWindow(&evt)= stParent;
   xdndStatus_setWillAccept(&evt, willAccept);
   xdndStatus_setWantPosition(&evt, 0);
   xdndStatus_action(&evt)= action;
@@ -286,7 +285,7 @@ static void dndSendStatus(Window target, int willAccept, Atom action)
 	   xdndSourceWindow, willAccept, evt.data.l[1], action, XGetAtomName(stDisplay, action)));
 }
 
-static void dndSendFinished(Window target)
+static void dndSendFinished()
 {
     XClientMessageEvent evt;
     memset (&evt, 0, sizeof(evt));
@@ -297,17 +296,17 @@ static void dndSendFinished(Window target)
     evt.message_type = XdndFinished;
     evt.format	     = 32;
 
-    xdndFinished_targetWindow(&evt)= target;
-
+    xdndFinished_targetWindow(&evt)= stParent;
     XSendEvent(stDisplay, xdndSourceWindow, 0, 0, (XEvent *)&evt);
 
-    dprintf((stderr, "sent finished to %ld(%ld)\n", xdndSourceWindow, target));
+    dprintf((stderr, "dndSendFinished target: 0x%lx source: 0x%lx\n",
+	     stParent, xdndSourceWindow));
 }
 
 
 static void dndEnter(XClientMessageEvent *evt)
 {
-  dprintf((stderr, "dndEnter\n"));
+
   if (xdndEnter_version(evt) < 3)
     {
       fprintf(stderr, "xdnd: protocol version %ld not supported\n", xdndEnter_version(evt));
@@ -316,10 +315,13 @@ static void dndEnter(XClientMessageEvent *evt)
   xdndSourceWindow= xdndEnter_sourceWindow(evt);
   dndGetTypeList(evt);
   xdndState= XdndStateEntered;
+
+  dprintf((stderr, "dndEnter target: 0x%lx source: 0x%lx\n",
+	   evt->window, xdndSourceWindow));
 }
 
 
-static void dndLeave(XClientMessageEvent *evt)
+static void dndLeave()
 {
   dprintf((stderr, "dndLeave\n"));
   recordDragEvent(DragLeave, 1);
@@ -363,14 +365,15 @@ static void dndPosition(XClientMessageEvent *evt)
   if (xdndWillAccept)
     {
       dprintf((stderr, "accepting\n"));
-      dndSendStatus(evt->window, 1, XdndActionCopy);
+      dndSendStatus(1, XdndActionCopy);
       recordDragEvent(DragMove, 1);
     }
   else /* won't accept */
     {
       dprintf((stderr, "not accepting\n"));
-      dndSendStatus(evt->window, 0, XdndActionPrivate);
+      dndSendStatus(0, XdndActionPrivate);
     }
+
 }
 
 
@@ -415,8 +418,8 @@ static void dndDrop(XClientMessageEvent *evt)
   else
     dprintf((stderr, "refusing selection -- finishing\n"));
 
-  dndSendFinished(evt->window);
-  dndLeave(evt);
+  dndSendFinished();
+  dndLeave();
 
   xdndState= XdndStateIdle;
 }
@@ -461,10 +464,10 @@ static void dndGetSelection(Window owner, Atom property)
 }
 
 
-void finishDrop (XSelectionEvent * evt)
+void finishDrop ()
 {
-  dndSendFinished(evt->requestor);
-  dndLeave((XClientMessageEvent *)evt);
+  dndSendFinished();
+  dndLeave();
 }
 
 
@@ -473,7 +476,7 @@ int dndHandleSelectionNotify(XSelectionEvent *evt)
   if (evt->property == XdndSelectionAtom)
     {
       dndGetSelection(evt->requestor, evt->property);
-      finishDrop(evt);
+      finishDrop();
       return 1;
     }
   return 0;
@@ -487,7 +490,7 @@ int dndHandleClientMessage(XClientMessageEvent *evt)
   if      (type == XdndEnter)	 dndEnter(evt);
   else if (type == XdndPosition) dndPosition(evt);
   else if (type == XdndDrop)	 dndDrop(evt);
-  else if (type == XdndLeave)	 dndLeave(evt);
+  else if (type == XdndLeave)	 dndLeave();
   else				 handled= 0;
   return handled;
 }

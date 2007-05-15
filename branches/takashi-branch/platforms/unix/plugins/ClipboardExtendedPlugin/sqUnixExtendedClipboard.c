@@ -1,11 +1,28 @@
-/*
- *  sqMacExtendedClipboard.c
- *  SqueakClipboardExtendedxcodeproj
+/*  sqUnixExtendedClipboard.c  -- support for clipboard with multiple types
  *
- *  Created by John Sterling Mcintosh on 4/21/06.
- *  Copyright 2006 Corporate Smalltalk Consulting ltd. All rights reserved.
- *  Licenced under the squeak-l NSImage
- *
+ * Copyright (C) 2007 by Viewpoints Research Institute and other
+ *                             authors/contributors as listed.
+ *   All rights reserved.
+ *   
+ *   This file is part of Unix Squeak.
+ * 
+ *   Permission is hereby granted, free of charge, to any person obtaining a copy
+ *   of this software and associated documentation files (the "Software"), to deal
+ *   in the Software without restriction, including without limitation the rights
+ *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *   copies of the Software, and to permit persons to whom the Software is
+ *   furnished to do so, subject to the following conditions:
+ * 
+ *   The above copyright notice and this permission notice shall be included in
+ *   all copies or substantial portions of the Software.
+ * 
+ *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *   SOFTWARE.
  */
 
 #include<string.h>
@@ -24,12 +41,12 @@
 
 extern	Atom	 inputSelection;
 extern	Atom	 *inputTargets;
-char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * event);
+char * getSelectionData(Atom selection, Atom target, size_t * bytes);
 
 Display * ioGetDisplay();
 void updateInputTargets(Atom * newTargets, int targetSize);
 void destroyInputTargets();
-void finishDrop (XSelectionEvent * evt);
+void finishDrop();
 
 /* Convert string to Atom */
 static Atom atom (char * name)
@@ -46,7 +63,7 @@ static void getItemFravors()
   targets= (Atom *) getSelectionData(
 				     atom("CLIPBOARD"),
 				     atom("TARGETS"),
-				     &bytes, NULL);
+				     &bytes);
   updateInputTargets(targets, bytes / sizeof(Atom));
 }
 
@@ -54,7 +71,7 @@ static void getItemFravors()
 
 void sqPasteboardClear( sqInt inPasteboard )
 {
-  /*	PasteboardClear( inPasteboard ); */
+  /* UNNECESSARY */
 }
 
 /* Return a number of types.
@@ -113,33 +130,19 @@ sqInt sqCreateClipboard( void )
 }
 
 void sqPasteboardPutItemFlavordatalengthformatTypeformatLength ( sqInt inPasteboard, char* inData, int dataLength, char* format, int formatLength)
-{	
-/* 	OSStatus err; */
+{
+  /* NOT YETT */
 
-/* 	CFStringRef formatType = CFStringCreateWithBytes ( kCFAllocatorDefault, format, formatLength,  */
-/* 														kCFStringEncodingMacRoman, false); */
-/* 	CFDataRef convertedData = CFDataCreate(NULL, inData, dataLength); */
-	
-/* 	err = PasteboardPutItemFlavor ( inPasteboard, 1, formatType, convertedData, kPasteboardFlavorNoFlags); */
-
-/* 	CFRelease (convertedData); */
-/* 	CFRelease (formatType); */
-
-/* 	if (err) { */
-/* 		interpreterProxy->success(0); */
-/* 	} */
 }
 
 /* Return content in format at inputSelection. */
-int sqPasteboardCopyItemFlavorDataformatformatLength ( sqInt inPasteboard, char* format, int formatLength)
+int sqPasteboardCopyItemFlavorDataformatformatLength (sqInt inPasteboard, char* format, int formatLength)
 {
   char * formatString;
   char * buffer;
   size_t bytes;
   Atom target;
   int outData;
-  char * dest;
-  XEvent ev;
 
   formatString= (char *) malloc(formatLength + 1);
   memcpy(formatString, format, formatLength);
@@ -149,25 +152,21 @@ int sqPasteboardCopyItemFlavorDataformatformatLength ( sqInt inPasteboard, char*
     inputSelection= atom("CLIPBOARD");
   }
 
-  printf("selection=%s\n", XGetAtomName(ioGetDisplay(), inputSelection));
-
   target= atom(formatString);
-  buffer= (char *) getSelectionData(inputSelection, target, &bytes, &ev);
+  buffer= (char *) getSelectionData(inputSelection, target, &bytes);
 
   if (inputSelection == atom("XdndSelection"))
     {
       destroyInputTargets();
       inputSelection= None;
-      printf("From %s\n", __FILE__);
-      finishDrop(&ev.xselection);
+      finishDrop();
     }
   
   if (buffer == NULL)
     return interpreterProxy->nilObject();
 
   outData = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classByteArray(), bytes);
-  dest = interpreterProxy->firstIndexableField(outData);
-  memcpy(dest, buffer, bytes);
+  memcpy(interpreterProxy->firstIndexableField(outData), buffer, bytes);
   free(buffer);
   free(formatString);
 

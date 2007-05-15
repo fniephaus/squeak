@@ -351,7 +351,7 @@ static char *getSelection(void);
 static char *getSelectionFrom(Atom source);
 static int   translateCode(KeySym symbolic);
 
-char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * event);
+char * getSelectionData(Atom selection, Atom target, size_t * bytes);
 Atom inputSelection= None; /* CLIPBOARD or XdndSelection */
 Atom * inputTargets= NULL; /* All targets in clipboard */
 Window inputSelectionSource= 0; /* Source window of last notify */
@@ -784,7 +784,7 @@ static char *getSelectionFrom(Atom source)
 
   /* request the selection */
   Atom target= textEncodingUTF8 ? xaUTF8String : XA_STRING;
-  data= getSelectionData(source, target, &bytes, NULL);
+  data= getSelectionData(source, target, &bytes);
 
   if (data == NULL)
     return stEmptySelection;
@@ -1018,10 +1018,6 @@ size_t getSelectionProperty(SelectionChunk * chunk,
       dumpSelectionData((char *) data, nitems, 1);
 #     endif
 
-      fprintf(stderr, "bytesAfter=%lu, ", bytesAfter);
-      fprintf(stderr, "format=%i, nitems=%lu, ", format, nitems);
-      fprintf(stderr, "\n");
-
       addSelectionChunk(chunk, data, size);
     }
   while (bytesAfter != 0);
@@ -1041,18 +1037,15 @@ void getSelectionIncr(SelectionChunk * chunk, Window requestor, Atom property)
   } while (size > 0);
 }
 
-/* Get selection data from the target in the selection.  if event is
- * not NULL, the event handled here is set (this event can be used to
- * finish drag event).
+/* Get selection data from the target in the selection.
  * Return NULL if there is no selection data.
- * Otherwise, caller must free the return address.
+ * Caller must free the return data.
  */
-char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * event)
+char * getSelectionData(Atom selection, Atom target, size_t * bytes)
 {
   char *data= NULL;
   Time	  timestamp= getXTimestamp();
-  XEvent  event0;
-  XEvent * ev= (event != NULL) ? event : &event0;
+  XEvent evt;
   int success;
   SelectionChunk * chunk;
   Atom actualType;
@@ -1063,10 +1056,10 @@ char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * ev
   XDeleteProperty(stDisplay, stWindow, selectionAtom);
   XConvertSelection(stDisplay, selection, target, selectionAtom, stWindow, timestamp);
 
-  success= waitNotify(ev, waitSelectionNotify);
+  success= waitNotify(&evt, waitSelectionNotify);
   if (success == 0) return NULL;
-  requestor= ev->xselection.requestor;
-  property= ev->xselection.property;
+  requestor= evt.xselection.requestor;
+  property= evt.xselection.property;
 
   /* check if the selection was refused */
   if (None == property)
@@ -1091,9 +1084,6 @@ char * getSelectionData(Atom selection, Atom target, size_t * bytes, XEvent * ev
   *bytes= sizeSelectionChunk(chunk);
   data= malloc(*bytes);
   copySelectionChunk(chunk, data);
-
-/*  data= _copySelectionChunk(chunk, bytes);*/
-
   destroySelectionChunk(chunk);
   return data;
 }
