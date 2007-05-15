@@ -84,8 +84,21 @@ static	Atom	  XdndTextUriList;
 static	Atom	  XdndSelectionAtom;
 
 static	Window	  xdndSourceWindow= 0;
-static	Atom	 *xdndTypeList= 0;
+
+/* 1 if input targets includes "text/uri-list".
+ *
+ * To keep backword compatibitily, xdndWillAccept is always 1.  But
+ * isUrlList is 1 only if the dropped type includes "text/uri-list".
+ * 
+ * case isUrlList == 1:
+ *   Get url list and send dndFinished immediately. Then record drag event.
+ * case isUrlList == 0:
+ *   Record drag event anyway (uxDropFileCount= 0).
+ *   The image will get the data and send dndFinished.
+ */
+
 static	int	  xdndWillAccept= 0;
+static	int	  isUrlList= 0;
 
 enum XdndState {
   XdndStateIdle,
@@ -100,6 +113,7 @@ static enum XdndState xdndState= XdndStateIdle;
 #define xdndEnter_version(evt)			( (evt)->data.l[1] >> 24)
 #define xdndEnter_hasThreeTypes(evt)		(((evt)->data.l[1] & 0x1UL) == 0)
 #define xdndEnter_typeAt(evt, idx)		( (evt)->data.l[2 + (idx)])
+#define xdndEnter_targets(evt)			( (evt)->data.l + 2)
 
 #define xdndPosition_sourceWindow(evt)		((Window)((evt)->data.l[0]))
 #define xdndPosition_rootX(evt)			((evt)->data.l[2] >> 16)
@@ -202,28 +216,20 @@ static char *uri2string(const char *uri)
 
 static void dndGetTypeList(XClientMessageEvent *evt)
 {
-  if (xdndTypeList)
-    {
-      free(xdndTypeList);
-      xdndTypeList= 0;
-    }
-
+  inputSelection= XdndSelection;
   xdndWillAccept= 0;
+  isUrlList= 0;
 
   if (xdndEnter_hasThreeTypes(evt))
     {
-      int i;
       dprintf((stderr, "  3 types\n"));
-      xdndTypeList= (Atom *)xcalloc(3 + 1, sizeof(Atom));
-      for (i= 0;  i <  3;  ++i)
-	xdndTypeList[i]= xdndEnter_typeAt(evt, i);
-      xdndTypeList[3]= 0;
+      updateInputTargets((Atom *) xdndEnter_targets(evt), 3);
     }
   else
     {
-      Atom type, *atoms;
+      Atom type;
       int format;
-      unsigned long i, count, remaining;
+      unsigned long count, remaining;
       unsigned char *data= 0;
 
       XGetWindowProperty(stDisplay, xdndSourceWindow, XdndTypeList, 0, 0x8000000L, False, XA_ATOM,
@@ -236,11 +242,7 @@ static void dndGetTypeList(XClientMessageEvent *evt)
 	  return;
 	}
 
-      xdndTypeList= (Atom *)xcalloc(count + 1, sizeof(Atom));
-      atoms= (Atom *)data;
-      for (i= 0;  i < count;  ++i)
-	xdndTypeList[i]= atoms[i];
-      xdndTypeList[count]= 0;
+      updateInputTargets((Atom *) data, count);
       XFree(data);
       dprintf((stderr, "  %ld types\n", count));
     }
@@ -248,17 +250,20 @@ static void dndGetTypeList(XClientMessageEvent *evt)
   /* We only accept filenames (MIME type "text/uri-list"). */
   {
     int i;
-    for (i= 0;  xdndTypeList[i];  ++i)
+    for (i= 0; inputTargets[i]; ++i)
       {
-	dprintf((stderr, "  type %d == %ld %s\n", i, xdndTypeList[i], XGetAtomName(stDisplay, xdndTypeList[i])));
-	if (XdndTextUriList == xdndTypeList[i])
-	  xdndWillAccept= 1;
+	dprintf((stderr, "  type %d == %ld %s\n", i, inputTargets[i], XGetAtomName(stDisplay, inputTargets[i])));
+	if (XdndTextUriList == inputTargets[i])
+	  {
+	    isUrlList= 1;
+	    xdndWillAccept= 1;
+	  }
       }
   }
+  xdndWillAccept= 1;
 }
 
-
-static void dndSendStatus(Window target, int willAccept, Atom action)
+static void dndSendStatus(int willAccept, Atom action)
 {
   XClientMessageEvent evt;
   memset(&evt, 0, sizeof(evt));
@@ -269,7 +274,7 @@ static void dndSendStatus(Window target, int willAccept, Atom action)
   evt.message_type = XdndStatus;
   evt.format	   = 32;
 
-  xdndStatus_targetWindow(&evt)= target;
+  xdndStatus_targetWindow(&evt)= stParent;
   xdndStatus_setWillAccept(&evt, willAccept);
   xdndStatus_setWantPosition(&evt, 0);
   xdndStatus_action(&evt)= action;
@@ -280,8 +285,7 @@ static void dndSendStatus(Window target, int willAccept, Atom action)
 	   xdndSourceWindow, willAccept, evt.data.l[1], action, XGetAtomName(stDisplay, action)));
 }
 
-
-static void dndSendFinished(Window target)
+static void dndSendFinished()
 {
     XClientMessageEvent evt;
     memset (&evt, 0, sizeof(evt));
@@ -292,17 +296,17 @@ static void dndSendFinished(Window target)
     evt.message_type = XdndFinished;
     evt.format	     = 32;
 
-    xdndFinished_targetWindow(&evt)= target;
-
+    xdndFinished_targetWindow(&evt)= stParent;
     XSendEvent(stDisplay, xdndSourceWindow, 0, 0, (XEvent *)&evt);
 
-    dprintf((stderr, "sent finished to %ld\n", xdndSourceWindow));
+    dprintf((stderr, "dndSendFinished target: 0x%lx source: 0x%lx\n",
+	     stParent, xdndSourceWindow));
 }
 
 
 static void dndEnter(XClientMessageEvent *evt)
 {
-  dprintf((stderr, "dndEnter\n"));
+
   if (xdndEnter_version(evt) < 3)
     {
       fprintf(stderr, "xdnd: protocol version %ld not supported\n", xdndEnter_version(evt));
@@ -311,10 +315,13 @@ static void dndEnter(XClientMessageEvent *evt)
   xdndSourceWindow= xdndEnter_sourceWindow(evt);
   dndGetTypeList(evt);
   xdndState= XdndStateEntered;
+
+  dprintf((stderr, "dndEnter target: 0x%lx source: 0x%lx\n",
+	   evt->window, xdndSourceWindow));
 }
 
 
-static void dndLeave(XClientMessageEvent *evt)
+static void dndLeave()
 {
   dprintf((stderr, "dndLeave\n"));
   recordDragEvent(DragLeave, 1);
@@ -332,13 +339,7 @@ static void dndPosition(XClientMessageEvent *evt)
       return;
     }
 
-  {
-    Window root;
-    unsigned int x, y, w, h, b, d;
-    XGetGeometry(stDisplay, stWindow, &root, &x, &y, &w, &h, &b, &d);
-    mousePosition.x= xdndPosition_rootX(evt) - x;
-    mousePosition.y= xdndPosition_rootY(evt) - y;
-  }
+  getMousePosition();
 
   if (xdndState == XdndStateEntered)
     {
@@ -364,20 +365,34 @@ static void dndPosition(XClientMessageEvent *evt)
   if (xdndWillAccept)
     {
       dprintf((stderr, "accepting\n"));
-      dndSendStatus(evt->window, 1, XdndActionCopy);
+      dndSendStatus(1, XdndActionCopy);
       recordDragEvent(DragMove, 1);
     }
   else /* won't accept */
     {
       dprintf((stderr, "not accepting\n"));
-      dndSendStatus(evt->window, 0, XdndActionPrivate);
+      dndSendStatus(0, XdndActionPrivate);
     }
+
 }
 
 
 static void dndDrop(XClientMessageEvent *evt)
 {
   dprintf((stderr, "dndDrop\n"));
+
+  /* If there is "text/url-list" in inputTargets, the selection is
+   * processed only in DropFilesEvent. But if none (file count == 0),
+   * the selection is handled ClipboardExtendedPlugin.
+   */
+  if (isUrlList == 0)
+    {
+      dprintf((stderr, "dndDrop: no url list\n"));
+      recordDragEvent(DragDrop, 0);
+      return;
+    }
+  destroyInputTargets();
+  inputSelection= None;
 
   if (xdndSourceWindow != xdndDrop_sourceWindow(evt))
     dprintf((stderr, "dndDrop: wrong source window\n"));
@@ -403,8 +418,8 @@ static void dndDrop(XClientMessageEvent *evt)
   else
     dprintf((stderr, "refusing selection -- finishing\n"));
 
-  dndSendFinished(evt->window);
-  dndLeave(evt);
+  dndSendFinished();
+  dndLeave();
 
   xdndState= XdndStateIdle;
 }
@@ -426,7 +441,7 @@ static void dndGetSelection(Window owner, Atom property)
     fprintf(stderr, "dndGetSelection: XGetWindowProperty has more than 64K (why?)\n");
   else
     {
-      char *tokens= data;
+      char *tokens= (char *)data;
       char *item= 0;
       while ((item= strtok(tokens, "\n\r")))
 	{
@@ -449,13 +464,19 @@ static void dndGetSelection(Window owner, Atom property)
 }
 
 
+void finishDrop ()
+{
+  dndSendFinished();
+  dndLeave();
+}
+
+
 int dndHandleSelectionNotify(XSelectionEvent *evt)
 {
   if (evt->property == XdndSelectionAtom)
     {
       dndGetSelection(evt->requestor, evt->property);
-      dndSendFinished(evt->requestor);
-      dndLeave((XClientMessageEvent *)evt);
+      finishDrop();
       return 1;
     }
   return 0;
@@ -469,7 +490,7 @@ int dndHandleClientMessage(XClientMessageEvent *evt)
   if      (type == XdndEnter)	 dndEnter(evt);
   else if (type == XdndPosition) dndPosition(evt);
   else if (type == XdndDrop)	 dndDrop(evt);
-  else if (type == XdndLeave)	 dndLeave(evt);
+  else if (type == XdndLeave)	 dndLeave();
   else				 handled= 0;
   return handled;
 }
