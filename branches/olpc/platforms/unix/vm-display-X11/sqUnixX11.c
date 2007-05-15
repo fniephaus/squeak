@@ -176,7 +176,7 @@ XColor		 stColorBlack;		/* black pixel value in stColormap */
 XColor		 stColorWhite;		/* white pixel value in stColormap */
 int		 savedWindowOrigin= -1;	/* initial origin of window */
 
-#define		 SELECTION_ATOM_COUNT  8
+#define		 SELECTION_ATOM_COUNT  9
 /* http://www.freedesktop.org/standards/clipboards-spec/clipboards.txt */
 Atom		 selectionAtoms[SELECTION_ATOM_COUNT];
 char		*selectionAtomNames[SELECTION_ATOM_COUNT]= {
@@ -196,6 +196,8 @@ char		*selectionAtomNames[SELECTION_ATOM_COUNT]= {
 #define xaTimestamp     selectionAtoms[6]
 	 "SQUEAK_SELECTION",		/* used for XGetSelectionOwner() data */
 #define selectionAtom   selectionAtoms[7]
+	 "INCR",
+#define xaINCR   selectionAtoms[8]
 };
 
 #if defined(USE_XSHM)
@@ -344,10 +346,32 @@ declareCopyFunction(copyImage32To32Same);
 
 static void  redrawDisplay(int l, int r, int t, int b);
 
+/* Selection functions */
 static int   sendSelection(XSelectionRequestEvent *requestEv, int isMultiple);
 static char *getSelection(void);
 static char *getSelectionFrom(Atom source);
 static int   translateCode(KeySym symbolic);
+
+Atom inputSelection= None; /* CLIPBOARD or XdndSelection */
+Atom * inputTargets= NULL; /* All targets in clipboard */
+Window inputSelectionSource= 0; /* Source window of last notify */
+
+typedef struct _SelectionChunk
+{
+  unsigned char * data;
+  size_t size;
+  struct _SelectionChunk * next;
+  struct _SelectionChunk * last;
+} SelectionChunk;
+
+SelectionChunk * newSelectionChunk();
+void destroySelectionChunk(SelectionChunk * chunk);
+void addSelectionChunk(SelectionChunk * chunk,
+		       unsigned char * src, size_t size);
+size_t sizeSelectionChunk(SelectionChunk * chunk);
+void copySelectionChunk(SelectionChunk * chunk, char * dest);
+void getSelectionChunk(SelectionChunk * chunk, Atom selection, Atom target);
+char * getSelectionData(Atom selection, Atom target, size_t * bytes);
 
 #if defined(USE_XSHM)
 int    XShmGetEventBase(Display *);
@@ -742,16 +766,15 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
   return notifyEv.property != None;
 }
 
-
 static char *getSelection(void)
 {
   char *data;
 
   if (stOwnsClipboard)
     {
-#    if defined(DEBUG_SELECTIONS)
+#     if defined(DEBUG_SELECTIONS)
       fprintf(stderr, "getSelection: returning own selection\n");
-#    endif
+#     endif
       return stPrimarySelection;
     }
 
@@ -771,26 +794,73 @@ static char *getSelection(void)
   return data;
 }
 
-
 static char *getSelectionFrom(Atom source)
 {
-  XEvent  ev;
-  fd_set  fdMask;
-  Time	  timestamp= getXTimestamp();
-
-  XDeleteProperty(stDisplay, stWindow, selectionAtom);
+  char * data= NULL;
+  size_t bytes= 0;
 
   /* request the selection */
-  if (textEncodingUTF8)
-    XConvertSelection(stDisplay, source, xaUTF8String, selectionAtom, stWindow, timestamp);
-  else
-    XConvertSelection(stDisplay, source, XA_STRING, selectionAtom, stWindow, timestamp);
+  Atom target= textEncodingUTF8 ? xaUTF8String : XA_STRING;
 
+  data= getSelectionData(source, target, &bytes);
+
+  if (bytes == 0)
+    return stEmptySelection;
+  
+  /* convert the encoding if necessary */
+  if (bytes && allocateSelectionBuffer(bytes))
+    {
+      if (textEncodingUTF8)
+	bytes= ux2sqUTF8(data, bytes, stPrimarySelection, bytes + 1, 1);
+      else
+	bytes= ux2sqText(data, bytes, stPrimarySelection, bytes + 1, 1);
+      /* wrong type check was omitted */
+    }
+  else
+    {
+#     if defined(DEBUG_SELECTIONS)
+      fprintf(stderr, "no bytes\n");
+#     endif
+    }
+#  if defined(DEBUG_SELECTIONS)
+  fprintf(stderr, "selection=");
+  dumpSelectionData(stPrimarySelection, bytes, 1);
+#  endif
+
+  XFree((void *)data);
+  return stPrimarySelection;
+}
+
+void destroyInputTargets()
+{
+  if (inputTargets == NULL)
+    return;
+  free(inputTargets);
+  inputTargets= NULL;
+}
+
+void updateInputTargets(Atom * newTargets, int targetSize)
+{
+  int i;
+  destroyInputTargets();
+  inputTargets= (Atom *)calloc(targetSize + 1, sizeof(Atom));
+  for (i= 0; i < targetSize;  ++i)
+    inputTargets[i]= newTargets[i];
+  inputTargets[targetSize]= None;
+}
+
+
+/* Wait specific event to get property change.
+ * Return 1 if success.
+ */
+int waitNotify(XEvent * ev, int (*condition) (XEvent * ev))
+{
+  fd_set  fdMask;
   /* wait for selection notification, ignoring (most) other events. */
   FD_ZERO(&fdMask);
   if (stXfd >= 0)
     FD_SET(stXfd, &fdMask);
-
+  
   do
     {
       if (XPending(stDisplay) == 0)
@@ -804,7 +874,8 @@ static char *getSelectionFrom(Atom source)
 	  if (status < 0)
 	    {
 	      perror("select(stDisplay)");
-	      return stEmptySelection;
+	      return 0;
+/* 	      return stEmptySelection; */
 	    }
 	  if (status == 0)
 	    {
@@ -813,15 +884,15 @@ static char *getSelectionFrom(Atom source)
 #	     endif
 	      if (isConnectedToXServer)
 		XBell(stDisplay, 0);
-	      return stEmptySelection;
+	      return 0;
 	    }
 	}
 
-      XNextEvent(stDisplay, &ev);
-      switch (ev.type)
+      XNextEvent(stDisplay, ev);
+      switch (ev->type)
 	{
 	case ConfigureNotify:
-	  noteResize(ev.xconfigure.width, ev.xconfigure.height);
+	  noteResize(ev->xconfigure.width, ev->xconfigure.height);
 	  break;
 
         /* this is necessary so that we can supply our own selection when we
@@ -831,94 +902,208 @@ static char *getSelectionFrom(Atom source)
 #	 if defined(DEBUG_SELECTIONS)
 	  fprintf(stderr, "getSelection: sending own selection\n");
 #	 endif
-	  sendSelection(&ev.xselectionrequest, 0);
+	  sendSelection(&ev->xselectionrequest, 0);
 	  break;
 
 #       if defined(USE_XSHM)
 	default:
-	  if (ev.type == completionType)
+	  if (ev->type == completionType)
 	    --completions;
 #       endif
 	}
     }
-  while (ev.type != SelectionNotify);
-
-  /* check if the selection was refused */
-  if (None == ev.xselection.property)
-    {
-#    if defined(DEBUG_SELECTIONS)
-      fprintf(stderr, "getSelection: xselection.property == None\n");
-#    endif
-      if (isConnectedToXServer)
-	XBell(stDisplay, 0);
-      return stEmptySelection;
-    }
-
-  /* get the value of the selection from the containing property */
-  {
-    Atom	 type;
-    int		 format;
-    unsigned	 long nitems=0, bytesAfter= 0;
-    int		 bytes;
-    char	*data= NULL;
-
-    XGetWindowProperty(stDisplay, ev.xselection.requestor, ev.xselection.property,
-		       (long)0, (long)(MAX_SELECTION_SIZE/4),
-		       True, AnyPropertyType,
-		       &type, &format, &nitems, &bytesAfter,
-		       (unsigned char **)&data);
-
-#  if defined(DEBUG_SELECTIONS)
-    fprintf(stderr, "getprop type ");
-    printAtomName(type);
-    fprintf(stderr, " format %d nitems %ld bytesAfter %ld\ndata=",
-	    format, nitems, bytesAfter);
-    dumpSelectionData(data, nitems, 1);
-#  endif
-
-    if (bytesAfter > 0)
-      XBell(stDisplay, 0);
-
-    /* convert the encoding if necessary */
-    bytes= min(nitems, MAX_SELECTION_SIZE - 1) * (format / 8);
-    if (bytes && allocateSelectionBuffer(bytes))
-      {
-	if (xaUTF8String == type)
-	  bytes= ux2sqUTF8(data, bytes, stPrimarySelection, bytes + 1, 1);
-	else if (XA_STRING == type)
-	  bytes= ux2sqText(data, bytes, stPrimarySelection, bytes + 1, 1);
-	else
-	  {
-	    char* atomName;
-
-	    bytes= 0;
-	    atomName= XGetAtomName(stDisplay, type);
-	    if (atomName != NULL)
-	      {
-		fprintf(stderr, "selection data is of wrong type (%s)\n", atomName);
-		XFree((void *)atomName);
-	      }
-	  }
-      }
-    else
-      {
-#      if defined(DEBUG_SELECTIONS)
-	fprintf(stderr, "no bytes\n");
-#      endif
-      }
-#  if defined(DEBUG_SELECTIONS)
-    fprintf(stderr, "selection=");
-    dumpSelectionData(stPrimarySelection, bytes, 1);
-#  endif
-    if (data != NULL)
-      {
-	XFree((void *)data);
-      }
-  }
-
-  return stPrimarySelection;
+  while (!condition(ev));
+  return 1;
 }
 
+
+int waitSelectionNotify(XEvent * ev)
+{
+/*   fprintf(stderr, "expected = SelectionNotify, result = %i\n", ev->type); */
+  return ev->type == SelectionNotify;
+}
+
+int waitPropertyNotify(XEvent * ev)
+{
+/*   fprintf(stderr, "expected = PropertyNotify, result = %i\n", ev->type); */
+  return (ev->type == PropertyNotify)
+    && (ev->xproperty.state == PropertyNewValue);
+}
+
+
+/* SelectionChunk functions.
+ * SelectionChunk remembers (not copies) buffers from selections.
+ * It is useful to handle partial data transfar with XGetWindowProperty.
+ */
+
+SelectionChunk * newSelectionChunk()
+{
+  SelectionChunk * chunk= malloc(sizeof(SelectionChunk));
+  chunk->data= NULL;
+  chunk->size= 0;
+  chunk->next= NULL;
+  chunk->last=chunk;
+  return chunk;
+}
+
+void destroySelectionChunk(SelectionChunk * chunk)
+{
+  SelectionChunk * i;
+  for (i= chunk; i != NULL;) {
+    SelectionChunk * next= i->next;
+    XFree(i->data);
+    free(i);
+    i= next;
+  }
+}
+
+void addSelectionChunk(SelectionChunk * chunk,
+		       unsigned char * src, size_t size)
+{
+  chunk->last->data= src;
+  chunk->last->size= size;
+  chunk->last->next= newSelectionChunk();
+  chunk->last= chunk->last->next;
+}
+
+size_t sizeSelectionChunk(SelectionChunk * chunk)
+{
+  size_t totalSize= 0;
+  SelectionChunk * i;
+  for (i= chunk; i != NULL; i= i->next)
+    totalSize += i->size;
+  return totalSize;
+}
+
+void copySelectionChunk(SelectionChunk * chunk, char * dest)
+{
+  SelectionChunk * i;
+  char * j= dest;
+  for (i= chunk; i != NULL; j+= i->size, i= i->next)
+    memcpy(j, i->data, i->size);
+}
+
+char * _copySelectionChunk(SelectionChunk * chunk, size_t * size)
+{
+  SelectionChunk * i;
+  char * data;
+  char * j;
+  size_t totalSize= 0;
+
+  for (i= chunk; i != NULL; i= i->next)
+    totalSize += i->size;
+
+  j= data= malloc(totalSize);
+  for (i= chunk; i != NULL; j += i->size, i= i->next)
+    memcpy(j, i->data, i->size);
+  *size= totalSize;
+  return data;
+}
+
+/* get the value of the selection from the containing property */
+size_t getSelectionProperty(SelectionChunk * chunk,
+			    Window requestor, Atom property,
+			    Atom * actualType)
+{
+  unsigned long bytesAfter= 0, nitems= 0, nread= 0;
+  unsigned char *data= NULL;
+  size_t size;
+  int format;
+  
+  do
+    {
+      XGetWindowProperty(stDisplay, requestor, property,
+			 nread, (MAX_SELECTION_SIZE/4),
+			 True, AnyPropertyType,
+			 actualType, &format, &nitems, &bytesAfter,
+			 &data);
+      
+      size= nitems * format / 8;
+      nread += size / 4;
+      
+#     if defined(DEBUG_SELECTIONS)
+      fprintf(stderr, "getprop type ");
+      printAtomName(*actualType);
+      fprintf(stderr, " format %d nitems %ld bytesAfter %ld\ndata=",
+	      format, nitems, bytesAfter);
+      dumpSelectionData((char *) data, nitems, 1);
+#     endif
+
+      addSelectionChunk(chunk, data, size);
+    }
+  while (bytesAfter != 0);
+  return size;
+}
+
+void getSelectionIncr(SelectionChunk * chunk, Window requestor, Atom property)
+{
+  XEvent ev;
+  size_t size;
+  Atom actualType;
+  do {
+    fprintf(stderr, "getSelectionIncr: wait next chunk\n");
+
+    waitNotify(&ev, waitPropertyNotify);
+    size= getSelectionProperty(chunk, requestor, property, &actualType);
+  } while (size > 0);
+}
+
+/* Get selection data from the target in the selection.
+ * Return NULL if there is no selection data.
+ * Caller must free the return data.
+ */
+void getSelectionChunk(SelectionChunk * chunk, Atom selection, Atom target)
+{
+  Time	  timestamp= getXTimestamp();
+  XEvent evt;
+  int success;
+  Atom actualType;
+  Window requestor;
+  Atom property;
+
+  XDeleteProperty(stDisplay, stWindow, selectionAtom);
+  XConvertSelection(stDisplay, selection, target, selectionAtom, stWindow, timestamp);
+
+  success= waitNotify(&evt, waitSelectionNotify);
+  if (success == 0) return;
+  requestor= evt.xselection.requestor;
+  property= evt.xselection.property;
+
+  /* check if the selection was refused */
+  if (None == property)
+    {
+#     if defined(DEBUG_SELECTIONS)
+      fprintf(stderr, "getSelection: xselection.property == None\n");
+#     endif
+      if (isConnectedToXServer)
+	XBell(stDisplay, 0);
+      return;
+    }
+
+  getSelectionProperty(chunk, requestor, property, &actualType);
+
+  if (actualType == xaINCR) {
+    destroySelectionChunk(chunk);
+    chunk= newSelectionChunk();
+    getSelectionIncr(chunk, requestor, property);
+  }
+}
+
+/* Get selection data from the target in the selection.
+ * Return NULL if there is no selection data.
+ * Caller must free the return data.
+ */
+char * getSelectionData(Atom selection, Atom target, size_t * bytes)
+{
+  char * data;
+  SelectionChunk * chunk= newSelectionChunk();
+  getSelectionChunk(chunk, selection, target);
+  *bytes= sizeSelectionChunk(chunk);
+  data= malloc(*bytes);
+  copySelectionChunk(chunk, data);
+  destroySelectionChunk(chunk);
+  return data;
+}
 
 /* claim ownership of the X selection, providing the given string to requestors */
 
@@ -1013,7 +1198,7 @@ static void redrawDisplay(int l, int r, int t, int b)
 }
 
 
-static void getMousePosition(void)
+void getMousePosition(void)
 {
   Window root, child;
   int rootX, rootY, winX, winY;
@@ -1071,7 +1256,7 @@ static int x2sqKeyInput(XKeyEvent *xevt)
       else
 	{
 	  if (!(ic= XCreateIC(im, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-			      XNClientWindow, stWindow, 0)))
+			      XNClientWindow, stWindow, NULL)))
 	    {
 	      fprintf(stderr, "XCreateIC() failed\n");
 	      goto revertInput;
@@ -1100,7 +1285,7 @@ static int x2sqKeyInput(XKeyEvent *xevt)
 #endif
 
   {
-    unsigned char string[128];	/* way too much */
+    char string[128];	/* way too much */
     KeySym symbolic;
     Status status;
     int count= XmbLookupString(ic, (XKeyPressedEvent *)xevt,
@@ -1759,9 +1944,9 @@ static int xError(Display *dpy, XErrorEvent *evt)
   XGetErrorText(dpy, evt->error_code, buf, sizeof(buf));
   fprintf(stderr,
 	  "X Error: %s\n"
-	  "  Major opcode of failed request:  %lu\n"
-	  "  Minor opcode of failed request:  %lu\n"
-	  "  Serial number of failed request: %d\n",
+	  "  Major opcode of failed request:  %u\n"
+	  "  Minor opcode of failed request:  %u\n"
+	  "  Serial number of failed request: %lu\n",
 	  buf,
 	  evt->request_code,
 	  evt->minor_code,
