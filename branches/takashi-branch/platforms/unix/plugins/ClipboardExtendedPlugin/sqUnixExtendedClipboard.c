@@ -88,7 +88,7 @@ static void getItemFravors()
 
 void sqPasteboardClear( sqInt inPasteboard )
 {
-  /* UNNECESSARY */
+  /* NOT IMPLEMENTED YET */
 }
 
 /* Return a number of types.
