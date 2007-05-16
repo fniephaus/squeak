@@ -1,7 +1,0 @@
-To build:
-
-$ svn co http://squeakvm.org/svn/squeak/branches/olpc squeak
-$ cd squeak
-$ ./autogen.sh --prefix=...
-$ make
-$ make install
