@@ -355,6 +355,7 @@ static int   translateCode(KeySym symbolic);
 Atom inputSelection= None; /* CLIPBOARD or XdndSelection */
 Atom * inputTargets= NULL; /* All targets in clipboard */
 Window inputSelectionSource= 0; /* Source window of last notify */
+Atom outputTarget= None;
 
 typedef struct _SelectionChunk
 {
@@ -631,18 +632,33 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 		      8, PropModeReplace, (const unsigned char *)buf, n);
       free(buf);
     }
+  else if ((outputTarget == requestEv->target) && (outputTarget != None))
+    {
+      XChangeProperty(requestEv->display, requestEv->requestor,
+		      targetProperty, requestEv->target,
+		      8, PropModeReplace,
+		      (const unsigned char *) stPrimarySelection,
+		      stPrimarySelectionSize);
+    }
   else if (xaTargets == requestEv->target)
     {
       /* If we don't report COMPOUND_TEXT in this list, KMail (and maybe other
        * Qt/KDE apps) don't accept pastes from Squeak. Of course, they'll use
        * UTF8_STRING anyway... */
-      Atom targets[6];
+      Atom targets[7];
+      int targetsSize= 6;
       targets[0]= xaTargets;
       targets[1]= xaMultiple;
       targets[2]= xaTimestamp;	        /* required by ICCCM */
       targets[3]= xaUTF8String;
       targets[4]= XA_STRING;
       targets[5]= xaCompoundText;
+      if (outputTarget != None)
+	{
+	  targetsSize += 1;
+	  targets[6]= outputTarget;
+	}
+
 
       xError= XChangeProperty(requestEv->display, requestEv->requestor,
                               targetProperty, XA_ATOM,
@@ -1130,8 +1146,23 @@ void initClipboard(void)
   stPrimarySelectionSize= 0;
   stOwnsSelection= 0;
   stOwnsClipboard= 0;
+  outputTarget= None;
 }
 
+/* Dirty hook to write clipboard.
+ * It's just for prototype purpose.
+ */
+void clipboardWrite(char * data, size_t length, Atom target)
+
+{
+  if (allocateSelectionBuffer(length))
+    {
+      memcpy((void *)stPrimarySelection, data, length);
+      stPrimarySelection[length]= '\0';
+      outputTarget= target;
+      claimSelection();
+    }
+}
 
 static sqInt display_clipboardSize(void)
 {

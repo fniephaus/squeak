@@ -146,10 +146,23 @@ sqInt sqCreateClipboard( void )
   return 1;
 }
 
+Atom formatStringToAtom(char * format, int formatLength)
+{
+  char * formatString;
+  Atom result;
+
+  formatString= (char *) malloc(formatLength + 1);
+  memcpy(formatString, format, formatLength);
+  formatString[formatLength]= 0;
+  result= atom(formatString);
+  free(formatString);
+  return result;
+}
+
 void sqPasteboardPutItemFlavordatalengthformatTypeformatLength ( sqInt inPasteboard, char* inData, int dataLength, char* format, int formatLength)
 {
-  /* NOT YETT */
-
+  Atom target= formatStringToAtom(format, formatLength);
+  clipboardWrite(inData, dataLength, target);
 }
 
 /* Return content in format at inputSelection. */
