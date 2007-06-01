@@ -588,6 +588,9 @@ static int allocateSelectionBuffer(int count)
 }
 
 
+#include "sqUnixXdnd.c"
+
+
 /* answers true if selection could be handled */
 static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 {
@@ -596,6 +599,11 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
   Atom targetProperty= ((None == requestEv->property)
 			? requestEv->target 
 			: requestEv->property);
+
+  if (XdndSelection == requestEv->selection)
+    {
+      return dndSelectionRequest(requestEv);
+    }
 
   notifyEv.property= targetProperty;
 
@@ -1459,9 +1467,6 @@ static void waitForCompletions(void)
 }
 
 
-#include "sqUnixXdnd.c"
-
-
 static void handleEvent(XEvent *evt)
 {
 #if defined(DEBUG_EVENTS)
@@ -1506,6 +1511,7 @@ static void handleEvent(XEvent *evt)
     case MotionNotify:
       noteEventState(evt->xmotion);
       recordMouseEvent();
+      processDndOutMouseMotion(&evt->xmotion);
       break;
 
     case ButtonPress:
@@ -1533,6 +1539,7 @@ static void handleEvent(XEvent *evt)
 
     case ButtonRelease:
       noteEventState(evt->xbutton);
+      processDndOutMouseRelease(&evt->xbutton);
       switch (evt->xbutton.button)
 	{
 	case 1: case 2: case 3:

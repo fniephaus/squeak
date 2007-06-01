@@ -63,6 +63,7 @@ struct SqDisplay
   sqInt (*primitivePluginRequestFileHandle)(void);
   sqInt (*primitivePluginDestroyRequest)(void);
   sqInt (*primitivePluginRequestState)(void);
+  sqInt (*dndTrigger)(void);
 };
 
 
@@ -111,7 +112,8 @@ static struct SqDisplay display_##NAME##_itf= {	\
   display_primitivePluginPostURL,		\
   display_primitivePluginRequestFileHandle,	\
   display_primitivePluginDestroyRequest,	\
-  display_primitivePluginRequestState		\
+  display_primitivePluginRequestState,		\
+  display_dndTrigger				\
 }
 
 

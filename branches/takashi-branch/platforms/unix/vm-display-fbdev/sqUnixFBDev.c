@@ -437,6 +437,8 @@ static sqInt display_primitivePluginRequestFileHandle()	{ return primitiveFail()
 static sqInt display_primitivePluginDestroyRequest()	{ return primitiveFail(); }
 static sqInt display_primitivePluginRequestState()	{ return primitiveFail(); }
 
+static sqInt display_dndTrigger() { return 0; }
+
 //----------------------------------------------------------------
 
 

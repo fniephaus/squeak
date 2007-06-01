@@ -576,6 +576,12 @@ sqInt ioGetKeystroke(void)		{ return dpy->ioGetKeystroke(); }
 sqInt ioGetNextEvent(sqInputEvent *evt)	{ return dpy->ioGetNextEvent(evt); }
 sqInt ioMousePoint(void)		{ return dpy->ioMousePoint(); }
 
+/*** Drag and Drop ***/
+
+sqInt dndTrigger()
+{
+  return dpy->dndTrigger();
+}
 
 /*** OpenGL ***/
 

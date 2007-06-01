@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:40 pm) */
+/* Automatically generated from Squeak on an Array(31 May 2007 5:11:07 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -43,6 +43,7 @@ EXPORT(sqInt) initialiseModule(void);
 #pragma export off
 static sqInt msg(char * s);
 #pragma export on
+EXPORT(sqInt) primitiveDragTrigger(void);
 EXPORT(sqInt) primitiveDropRequestFileHandle(void);
 EXPORT(sqInt) primitiveDropRequestFileName(void);
 EXPORT(sqInt) setFileAccessCallback(int address);
@@ -57,9 +58,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DropPlugin 11 October 2006 (i)"
+	"DropPlugin 31 May 2007 (i)"
 #else
-	"DropPlugin 11 October 2006 (e)"
+	"DropPlugin 31 May 2007 (e)"
 #endif
 ;
 
@@ -91,6 +92,12 @@ EXPORT(sqInt) initialiseModule(void) {
 
 static sqInt msg(char * s) {
 	fprintf(stderr, "\n%s: %s", moduleName, s);
+}
+
+EXPORT(sqInt) primitiveDragTrigger(void) {
+	sqDragTrigger();
+	interpreterProxy->pop(1);
+	return interpreterProxy->pushInteger(42);
 }
 
 
@@ -176,6 +183,7 @@ EXPORT(sqInt) shutdownModule(void) {
 void* DropPlugin_exports[][3] = {
 	{"DropPlugin", "primitiveDropRequestFileName", (void*)primitiveDropRequestFileName},
 	{"DropPlugin", "shutdownModule", (void*)shutdownModule},
+	{"DropPlugin", "primitiveDragTrigger", (void*)primitiveDragTrigger},
 	{"DropPlugin", "getModuleName", (void*)getModuleName},
 	{"DropPlugin", "setFileAccessCallback", (void*)setFileAccessCallback},
 	{"DropPlugin", "setInterpreter", (void*)setInterpreter},

@@ -103,7 +103,11 @@ static	int	  isUrlList= 0;
 enum XdndState {
   XdndStateIdle,
   XdndStateEntered,
-  XdndStateTracking
+  XdndStateTracking,
+
+  XdndStateOutFind,
+  XdndStateOutPosition,
+  XdndStateOutAccepted,
 };
 
 static enum XdndState xdndState= XdndStateIdle;
@@ -137,6 +141,10 @@ static enum XdndState xdndState= XdndStateIdle;
 # define dprintf(ARGS) do { } while (0)
 #endif
 
+/* Functio Prototypes */
+void updateInputTargets(Atom * newTargets, int targetSize);
+void getMousePosition(void);
+void destroyInputTargets();
 
 static void *xmalloc(size_t size)
 {
@@ -211,6 +219,219 @@ static char *uri2string(const char *uri)
     }
   dprintf((stderr, "uri2string: <%s>\n", string));
   return string;
+}
+
+/* Handle DnD Output */
+
+static int isAccept= 0;
+
+static Atom atom(char * name)
+{
+  return XInternAtom(stDisplay, name, False);
+}
+
+static sqInt display_dndTrigger()
+{
+  if (XdndStateIdle != xdndState) return 0;
+  XSetSelectionOwner(stDisplay, atom("XdndSelection"), stParent, CurrentTime);
+  xdndState= XdndStateOutFind;
+  isAccept= 0;
+  {
+    Cursor cursor;
+    cursor= XCreateFontCursor(stDisplay, 90);
+    XDefineCursor(stDisplay, stParent, cursor);
+  }
+  
+  return 1;
+}
+
+/* Find dndAware window under the cursor,
+ * return None if not found */
+Window dndAwareWindow(Window root, Window child, int * version_return)
+{
+  Atom actualType;
+  int actualFormat;
+  unsigned long nitems, bytesAfter;
+  unsigned char * data;
+  Window root_return;
+  Window child_return;
+  int root_x, root_y, win_x, win_y;
+  unsigned int mask;
+
+  if (None == child) return None;
+  XGetWindowProperty(stDisplay, child, atom("XdndAware"),
+		     0, 0x8000000L, False, XA_ATOM,
+		     &actualType, &actualFormat, &nitems,
+		     &bytesAfter, &data);
+  if (nitems > 0) {
+    *version_return= (int) * data;
+    return child;
+  }
+
+  XQueryPointer(stDisplay, child, &root_return, &child_return, &root_x, &root_y,
+		&win_x, &win_y, &mask);
+
+  if (child_return == None) return None;
+  return dndAwareWindow(root, child_return, version_return);
+}
+
+void initClientMessage(XClientMessageEvent * evt, Window source, Window target, Atom type)
+{
+  memset(evt, 0, sizeof(XClientMessageEvent));
+  evt->type	   = ClientMessage;
+  evt->display	   = stDisplay;
+  evt->window	   = target;
+  evt->message_type = type;
+  evt->format	   = 32;
+  evt->data.l[0]= source;
+}
+
+void sendClientMessage(XClientMessageEvent * evt)
+{
+  XSendEvent(evt->display, evt->window, 0, 0, (XEvent *) evt);
+/*   printf("Send %s to: %lx\n", XGetAtomName(stDisplay, evt->message_type), evt->window); */
+}
+
+void sendEnter(Window target, Window source)
+{
+  XClientMessageEvent evt;
+  initClientMessage(&evt, source, target, atom("XdndEnter"));
+  evt.data.l[1] |= 0x0UL; /* just three data types */
+  evt.data.l[1] |= 5 << 24; /* version num */
+  evt.data.l[2]= atom("STRING");
+  evt.data.l[3]= atom("text/plain");
+  evt.data.l[4]= atom("UTF8_STRING");
+  sendClientMessage(&evt);
+  /*  window_ls(display, target); */
+}
+
+void sendPosition(Window target, Window source, int root_x, int root_y, Time timestamp)
+{
+  XClientMessageEvent evt;
+  initClientMessage(&evt, source, target, atom("XdndPosition"));
+  evt.data.l[2]= (root_x << 16) | root_y;
+  evt.data.l[3]= timestamp;
+  evt.data.l[4]= atom("XdndActionCopy");
+  sendClientMessage(&evt);
+}
+
+void sendDrop(Window target, Window source, Time timestamp)
+{
+  XClientMessageEvent evt;
+  if (None == target) return;
+  initClientMessage(&evt, source, target, atom("XdndDrop"));
+  evt.data.l[2]= timestamp;
+  sendClientMessage(&evt);
+}
+
+void sendLeave(Window target, Window source)
+{
+  XClientMessageEvent evt;
+  if (None == target) return;
+  initClientMessage(&evt, source, target, atom("XdndLeave"));
+  sendClientMessage(&evt);
+}
+
+static Window lastWindow= None;
+
+/* Find appropriate distination */
+static void dndFind(XMotionEvent * evt)
+{
+  Window currentWindow= None;
+  int version_return= 0;
+
+  /*  updateCursor(); */
+  currentWindow= dndAwareWindow(evt->root, evt->root, &version_return);
+  if ((currentWindow != lastWindow) && (None != currentWindow)) {
+    printf("version=%i: ", version_return);
+    sendLeave(lastWindow, stParent);
+    sendEnter(currentWindow, stParent);
+  }
+
+  if (None != currentWindow) {
+    sendPosition(currentWindow, stParent, evt->x_root, evt->y_root, evt->time);
+  }
+
+  lastWindow= currentWindow;
+}
+
+void processDndOutMouseMotion(XMotionEvent * evt)
+{
+  if (XdndStateOutFind == xdndState) {
+    dndFind(evt);
+  }
+}
+
+void processDndOutMouseRelease(XButtonEvent * evt)
+{
+  sendDrop(lastWindow, stParent, evt->time);
+  sendLeave(lastWindow, stParent);
+  isAccept= 0;
+  xdndState= XdndStateIdle;
+}
+
+
+void dndStatus(XClientMessageEvent * evt)
+{
+  if (lastWindow != evt->data.l[0]) return;
+  isAccept= evt->data.l[1] && 0x1UL;
+}
+
+
+void processString(XSelectionRequestEvent * req, Atom targetProperty)
+{
+  char * source = "http://www.squeakland.org";
+  XChangeProperty(req->display, req->requestor,
+		  targetProperty, atom("STRING"),
+		  8, PropModeReplace,
+		  (unsigned char *) source,
+		  strlen(source));
+  printf("Send a string\n");
+}
+
+int dndSelectionRequest(XSelectionRequestEvent * req)
+{
+
+  Status xError= 0;
+  XEvent notify;
+  XSelectionEvent * res= &notify.xselection;
+  Atom targetProperty= ((None == req->property)
+			? req->target 
+			: req->property);
+/*   printf("Selection requested as: %s from: %lx", XGetAtomName(stDisplay, req->target), req->requestor); */
+
+/*   window_ls(display, req->requestor); */
+  printf("\n");
+
+  res->type= SelectionNotify;
+  res->display= req->display;
+  res->requestor= req->requestor;
+  res->selection= req->selection;
+  res->target= req->target;
+  res->time= req->time;
+  res->send_event= True;
+  res->property= targetProperty; /* override later if error */
+
+  if (atom("STRING") == req->target) {
+    processString(req, targetProperty);
+  } else if (atom("STRING") == req->target) {
+    processString(req, targetProperty);
+  } else if (atom("UTF8_STRING") == req->target) {
+    processString(req, targetProperty);
+  } else if (atom("text/plain") == req->target) {
+    processString(req, targetProperty);
+  } else {
+    printf("Unsupported target %s.\n", XGetAtomName(stDisplay, req->target));
+
+    res->property= None;
+  }
+  
+  xError= XSendEvent(req->display, req->requestor, False, 0, &notify);
+  if (xError == 0) {
+    printf("ERROR at: %i\n", __LINE__);
+    return 0;
+  }
+  return 1;
 }
 
 
@@ -491,6 +712,7 @@ int dndHandleClientMessage(XClientMessageEvent *evt)
   else if (type == XdndPosition) dndPosition(evt);
   else if (type == XdndDrop)	 dndDrop(evt);
   else if (type == XdndLeave)	 dndLeave();
+  else if (type == XdndStatus)   dndStatus(evt);
   else				 handled= 0;
   return handled;
 }
