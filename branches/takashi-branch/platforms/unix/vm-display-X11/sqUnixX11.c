@@ -602,7 +602,8 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 
   if (XdndSelection == requestEv->selection)
     {
-      return dndSelectionRequest(requestEv);
+      dndOutHandleEvent((XEvent *) requestEv);
+      return 1;
     }
 
   notifyEv.property= targetProperty;
@@ -1511,7 +1512,7 @@ static void handleEvent(XEvent *evt)
     case MotionNotify:
       noteEventState(evt->xmotion);
       recordMouseEvent();
-      processDndOutMouseMotion(&evt->xmotion);
+      dndOutHandleEvent(evt);
       break;
 
     case ButtonPress:
@@ -1539,7 +1540,7 @@ static void handleEvent(XEvent *evt)
 
     case ButtonRelease:
       noteEventState(evt->xbutton);
-      processDndOutMouseRelease(&evt->xbutton);
+      dndOutHandleEvent(evt);
       switch (evt->xbutton.button)
 	{
 	case 1: case 2: case 3:
