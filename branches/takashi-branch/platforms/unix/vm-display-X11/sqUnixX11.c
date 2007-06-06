@@ -588,9 +588,6 @@ static int allocateSelectionBuffer(int count)
 }
 
 
-#include "sqUnixXdnd.c"
-
-
 /* answers true if selection could be handled */
 static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 {
@@ -599,12 +596,6 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
   Atom targetProperty= ((None == requestEv->property)
 			? requestEv->target 
 			: requestEv->property);
-
-  if (XdndSelection == requestEv->selection)
-    {
-      dndOutHandleEvent((XEvent *) requestEv);
-      return 1;
-    }
 
   notifyEv.property= targetProperty;
 
@@ -791,6 +782,7 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
   return notifyEv.property != None;
 }
 
+
 static char *getSelection(void)
 {
   char *data;
@@ -818,6 +810,7 @@ static char *getSelection(void)
 
   return data;
 }
+
 
 static char *getSelectionFrom(Atom source)
 {
@@ -1130,6 +1123,7 @@ char * getSelectionData(Atom selection, Atom target, size_t * bytes)
   return data;
 }
 
+
 /* claim ownership of the X selection, providing the given string to requestors */
 
 static void claimSelection(void)
@@ -1238,7 +1232,7 @@ static void redrawDisplay(int l, int r, int t, int b)
 }
 
 
-void getMousePosition(void)
+static void getMousePosition(void)
 {
   Window root, child;
   int rootX, rootY, winX, winY;
@@ -1468,6 +1462,9 @@ static void waitForCompletions(void)
 }
 
 
+#include "sqUnixXdnd.c"
+
+
 static void handleEvent(XEvent *evt)
 {
 #if defined(DEBUG_EVENTS)
@@ -1512,7 +1509,6 @@ static void handleEvent(XEvent *evt)
     case MotionNotify:
       noteEventState(evt->xmotion);
       recordMouseEvent();
-      dndOutHandleEvent(evt);
       break;
 
     case ButtonPress:
@@ -1540,7 +1536,6 @@ static void handleEvent(XEvent *evt)
 
     case ButtonRelease:
       noteEventState(evt->xbutton);
-      dndOutHandleEvent(evt);
       switch (evt->xbutton.button)
 	{
 	case 1: case 2: case 3:
@@ -1696,7 +1691,10 @@ static void handleEvent(XEvent *evt)
 	--completions;
       break;
 #  endif
+
     }
+  dndOutHandleEvent(evt);
+
 # undef noteEventState
 }
 
