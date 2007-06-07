@@ -1152,17 +1152,32 @@ void initClipboard(void)
   outputTarget= None;
 }
 
+
+static Atom formatStringToAtom(char * target, size_t size)
+{
+  char * formatString;
+  Atom result;
+
+  formatString= (char *) malloc(size + 1);
+  memcpy(formatString, target, size);
+  formatString[size]= 0;
+  result= XInternAtom(stDisplay, formatString, False);
+  free(formatString);
+  return result;
+}
+
+
 /* Dirty hook to write clipboard.
  * It's just for prototype purpose.
  */
-void clipboardWrite(char * data, size_t length, Atom target)
+void clipboardWrite(char * data, size_t ndata, char * target, size_t ntarget)
 
 {
-  if (allocateSelectionBuffer(length))
+  if (allocateSelectionBuffer(ndata))
     {
-      memcpy((void *)stPrimarySelection, data, length);
-      stPrimarySelection[length]= '\0';
-      outputTarget= target;
+      memcpy((void *)stPrimarySelection, data, ndata);
+      stPrimarySelection[ndata]= '\0';
+      outputTarget= formatStringToAtom(target, ntarget);
       claimSelection();
     }
 }

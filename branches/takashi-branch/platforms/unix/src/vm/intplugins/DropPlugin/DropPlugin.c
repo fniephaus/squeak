@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(31 May 2007 5:11:07 pm) */
+/* Automatically generated from Squeak on an Array(7 June 2007 2:22:46 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -43,13 +43,14 @@ EXPORT(sqInt) initialiseModule(void);
 #pragma export off
 static sqInt msg(char * s);
 #pragma export on
-EXPORT(sqInt) primitiveDragTrigger(void);
 EXPORT(sqInt) primitiveDropRequestFileHandle(void);
 EXPORT(sqInt) primitiveDropRequestFileName(void);
+EXPORT(sqInt) primitiveTriggerData(void);
 EXPORT(sqInt) setFileAccessCallback(int address);
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 EXPORT(sqInt) shutdownModule(void);
 #pragma export off
+static sqInt sqAssert(sqInt aBool);
 /*** Variables ***/
 
 #ifdef SQUEAK_BUILTIN_PLUGIN
@@ -58,9 +59,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DropPlugin 31 May 2007 (i)"
+	"DropPlugin 7 June 2007 (i)"
 #else
-	"DropPlugin 31 May 2007 (e)"
+	"DropPlugin 7 June 2007 (e)"
 #endif
 ;
 
@@ -94,18 +95,12 @@ static sqInt msg(char * s) {
 	fprintf(stderr, "\n%s: %s", moduleName, s);
 }
 
-EXPORT(sqInt) primitiveDragTrigger(void) {
-	sqDragTrigger();
-	interpreterProxy->pop(1);
-	return interpreterProxy->pushInteger(42);
-}
-
 
 /*	Note: File handle creation needs to be handled by specific support code explicitly bypassing the plugin file sand box. */
 
 EXPORT(sqInt) primitiveDropRequestFileHandle(void) {
-    sqInt handleOop;
-    sqInt dropIndex;
+	sqInt handleOop;
+	sqInt dropIndex;
 
 	if (!((interpreterProxy->methodArgumentCount()) == 1)) {
 		return interpreterProxy->primitiveFail();
@@ -125,12 +120,12 @@ EXPORT(sqInt) primitiveDropRequestFileHandle(void) {
 /*	Note: File handle creation needs to be handled by specific support code explicitly bypassing the plugin file sand box. */
 
 EXPORT(sqInt) primitiveDropRequestFileName(void) {
-    sqInt nameOop;
-    sqInt i;
-    char * dropName;
-    sqInt nameLength;
-    sqInt dropIndex;
-    char * namePtr;
+	sqInt nameOop;
+	sqInt i;
+	char * dropName;
+	sqInt nameLength;
+	sqInt dropIndex;
+	char * namePtr;
 
 	if (!((interpreterProxy->methodArgumentCount()) == 1)) {
 		return interpreterProxy->primitiveFail();
@@ -153,6 +148,29 @@ EXPORT(sqInt) primitiveDropRequestFileName(void) {
 	interpreterProxy->push(nameOop);
 }
 
+EXPORT(sqInt) primitiveTriggerData(void) {
+	sqInt dataLength;
+	sqInt formatLength;
+	char *aByteArray;
+	char *aFormat;
+
+	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(1)));
+	aByteArray = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(1))));
+	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
+	aFormat = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	dataLength = interpreterProxy->slotSizeOf(((sqInt)(long)(aByteArray) - 4));
+	formatLength = interpreterProxy->slotSizeOf(((sqInt)(long)(aFormat) - 4));
+	sqDragTriggerData(aByteArray, dataLength, aFormat, formatLength);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(2);
+	return null;
+}
+
 EXPORT(sqInt) setFileAccessCallback(int address) {
 	return sqSecFileAccessCallback((void *) address);
 }
@@ -161,7 +179,7 @@ EXPORT(sqInt) setFileAccessCallback(int address) {
 /*	Note: This is coded so that is can be run from Squeak. */
 
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
-    sqInt ok;
+	sqInt ok;
 
 	interpreterProxy = anInterpreter;
 	ok = interpreterProxy->majorVersion() == VM_PROXY_MAJOR;
@@ -176,6 +194,10 @@ EXPORT(sqInt) shutdownModule(void) {
 	return dropShutdown();
 }
 
+static sqInt sqAssert(sqInt aBool) {
+	/* missing DebugCode */;
+}
+
 
 #ifdef SQUEAK_BUILTIN_PLUGIN
 
@@ -183,7 +205,7 @@ EXPORT(sqInt) shutdownModule(void) {
 void* DropPlugin_exports[][3] = {
 	{"DropPlugin", "primitiveDropRequestFileName", (void*)primitiveDropRequestFileName},
 	{"DropPlugin", "shutdownModule", (void*)shutdownModule},
-	{"DropPlugin", "primitiveDragTrigger", (void*)primitiveDragTrigger},
+	{"DropPlugin", "primitiveTriggerData", (void*)primitiveTriggerData},
 	{"DropPlugin", "getModuleName", (void*)getModuleName},
 	{"DropPlugin", "setFileAccessCallback", (void*)setFileAccessCallback},
 	{"DropPlugin", "setInterpreter", (void*)setInterpreter},

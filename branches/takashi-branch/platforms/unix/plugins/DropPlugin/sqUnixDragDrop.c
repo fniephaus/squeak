@@ -78,9 +78,9 @@ int dropRequestFileHandle(int dropIndex)
   return interpreterProxy->nilObject();
 }
 
-void sqDragTrigger()
+void sqDragTriggerData(char * data, int dataLength, char * aFormat, int formatLength)
 {
-  dndTrigger();
+  dndTriggerData(data, dataLength, aFormat, formatLength);
 }
 
 int  sqSecFileAccessCallback(void *callback)		 { return 0; }

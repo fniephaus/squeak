@@ -113,6 +113,9 @@ enum XdndState {
 
 static enum XdndState xdndState= XdndStateIdle;
 
+static char * xdndOutBuffer= NULL;
+static size_t xdndOutBufferSize= 0;
+static Atom   xdndOutBufferTarget= 0;
 
 #define xdndEnter_sourceWindow(evt)		( (evt)->data.l[0])
 #define xdndEnter_version(evt)			( (evt)->data.l[1] >> 24)
@@ -142,7 +145,7 @@ static enum XdndState xdndState= XdndStateIdle;
 # define dprintf(ARGS) do { } while (0)
 #endif
 
-/* Functio Prototypes */
+/* Function Prototypes */
 void updateInputTargets(Atom * newTargets, int targetSize);
 void getMousePosition(void);
 void destroyInputTargets();
@@ -298,9 +301,9 @@ static void sendEnter(Window target, Window source)
   long data[5] = {0, 0, 0, 0, 0};
   data[1] |= 0x0UL; /* just three data types */
   data[1] |= XdndVersion << 24; /* version num */
-  data[2]= atom("STRING");
-  data[3]= atom("text/plain");
-  data[4]= atom("UTF8_STRING");
+  data[2]= xdndOutBufferTarget;
+  data[3]= 0;
+  data[4]= 0;
   sendClientMessage(data, source, target, XdndEnter);
 }
 
@@ -346,7 +349,9 @@ static enum XdndState onDndOutMotion(enum XdndState state, XMotionEvent * evt)
       && (XdndStateOutAccepted != state)) return state;
 
   currentWindow= dndAwareWindow(evt->root, evt->root, &version_return);
-  if ((XdndVersion > version_return) || (None == currentWindow))
+  if ((XdndVersion > version_return)
+      || (None == currentWindow)
+      || (DndWindow == currentWindow))
     {
       DndOutTarget= None;
       return XdndStateOutTracking;
@@ -407,6 +412,14 @@ static void processString(XSelectionRequestEvent * req, Atom targetProperty)
 		  strlen(source));
 }
 
+static void dndOutSelectionSend(XSelectionRequestEvent * req, Atom targetProperty)
+{
+  XChangeProperty(req->display, req->requestor,
+		  targetProperty, xdndOutBufferTarget,
+		  8, PropModeReplace,
+		  (unsigned char *) xdndOutBuffer,
+		  xdndOutBufferSize);
+}
 
 static enum XdndState onDndOutSelectionRequest(enum XdndState state, XSelectionRequestEvent * req)
 {
@@ -420,7 +433,7 @@ static enum XdndState onDndOutSelectionRequest(enum XdndState state, XSelectionR
       && (XdndStateOutAccepted != state))
     {
       printf("%i is not expected in SelectionRequest\n", state);
-      abort();
+      return state;
     }
   
   res->type= SelectionNotify;
@@ -432,7 +445,8 @@ static enum XdndState onDndOutSelectionRequest(enum XdndState state, XSelectionR
   res->send_event= True;
   res->property= targetProperty; /* override later if error */
 
-  if (atom("STRING") == req->target)           processString(req, targetProperty);
+  printf("SelectionRequest %s from: 0x%lx.\n", XGetAtomName(stDisplay, req->target), req->requestor);
+  if (xdndOutBufferTarget == req->target)dndOutSelectionSend(req, targetProperty);
   else if (atom("STRING") == req->target)      processString(req, targetProperty);
   else if (atom("UTF8_STRING") == req->target) processString(req, targetProperty);
   else if (atom("text/plain") == req->target)  processString(req, targetProperty);
@@ -489,8 +503,8 @@ static void dndOutHandleEvent(XEvent * evt)
   switch(evt->type)
     {
     case ButtonPress:
-      xdndState= onDndOutPress(xdndState, &evt->xbutton);
-      break;
+/*       xdndState= onDndOutPress(xdndState, &evt->xbutton); */
+/*       break; */
     case MotionNotify:
       xdndState= onDndOutMotion(xdndState, &evt->xmotion);
       break;
@@ -508,14 +522,27 @@ static void dndOutHandleEvent(XEvent * evt)
 }
 
 
-static sqInt display_dndTrigger()
+static sqInt display_dndTriggerData(char * data, int ndata, char * target, int ntarget)
 {
-  /* XEvent is not needed in theory here, so I'll remove later. */
-  XEvent evt;
-  evt.type= ButtonPress;
-  dndOutHandleEvent(&evt);
+  if (ndata > 0)
+    {
+      if (0 != xdndOutBufferSize)
+	{
+	  free(xdndOutBuffer);
+	  xdndOutBufferSize= 0;
+	}
+      xdndOutBuffer= xmalloc(ndata + 1);
+      memcpy(xdndOutBuffer, data, ndata);
+      xdndOutBufferSize= ndata;
+      xdndOutBufferTarget= formatStringToAtom(target, ntarget);
+      data[ndata]= '0';
+/*       printf("data=%s, target=%s\n", data, target); */
+    }
+  xdndState= onDndOutPress(xdndState, NULL); 
+
   return 1;
 }
+
 
 static void dndGetTypeList(XClientMessageEvent *evt)
 {

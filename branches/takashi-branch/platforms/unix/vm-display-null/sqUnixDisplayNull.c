@@ -116,7 +116,7 @@ static sqInt display_primitivePluginRequestFileHandle(void)	{ return primitiveFa
 static sqInt display_primitivePluginDestroyRequest(void)	{ return primitiveFail(); }
 static sqInt display_primitivePluginRequestState(void)		{ return primitiveFail(); }
 
-static sqInt display_dndTrigger() { return 0; }
+static sqInt display_dndTriggerData(char * data, int dataLength, char * aFormat, int formatLength) { return 0; }
 
 SqDisplayDefine(null);
 

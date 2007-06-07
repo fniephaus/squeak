@@ -10,4 +10,4 @@ int dropRequestFileHandle(int dropIndex); /* return READ-ONLY file handle OOP or
 int sqSecFileAccessCallback(void *);
 void sqSetNumberOfDropFiles(int numberOfFiles);
 void sqSetFileInformation(int dropIndex, void *dropFile);
-void sqDragTrigger();
+void sqDragTriggerData(char * aByteArray, int dataLength, char * aFormat, int formatLength);
