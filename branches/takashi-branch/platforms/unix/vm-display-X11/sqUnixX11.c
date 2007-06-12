@@ -662,7 +662,7 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 
       xError= XChangeProperty(requestEv->display, requestEv->requestor,
                               targetProperty, XA_ATOM,
-                              32, PropModeReplace, (unsigned char *)targets, sizeof(targets) / sizeof(Atom));
+                              32, PropModeReplace, (unsigned char *)targets, targetsSize);
     }
   else if (xaCompoundText == requestEv->target)
     {
