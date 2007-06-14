@@ -153,7 +153,7 @@ void sqPasteboardPutItemFlavordatalengthformatTypeformatLength ( sqInt inPastebo
 }
 
 
-/* Return content in format at inputSelection. */
+/* Read the clipboard */
 int sqPasteboardCopyItemFlavorDataformatformatLength (sqInt inPasteboard, char* format, int formatLength)
 {
   char * formatString;

@@ -1066,9 +1066,9 @@ void getSelectionIncr(SelectionChunk * chunk, Window requestor, Atom property)
   } while (size > 0);
 }
 
-/* Get selection data from the target in the selection.
- * Return NULL if there is no selection data.
- * Caller must free the return data.
+/* Read selection data from the target in the selection,
+ * or chunk of zero length if unavailable.
+ * Caller must free the returned data with destroySelectionChunk().
  */
 void getSelectionChunk(SelectionChunk * chunk, Atom selection, Atom target)
 {
@@ -1167,19 +1167,33 @@ static Atom formatStringToAtom(char * target, size_t size)
 }
 
 
+/* Prepare to Write data for the selection
+ * selectionAtom : None (CLIPBOARD and PRIMARY), or XdndSelection
+ * type : None (various string), or target type. ('image/png' etc.)
+ * data : data
+ * ndata : size of the data.
+ * selectionAtom : 0 if XGetSelectionOwner is needed
+ */
+static void writeSelection(Atom selectionAtom, Atom type, char * data, size_t ndata, int selectionNeeded)
+{
+  if (allocateSelectionBuffer(ndata))
+    {
+      memcpy((void *) stPrimarySelection, data, ndata);
+      stPrimarySelection[ndata]= '\0';
+      outputTarget= type;
+      if (selectionNeeded)
+	claimSelection();
+    }
+}
+
+
 /* Dirty hook to write clipboard.
  * It's just for prototype purpose.
  */
 void clipboardWrite(char * data, size_t ndata, char * target, size_t ntarget)
-
 {
-  if (allocateSelectionBuffer(ndata))
-    {
-      memcpy((void *)stPrimarySelection, data, ndata);
-      stPrimarySelection[ndata]= '\0';
-      outputTarget= formatStringToAtom(target, ntarget);
-      claimSelection();
-    }
+  Atom type= formatStringToAtom(target, ntarget);
+  writeSelection(None, type, data, ndata, 1);
 }
 
 static sqInt display_clipboardSize(void)
@@ -1190,12 +1204,7 @@ static sqInt display_clipboardSize(void)
 
 static sqInt display_clipboardWriteFromAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex)
 {
-  if (allocateSelectionBuffer(count))
-    {
-      memcpy((void *)stPrimarySelection, pointerForOop(byteArrayIndex + startIndex), count);
-      stPrimarySelection[count]= '\0';
-      claimSelection();
-    }
+  writeSelection(None, None, pointerForOop(byteArrayIndex + startIndex), count, 1);
   return 0;
 }
 
@@ -1708,7 +1717,8 @@ static void handleEvent(XEvent *evt)
 #  endif
 
     }
-  dndOutHandleEvent(evt);
+  if (useXdnd)
+    dndOutHandleEvent(evt);
 
 # undef noteEventState
 }
