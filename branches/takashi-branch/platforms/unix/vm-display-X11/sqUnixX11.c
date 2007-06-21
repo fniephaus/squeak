@@ -168,6 +168,9 @@ XImage		*stImage= 0;		/* ...and it's client-side pixmap */
 char		*stEmptySelection= "";	/* immutable "empty string" value */
 char		*stPrimarySelection;	/* buffer holding selection */
 int		 stPrimarySelectionSize;/* size of buffer holding selection */
+Atom             stSelectionName= None; /* None or XdndSelection */
+Atom             stSelectionType= None; /* choose one type to send selection
+                                           (multiple types should be supported later) */
 int		 stOwnsSelection= 0;	/* true if we own the X selection */
 int		 stOwnsClipboard= 0;	/* true if we own the X clipboard */
 int		 usePrimaryFirst= 0;	/* true if we should look to PRIMARY before CLIPBOARD */
@@ -355,7 +358,6 @@ static int   translateCode(KeySym symbolic);
 Atom inputSelection= None; /* CLIPBOARD or XdndSelection */
 Atom * inputTargets= NULL; /* All targets in clipboard */
 Window inputSelectionSource= 0; /* Source window of last notify */
-Atom outputTarget= None;
 
 typedef struct _SelectionChunk
 {
@@ -632,8 +634,9 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 		      8, PropModeReplace, (const unsigned char *)buf, n);
       free(buf);
     }
-  else if ((outputTarget == requestEv->target) && (outputTarget != None))
+  else if ((stSelectionType == requestEv->target) && (stSelectionType != None))
     {
+      /* In case of other type except string image/png */
       XChangeProperty(requestEv->display, requestEv->requestor,
 		      targetProperty, requestEv->target,
 		      8, PropModeReplace,
@@ -653,10 +656,10 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
       targets[3]= xaUTF8String;
       targets[4]= XA_STRING;
       targets[5]= xaCompoundText;
-      if (outputTarget != None)
+      if (stSelectionType != None)
 	{
 	  targetsSize += 1;
-	  targets[6]= outputTarget;
+	  targets[6]= stSelectionType;
 	}
 
 
@@ -1149,7 +1152,7 @@ void initClipboard(void)
   stPrimarySelectionSize= 0;
   stOwnsSelection= 0;
   stOwnsClipboard= 0;
-  outputTarget= None;
+  stSelectionType= None;
 }
 
 
@@ -1168,19 +1171,22 @@ static Atom formatStringToAtom(char * target, size_t size)
 
 
 /* Prepare to Write data for the selection
- * selectionAtom : None (CLIPBOARD and PRIMARY), or XdndSelection
+ * It puts '\0' at end of the data for safety.
+ *
+ * selectionName : None (CLIPBOARD and PRIMARY), or XdndSelection
  * type : None (various string), or target type. ('image/png' etc.)
  * data : data
  * ndata : size of the data.
  * selectionAtom : 0 if XGetSelectionOwner is needed
  */
-static void writeSelection(Atom selectionAtom, Atom type, char * data, size_t ndata, int selectionNeeded)
+static void writeSelection(Atom selectionName, Atom type, char * data, size_t ndata, int selectionNeeded)
 {
   if (allocateSelectionBuffer(ndata))
     {
       memcpy((void *) stPrimarySelection, data, ndata);
       stPrimarySelection[ndata]= '\0';
-      outputTarget= type;
+      stSelectionName= selectionName;
+      stSelectionType= type;
       if (selectionNeeded)
 	claimSelection();
     }
@@ -1195,6 +1201,7 @@ void clipboardWrite(char * data, size_t ndata, char * target, size_t ntarget)
   Atom type= formatStringToAtom(target, ntarget);
   writeSelection(None, type, data, ndata, 1);
 }
+
 
 static sqInt display_clipboardSize(void)
 {

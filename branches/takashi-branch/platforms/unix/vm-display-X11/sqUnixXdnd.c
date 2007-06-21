@@ -113,10 +113,6 @@ enum XdndState {
 
 static enum XdndState xdndState= XdndStateIdle;
 
-static char * xdndOutBuffer= NULL;
-static size_t xdndOutBufferSize= 0;
-static Atom   xdndOutBufferTarget= 0;
-
 #define xdndEnter_sourceWindow(evt)		( (evt)->data.l[0])
 #define xdndEnter_version(evt)			( (evt)->data.l[1] >> 24)
 #define xdndEnter_hasThreeTypes(evt)		(((evt)->data.l[1] & 0x1UL) == 0)
@@ -231,12 +227,6 @@ static Window DndOutTarget= None;
 #define DndWindow stParent
 
 
-static Atom atom(char * name)
-{
-  return XInternAtom(stDisplay, name, False);
-}
-
-
 /* Find dndAware window under the cursor,
  * return None if not found */
 static Window dndAwareWindow(Window root, Window child, int * version_return)
@@ -301,7 +291,7 @@ static void sendEnter(Window target, Window source)
   long data[5] = {0, 0, 0, 0, 0};
   data[1] |= 0x0UL; /* just three data types */
   data[1] |= XdndVersion << 24; /* version num */
-  data[2]= xdndOutBufferTarget;
+  data[2]= stSelectionType;
   data[3]= 0;
   data[4]= 0;
   sendClientMessage(data, source, target, XdndEnter);
@@ -402,23 +392,13 @@ static enum XdndState onDndOutRelease(enum XdndState state, XButtonEvent * evt)
 }
 
 
-static void processString(XSelectionRequestEvent * req, Atom targetProperty)
-{
-  char * source = "Hello,World!";
-  XChangeProperty(req->display, req->requestor,
-		  targetProperty, atom("STRING"),
-		  8, PropModeReplace,
-		  (unsigned char *) source,
-		  strlen(source));
-}
-
 static void dndOutSelectionSend(XSelectionRequestEvent * req, Atom targetProperty)
 {
   XChangeProperty(req->display, req->requestor,
-		  targetProperty, xdndOutBufferTarget,
+		  targetProperty, stSelectionType,
 		  8, PropModeReplace,
-		  (unsigned char *) xdndOutBuffer,
-		  xdndOutBufferSize);
+		  (unsigned char *) stPrimarySelection,
+		  stPrimarySelectionSize);
 }
 
 static enum XdndState onDndOutSelectionRequest(enum XdndState state, XSelectionRequestEvent * req)
@@ -445,11 +425,10 @@ static enum XdndState onDndOutSelectionRequest(enum XdndState state, XSelectionR
   res->send_event= True;
   res->property= targetProperty; /* override later if error */
 
-  printf("SelectionRequest %s from: 0x%lx.\n", XGetAtomName(stDisplay, req->target), req->requestor);
-  if (xdndOutBufferTarget == req->target)dndOutSelectionSend(req, targetProperty);
-  else if (atom("STRING") == req->target)      processString(req, targetProperty);
-  else if (atom("UTF8_STRING") == req->target) processString(req, targetProperty);
-  else if (atom("text/plain") == req->target)  processString(req, targetProperty);
+  if (stSelectionType == req->target)
+    {
+      dndOutSelectionSend(req, targetProperty);
+    }
   else
     {
       printf("Unsupported target %s.\n", XGetAtomName(stDisplay, req->target));
@@ -500,6 +479,7 @@ static void updateCursor(int isAccepted)
 /* Drag out event handler */
 static void dndOutHandleEvent(XEvent * evt)
 {
+  if (XdndSelection != stSelectionName) return;
   switch(evt->type)
     {
     case ButtonPress:
@@ -524,22 +504,11 @@ static void dndOutHandleEvent(XEvent * evt)
 
 static sqInt display_dndTriggerData(char * data, int ndata, char * target, int ntarget)
 {
-  if (ndata > 0)
-    {
-      if (0 != xdndOutBufferSize)
-	{
-	  free(xdndOutBuffer);
-	  xdndOutBufferSize= 0;
-	}
-      xdndOutBuffer= xmalloc(ndata + 1);
-      memcpy(xdndOutBuffer, data, ndata);
-      xdndOutBufferSize= ndata;
-      xdndOutBufferTarget= formatStringToAtom(target, ntarget);
-      data[ndata]= '0';
-/*       printf("data=%s, target=%s\n", data, target); */
-    }
-  xdndState= onDndOutPress(xdndState, NULL); 
 
+  if (ndata > 0)
+    writeSelection(XdndSelection, formatStringToAtom(target, ntarget), data, ndata, 0);
+
+  xdndState= onDndOutPress(xdndState, NULL); 
   return 1;
 }
 
