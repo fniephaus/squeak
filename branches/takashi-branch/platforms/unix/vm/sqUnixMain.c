@@ -578,9 +578,9 @@ sqInt ioMousePoint(void)		{ return dpy->ioMousePoint(); }
 
 /*** Drag and Drop ***/
 
-sqInt dndTriggerData(char * data, int dataLength, char * aFormat, int formatLength)
+sqInt dndOutStart(char * data, int dataLength, char * aFormat, int formatLength)
 {
-  return dpy->dndTriggerData(data, dataLength, aFormat, formatLength);
+  return dpy->dndOutStart(data, dataLength, aFormat, formatLength);
 }
 
 /*** OpenGL ***/

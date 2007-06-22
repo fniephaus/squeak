@@ -792,9 +792,9 @@ static char *getSelection(void)
 
   if (stOwnsClipboard)
     {
-#     if defined(DEBUG_SELECTIONS)
+#    if defined(DEBUG_SELECTIONS)
       fprintf(stderr, "getSelection: returning own selection\n");
-#     endif
+#    endif
       return stPrimarySelection;
     }
 
@@ -900,9 +900,9 @@ int waitNotify(XEvent * ev, int (*condition) (XEvent * ev))
 	    }
 	  if (status == 0)
 	    {
-#	     if defined(DEBUG_SELECTIONS)
+#           if defined(DEBUG_SELECTIONS)
 	      fprintf(stderr, "getSelection: select() timeout\n");
-#	     endif
+#           endif
 	      if (isConnectedToXServer)
 		XBell(stDisplay, 0);
 	      return 0;
@@ -1093,9 +1093,9 @@ void getSelectionChunk(SelectionChunk * chunk, Atom selection, Atom target)
   /* check if the selection was refused */
   if (None == property)
     {
-#     if defined(DEBUG_SELECTIONS)
+#    if defined(DEBUG_SELECTIONS)
       fprintf(stderr, "getSelection: xselection.property == None\n");
-#     endif
+#    endif
       if (isConnectedToXServer)
 	XBell(stDisplay, 0);
       return;

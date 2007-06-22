@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(7 June 2007 2:22:46 pm) */
+/* Automatically generated from Squeak on an Array(21 June 2007 12:11:17 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -43,9 +43,9 @@ EXPORT(sqInt) initialiseModule(void);
 #pragma export off
 static sqInt msg(char * s);
 #pragma export on
+EXPORT(sqInt) primitiveDndOutStart(void);
 EXPORT(sqInt) primitiveDropRequestFileHandle(void);
 EXPORT(sqInt) primitiveDropRequestFileName(void);
-EXPORT(sqInt) primitiveTriggerData(void);
 EXPORT(sqInt) setFileAccessCallback(int address);
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 EXPORT(sqInt) shutdownModule(void);
@@ -59,9 +59,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DropPlugin 7 June 2007 (i)"
+	"DropPlugin 21 June 2007 (i)"
 #else
-	"DropPlugin 7 June 2007 (e)"
+	"DropPlugin 21 June 2007 (e)"
 #endif
 ;
 
@@ -93,6 +93,29 @@ EXPORT(sqInt) initialiseModule(void) {
 
 static sqInt msg(char * s) {
 	fprintf(stderr, "\n%s: %s", moduleName, s);
+}
+
+EXPORT(sqInt) primitiveDndOutStart(void) {
+	sqInt dataLength;
+	sqInt formatLength;
+	char *aByteArray;
+	char *aFormat;
+
+	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(1)));
+	aByteArray = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(1))));
+	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
+	aFormat = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	dataLength = interpreterProxy->slotSizeOf(((sqInt)(long)(aByteArray) - 4));
+	formatLength = interpreterProxy->slotSizeOf(((sqInt)(long)(aFormat) - 4));
+	sqDndOutStart(aByteArray, dataLength, aFormat, formatLength);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(2);
+	return null;
 }
 
 
@@ -148,29 +171,6 @@ EXPORT(sqInt) primitiveDropRequestFileName(void) {
 	interpreterProxy->push(nameOop);
 }
 
-EXPORT(sqInt) primitiveTriggerData(void) {
-	sqInt dataLength;
-	sqInt formatLength;
-	char *aByteArray;
-	char *aFormat;
-
-	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(1)));
-	aByteArray = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(1))));
-	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
-	aFormat = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	dataLength = interpreterProxy->slotSizeOf(((sqInt)(long)(aByteArray) - 4));
-	formatLength = interpreterProxy->slotSizeOf(((sqInt)(long)(aFormat) - 4));
-	sqDragTriggerData(aByteArray, dataLength, aFormat, formatLength);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->pop(2);
-	return null;
-}
-
 EXPORT(sqInt) setFileAccessCallback(int address) {
 	return sqSecFileAccessCallback((void *) address);
 }
@@ -205,10 +205,10 @@ static sqInt sqAssert(sqInt aBool) {
 void* DropPlugin_exports[][3] = {
 	{"DropPlugin", "primitiveDropRequestFileName", (void*)primitiveDropRequestFileName},
 	{"DropPlugin", "shutdownModule", (void*)shutdownModule},
-	{"DropPlugin", "primitiveTriggerData", (void*)primitiveTriggerData},
 	{"DropPlugin", "getModuleName", (void*)getModuleName},
-	{"DropPlugin", "setFileAccessCallback", (void*)setFileAccessCallback},
+	{"DropPlugin", "primitiveDndOutStart", (void*)primitiveDndOutStart},
 	{"DropPlugin", "setInterpreter", (void*)setInterpreter},
+	{"DropPlugin", "setFileAccessCallback", (void*)setFileAccessCallback},
 	{"DropPlugin", "initialiseModule", (void*)initialiseModule},
 	{"DropPlugin", "primitiveDropRequestFileHandle", (void*)primitiveDropRequestFileHandle},
 	{NULL, NULL, NULL}

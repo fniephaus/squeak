@@ -502,7 +502,7 @@ static void dndOutHandleEvent(XEvent * evt)
 }
 
 
-static sqInt display_dndTriggerData(char * data, int ndata, char * target, int ntarget)
+static sqInt display_dndOutStart(char * data, int ndata, char * target, int ntarget)
 {
 
   if (ndata > 0)
