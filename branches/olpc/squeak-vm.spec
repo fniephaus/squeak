@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.9
 %define minor   10
-%define release %{minor}olpc5
+%define release %{minor}olpc6
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -29,6 +29,7 @@ Requires:	/lib/ld-linux.so.2
 Requires:	libogg.so.0
 Requires:	libvorbis.so.0
 Requires:	libspeex.so.1
+Requires:	libdbus-1.so.2
 Provides:	%{name}-%{version}
 
 %description
@@ -59,23 +60,28 @@ done
 %files
 %{prefix}/bin
 %{prefix}/lib/squeak
-%{prefix}/man
+%{prefix}/share
 %{prefix}/doc
 
 %changelog
+* Thu May 17 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-10olpc6: SVN r.1687
+  - add ClipboardExtendedPlugin (tak)
+  - add DBusPlugin (impara, bf)
+  - support keypad keys (bf)
 * Thu Apr 19 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-10olpc5: SVN r.1658
   - enabled Kedama plugin
 * Wed Apr 04 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-10olpc4: SVN r.1652 (moved to OLPC branch)
-  - added ogg plugin
+  - added ogg plugin (tak)
 * Fri Mar 23 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-10olpc3: SVN r.1613 + olpc.patch
-  - big cursor support
-  - faster camera input
+  - big cursor support (bf)
+  - faster camera input (dgd)
 * Wed Nov 09 2006 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-10olpc1: SVN r.1591
-  - work around ALSA SIGIO issue
+  - work around ALSA SIGIO issue (bf)
   - added dgd's camera support (V4L plugin)
 * Wed Nov 09 2006 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-9olpc4: SVN r.1571
