@@ -63,7 +63,7 @@ int sqPasteboardGetItemCount(sqInt inPasteboard)
   char ** types;
   types= clipboardGetTypeNames();
   if (NULL == types) return 0;
-  for (i= 0; NULL != types[i]; i++) XFree(types[i]);
+  for (i= 0; NULL != types[i]; i++) free(types[i]); /* XFree() is better */
   free(types);
   return i;
 }

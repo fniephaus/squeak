@@ -1655,16 +1655,6 @@ static void handleEvent(XEvent *evt)
 	}
       break;
 
-    case SelectionNotify:
-      if (useXdnd)
-	dndHandleSelectionNotify(&evt->xselection);
-      break;
-
-    case ClientMessage:
-      if (useXdnd)
-	dndHandleClientMessage(&evt->xclient);
-      break;
-
     case Expose:
       {
 	XExposeEvent *ex= &evt->xexpose;
@@ -1735,7 +1725,7 @@ static void handleEvent(XEvent *evt)
 
     }
   if (useXdnd)
-    dndOutHandleEvent(evt);
+    dndHandleEvent(evt);
 
 # undef noteEventState
 }

@@ -322,7 +322,7 @@ static void sendLeave(Window target, Window source)
 }
 
 
-static enum XdndState onDndOutPress(enum XdndState state, XButtonEvent * evt)
+static enum XdndState dndOutPress(enum XdndState state, XButtonEvent * evt)
 {
   if (XdndStateIdle != state) return state;
   XSetSelectionOwner(stDisplay, XdndSelection, DndWindow, CurrentTime);
@@ -330,7 +330,7 @@ static enum XdndState onDndOutPress(enum XdndState state, XButtonEvent * evt)
 }
 
 
-static enum XdndState onDndOutMotion(enum XdndState state, XMotionEvent * evt)
+static enum XdndState dndOutMotion(enum XdndState state, XMotionEvent * evt)
 {
   Window currentWindow= None;
   int version_return= 0;
@@ -359,7 +359,7 @@ static enum XdndState onDndOutMotion(enum XdndState state, XMotionEvent * evt)
 }
 
 
-static enum XdndState onDndOutStatus(enum XdndState state, XClientMessageEvent * evt)
+static enum XdndState dndOutStatus(enum XdndState state, XClientMessageEvent * evt)
 {
   long * ldata= evt->data.l;
   if ((XdndStateOutTracking != state)
@@ -379,7 +379,7 @@ static enum XdndState onDndOutStatus(enum XdndState state, XClientMessageEvent *
 }
 
 
-static enum XdndState onDndOutRelease(enum XdndState state, XButtonEvent * evt)
+static enum XdndState dndOutRelease(enum XdndState state, XButtonEvent * evt)
 {
   if (XdndStateOutAccepted == state)
     {
@@ -401,7 +401,7 @@ static void dndOutSelectionSend(XSelectionRequestEvent * req, Atom targetPropert
 		  stPrimarySelectionSize);
 }
 
-static enum XdndState onDndOutSelectionRequest(enum XdndState state, XSelectionRequestEvent * req)
+static enum XdndState dndOutSelectionRequest(enum XdndState state, XSelectionRequestEvent * req)
 {
   Status xError= 0;
   XEvent notify;
@@ -442,17 +442,17 @@ static enum XdndState onDndOutSelectionRequest(enum XdndState state, XSelectionR
 }
 
 
-static enum XdndState onDndOutFinished(enum XdndState state, XClientMessageEvent * evt)
+static enum XdndState dndOutFinished(enum XdndState state, XClientMessageEvent * evt)
 {
   DndOutTarget= None;
   return XdndStateIdle;
 }
 
 
-static enum XdndState onDndOutClientMessage(enum XdndState state, XClientMessageEvent * evt)
+static enum XdndState dndOutClientMessage(enum XdndState state, XClientMessageEvent * evt)
 {
-  if (XdndStatus == evt->message_type)        return onDndOutStatus(state, evt);
-  else if (XdndFinished == evt->message_type) return onDndOutFinished(state, evt);
+  if      (XdndStatus == evt->message_type)   return dndOutStatus(state, evt);
+  else if (XdndFinished == evt->message_type) return dndOutFinished(state, evt);
   else                                        return state;
   
 }
@@ -475,38 +475,12 @@ static void updateCursor(int isAccepted)
 }
 
 
-/* Drag out event handler */
-static void dndOutHandleEvent(XEvent * evt)
-{
-  if (XdndSelection != stSelectionName) return;
-  switch(evt->type)
-    {
-    case ButtonPress:
-/*       xdndState= onDndOutPress(xdndState, &evt->xbutton); */
-/*       break; */
-    case MotionNotify:
-      xdndState= onDndOutMotion(xdndState, &evt->xmotion);
-      break;
-    case ClientMessage:
-      xdndState= onDndOutClientMessage(xdndState, &evt->xclient);
-      break;
-    case ButtonRelease:
-      xdndState= onDndOutRelease(xdndState, &evt->xbutton);
-      break;
-    case SelectionRequest:
-      xdndState= onDndOutSelectionRequest(xdndState, &evt->xselectionrequest);
-      break;
-    }
-  updateCursor(XdndStateOutAccepted == xdndState);
-}
-
-
 static sqInt display_dndOutStart(char * data, int ndata, char * typeName, int ntypeName)
 {
   if (ndata > 0)
     display_clipboardWriteWithType(data, ndata, typeName, ntypeName, 1, 0);
 
-  xdndState= onDndOutPress(xdndState, NULL); 
+  xdndState= dndOutPress(xdndState, NULL); 
   return 1;
 }
 
@@ -803,7 +777,7 @@ static void dndGetSelection(Window owner, Atom property)
 }
 
 
-void finishDrop ()
+static void finishDrop ()
 {
   dndSendFinished();
   dndLeave();
@@ -816,7 +790,7 @@ static void dndReadSelectionDestroy()
   finishDrop();
 }
 
-int dndHandleSelectionNotify(XSelectionEvent *evt)
+static int dndInSelectionNotify(XSelectionEvent *evt)
 {
   if (evt->property == XdndSelectionAtom)
     {
@@ -828,7 +802,7 @@ int dndHandleSelectionNotify(XSelectionEvent *evt)
 }
 
 
-int dndHandleClientMessage(XClientMessageEvent *evt)
+static int dndInClientMessage(XClientMessageEvent *evt)
 {
   int handled= 1;
   Atom type= evt->message_type;
@@ -841,7 +815,39 @@ int dndHandleClientMessage(XClientMessageEvent *evt)
 }
 
 
-void dndInitialise(void)
+/* Dnd event handler */
+/* TODO: this function should be a state machine for xdndState. */
+static void dndHandleEvent(XEvent * evt)
+{
+  if (XdndSelection != stSelectionName) return;
+  switch(evt->type)
+    {
+    case ButtonPress:
+/*       xdndState= dndOutPress(xdndState, &evt->xbutton); */
+/*       break; */
+    case MotionNotify:
+      xdndState= dndOutMotion(xdndState, &evt->xmotion);
+      break;
+    case ClientMessage:
+      xdndState= dndOutClientMessage(xdndState, &evt->xclient);
+      dndInClientMessage(&evt->xclient);
+      break;
+    case ButtonRelease:
+      xdndState= dndOutRelease(xdndState, &evt->xbutton);
+      break;
+    case SelectionRequest:
+      xdndState= dndOutSelectionRequest(xdndState, &evt->xselectionrequest);
+      break;
+    case SelectionNotify:
+      dndInSelectionNotify(&evt->xselection);
+      break;
+
+    }
+  updateCursor(XdndStateOutAccepted == xdndState);
+}
+
+
+static void dndInitialise(void)
 {
   XdndAware=		 XInternAtom(stDisplay, "XdndAware", False);
   XdndSelection=	 XInternAtom(stDisplay, "XdndSelection", False);
