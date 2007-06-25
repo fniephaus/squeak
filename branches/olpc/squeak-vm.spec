@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.9
 %define minor   10
-%define release %{minor}olpc6
+%define release %{minor}olpc7
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -29,7 +29,7 @@ Requires:	/lib/ld-linux.so.2
 Requires:	libogg.so.0
 Requires:	libvorbis.so.0
 Requires:	libspeex.so.1
-Requires:	libdbus-1.so.2
+Requires:	libdbus-1.so.3
 Provides:	%{name}-%{version}
 
 %description
@@ -45,7 +45,7 @@ to install it before you install the Etoys activity.
 %build
 mkdir bld
 cd bld
-../platforms/unix/config/configure --prefix=%{prefix}
+../platforms/unix/config/configure --without-gl --prefix=%{prefix}
 make ROOT=%{root}
 
 %install
@@ -64,6 +64,10 @@ done
 %{prefix}/doc
 
 %changelog
+* Fri Jun 22 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - move build env to Fedora 7
+  - require libdbus-1.so.3
+  - configure without OpenGL (rather than hiding GL libs)
 * Thu May 17 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-10olpc6: SVN r.1687
   - add ClipboardExtendedPlugin (tak)
