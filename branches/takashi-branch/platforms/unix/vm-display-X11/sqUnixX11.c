@@ -179,7 +179,7 @@ XColor		 stColorBlack;		/* black pixel value in stColormap */
 XColor		 stColorWhite;		/* white pixel value in stColormap */
 int		 savedWindowOrigin= -1;	/* initial origin of window */
 
-#define		 SELECTION_ATOM_COUNT  9
+#define		 SELECTION_ATOM_COUNT  10
 /* http://www.freedesktop.org/standards/clipboards-spec/clipboards.txt */
 Atom		 selectionAtoms[SELECTION_ATOM_COUNT];
 char		*selectionAtomNames[SELECTION_ATOM_COUNT]= {
@@ -201,6 +201,8 @@ char		*selectionAtomNames[SELECTION_ATOM_COUNT]= {
 #define selectionAtom   selectionAtoms[7]
 	 "INCR",
 #define xaINCR   selectionAtoms[8]
+	 "XdndSelection",
+#define xaXdndSelection selectionAtoms[9]
 };
 
 #if defined(USE_XSHM)
@@ -351,13 +353,9 @@ static void  redrawDisplay(int l, int r, int t, int b);
 
 /* Selection functions */
 static int   sendSelection(XSelectionRequestEvent *requestEv, int isMultiple);
-static char *getSelection(void);
+static void getSelection(void);
 static char *getSelectionFrom(Atom source);
 static int   translateCode(KeySym symbolic);
-
-Atom inputSelection= None; /* CLIPBOARD or XdndSelection */
-Atom * inputTargets= NULL; /* All targets in clipboard */
-Window inputSelectionSource= 0; /* Source window of last notify */
 
 typedef struct _SelectionChunk
 {
@@ -367,14 +365,8 @@ typedef struct _SelectionChunk
   struct _SelectionChunk * last;
 } SelectionChunk;
 
-SelectionChunk * newSelectionChunk();
-void destroySelectionChunk(SelectionChunk * chunk);
-void addSelectionChunk(SelectionChunk * chunk,
-		       unsigned char * src, size_t size);
-size_t sizeSelectionChunk(SelectionChunk * chunk);
-void copySelectionChunk(SelectionChunk * chunk, char * dest);
-void getSelectionChunk(SelectionChunk * chunk, Atom selection, Atom target);
-char * getSelectionData(Atom selection, Atom target, size_t * bytes);
+
+static char * getSelectionData(Atom selection, Atom target, size_t * bytes);
 
 #if defined(USE_XSHM)
 int    XShmGetEventBase(Display *);
@@ -569,23 +561,21 @@ static void printAtomName(Atom atom)
 
 static int allocateSelectionBuffer(int count)
 {
-  if (count + 1 > stPrimarySelectionSize)
+/*   if (count + 1 < stPrimarySelectionSize) return 1; */
+  if (stPrimarySelection != stEmptySelection)
     {
-      if (stPrimarySelection != stEmptySelection)
-	{
-	  free(stPrimarySelection);
-	  stPrimarySelection= stEmptySelection;
-	  stPrimarySelectionSize= 0;
-	}
-      if (!(stPrimarySelection= (char *)malloc(count + 1)))
-	{
-	  fprintf(stderr, "failed to allocate X selection buffer\n");
-	  stPrimarySelection= stEmptySelection;
- 	  stPrimarySelectionSize= 0;
-	  return 0;
-	}
-      stPrimarySelectionSize= count;
+      free(stPrimarySelection);
+      stPrimarySelection= stEmptySelection;
+      stPrimarySelectionSize= 0;
     }
+  if (!(stPrimarySelection= (char *)malloc(count + 1)))
+    {
+      fprintf(stderr, "failed to allocate X selection buffer\n");
+      stPrimarySelection= stEmptySelection;
+      stPrimarySelectionSize= 0;
+      return 0;
+    }
+  stPrimarySelectionSize= count;
   return 1;
 }
 
@@ -786,7 +776,7 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 }
 
 
-static char *getSelection(void)
+static void getSelection(void)
 {
   char *data;
 
@@ -795,7 +785,7 @@ static char *getSelection(void)
 #    if defined(DEBUG_SELECTIONS)
       fprintf(stderr, "getSelection: returning own selection\n");
 #    endif
-      return stPrimarySelection;
+      return;
     }
 
   if (usePrimaryFirst)
@@ -810,11 +800,10 @@ static char *getSelection(void)
       if (stEmptySelection == data)
 	data= getSelectionFrom(XA_PRIMARY);   /* then try PRIMARY */
     }
-
-  return data;
 }
 
 
+/* Set a string from current selection to stPrimarySelection. */
 static char *getSelectionFrom(Atom source)
 {
   char * data= NULL;
@@ -850,24 +839,6 @@ static char *getSelectionFrom(Atom source)
 
   XFree((void *)data);
   return stPrimarySelection;
-}
-
-void destroyInputTargets()
-{
-  if (inputTargets == NULL)
-    return;
-  free(inputTargets);
-  inputTargets= NULL;
-}
-
-void updateInputTargets(Atom * newTargets, int targetSize)
-{
-  int i;
-  destroyInputTargets();
-  inputTargets= (Atom *)calloc(targetSize + 1, sizeof(Atom));
-  for (i= 0; i < targetSize;  ++i)
-    inputTargets[i]= newTargets[i];
-  inputTargets[targetSize]= None;
 }
 
 
@@ -957,7 +928,7 @@ int waitPropertyNotify(XEvent * ev)
  * It is useful to handle partial data transfar with XGetWindowProperty.
  */
 
-SelectionChunk * newSelectionChunk()
+static SelectionChunk * newSelectionChunk()
 {
   SelectionChunk * chunk= malloc(sizeof(SelectionChunk));
   chunk->data= NULL;
@@ -967,7 +938,7 @@ SelectionChunk * newSelectionChunk()
   return chunk;
 }
 
-void destroySelectionChunk(SelectionChunk * chunk)
+static void destroySelectionChunk(SelectionChunk * chunk)
 {
   SelectionChunk * i;
   for (i= chunk; i != NULL;) {
@@ -978,7 +949,7 @@ void destroySelectionChunk(SelectionChunk * chunk)
   }
 }
 
-void addSelectionChunk(SelectionChunk * chunk,
+static void addSelectionChunk(SelectionChunk * chunk,
 		       unsigned char * src, size_t size)
 {
   chunk->last->data= src;
@@ -987,7 +958,7 @@ void addSelectionChunk(SelectionChunk * chunk,
   chunk->last= chunk->last->next;
 }
 
-size_t sizeSelectionChunk(SelectionChunk * chunk)
+static size_t sizeSelectionChunk(SelectionChunk * chunk)
 {
   size_t totalSize= 0;
   SelectionChunk * i;
@@ -996,7 +967,7 @@ size_t sizeSelectionChunk(SelectionChunk * chunk)
   return totalSize;
 }
 
-void copySelectionChunk(SelectionChunk * chunk, char * dest)
+static void copySelectionChunk(SelectionChunk * chunk, char * dest)
 {
   SelectionChunk * i;
   char * j= dest;
@@ -1004,25 +975,9 @@ void copySelectionChunk(SelectionChunk * chunk, char * dest)
     memcpy(j, i->data, i->size);
 }
 
-char * _copySelectionChunk(SelectionChunk * chunk, size_t * size)
-{
-  SelectionChunk * i;
-  char * data;
-  char * j;
-  size_t totalSize= 0;
-
-  for (i= chunk; i != NULL; i= i->next)
-    totalSize += i->size;
-
-  j= data= malloc(totalSize);
-  for (i= chunk; i != NULL; j += i->size, i= i->next)
-    memcpy(j, i->data, i->size);
-  *size= totalSize;
-  return data;
-}
 
 /* get the value of the selection from the containing property */
-size_t getSelectionProperty(SelectionChunk * chunk,
+static size_t getSelectionProperty(SelectionChunk * chunk,
 			    Window requestor, Atom property,
 			    Atom * actualType)
 {
@@ -1056,7 +1011,7 @@ size_t getSelectionProperty(SelectionChunk * chunk,
   return size;
 }
 
-void getSelectionIncr(SelectionChunk * chunk, Window requestor, Atom property)
+static void getSelectionIncr(SelectionChunk * chunk, Window requestor, Atom property)
 {
   XEvent ev;
   size_t size;
@@ -1073,7 +1028,7 @@ void getSelectionIncr(SelectionChunk * chunk, Window requestor, Atom property)
  * or chunk of zero length if unavailable.
  * Caller must free the returned data with destroySelectionChunk().
  */
-void getSelectionChunk(SelectionChunk * chunk, Atom selection, Atom target)
+static void getSelectionChunk(SelectionChunk * chunk, Atom selection, Atom target)
 {
   Time	  timestamp= getXTimestamp();
   XEvent evt;
@@ -1114,7 +1069,7 @@ void getSelectionChunk(SelectionChunk * chunk, Atom selection, Atom target)
  * Return NULL if there is no selection data.
  * Caller must free the return data.
  */
-char * getSelectionData(Atom selection, Atom target, size_t * bytes)
+static char * getSelectionData(Atom selection, Atom target, size_t * bytes)
 {
   char * data;
   SelectionChunk * chunk= newSelectionChunk();
@@ -1156,7 +1111,7 @@ void initClipboard(void)
 }
 
 
-static Atom formatStringToAtom(char * target, size_t size)
+static Atom stringToAtom(char * target, size_t size)
 {
   char * formatString;
   Atom result;
@@ -1198,14 +1153,15 @@ static void writeSelection(Atom selectionName, Atom type, char * data, size_t nd
  */
 void clipboardWrite(char * data, size_t ndata, char * target, size_t ntarget)
 {
-  Atom type= formatStringToAtom(target, ntarget);
+  Atom type= stringToAtom(target, ntarget);
   writeSelection(None, type, data, ndata, 1);
 }
 
 
 static sqInt display_clipboardSize(void)
 {
-  return strlen(getSelection());
+  getSelection();
+  return stPrimarySelectionSize;
 }
 
 
@@ -1215,22 +1171,81 @@ static sqInt display_clipboardWriteFromAt(sqInt count, sqInt byteArrayIndex, sqI
   return 0;
 }
 
-/* transfer the X selection into the given byte array; optimise local requests */
+/* Transfer the X selection into the given byte array; optimise local requests.
+ * Call clipboardSize() or clipboardSizeWithType() before this. */
 
 static sqInt display_clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex)
 {
   int clipSize;
-  int selectionSize;
 
   if (!isConnectedToXServer)
     return 0;
-  selectionSize= strlen(getSelection());
-  clipSize= min(count, selectionSize);
+  clipSize= min(count, stPrimarySelectionSize);
 #if defined(DEBUG_SELECTIONS)
-  fprintf(stderr, "clipboard read: %d selectionSize %d\n", count, selectionSize);
+  fprintf(stderr, "clipboard read: %d selectionSize %d\n", count, stPrimarySelectionSize);
 #endif
   memcpy(pointerForOop(byteArrayIndex + startIndex), (void *)stPrimarySelection, clipSize);
   return clipSize;
+}
+
+
+static int dndAvailable();
+static void dndGetTargets(Atom ** types, int * count);
+static void dndReadSelectionDestroy();
+
+/* Answer available types (like "image/png") in XdndSelection or CLIPBOARD.
+ * NULL is set after the last element as a sentinel.
+ * You should free() returned array of string.
+ * Answer NULL if error. */
+static char ** display_clipboardGetTypeNames()
+{
+  Atom * targets= NULL;
+  size_t bytes= 0;
+  char ** typeNames= NULL;
+  Status isSuccess= 0;
+  int ntypeNames= 0;
+
+  if (dndAvailable())
+    dndGetTargets(&targets, &ntypeNames);
+  else 
+    {
+      targets= (Atom *) getSelectionData(xaClipboard, xaTargets, &bytes);
+      if (0 == bytes) return NULL;
+      ntypeNames= bytes / sizeof(Atom);
+    }
+
+  typeNames= calloc(sizeof(char *), ntypeNames + 1);
+  isSuccess= XGetAtomNames(stDisplay, targets, ntypeNames, typeNames);
+  
+  if (!isSuccess) return NULL;
+  typeNames[ntypeNames]= NULL;
+  return typeNames;
+}
+
+
+/* Read clipboard associated with the type to stPrimarySelection.
+ * Answer size of the data. */
+static sqInt display_clipboardSizeWithType(char * typeName, int ntypeName)
+{
+  size_t bytes;
+  Atom type;
+  int isDnd= 0;
+  Atom inputSelection;
+  
+  isDnd= dndAvailable();
+  inputSelection= isDnd ? xaXdndSelection : xaClipboard;
+
+  SelectionChunk * chunk= newSelectionChunk();
+  type= stringToAtom(typeName, ntypeName);
+  getSelectionChunk(chunk, inputSelection, type);
+  bytes= sizeSelectionChunk(chunk);
+
+  allocateSelectionBuffer(bytes);
+  copySelectionChunk(chunk, stPrimarySelection);
+  destroySelectionChunk(chunk);
+  if (isDnd) dndReadSelectionDestroy();
+
+  return stPrimarySelectionSize;
 }
 
 

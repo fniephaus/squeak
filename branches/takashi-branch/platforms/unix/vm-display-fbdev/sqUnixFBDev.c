@@ -438,6 +438,9 @@ static sqInt display_primitivePluginDestroyRequest()	{ return primitiveFail(); }
 static sqInt display_primitivePluginRequestState()	{ return primitiveFail(); }
 
 static sqInt display_dndOutStart(char * data, int dataLength, char * aFormat, int formatLength) { return 0; }
+static char ** display_clipboardGetTypeNames() { return NULL; }
+static sqInt display_clipboardSizeWithType(char * typeName, int ntypeName) { return 0; }
+
 
 //----------------------------------------------------------------
 

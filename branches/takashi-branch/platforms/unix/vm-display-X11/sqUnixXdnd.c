@@ -100,6 +100,8 @@ static	Window	  xdndSourceWindow= 0;
 static	int	  xdndWillAccept= 0;
 static	int	  isUrlList= 0;
 
+Atom * inputTargets= NULL; /* All targets in clipboard */
+
 enum XdndState {
   XdndStateIdle,
 
@@ -142,9 +144,7 @@ static enum XdndState xdndState= XdndStateIdle;
 #endif
 
 /* Function Prototypes */
-void updateInputTargets(Atom * newTargets, int targetSize);
 void getMousePosition(void);
-void destroyInputTargets();
 
 static void *xmalloc(size_t size)
 {
@@ -506,16 +506,58 @@ static sqInt display_dndOutStart(char * data, int ndata, char * target, int ntar
 {
 
   if (ndata > 0)
-    writeSelection(XdndSelection, formatStringToAtom(target, ntarget), data, ndata, 0);
+    writeSelection(XdndSelection, stringToAtom(target, ntarget), data, ndata, 0);
 
   xdndState= onDndOutPress(xdndState, NULL); 
   return 1;
 }
 
 
+void destroyInputTargets()
+/* static void destroyInputTargets() */
+{
+  if (inputTargets == NULL)
+    return;
+  free(inputTargets);
+  inputTargets= NULL;
+}
+
+static void updateInputTargets(Atom * newTargets, int targetSize)
+{
+  int i;
+  destroyInputTargets();
+  inputTargets= (Atom *)calloc(targetSize + 1, sizeof(Atom));
+  for (i= 0; i < targetSize;  ++i)
+    inputTargets[i]= newTargets[i];
+  inputTargets[targetSize]= None;
+}
+
+
+/* true if dnd input object is available */
+static int dndAvailable()
+{
+  return useXdnd && (NULL != inputTargets);
+}
+
+
+/* Answer types for dropping object.
+ * types - returned types (it should be copied by client), or NULL if unavailable.
+ * count - number of types.
+ */
+static void dndGetTargets(Atom ** types, int * count)
+{
+  *types= NULL;
+  *count= 0;
+  int i;
+  if (NULL == inputTargets) return;
+  for (i= 0; None != inputTargets[i]; ++i);
+  *count= i;
+  *types= inputTargets;
+}
+
+
 static void dndGetTypeList(XClientMessageEvent *evt)
 {
-  inputSelection= XdndSelection;
   xdndWillAccept= 0;
   isUrlList= 0;
 
@@ -691,7 +733,6 @@ static void dndDrop(XClientMessageEvent *evt)
       return;
     }
   destroyInputTargets();
-  inputSelection= None;
 
   if (xdndSourceWindow != xdndDrop_sourceWindow(evt))
     dprintf((stderr, "dndDrop: wrong source window\n"));
@@ -769,6 +810,12 @@ void finishDrop ()
   dndLeave();
 }
 
+
+static void dndReadSelectionDestroy()
+{
+  destroyInputTargets();
+  finishDrop();
+}
 
 int dndHandleSelectionNotify(XSelectionEvent *evt)
 {

@@ -64,6 +64,8 @@ struct SqDisplay
   sqInt (*primitivePluginDestroyRequest)(void);
   sqInt (*primitivePluginRequestState)(void);
   sqInt (*dndOutStart)(char * data, int dataLength, char * aFormat, int formatLength);
+  char ** (*clipboardGetTypeNames)();
+  sqInt (*clipboardSizeWithType)(char * typeName, int ntypeName);
 };
 
 
@@ -113,7 +115,9 @@ static struct SqDisplay display_##NAME##_itf= {	\
   display_primitivePluginRequestFileHandle,	\
   display_primitivePluginDestroyRequest,	\
   display_primitivePluginRequestState,		\
-  display_dndOutStart				\
+  display_dndOutStart,				\
+  display_clipboardGetTypeNames,			\
+  display_clipboardSizeWithType			\
 }
 
 
