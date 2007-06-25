@@ -183,6 +183,12 @@ static sqInt display_primitivePluginPostURL(void)		{ return primitiveFail(); }
 static sqInt display_primitivePluginRequestFileHandle(void)	{ return primitiveFail(); }
 static sqInt display_primitivePluginDestroyRequest(void)	{ return primitiveFail(); }
 static sqInt display_primitivePluginRequestState(void)		{ return primitiveFail(); }
+static sqInt display_dndOutStart(char * data, int dataLength, char * aFormat, int formatLength) { return 0; }
+static char ** display_clipboardGetTypeNames() { return NULL; }
+static sqInt display_clipboardSizeWithType(char * typeName, int ntypeName) { return 0; }
+static void display_clipboardWriteWithType(char * data, size_t ndata,
+					   char * typeName, size_t ntypeName,
+					   int isDnd, int isClaiming) {}
 
 SqDisplayDefine(custom);	/* name must match that in makeInterface() below */
 

@@ -1132,29 +1132,24 @@ static Atom stringToAtom(char * target, size_t size)
  * type : None (various string), or target type. ('image/png' etc.)
  * data : data
  * ndata : size of the data.
- * selectionAtom : 0 if XGetSelectionOwner is needed
+ * typeName : NULL (various string), or target name. ('image/png' etc.)
+ * ntypeName : length of typeName
+ * isDnd : true if XdndSelection, false if CLIPBOARD or PRIMARY
+ * isClaiming : true if XGetSelectionOwner is needed
  */
-static void writeSelection(Atom selectionName, Atom type, char * data, size_t ndata, int selectionNeeded)
+static void display_clipboardWriteWithType(char * data, size_t ndata,
+					   char * typeName, size_t ntypeName,
+					   int isDnd, int isClaiming)
 {
-  if (allocateSelectionBuffer(ndata))
-    {
-      memcpy((void *) stPrimarySelection, data, ndata);
-      stPrimarySelection[ndata]= '\0';
-      stSelectionName= selectionName;
-      stSelectionType= type;
-      if (selectionNeeded)
-	claimSelection();
-    }
-}
-
-
-/* Dirty hook to write clipboard.
- * It's just for prototype purpose.
- */
-void clipboardWrite(char * data, size_t ndata, char * target, size_t ntarget)
-{
-  Atom type= stringToAtom(target, ntarget);
-  writeSelection(None, type, data, ndata, 1);
+  if (!allocateSelectionBuffer(ndata)) return;
+  
+  Atom type= stringToAtom(typeName, ntypeName);
+  stSelectionName= isDnd ? xaXdndSelection : None;
+  memcpy((void *) stPrimarySelection, data, ndata);
+  stPrimarySelection[ndata]= '\0';
+  stSelectionType= type;
+  if (isClaiming)
+    claimSelection();
 }
 
 
@@ -1164,10 +1159,10 @@ static sqInt display_clipboardSize(void)
   return stPrimarySelectionSize;
 }
 
-
 static sqInt display_clipboardWriteFromAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex)
 {
-  writeSelection(None, None, pointerForOop(byteArrayIndex + startIndex), count, 1);
+  display_clipboardWriteWithType(pointerForOop(byteArrayIndex + startIndex), count,
+			 NULL, 0, 0, 1);
   return 0;
 }
 

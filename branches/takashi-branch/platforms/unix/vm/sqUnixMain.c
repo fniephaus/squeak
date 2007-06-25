@@ -587,6 +587,14 @@ sqInt clipboardSizeWithType(char * typeName, int ntypeName)
   return dpy->clipboardSizeWithType(typeName, ntypeName);
 }
 
+void clipboardWriteWithType(char * data, size_t ndata,
+			    char * typeName, size_t ntypeName,
+			    int isDnd, int isClaiming)
+{
+  dpy->clipboardWriteWithType(data, ndata, typeName, ntypeName, isDnd, isClaiming);
+}
+
+
 
 /*** Drag and Drop ***/
 

@@ -100,7 +100,7 @@ static	Window	  xdndSourceWindow= 0;
 static	int	  xdndWillAccept= 0;
 static	int	  isUrlList= 0;
 
-Atom * inputTargets= NULL; /* All targets in clipboard */
+static Atom * xdndInTypes= NULL; /* All targets in clipboard */
 
 enum XdndState {
   XdndStateIdle,
@@ -449,7 +449,6 @@ static enum XdndState onDndOutFinished(enum XdndState state, XClientMessageEvent
 }
 
 
-/* Client event handling */
 static enum XdndState onDndOutClientMessage(enum XdndState state, XClientMessageEvent * evt)
 {
   if (XdndStatus == evt->message_type)        return onDndOutStatus(state, evt);
@@ -502,41 +501,41 @@ static void dndOutHandleEvent(XEvent * evt)
 }
 
 
-static sqInt display_dndOutStart(char * data, int ndata, char * target, int ntarget)
+static sqInt display_dndOutStart(char * data, int ndata, char * typeName, int ntypeName)
 {
-
   if (ndata > 0)
-    writeSelection(XdndSelection, stringToAtom(target, ntarget), data, ndata, 0);
+    display_clipboardWriteWithType(data, ndata, typeName, ntypeName, 1, 0);
 
   xdndState= onDndOutPress(xdndState, NULL); 
   return 1;
 }
 
 
-void destroyInputTargets()
+static void destroyInputTargets()
 /* static void destroyInputTargets() */
 {
-  if (inputTargets == NULL)
+  if (xdndInTypes == NULL)
     return;
-  free(inputTargets);
-  inputTargets= NULL;
+  free(xdndInTypes);
+  xdndInTypes= NULL;
 }
+
 
 static void updateInputTargets(Atom * newTargets, int targetSize)
 {
   int i;
   destroyInputTargets();
-  inputTargets= (Atom *)calloc(targetSize + 1, sizeof(Atom));
+  xdndInTypes= (Atom *)calloc(targetSize + 1, sizeof(Atom));
   for (i= 0; i < targetSize;  ++i)
-    inputTargets[i]= newTargets[i];
-  inputTargets[targetSize]= None;
+    xdndInTypes[i]= newTargets[i];
+  xdndInTypes[targetSize]= None;
 }
 
 
 /* true if dnd input object is available */
 static int dndAvailable()
 {
-  return useXdnd && (NULL != inputTargets);
+  return useXdnd && (NULL != xdndInTypes);
 }
 
 
@@ -549,10 +548,10 @@ static void dndGetTargets(Atom ** types, int * count)
   *types= NULL;
   *count= 0;
   int i;
-  if (NULL == inputTargets) return;
-  for (i= 0; None != inputTargets[i]; ++i);
+  if (NULL == xdndInTypes) return;
+  for (i= 0; None != xdndInTypes[i]; ++i);
   *count= i;
-  *types= inputTargets;
+  *types= xdndInTypes;
 }
 
 
@@ -591,10 +590,10 @@ static void dndGetTypeList(XClientMessageEvent *evt)
   /* We only accept filenames (MIME type "text/uri-list"). */
   {
     int i;
-    for (i= 0; inputTargets[i]; ++i)
+    for (i= 0; xdndInTypes[i]; ++i)
       {
-	dprintf((stderr, "  type %d == %ld %s\n", i, inputTargets[i], XGetAtomName(stDisplay, inputTargets[i])));
-	if (XdndTextUriList == inputTargets[i])
+	dprintf((stderr, "  type %d == %ld %s\n", i, xdndInTypes[i], XGetAtomName(stDisplay, xdndInTypes[i])));
+	if (XdndTextUriList == xdndInTypes[i])
 	  {
 	    isUrlList= 1;
 	    xdndWillAccept= 1;
@@ -722,7 +721,7 @@ static void dndDrop(XClientMessageEvent *evt)
 {
   dprintf((stderr, "dndDrop\n"));
 
-  /* If there is "text/url-list" in inputTargets, the selection is
+  /* If there is "text/url-list" in xdndInTypes, the selection is
    * processed only in DropFilesEvent. But if none (file count == 0),
    * the selection is handled ClipboardExtendedPlugin.
    */

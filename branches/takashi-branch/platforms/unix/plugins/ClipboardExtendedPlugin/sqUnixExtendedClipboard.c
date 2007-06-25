@@ -45,6 +45,7 @@ char ** clipboardGetTypeNames();
 sqInt clipboardSizeWithType(char * typeName, int ntypeName);
 sqInt clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex);
 void * firstIndexableField(sqInt oop);
+void clipboardWriteWithType(char * data, size_t ndata, char * typeName, size_t ntypeName, int isDnd, int isClaiming);
 
 #ifndef CLIPBOARD_TEST
 
@@ -104,9 +105,9 @@ sqInt sqCreateClipboard( void )
 }
 
 
-void sqPasteboardPutItemFlavordatalengthformatTypeformatLength ( sqInt inPasteboard, char* inData, int dataLength, char* format, int formatLength)
+void sqPasteboardPutItemFlavordatalengthformatTypeformatLength ( sqInt inPasteboard, char * data, int ndata, char * typeName, int ntypeName)
 {
-  clipboardWrite(inData, dataLength, format, formatLength);
+  clipboardWriteWithType(data, ndata, typeName, ntypeName, 0, 1);
 }
 
 
