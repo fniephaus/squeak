@@ -485,8 +485,8 @@ static sqInt display_dndOutStart(char * data, int ndata, char * typeName, int nt
 }
 
 
-static void destroyInputTargets()
-/* static void destroyInputTargets() */
+static void destroyInTypes()
+/* static void destroyInTypes() */
 {
   if (xdndInTypes == NULL)
     return;
@@ -495,10 +495,10 @@ static void destroyInputTargets()
 }
 
 
-static void updateInputTargets(Atom * newTargets, int targetSize)
+static void updateInTypes(Atom * newTargets, int targetSize)
 {
   int i;
-  destroyInputTargets();
+  destroyInTypes();
   xdndInTypes= (Atom *)calloc(targetSize + 1, sizeof(Atom));
   for (i= 0; i < targetSize;  ++i)
     xdndInTypes[i]= newTargets[i];
@@ -537,7 +537,7 @@ static void dndGetTypeList(XClientMessageEvent *evt)
   if (xdndEnter_hasThreeTypes(evt))
     {
       dprintf((stderr, "  3 types\n"));
-      updateInputTargets((Atom *) xdndEnter_targets(evt), 3);
+      updateInTypes((Atom *) xdndEnter_targets(evt), 3);
     }
   else
     {
@@ -556,7 +556,7 @@ static void dndGetTypeList(XClientMessageEvent *evt)
 	  return;
 	}
 
-      updateInputTargets((Atom *) data, count);
+      updateInTypes((Atom *) data, count);
       XFree(data);
       dprintf((stderr, "  %ld types\n", count));
     }
@@ -705,7 +705,7 @@ static void dndDrop(XClientMessageEvent *evt)
       recordDragEvent(DragDrop, 0);
       return;
     }
-  destroyInputTargets();
+  destroyInTypes();
 
   if (xdndSourceWindow != xdndDrop_sourceWindow(evt))
     dprintf((stderr, "dndDrop: wrong source window\n"));
@@ -786,7 +786,7 @@ static void finishDrop ()
 
 static void dndReadSelectionDestroy()
 {
-  destroyInputTargets();
+  destroyInTypes();
   finishDrop();
 }
 
@@ -819,23 +819,26 @@ static int dndInClientMessage(XClientMessageEvent *evt)
 /* TODO: this function should be a state machine for xdndState. */
 static void dndHandleEvent(XEvent * evt)
 {
-  if (XdndSelection != stSelectionName) return;
   switch(evt->type)
     {
     case ButtonPress:
 /*       xdndState= dndOutPress(xdndState, &evt->xbutton); */
 /*       break; */
     case MotionNotify:
+      if (XdndSelection != stSelectionName) break;
       xdndState= dndOutMotion(xdndState, &evt->xmotion);
       break;
     case ClientMessage:
-      xdndState= dndOutClientMessage(xdndState, &evt->xclient);
       dndInClientMessage(&evt->xclient);
+      if (XdndSelection != stSelectionName) break;
+      xdndState= dndOutClientMessage(xdndState, &evt->xclient);
       break;
     case ButtonRelease:
+      if (XdndSelection != stSelectionName) break;
       xdndState= dndOutRelease(xdndState, &evt->xbutton);
       break;
     case SelectionRequest:
+      if (XdndSelection != stSelectionName) break;
       xdndState= dndOutSelectionRequest(xdndState, &evt->xselectionrequest);
       break;
     case SelectionNotify:
