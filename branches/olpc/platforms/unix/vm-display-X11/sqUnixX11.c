@@ -227,6 +227,8 @@ int		 stRShift, stGShift, stBShift;
 char		*stDisplayBitmap= 0;
 Window           browserWindow= 0;      /* parent window */
 int		 browserPipes[]= {-1, -1}; /* read/write fd for browser communication */
+char            *sugarBundleId= 0;
+char            *sugarActivityId= 0;
 int		 headless= 0;
 
 int		 useXdnd= 1;		/* true if we should handle XDND protocol messages */
@@ -2195,6 +2197,23 @@ void initWindow(char *displayName)
 				0,
 				stDepth, InputOutput, stVisual,
 				parentValuemask, &attributes);
+
+	if (sugarBundleId)
+	  XChangeProperty(stDisplay, 
+			  stParent,
+			  XInternAtom(stDisplay, "_SUGAR_BUNDLE_ID", 0),
+			  XInternAtom(stDisplay, "STRING", 0), 8,
+			  PropModeReplace, 
+			  sugarBundleId, strlen(sugarBundleId));
+			  
+	if (sugarActivityId)
+	  XChangeProperty(stDisplay, 
+			  stParent,
+			  XInternAtom(stDisplay, "_SUGAR_ACTIVITY_ID", 0),
+			  XInternAtom(stDisplay, "STRING", 0), 8,
+			  PropModeReplace, 
+			  sugarActivityId, strlen(sugarActivityId));
+			  
       }
 
     attributes.event_mask= EVENTMASK;
@@ -4580,6 +4599,8 @@ static void display_printUsage(void)
   printf("\nX11 <option>s:\n");
   printf("  -browserWindow <wid>  run in window <wid>\n");
   printf("  -browserPipes <r> <w> run as Browser plugin using descriptors <r> <w>\n");
+  printf("  -sugarBundleId <id>   set window property _SUGAR_BUNDLE_ID to <id>\n");
+  printf("  -sugarActivityId <id> set window property _SUGAR_ACTIVITY_ID to <id>\n");
   printf("  -cmdmod <n>           map Mod<n> to the Command key\n");
   printf("  -display <dpy>        display on <dpy> (default: $DISPLAY)\n");
   printf("  -fullscreen           occupy the entire screen\n");
@@ -4656,6 +4677,8 @@ static int display_parseArgument(int argc, char **argv)
       if      (!strcmp(arg, "-display")) displayName= argv[1];
       else if (!strcmp(arg, "-optmod"))	 optMapIndex= Mod1MapIndex + atoi(argv[1]) - 1;
       else if (!strcmp(arg, "-cmdmod"))  cmdMapIndex= Mod1MapIndex + atoi(argv[1]) - 1;
+      else if (!strcmp(arg, "-sugarBundleId")) sugarBundleId= argv[1]; 
+      else if (!strcmp(arg, "-sugarActivityId")) sugarActivityId= argv[1]; 
       else if (!strcmp(arg, "-browserWindow"))
 	{
 	  sscanf(argv[1], "%lu", (unsigned long *)&browserWindow);
