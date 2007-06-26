@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:40 pm) */
+/* Automatically generated from Squeak on an Array(21 June 2007 12:11:17 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -43,12 +43,14 @@ EXPORT(sqInt) initialiseModule(void);
 #pragma export off
 static sqInt msg(char * s);
 #pragma export on
+EXPORT(sqInt) primitiveDndOutStart(void);
 EXPORT(sqInt) primitiveDropRequestFileHandle(void);
 EXPORT(sqInt) primitiveDropRequestFileName(void);
 EXPORT(sqInt) setFileAccessCallback(int address);
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 EXPORT(sqInt) shutdownModule(void);
 #pragma export off
+static sqInt sqAssert(sqInt aBool);
 /*** Variables ***/
 
 #ifdef SQUEAK_BUILTIN_PLUGIN
@@ -57,9 +59,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DropPlugin 11 October 2006 (i)"
+	"DropPlugin 21 June 2007 (i)"
 #else
-	"DropPlugin 11 October 2006 (e)"
+	"DropPlugin 21 June 2007 (e)"
 #endif
 ;
 
@@ -93,12 +95,35 @@ static sqInt msg(char * s) {
 	fprintf(stderr, "\n%s: %s", moduleName, s);
 }
 
+EXPORT(sqInt) primitiveDndOutStart(void) {
+	sqInt dataLength;
+	sqInt formatLength;
+	char *aByteArray;
+	char *aFormat;
+
+	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(1)));
+	aByteArray = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(1))));
+	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
+	aFormat = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	dataLength = interpreterProxy->slotSizeOf(((sqInt)(long)(aByteArray) - 4));
+	formatLength = interpreterProxy->slotSizeOf(((sqInt)(long)(aFormat) - 4));
+	sqDndOutStart(aByteArray, dataLength, aFormat, formatLength);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(2);
+	return null;
+}
+
 
 /*	Note: File handle creation needs to be handled by specific support code explicitly bypassing the plugin file sand box. */
 
 EXPORT(sqInt) primitiveDropRequestFileHandle(void) {
-    sqInt handleOop;
-    sqInt dropIndex;
+	sqInt handleOop;
+	sqInt dropIndex;
 
 	if (!((interpreterProxy->methodArgumentCount()) == 1)) {
 		return interpreterProxy->primitiveFail();
@@ -118,12 +143,12 @@ EXPORT(sqInt) primitiveDropRequestFileHandle(void) {
 /*	Note: File handle creation needs to be handled by specific support code explicitly bypassing the plugin file sand box. */
 
 EXPORT(sqInt) primitiveDropRequestFileName(void) {
-    sqInt nameOop;
-    sqInt i;
-    char * dropName;
-    sqInt nameLength;
-    sqInt dropIndex;
-    char * namePtr;
+	sqInt nameOop;
+	sqInt i;
+	char * dropName;
+	sqInt nameLength;
+	sqInt dropIndex;
+	char * namePtr;
 
 	if (!((interpreterProxy->methodArgumentCount()) == 1)) {
 		return interpreterProxy->primitiveFail();
@@ -154,7 +179,7 @@ EXPORT(sqInt) setFileAccessCallback(int address) {
 /*	Note: This is coded so that is can be run from Squeak. */
 
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
-    sqInt ok;
+	sqInt ok;
 
 	interpreterProxy = anInterpreter;
 	ok = interpreterProxy->majorVersion() == VM_PROXY_MAJOR;
@@ -169,6 +194,10 @@ EXPORT(sqInt) shutdownModule(void) {
 	return dropShutdown();
 }
 
+static sqInt sqAssert(sqInt aBool) {
+	/* missing DebugCode */;
+}
+
 
 #ifdef SQUEAK_BUILTIN_PLUGIN
 
@@ -177,8 +206,9 @@ void* DropPlugin_exports[][3] = {
 	{"DropPlugin", "primitiveDropRequestFileName", (void*)primitiveDropRequestFileName},
 	{"DropPlugin", "shutdownModule", (void*)shutdownModule},
 	{"DropPlugin", "getModuleName", (void*)getModuleName},
-	{"DropPlugin", "setFileAccessCallback", (void*)setFileAccessCallback},
+	{"DropPlugin", "primitiveDndOutStart", (void*)primitiveDndOutStart},
 	{"DropPlugin", "setInterpreter", (void*)setInterpreter},
+	{"DropPlugin", "setFileAccessCallback", (void*)setFileAccessCallback},
 	{"DropPlugin", "initialiseModule", (void*)initialiseModule},
 	{"DropPlugin", "primitiveDropRequestFileHandle", (void*)primitiveDropRequestFileHandle},
 	{NULL, NULL, NULL}

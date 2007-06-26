@@ -51,6 +51,7 @@ extern struct VirtualMachine  *interpreterProxy;
 extern int		       uxDropFileCount;
 extern char		     **uxDropFileNames;
 
+sqInt dndOutStart(char * data, int dataLength, char * aFormat, int formatLength);
 
 int dropInit(void)	{ return 1; }
 int dropShutdown(void)	{ return 1; }
@@ -76,6 +77,11 @@ int dropRequestFileHandle(int dropIndex)
       return handle;
     }  
   return interpreterProxy->nilObject();
+}
+
+void sqDndOutStart(char * data, int dataLength, char * aFormat, int formatLength)
+{
+  dndOutStart(data, dataLength, aFormat, formatLength);
 }
 
 int  sqSecFileAccessCallback(void *callback)		 { return 0; }

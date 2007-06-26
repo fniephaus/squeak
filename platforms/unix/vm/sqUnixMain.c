@@ -576,6 +576,32 @@ sqInt ioGetKeystroke(void)		{ return dpy->ioGetKeystroke(); }
 sqInt ioGetNextEvent(sqInputEvent *evt)	{ return dpy->ioGetNextEvent(evt); }
 sqInt ioMousePoint(void)		{ return dpy->ioMousePoint(); }
 
+char ** clipboardGetTypeNames()
+{
+  return dpy->clipboardGetTypeNames();
+}
+
+
+sqInt clipboardSizeWithType(char * typeName, int ntypeName)
+{
+  return dpy->clipboardSizeWithType(typeName, ntypeName);
+}
+
+void clipboardWriteWithType(char * data, size_t ndata,
+			    char * typeName, size_t ntypeName,
+			    int isDnd, int isClaiming)
+{
+  dpy->clipboardWriteWithType(data, ndata, typeName, ntypeName, isDnd, isClaiming);
+}
+
+
+
+/*** Drag and Drop ***/
+
+sqInt dndOutStart(char * data, int ndata, char * typeName, int ntypeName)
+{
+  return dpy->dndOutStart(data, ndata, typeName, ntypeName);
+}
 
 /*** OpenGL ***/
 
