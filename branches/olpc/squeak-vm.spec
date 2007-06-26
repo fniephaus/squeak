@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.9
-%define minor   10
-%define release %{minor}olpc7
+%define minor   11
+%define release %{minor}olpc1
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -64,7 +64,13 @@ done
 %{prefix}/doc
 
 %changelog
+* Tue Jun 26 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-11olpc1: SVN r. 1728
+  - IPv6 support (ian)
+  - updated DBus plugin (impara, bf)
+  - better drag-and-drop support, extended clipboard support (tak)
 * Fri Jun 22 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-10olpc7: SVN r.1723
   - move build env to Fedora 7
   - require libdbus-1.so.3
   - configure without OpenGL (rather than hiding GL libs)
