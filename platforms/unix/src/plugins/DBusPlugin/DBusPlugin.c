@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(15 May 2007 6:42:31 pm) */
+/* Automatically generated from Squeak on an Array(25 June 2007 6:19:23 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -41,18 +41,23 @@
 /*** Constants ***/
 
 /*** Function Prototypes ***/
-static sqInt appendArgumentstosignature(sqInt argsOop, DBusMessageIter* msgIter, char * signature);
-static char* appendArgumentwithSignaturetoIter(sqInt argOop, char * sig, DBusMessageIter* msgIter);
-static sqInt argumentsAddArraytoIter(sqInt oop, DBusMessageIter* iter);
 static sqInt argumentsAddBooltoIter(sqInt oop, DBusMessageIter* iter);
+static sqInt argumentsAddBytetoIter(sqInt oop, DBusMessageIter* iter);
 static sqInt argumentsAddDoubletoIter(sqInt oop, DBusMessageIter* iter);
+static sqInt argumentsAddInt16toIter(sqInt oop, DBusMessageIter* iter);
 static sqInt argumentsAddInt32toIter(sqInt oop, DBusMessageIter* iter);
+static sqInt argumentsAddInt64toIter(sqInt oop, DBusMessageIter* iter);
+static sqInt argumentsAddObjectPathtoIter(sqInt oop, DBusMessageIter* iter);
+static sqInt argumentsAddSignaturetoIter(sqInt oop, DBusMessageIter* iter);
 static sqInt argumentsAddStringtoIter(sqInt oop, DBusMessageIter* iter);
+static sqInt argumentsAddUInt16toIter(sqInt oop, DBusMessageIter* iter);
+static sqInt argumentsAddUInt32toIter(sqInt oop, DBusMessageIter* iter);
+static sqInt argumentsAddUInt64toIter(sqInt oop, DBusMessageIter* iter);
 static sqInt buildStringOopFromCharP(const char* charP);
 static DBusMessage * createErrorTofrom(char* dest, sqInt msgOop);
 static DBusMessage * createReplyTofrom(char* dest, sqInt msgOop);
-static sqInt fetchBooleanofObject(sqInt n, sqInt oop);
 static char * fetchStringofObject(sqInt n, sqInt oop);
+static sqInt getBasicTypevalue(int t, void* val);
 static DBusConnection * getConnectionFromOop(sqInt oop);
 static VirtualMachine * getInterpreter(void);
 #pragma export on
@@ -66,29 +71,36 @@ static sqInt handleflag(int fd, int flag);
 #pragma export on
 EXPORT(sqInt) initialiseModule(void);
 #pragma export off
+static sqInt iterOpenContainercontains(sqInt t, char* s);
 static sqInt msg(char * s);
 static dbusWatchData newDataStructWitchConnectionandSemaphore(DBusConnection * con, int semaphore);
-static sqInt pendingCallNotifyFunction(void);
-static sqInt pendingCallNotifyFunctionData(DBusPendingCall* pendingCall, void* data);
 #pragma export on
-EXPORT(sqInt) primitiveAnswerSeventeen(void);
 EXPORT(sqInt) primitiveDBusAddMatch(void);
-EXPORT(sqInt) primitiveDBusArgumentGetArray(void);
+EXPORT(sqInt) primitiveDBusAppendBasicArgument(void);
 EXPORT(sqInt) primitiveDBusArgumentGetBool(void);
-EXPORT(sqInt) primitiveDBusArgumentGetDictionary(void);
+EXPORT(sqInt) primitiveDBusArgumentGetByte(void);
 EXPORT(sqInt) primitiveDBusArgumentGetDouble(void);
+EXPORT(sqInt) primitiveDBusArgumentGetInt16(void);
 EXPORT(sqInt) primitiveDBusArgumentGetInt32(void);
+EXPORT(sqInt) primitiveDBusArgumentGetInt64(void);
 EXPORT(sqInt) primitiveDBusArgumentGetObjectPath(void);
+EXPORT(sqInt) primitiveDBusArgumentGetSignature(void);
 EXPORT(sqInt) primitiveDBusArgumentGetString(void);
-EXPORT(sqInt) primitiveDBusArgumentGetStruct(void);
 EXPORT(sqInt) primitiveDBusArgumentGetType(void);
-EXPORT(sqInt) primitiveDBusArgumentGetVariant(void);
-EXPORT(sqInt) primitiveDBusConnectionDispatch(void);
+EXPORT(sqInt) primitiveDBusArgumentGetUInt16(void);
+EXPORT(sqInt) primitiveDBusArgumentGetUInt32(void);
+EXPORT(sqInt) primitiveDBusArgumentGetUInt64(void);
+EXPORT(sqInt) primitiveDBusConnectionClose(void);
 EXPORT(sqInt) primitiveDBusConnectionDispatchStatus(void);
 EXPORT(sqInt) primitiveDBusConnectionPopMessage(void);
 EXPORT(sqInt) primitiveDBusConnectionRegisterSemaphore(void);
 EXPORT(sqInt) primitiveDBusConnectToSessionBus(void);
 EXPORT(sqInt) primitiveDBusConnectToSystemBus(void);
+EXPORT(sqInt) primitiveDBusCreateMessageFrom(void);
+EXPORT(sqInt) primitiveDBusInitializeWriteIterator(void);
+EXPORT(sqInt) primitiveDBusIteratorSignature(void);
+EXPORT(sqInt) primitiveDBusIterCloseContainer(void);
+EXPORT(sqInt) primitiveDBusIterOpenContainerContains(void);
 EXPORT(sqInt) primitiveDBusMessageGetDestination(void);
 EXPORT(sqInt) primitiveDBusMessageGetErrorName(void);
 EXPORT(sqInt) primitiveDBusMessageGetInterface(void);
@@ -99,13 +111,16 @@ EXPORT(sqInt) primitiveDBusMessageGetReplySerial(void);
 EXPORT(sqInt) primitiveDBusMessageGetSender(void);
 EXPORT(sqInt) primitiveDBusMessageGetSerial(void);
 EXPORT(sqInt) primitiveDBusMessageGetSignature(void);
+EXPORT(sqInt) primitiveDBusMessageHasArguments(void);
 EXPORT(sqInt) primitiveDBusNextIterator(void);
-EXPORT(sqInt) primitiveDBusPopIterator(void);
+EXPORT(sqInt) primitiveDBusPopMessageIterator(void);
+EXPORT(sqInt) primitiveDBusPushMessageIterator(void);
 EXPORT(sqInt) primitiveDBusReadWriteConnection(void);
 EXPORT(sqInt) primitiveDBusRegisterName(void);
 EXPORT(sqInt) primitiveDBusReleaseName(void);
 EXPORT(sqInt) primitiveDBusRemoveMatch(void);
 EXPORT(sqInt) primitiveDBusSendMessage(void);
+EXPORT(sqInt) primitiveDBusSendMessageWithReply(void);
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 EXPORT(sqInt) shutdownModule(void);
 #pragma export off
@@ -117,7 +132,8 @@ static sqInt sqDBusPluginToggleWatchwithData(DBusWatch* watch, dbusWatchData dat
 static char * stringOopToChar(sqInt oop);
 /*** Variables ***/
 static DBusConnection* connections[2];
-static sqInt currIter;
+static int curIter;
+static int curWriteIter;
 static dbus_bool_t hasArgument;
 
 #ifdef SQUEAK_BUILTIN_PLUGIN
@@ -128,56 +144,16 @@ static DBusMessage* message;
 static DBusMessageIter messageIter[DBUS_MAXIMUM_TYPE_RECURSION_DEPTH];
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DBusPlugin 15 May 2007 (i)"
+	"DBusPlugin 25 June 2007 (i)"
 #else
-	"DBusPlugin 15 May 2007 (e)"
+	"DBusPlugin 25 June 2007 (e)"
 #endif
 ;
+static DBusMessage* writeMessage;
+static DBusMessageIter writeMessageIter[DBUS_MAXIMUM_TYPE_RECURSION_DEPTH];
 
 
-static sqInt appendArgumentstosignature(sqInt argsOop, DBusMessageIter* msgIter, char * signature) {
-	sqInt i;
-	char* s;
-	int argCount;
-	sqInt valOop;
-	int * arg;
-
-	argCount = interpreterProxy->stSizeOf(argsOop);
-	arg = ((int *) (interpreterProxy->firstIndexableField(argsOop)));
-	s = signature;
-	for (i = 0; i <= (argCount - 1); i += 1) {
-		valOop = arg[i];
-		s = appendArgumentwithSignaturetoIter(valOop, s, msgIter);
-	}
-}
-
-static char* appendArgumentwithSignaturetoIter(sqInt argOop, char * sig, DBusMessageIter* msgIter) {
-	char s;
-
-	s = 's';
-	s = *sig;
-	if (s == 'i') {
-		argumentsAddInt32toIter(argOop, msgIter);
-	} else {
-		if (s == 'd') {
-			argumentsAddDoubletoIter(argOop, msgIter);
-		} else {
-			if (s == 's') {
-				argumentsAddStringtoIter(argOop, msgIter);
-			} else {
-				if (s == 'b') {
-					argumentsAddBooltoIter(argOop, msgIter);
-				} else {
-					msg("unknown argument signature");
-					interpreterProxy->primitiveFail();
-				}
-			}
-		}
-	}
-	return sig + 1;
-}
-
-static sqInt argumentsAddArraytoIter(sqInt oop, DBusMessageIter* iter) {
+static sqInt argumentsAddBooltoIter(sqInt oop, DBusMessageIter* iter) {
 	int arg;
 
 	arg = 1;
@@ -190,15 +166,16 @@ static sqInt argumentsAddArraytoIter(sqInt oop, DBusMessageIter* iter) {
 	}
 }
 
-static sqInt argumentsAddBooltoIter(sqInt oop, DBusMessageIter* iter) {
-	int arg;
+static sqInt argumentsAddBytetoIter(sqInt oop, DBusMessageIter* iter) {
+	sqInt intArg;
 
-	arg = 1;
-	if (oop == (interpreterProxy->falseObject())) {
-		arg = 0;
+	intArg = interpreterProxy->checkedIntegerValueOf(oop);
+	if (interpreterProxy->failed()) {
+		msg("Wrong oop type");
+		return 0;
 	}
-	if (!(dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN, &arg))) {
-		msg("Can not add Boolean argument.");
+	if (!(dbus_message_iter_append_basic(iter, DBUS_TYPE_BYTE, &intArg))) {
+		msg("Can not add Byte argument.");
 		return interpreterProxy->primitiveFail();
 	}
 }
@@ -216,16 +193,69 @@ static sqInt argumentsAddDoubletoIter(sqInt oop, DBusMessageIter* iter) {
 	}
 }
 
-static sqInt argumentsAddInt32toIter(sqInt oop, DBusMessageIter* iter) {
-	int intArg;
+static sqInt argumentsAddInt16toIter(sqInt oop, DBusMessageIter* iter) {
+	dbus_int16_t intArg;
 
-	intArg = interpreterProxy->checkedIntegerValueOf(oop);
-	if (interpreterProxy->failed()) {
+	if (!((oop & 1))) {
+		msg("Oop is no integer value");
 		return interpreterProxy->primitiveFail();
+	}
+	intArg = (oop >> 1);
+	if (!(dbus_message_iter_append_basic(iter, DBUS_TYPE_INT16, &intArg))) {
+		msg("Can not add Int16 argument.");
+		return interpreterProxy->primitiveFail();
+	}
+}
+
+static sqInt argumentsAddInt32toIter(sqInt oop, DBusMessageIter* iter) {
+	dbus_int32_t intArg;
+
+	intArg = interpreterProxy->signed32BitValueOf(oop);
+	if (interpreterProxy->failed()) {
+		msg("Wrong oop type");
+		return 0;
 	}
 	if (!(dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &intArg))) {
 		msg("Can not add Int32 argument.");
 		return interpreterProxy->primitiveFail();
+	}
+}
+
+static sqInt argumentsAddInt64toIter(sqInt oop, DBusMessageIter* iter) {
+	dbus_int64_t intArg;
+
+	intArg = interpreterProxy->signed64BitValueOf(oop);
+	if (interpreterProxy->failed()) {
+		msg("Wrong oop type");
+		return 0;
+	}
+	if (!(dbus_message_iter_append_basic(iter, DBUS_TYPE_INT64, &intArg))) {
+		msg("Can not add Int64 argument.");
+		return interpreterProxy->primitiveFail();
+	}
+}
+
+static sqInt argumentsAddObjectPathtoIter(sqInt oop, DBusMessageIter* iter) {
+	char* arg;
+
+	arg = stringOopToChar(oop);
+	if (!(arg == null)) {
+		if (!(dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &arg))) {
+			msg("Can not add Path argument.");
+		}
+		free(arg);
+	}
+}
+
+static sqInt argumentsAddSignaturetoIter(sqInt oop, DBusMessageIter* iter) {
+	char* arg;
+
+	arg = stringOopToChar(oop);
+	if (!(arg == null)) {
+		if (!(dbus_message_iter_append_basic(iter, DBUS_TYPE_SIGNATURE, &arg))) {
+			msg("Can not add Signature argument.");
+		}
+		free(arg);
 	}
 }
 
@@ -240,6 +270,51 @@ static sqInt argumentsAddStringtoIter(sqInt oop, DBusMessageIter* iter) {
 		free(arg);
 	}
 }
+
+static sqInt argumentsAddUInt16toIter(sqInt oop, DBusMessageIter* iter) {
+	dbus_uint16_t intArg;
+
+	if (!((oop & 1))) {
+		msg("Oop is no integer value");
+		return interpreterProxy->primitiveFail();
+	}
+	intArg = (oop >> 1);
+	if (!(dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT16, &intArg))) {
+		msg("Can not add UInt16 argument.");
+		return interpreterProxy->primitiveFail();
+	}
+}
+
+static sqInt argumentsAddUInt32toIter(sqInt oop, DBusMessageIter* iter) {
+	dbus_uint32_t intArg;
+
+	intArg = interpreterProxy->positive32BitValueOf(oop);
+	if (interpreterProxy->failed()) {
+		msg("Wrong oop type");
+		return 0;
+	}
+	if (!(dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &intArg))) {
+		msg("Can not add UInt32 argument.");
+		return interpreterProxy->primitiveFail();
+	}
+}
+
+static sqInt argumentsAddUInt64toIter(sqInt oop, DBusMessageIter* iter) {
+	dbus_uint64_t intArg;
+
+	intArg = interpreterProxy->positive64BitValueOf(oop);
+	if (interpreterProxy->failed()) {
+		msg("Wrong oop type");
+		return 0;
+	}
+	if (!(dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT64, &intArg))) {
+		msg("Can not add UInt64 argument.");
+		return interpreterProxy->primitiveFail();
+	}
+}
+
+
+/*	answers an string oop for the char pointer */
 
 static sqInt buildStringOopFromCharP(const char* charP) {
 	int size;
@@ -260,6 +335,9 @@ static sqInt buildStringOopFromCharP(const char* charP) {
 	return strObj;
 }
 
+
+/*	creates an error message for a received message */
+
 static DBusMessage * createErrorTofrom(char* dest, sqInt msgOop) {
 	DBusMessage * error;
 	dbus_uint32_t serial;
@@ -267,7 +345,7 @@ static DBusMessage * createErrorTofrom(char* dest, sqInt msgOop) {
 	sqInt serialOop;
 	sqInt p;
 
-	serialOop = interpreterProxy->fetchPointerofObject(8, msgOop);
+	serialOop = interpreterProxy->fetchPointerofObject(7, msgOop);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -276,7 +354,7 @@ static DBusMessage * createErrorTofrom(char* dest, sqInt msgOop) {
 
 	serial = interpreterProxy->positive32BitValueOf(serialOop);
 	/* begin fetchString:ofObject: */
-	p = interpreterProxy->fetchPointerofObject(9, msgOop);
+	p = interpreterProxy->fetchPointerofObject(8, msgOop);
 	name = stringOopToChar(p);
 	error = null;
 	error = dbus_message_new(DBUS_MESSAGE_TYPE_ERROR);
@@ -288,12 +366,15 @@ static DBusMessage * createErrorTofrom(char* dest, sqInt msgOop) {
 	return error;
 }
 
+
+/*	answers a message which is send as reply for an previously received message */
+
 static DBusMessage * createReplyTofrom(char* dest, sqInt msgOop) {
 	dbus_uint32_t serial;
 	sqInt serialOop;
 	DBusMessage * reply;
 
-	serialOop = interpreterProxy->fetchPointerofObject(8, msgOop);
+	serialOop = interpreterProxy->fetchPointerofObject(7, msgOop);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -309,25 +390,30 @@ static DBusMessage * createReplyTofrom(char* dest, sqInt msgOop) {
 	return reply;
 }
 
-static sqInt fetchBooleanofObject(sqInt n, sqInt oop) {
-	sqInt p;
-	sqInt b;
-
-	p = interpreterProxy->fetchPointerofObject(n, oop);
-	b = booleanValueOf(p);
-	if (interpreterProxy->failed()) {
-		msg("Can not fetch a string from oop");
-		interpreterProxy->primitiveFail();
-	}
-	return b;
-}
-
 static char * fetchStringofObject(sqInt n, sqInt oop) {
 	sqInt p;
 
 	p = interpreterProxy->fetchPointerofObject(n, oop);
 	return stringOopToChar(p);
 }
+
+static sqInt getBasicTypevalue(int t, void* val) {
+	int type;
+
+	if (!(hasArgument)) {
+		return interpreterProxy->primitiveFail();
+	}
+	type = 0;
+	type = dbus_message_iter_get_arg_type(&messageIter[curIter]);
+	if (!(type == t)) {
+		msg("Wrong argument type");
+		return interpreterProxy->primitiveFail();
+	}
+	dbus_message_iter_get_basic(&messageIter[curIter], val );
+}
+
+
+/*	answers the corresponding dbus connection for the oop representation */
 
 static DBusConnection * getConnectionFromOop(sqInt oop) {
 	DBusConnection* conn;
@@ -363,6 +449,9 @@ EXPORT(const char*) getModuleName(void) {
 	return moduleName;
 }
 
+
+/*	anwers a connection to the session bus. The connection access is implementet as singleton so an open connection is reused */
+
 static DBusConnection * getSessionBusConnection(void) {
 	DBusError error;
 	DBusConnection* con;
@@ -384,6 +473,9 @@ static DBusConnection * getSessionBusConnection(void) {
 	connections[0] = con;
 	return con;
 }
+
+
+/*	anwers a connection to the system bus. The connection access is implementet as singleton so an open connection is reused */
 
 static DBusConnection * getSystemBusConnection(void) {
 	DBusError error;
@@ -411,6 +503,9 @@ static sqInt halt(void) {
 	;
 }
 
+
+/*	a handler function which is called when new messages arrived in the dbus queue */
+
 static sqInt handleReadForFDwithDataandFlag(int fd, dbusWatchData data, int flag) {
 	sqInt semaphore;
 
@@ -430,9 +525,25 @@ EXPORT(sqInt) initialiseModule(void) {
 	return 1;
 }
 
+
+/*	opens a new container and increase writeIterator. arrays, structs, dictionarys and variants are container types in dbus */
+
+static sqInt iterOpenContainercontains(sqInt t, char* s) {
+	if (dbus_message_iter_open_container( &writeMessageIter[curWriteIter], t, s, &writeMessageIter[curWriteIter+1])) {
+		curWriteIter += 1;
+	} else {
+		msg("Could not create container");
+		return interpreterProxy->primitiveFail();
+	}
+	return interpreterProxy->trueObject();
+}
+
 static sqInt msg(char * s) {
 	fprintf(stderr, "\n%s: %s", moduleName, s);
 }
+
+
+/*	answers an new data stuct which is needed for handling watchers */
 
 static dbusWatchData newDataStructWitchConnectionandSemaphore(DBusConnection * con, int semaphore) {
 	dbusWatchData t;
@@ -449,39 +560,8 @@ static dbusWatchData newDataStructWitchConnectionandSemaphore(DBusConnection * c
 	return t;
 }
 
-static sqInt pendingCallNotifyFunction(void) {
-	msg("Notify something");
-}
 
-static sqInt pendingCallNotifyFunctionData(DBusPendingCall* pendingCall, void* data) {
-	msg("Notify something");
-}
-
-EXPORT(sqInt) primitiveAnswerSeventeen(void) {
-	int msgType;
-	sqInt m;
-	sqInt _return_value;
-
-	m = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	msg("check oop");
-	msgType = interpreterProxy->fetchIntegerofObject(0, m);
-	if (interpreterProxy->failed()) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	_return_value = interpreterProxy->integerObjectOf((msgType + 20));
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(2, _return_value);
-	return null;
-}
-
-
-/*	Register match rule */
+/*	Register a match rule */
 
 EXPORT(sqInt) primitiveDBusAddMatch(void) {
 	DBusConnection * conn;
@@ -517,34 +597,127 @@ EXPORT(sqInt) primitiveDBusAddMatch(void) {
 }
 
 
-/*	returns a String argument) */
+/*	append a basic type argument to the currently topmost iterator in the iterator stack */
 
-EXPORT(sqInt) primitiveDBusArgumentGetArray(void) {
-	int type;
-	char * str;
+EXPORT(sqInt) primitiveDBusAppendBasicArgument(void) {
+	DBusMessageIter* iter;
+	sqInt arg;
+	sqInt t;
+	sqInt _return_value;
 
-	if (!(hasArgument)) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	type = 0;
-	type = dbus_message_iter_get_arg_type(&messageIter[currIter]);
-	if (!(type == (DBUS_TYPE_ARRAY))) {
-		msg("Wrong argument type: DBUS_TYPE_ARRAY.");
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	dbus_message_iter_recurse(&messageIter[currIter], &messageIter[currIter+1]);
-	currIter += 1;
-	hasArgument = 1;
+	arg = interpreterProxy->stackValue(1);
+	t = interpreterProxy->stackIntegerValue(0);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
+	iter = &(writeMessageIter[curWriteIter]);
+	if (t == (DBUS_TYPE_BYTE)) {
+		_return_value = argumentsAddBytetoIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	if (t == (DBUS_TYPE_INT16)) {
+		_return_value = argumentsAddInt16toIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	if (t == (DBUS_TYPE_INT32)) {
+		_return_value = argumentsAddInt32toIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	if (t == (DBUS_TYPE_INT64)) {
+		_return_value = argumentsAddInt64toIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	if (t == (DBUS_TYPE_UINT16)) {
+		_return_value = argumentsAddUInt16toIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	if (t == (DBUS_TYPE_UINT32)) {
+		_return_value = argumentsAddUInt32toIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	if (t == (DBUS_TYPE_UINT64)) {
+		_return_value = argumentsAddUInt64toIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	if (t == (DBUS_TYPE_DOUBLE)) {
+		_return_value = argumentsAddDoubletoIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	if (t == (DBUS_TYPE_STRING)) {
+		_return_value = argumentsAddStringtoIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	if (t == (DBUS_TYPE_BOOLEAN)) {
+		_return_value = argumentsAddBooltoIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	if (t == (DBUS_TYPE_OBJECT_PATH)) {
+		_return_value = argumentsAddObjectPathtoIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	if (t == (DBUS_TYPE_SIGNATURE)) {
+		_return_value = argumentsAddSignaturetoIter(arg, iter);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	msg("unknown argument type");
+	interpreterProxy->primitiveFail();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(2);
 	return null;
 }
 
 
-/*	returns a bool argument) */
+/*	returns a bool argument */
 
 EXPORT(sqInt) primitiveDBusArgumentGetBool(void) {
 	int value;
@@ -556,14 +729,14 @@ EXPORT(sqInt) primitiveDBusArgumentGetBool(void) {
 		return null;
 	}
 	type = 0;
-	type = dbus_message_iter_get_arg_type(&messageIter[currIter]);
+	type = dbus_message_iter_get_arg_type(&messageIter[curIter]);
 	if (!(type == (DBUS_TYPE_BOOLEAN))) {
 		msg("Wrong argument type: DBUS_TYPE_BOOLEAN.");
 		interpreterProxy->primitiveFail();
 		return null;
 	}
 	value = 0;
-	dbus_message_iter_get_basic(&messageIter[currIter], &value );
+	dbus_message_iter_get_basic(&messageIter[curIter], &value );
 	if (value) {
 		_return_value = interpreterProxy->trueObject();
 		if (interpreterProxy->failed()) {
@@ -581,34 +754,24 @@ EXPORT(sqInt) primitiveDBusArgumentGetBool(void) {
 }
 
 
-/*	returns a String argument) */
+/*	read a char argument and return a SmallIntegerOop */
 
-EXPORT(sqInt) primitiveDBusArgumentGetDictionary(void) {
-	int type;
+EXPORT(sqInt) primitiveDBusArgumentGetByte(void) {
+	char value;
+	sqInt _return_value;
 
-	if (!(hasArgument)) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	type = 0;
-	type = dbus_message_iter_get_arg_type(&messageIter[currIter]);
-	if (!(type == (DBUS_TYPE_DICT_ENTRY))) {
-		msg("Wrong argument type: DBUS_TYPE_DICT_ENTRY.");
-		msg("Wrong argument type.");
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	dbus_message_iter_recurse(&messageIter[currIter], &messageIter[currIter+1]);
-	currIter += 1;
-	hasArgument = 1;
+	value = 0;
+	getBasicTypevalue(DBUS_TYPE_BYTE, &value);
+	_return_value = interpreterProxy->integerObjectOf(value);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
+	interpreterProxy->popthenPush(1, _return_value);
 	return null;
 }
 
 
-/*	returns a double argument) */
+/*	read a double argument and answer float oop */
 
 EXPORT(sqInt) primitiveDBusArgumentGetDouble(void) {
 	double value;
@@ -620,14 +783,14 @@ EXPORT(sqInt) primitiveDBusArgumentGetDouble(void) {
 		return null;
 	}
 	type = 0;
-	type = dbus_message_iter_get_arg_type(&messageIter[currIter]);
+	type = dbus_message_iter_get_arg_type(&messageIter[curIter]);
 	if (!(type == (DBUS_TYPE_DOUBLE))) {
 		msg("Wrong argument type: DBUS_TYPE_DOUBLE.");
 		interpreterProxy->primitiveFail();
 		return null;
 	}
 	value = 0;
-	dbus_message_iter_get_basic(&messageIter[currIter], &value );
+	dbus_message_iter_get_basic(&messageIter[curIter], &value );
 	_return_value = interpreterProxy->floatObjectOf(value);
 	if (interpreterProxy->failed()) {
 		return null;
@@ -637,27 +800,49 @@ EXPORT(sqInt) primitiveDBusArgumentGetDouble(void) {
 }
 
 
-/*	returns a integer argument) */
+/*	read a signed integer argument and return a SmallIntegerOop */
 
-EXPORT(sqInt) primitiveDBusArgumentGetInt32(void) {
-	int value;
-	int type;
+EXPORT(sqInt) primitiveDBusArgumentGetInt16(void) {
+	dbus_int16_t value;
 	sqInt _return_value;
 
-	if (!(hasArgument)) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	type = 0;
-	type = dbus_message_iter_get_arg_type(&messageIter[currIter]);
-	if (!(type == (DBUS_TYPE_INT32))) {
-		msg("Wrong argument type: DBUS_TYPE_INT32.");
-		interpreterProxy->primitiveFail();
-		return null;
-	}
 	value = 0;
-	dbus_message_iter_get_basic(&messageIter[currIter], &value );
+	getBasicTypevalue(DBUS_TYPE_INT16, &value);
+	_return_value = interpreterProxy->integerObjectOf(value);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(1, _return_value);
+	return null;
+}
+
+
+/*	read a signed long argument and return a LargeIntegerOop depends on the sign */
+
+EXPORT(sqInt) primitiveDBusArgumentGetInt32(void) {
+	dbus_int32_t value;
+	sqInt _return_value;
+
+	value = 0;
+	getBasicTypevalue(DBUS_TYPE_INT32, &value);
 	_return_value = interpreterProxy->signed32BitIntegerFor(value);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(1, _return_value);
+	return null;
+}
+
+
+/*	read a signed long long argument and return a LargeIntegerOop depends on the sign */
+
+EXPORT(sqInt) primitiveDBusArgumentGetInt64(void) {
+	dbus_int64_t value;
+	sqInt _return_value;
+
+	value = 0;
+	getBasicTypevalue(DBUS_TYPE_INT64, &value);
+	_return_value = interpreterProxy->signed64BitIntegerFor(value);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -678,14 +863,14 @@ EXPORT(sqInt) primitiveDBusArgumentGetObjectPath(void) {
 		return null;
 	}
 	type = 0;
-	type = dbus_message_iter_get_arg_type(&messageIter[currIter]);
+	type = dbus_message_iter_get_arg_type(&messageIter[curIter]);
 	if (!(type == (DBUS_TYPE_OBJECT_PATH))) {
 		msg("Wrong argument type: DBUS_TYPE_OBJECT_PATH.");
 		interpreterProxy->primitiveFail();
 		return null;
 	}
 	str = "";
-	dbus_message_iter_get_basic(&messageIter[currIter], &str );
+	dbus_message_iter_get_basic(&messageIter[curIter], &str );
 	_return_value = buildStringOopFromCharP(str);
 	if (interpreterProxy->failed()) {
 		return null;
@@ -695,7 +880,24 @@ EXPORT(sqInt) primitiveDBusArgumentGetObjectPath(void) {
 }
 
 
-/*	returns a String argument) */
+/*	read a signature from the arguments */
+
+EXPORT(sqInt) primitiveDBusArgumentGetSignature(void) {
+	char* value;
+	sqInt _return_value;
+
+	value = 0;
+	getBasicTypevalue(DBUS_TYPE_SIGNATURE, &value);
+	_return_value = buildStringOopFromCharP(value);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(1, _return_value);
+	return null;
+}
+
+
+/*	returns the readed string argument as oop */
 
 EXPORT(sqInt) primitiveDBusArgumentGetString(void) {
 	int type;
@@ -707,45 +909,19 @@ EXPORT(sqInt) primitiveDBusArgumentGetString(void) {
 		return null;
 	}
 	type = 0;
-	type = dbus_message_iter_get_arg_type(&messageIter[currIter]);
+	type = dbus_message_iter_get_arg_type(&messageIter[curIter]);
 	if (!(type == (DBUS_TYPE_STRING))) {
 		msg("Wrong argument type: DBUS_TYPE_STRING.");
 		interpreterProxy->primitiveFail();
 		return null;
 	}
 	str = "";
-	dbus_message_iter_get_basic(&messageIter[currIter], &str );
+	dbus_message_iter_get_basic(&messageIter[curIter], &str );
 	_return_value = buildStringOopFromCharP(str);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
 	interpreterProxy->popthenPush(1, _return_value);
-	return null;
-}
-
-
-/*	returns a String argument) */
-
-EXPORT(sqInt) primitiveDBusArgumentGetStruct(void) {
-	int type;
-
-	if (!(hasArgument)) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	type = 0;
-	type = dbus_message_iter_get_arg_type(&messageIter[currIter]);
-	if (!(type == (DBUS_TYPE_STRUCT))) {
-		msg("Wrong argument type: DBUS_TYPE_STRUCT.");
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	dbus_message_iter_recurse(&messageIter[currIter], &messageIter[currIter+1]);
-	currIter += 1;
-	hasArgument = 1;
-	if (interpreterProxy->failed()) {
-		return null;
-	}
 	return null;
 }
 
@@ -764,7 +940,7 @@ EXPORT(sqInt) primitiveDBusArgumentGetType(void) {
 		interpreterProxy->popthenPush(1, _return_value);
 		return null;
 	}
-	type = dbus_message_iter_get_arg_type(&messageIter[currIter]);
+	type = dbus_message_iter_get_arg_type(&messageIter[curIter]);
 	_return_value = interpreterProxy->integerObjectOf(type);
 	if (interpreterProxy->failed()) {
 		return null;
@@ -774,44 +950,71 @@ EXPORT(sqInt) primitiveDBusArgumentGetType(void) {
 }
 
 
-/*	push an iterator for reading a variant */
+/*	read a unsigned int argument and return a SmallIntegerOop */
 
-EXPORT(sqInt) primitiveDBusArgumentGetVariant(void) {
-	int type;
+EXPORT(sqInt) primitiveDBusArgumentGetUInt16(void) {
+	dbus_uint16_t value;
+	sqInt _return_value;
 
-	if (!(hasArgument)) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	type = 0;
-	type = dbus_message_iter_get_arg_type(&messageIter[currIter]);
-	if (!(type == (DBUS_TYPE_VARIANT))) {
-		msg("Wrong argument type: DBUS_TYPE_VARIANT.");
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	dbus_message_iter_recurse(&messageIter[currIter], &messageIter[currIter+1]);
-	currIter += 1;
-	hasArgument = 1;
+	value = 0;
+	getBasicTypevalue(DBUS_TYPE_UINT16, &value);
+	_return_value = interpreterProxy->integerObjectOf(value);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
+	interpreterProxy->popthenPush(1, _return_value);
 	return null;
 }
 
 
-/*	read the connection for next available message */
+/*	read a unsigned long argument and returns a LargeInteger oop */
 
-EXPORT(sqInt) primitiveDBusConnectionDispatch(void) {
-	DBusConnection * conn;
+EXPORT(sqInt) primitiveDBusArgumentGetUInt32(void) {
+	dbus_uint32_t value;
+	sqInt _return_value;
+
+	value = 0;
+	getBasicTypevalue(DBUS_TYPE_UINT32, &value);
+	_return_value = interpreterProxy->positive32BitIntegerFor(value);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(1, _return_value);
+	return null;
+}
+
+
+/*	read a unsigned long long argument and returns a LargeInteger oop */
+
+EXPORT(sqInt) primitiveDBusArgumentGetUInt64(void) {
+	long long value;
+	sqInt _return_value;
+
+	value = 0;
+	getBasicTypevalue(DBUS_TYPE_UINT64, &value);
+	_return_value = interpreterProxy->positive64BitIntegerFor(value);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(1, _return_value);
+	return null;
+}
+
+
+/*	close the recivers connection */
+
+EXPORT(sqInt) primitiveDBusConnectionClose(void) {
+	sqInt h;
 	sqInt rcvOop;
 
 	rcvOop = interpreterProxy->stackValue(0);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	conn = getConnectionFromOop(rcvOop);
-	dbus_connection_dispatch(conn);
+	h = interpreterProxy->fetchIntegerofObject(0, rcvOop);
+	dbus_connection_close(connections[h]);
+				dbus_connection_unref(connections[h]);
+	connections[h] = null;
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -861,7 +1064,7 @@ EXPORT(sqInt) primitiveDBusConnectionPopMessage(void) {
 	conn = getConnectionFromOop(rcvOop);
 	if (!(message == null)) {
 		hasArgument = 0;
-		currIter = 0;
+		curIter = 0;
 		dbus_message_unref(message);
 	}
 	message = dbus_connection_pop_message(conn);
@@ -877,7 +1080,7 @@ EXPORT(sqInt) primitiveDBusConnectionPopMessage(void) {
 	/* if message contains argument initialize iterator */
 
 	msgType = dbus_message_get_type(message);
-	hasArgument = dbus_message_iter_init(message, &(messageIter[currIter]));
+	hasArgument = dbus_message_iter_init(message, &(messageIter[curIter]));
 	_return_value = interpreterProxy->integerObjectOf(msgType);
 	if (interpreterProxy->failed()) {
 		return null;
@@ -887,7 +1090,7 @@ EXPORT(sqInt) primitiveDBusConnectionPopMessage(void) {
 }
 
 
-/*	Registers watch functions for which will called when dbus want to register/remove a watch. The semaphore will signaled when dbus recives new messages */
+/*	Registers watch functions for which will called when dbus want to register/remove a watch. The semaphore will signaled when dbus receives new messages */
 
 EXPORT(sqInt) primitiveDBusConnectionRegisterSemaphore(void) {
 	DBusConnection* conn;
@@ -970,6 +1173,207 @@ EXPORT(sqInt) primitiveDBusConnectToSystemBus(void) {
 }
 
 
+/*	create a dbus message from the given oop */
+
+EXPORT(sqInt) primitiveDBusCreateMessageFrom(void) {
+	char * method;
+	int msgType;
+	char * path;
+	char * destination;
+	DBusMessage * tmpMsg;
+	char * interface;
+	sqInt m;
+	sqInt _return_value;
+	sqInt p;
+	sqInt p1;
+	sqInt p2;
+	sqInt p3;
+
+	m = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	msgType = interpreterProxy->fetchIntegerofObject(0, m);
+	if (interpreterProxy->failed()) {
+		msg("Can not fetch message type.");
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	/* begin fetchString:ofObject: */
+	p = interpreterProxy->fetchPointerofObject(1, m);
+	path = stringOopToChar(p);
+	/* begin fetchString:ofObject: */
+	p1 = interpreterProxy->fetchPointerofObject(2, m);
+	interface = stringOopToChar(p1);
+	/* begin fetchString:ofObject: */
+	p2 = interpreterProxy->fetchPointerofObject(3, m);
+	method = stringOopToChar(p2);
+	/* begin fetchString:ofObject: */
+	p3 = interpreterProxy->fetchPointerofObject(5, m);
+	destination = stringOopToChar(p3);
+
+	/* create Signal */
+
+	tmpMsg = null;
+	if (msgType == 4) {
+		tmpMsg = dbus_message_new_signal(path, interface, method);
+	}
+	if (msgType == 1) {
+		tmpMsg = dbus_message_new_method_call(destination, path, interface, method);
+	}
+	if (msgType == 2) {
+		tmpMsg = createReplyTofrom(destination, m);
+	}
+	if (msgType == 3) {
+		tmpMsg = createErrorTofrom(destination, m);
+	}
+	if (tmpMsg == null) {
+		msg("Can not create a message.");
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+
+	/* cleaning */
+
+	writeMessage = tmpMsg;
+	if (!(path == null)) {
+		free(path);
+	}
+	if (!(interface == null)) {
+		free(interface);
+	}
+	if (!(method == null)) {
+		free(method);
+	}
+	if (!(destination == null)) {
+		free(destination);
+	}
+	_return_value = interpreterProxy->trueObject();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(2, _return_value);
+	return null;
+}
+
+
+/*	initialize an interator to write message arguments */
+
+EXPORT(sqInt) primitiveDBusInitializeWriteIterator(void) {
+	if (writeMessage == null) {
+		null;
+	} else {
+		curWriteIter = 0;
+		dbus_message_iter_init_append(writeMessage, &writeMessageIter[curWriteIter]);
+	}
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	return null;
+}
+
+
+/*	answer the signature of the current iterator  */
+
+EXPORT(sqInt) primitiveDBusIteratorSignature(void) {
+	char* sig;
+	sqInt strOop;
+
+	sig = dbus_message_iter_get_signature(&messageIter[curIter]);
+	strOop = buildStringOopFromCharP(sig);
+	dbus_free(sig);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(1, strOop);
+	return null;
+}
+
+
+/*	pops the topmost container from the iterator stack */
+
+EXPORT(sqInt) primitiveDBusIterCloseContainer(void) {
+	if (curWriteIter == 0) {
+		msg("No open container available");
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (dbus_message_iter_close_container( &writeMessageIter[curWriteIter-1], &writeMessageIter[curWriteIter])) {
+		curWriteIter -= 1;
+	} else {
+		msg("Could not close container");
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	return null;
+}
+
+
+/*	push a new container to the iterator stack. s is the signature which describes the content of the container */
+
+EXPORT(sqInt) primitiveDBusIterOpenContainerContains(void) {
+	sqInt openContainer;
+	char* cSig;
+	sqInt t;
+	sqInt s;
+	sqInt _return_value;
+
+	t = interpreterProxy->stackIntegerValue(1);
+	s = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	cSig = null;
+	if (!(s == null)) {
+		cSig = stringOopToChar(s);
+		if (cSig == null) {
+			if (interpreterProxy->failed()) {
+				return null;
+			}
+			interpreterProxy->popthenPush(3, 0);
+			return null;
+		}
+	}
+	openContainer = 0;
+	if (t == (DBUS_TYPE_ARRAY)) {
+		openContainer = 1;
+		if (s == null) {
+			msg("To write an array you have to specify the signature of the contained elements");
+			interpreterProxy->primitiveFail();
+			return null;
+		}
+	}
+	if (t == (DBUS_TYPE_VARIANT)) {
+		openContainer = 1;
+		if (s == null) {
+			msg("To write a variant you have to specify the signature of the contained element");
+			interpreterProxy->primitiveFail();
+			return null;
+		}
+	}
+	if (t == (DBUS_TYPE_STRUCT)) {
+		openContainer = 1;
+	}
+	if (t == (DBUS_TYPE_DICT_ENTRY)) {
+		openContainer = 1;
+	}
+	if (!(openContainer)) {
+		fprintf(stderr, "\n%d is no container type", t);
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	_return_value = iterOpenContainercontains(t, cSig);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(3, _return_value);
+	return null;
+}
+
+
 /*	returns the destination of the received message or nil if there is none set */
 
 EXPORT(sqInt) primitiveDBusMessageGetDestination(void) {
@@ -990,7 +1394,7 @@ EXPORT(sqInt) primitiveDBusMessageGetDestination(void) {
 }
 
 
-/*	returns the error name (ERROR only) */
+/*	answer the name name of the received error (ERROR only) */
 
 EXPORT(sqInt) primitiveDBusMessageGetErrorName(void) {
 	int msgType;
@@ -1165,7 +1569,29 @@ EXPORT(sqInt) primitiveDBusMessageGetSignature(void) {
 }
 
 
-/*	returns a String argument) */
+/*	returns true if the received message has arguments */
+
+EXPORT(sqInt) primitiveDBusMessageHasArguments(void) {
+	sqInt _return_value;
+
+	if (!(hasArgument)) {
+		_return_value = interpreterProxy->falseObject();
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(1, _return_value);
+		return null;
+	}
+	_return_value = interpreterProxy->trueObject();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(1, _return_value);
+	return null;
+}
+
+
+/*	set the next message iterator as the current. anwers if there is a next iterator  */
 
 EXPORT(sqInt) primitiveDBusNextIterator(void) {
 	sqInt _return_value;
@@ -1174,7 +1600,7 @@ EXPORT(sqInt) primitiveDBusNextIterator(void) {
 		interpreterProxy->primitiveFail();
 		return null;
 	}
-	hasArgument = dbus_message_iter_next(&messageIter[currIter]);
+	hasArgument = dbus_message_iter_next(&messageIter[curIter]);
 	_return_value = (hasArgument? interpreterProxy->trueObject(): interpreterProxy->falseObject());
 	if (interpreterProxy->failed()) {
 		return null;
@@ -1186,11 +1612,11 @@ EXPORT(sqInt) primitiveDBusNextIterator(void) {
 
 /*	pops a message iterator from the iterator stack */
 
-EXPORT(sqInt) primitiveDBusPopIterator(void) {
+EXPORT(sqInt) primitiveDBusPopMessageIterator(void) {
 	sqInt _return_value;
 
-	if (currIter > 0) {
-		currIter -= 1;
+	if (curIter > 0) {
+		curIter -= 1;
 		hasArgument = 1;
 		_return_value = interpreterProxy->trueObject();
 		if (interpreterProxy->failed()) {
@@ -1204,6 +1630,38 @@ EXPORT(sqInt) primitiveDBusPopIterator(void) {
 		return null;
 	}
 	interpreterProxy->popthenPush(1, _return_value);
+	return null;
+}
+
+
+/*	push an iterator for reading variants, arrays or structs */
+
+EXPORT(sqInt) primitiveDBusPushMessageIterator(void) {
+	int type;
+
+	if (!(hasArgument)) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	type = 0;
+	type = dbus_message_iter_get_arg_type(&messageIter[curIter]);
+	if (!(type == (DBUS_TYPE_VARIANT))) {
+		if (!(type == (DBUS_TYPE_ARRAY))) {
+			if (!(type == (DBUS_TYPE_DICT_ENTRY))) {
+				if (!(type == (DBUS_TYPE_STRUCT))) {
+					fprintf(stderr, "Wrong argument type: %s", dbus_message_iter_get_signature(&messageIter[curIter]) );
+					interpreterProxy->primitiveFail();
+					return null;
+				}
+			}
+		}
+	}
+	dbus_message_iter_recurse(&messageIter[curIter], &messageIter[curIter+1]);
+	curIter += 1;
+	hasArgument = 1;
+	if (interpreterProxy->failed()) {
+		return null;
+	}
 	return null;
 }
 
@@ -1226,11 +1684,11 @@ EXPORT(sqInt) primitiveDBusReadWriteConnection(void) {
 	conn = getConnectionFromOop(rcvOop);
 	if (!(message == null)) {
 		hasArgument = 0;
-		currIter = 0;
+		curIter = 0;
 		dbus_message_unref(message);
 	}
-	dbus_connection_dispatch(conn);
-		message = dbus_connection_pop_message(conn);
+	dbus_connection_read_write(conn, 1); 
+				message = dbus_connection_pop_message(conn);
 	if (message == null) {
 		_return_value = interpreterProxy->integerObjectOf(0);
 		if (interpreterProxy->failed()) {
@@ -1243,7 +1701,7 @@ EXPORT(sqInt) primitiveDBusReadWriteConnection(void) {
 	/* if message contains argument initialize iterator */
 
 	msgType = dbus_message_get_type(message);
-	hasArgument = dbus_message_iter_init(message, &(messageIter[currIter]));
+	hasArgument = dbus_message_iter_init(message, &(messageIter[curIter]));
 	_return_value = interpreterProxy->integerObjectOf(msgType);
 	if (interpreterProxy->failed()) {
 		return null;
@@ -1253,7 +1711,7 @@ EXPORT(sqInt) primitiveDBusReadWriteConnection(void) {
 }
 
 
-/*	Register Name */
+/*	Register a name at the connection */
 
 EXPORT(sqInt) primitiveDBusRegisterName(void) {
 	DBusConnection * conn;
@@ -1290,7 +1748,7 @@ EXPORT(sqInt) primitiveDBusRegisterName(void) {
 }
 
 
-/*	Release Name */
+/*	Release a registered name */
 
 EXPORT(sqInt) primitiveDBusReleaseName(void) {
 	DBusConnection * conn;
@@ -1363,140 +1821,83 @@ EXPORT(sqInt) primitiveDBusRemoveMatch(void) {
 }
 
 
-/*	Send a broadcast signal to the DBus deamon */
+/*	send the prevoisly created message and returns the serial of the message */
 
 EXPORT(sqInt) primitiveDBusSendMessage(void) {
 	DBusConnection * conn;
-	char * signature;
-	DBusError error;
-	char * destination;
-	sqInt messageWasSend;
+	sqInt msgSend;
 	sqInt rcvOop;
-	char * interface;
-	sqInt sendWithReply;
-	int msgType;
-	char * path;
-	DBusMessageIter argIter;
-	DBusMessage * tmpMsg;
 	dbus_uint32_t serial;
-	char * method;
-	sqInt m;
-	sqInt args;
 	sqInt _return_value;
-	sqInt p;
-	sqInt b;
-	sqInt p1;
-	sqInt p2;
-	sqInt p3;
-	sqInt p4;
-	sqInt p5;
 
-	m = interpreterProxy->stackValue(1);
-	args = interpreterProxy->stackValue(0);
-	rcvOop = interpreterProxy->stackValue(2);
+	rcvOop = interpreterProxy->stackValue(0);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	msgType = interpreterProxy->fetchIntegerofObject(0, m);
-	if (interpreterProxy->failed()) {
-		msg("Can not fetch message type.");
+	if (writeMessage == null) {
 		interpreterProxy->primitiveFail();
 		return null;
 	}
-
-	/* extract path from the Oop */
-
-	sendWithReply = 0;
-	/* begin fetchString:ofObject: */
-	p1 = interpreterProxy->fetchPointerofObject(1, m);
-	path = stringOopToChar(p1);
-	/* begin fetchString:ofObject: */
-	p2 = interpreterProxy->fetchPointerofObject(2, m);
-	interface = stringOopToChar(p2);
-	/* begin fetchString:ofObject: */
-	p3 = interpreterProxy->fetchPointerofObject(3, m);
-	method = stringOopToChar(p3);
-	/* begin fetchString:ofObject: */
-	p4 = interpreterProxy->fetchPointerofObject(5, m);
-	destination = stringOopToChar(p4);
-	/* begin fetchString:ofObject: */
-	p5 = interpreterProxy->fetchPointerofObject(6, m);
-	signature = stringOopToChar(p5);
-	dbus_error_init(&error);
-
-	/* create new msg */
-
 	conn = getConnectionFromOop(rcvOop);
-
-	/* create Signal */
-
-	tmpMsg = null;
-	if (msgType == 4) {
-		tmpMsg = dbus_message_new_signal(path, interface, method);
+	serial = 0;
+	msgSend = 1;
+	if (dbus_connection_send(conn, writeMessage, &serial)) {
+		dbus_connection_flush(conn);
+	} else {
+		msg("message was not sended");
+		msgSend = 0;
 	}
-	if (msgType == 1) {
-		tmpMsg = dbus_message_new_method_call(destination, path, interface, method);
-		/* begin fetchBoolean:ofObject: */
-		p = interpreterProxy->fetchPointerofObject(9, m);
-		b = booleanValueOf(p);
-		if (interpreterProxy->failed()) {
-			msg("Can not fetch a string from oop");
-			interpreterProxy->primitiveFail();
-		}
-		sendWithReply = b;
-	}
-	if (msgType == 2) {
-		tmpMsg = createReplyTofrom(destination, m);
-	}
-	if (msgType == 3) {
-		tmpMsg = createErrorTofrom(destination, m);
-	}
-	if (tmpMsg == null) {
-		msg("Can not create a message.");
+	dbus_message_unref(writeMessage);
+	if (!(msgSend)) {
 		interpreterProxy->primitiveFail();
 		return null;
-	}
-	dbus_message_iter_init_append(tmpMsg, &argIter);
-	appendArgumentstosignature(args, &argIter, signature);
-	if (!(interpreterProxy->failed())) {
-		serial = 0;
-		messageWasSend = interpreterProxy->trueObject();
-		if (sendWithReply) {
-			if (!(dbus_connection_send_with_reply(conn, tmpMsg, NULL, -1))) {
-				messageWasSend = interpreterProxy->falseObject();
-			}
-			serial = dbus_message_get_serial(tmpMsg);
-		} else {
-			if (!(dbus_connection_send(conn, tmpMsg, &serial))) {
-				messageWasSend = interpreterProxy->falseObject();
-			}
-		}
-		dbus_connection_flush(conn);
-		dbus_message_unref(tmpMsg);
-	}
-	if (!(path == null)) {
-		free(path);
-	}
-	if (!(interface == null)) {
-		free(interface);
-	}
-	if (!(method == null)) {
-		free(method);
-	}
-	if (!(destination == null)) {
-		free(destination);
-	}
-	if (!(signature == null)) {
-		free(signature);
-	}
-	if (!(messageWasSend)) {
-		msg("msg was not send");
 	}
 	_return_value = interpreterProxy->integerObjectOf(serial);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	interpreterProxy->popthenPush(3, _return_value);
+	interpreterProxy->popthenPush(1, _return_value);
+	return null;
+}
+
+
+/*	send the previously created message with reply and returns the serial of the message */
+
+EXPORT(sqInt) primitiveDBusSendMessageWithReply(void) {
+	DBusConnection * conn;
+	sqInt msgSend;
+	sqInt rcvOop;
+	dbus_uint32_t serial;
+	sqInt _return_value;
+
+	rcvOop = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if (writeMessage == null) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	conn = getConnectionFromOop(rcvOop);
+	serial = 0;
+	msgSend = 1;
+	if (dbus_connection_send_with_reply(conn, writeMessage, NULL, -1)) {
+		serial = dbus_message_get_serial(writeMessage);
+		dbus_connection_flush(conn);
+	} else {
+		msg("message was not sended");
+		msgSend = 0;
+	}
+	dbus_message_unref(writeMessage);
+	if (!(msgSend)) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	_return_value = interpreterProxy->integerObjectOf(serial);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(1, _return_value);
 	return null;
 }
 
@@ -1525,7 +1926,7 @@ EXPORT(sqInt) shutdownModule(void) {
 		if ((connections[i]) != null) {
 			dbus_connection_close(connections[i]);
 				dbus_connection_unref(connections[i]);
-			connections[i == null];
+			connections[i] = null;
 		}
 	}
 	return 1;
@@ -1536,11 +1937,11 @@ static sqInt sqAssert(sqInt aBool) {
 }
 
 
-/*	function which is called when the dbus want to add a watch handle */
+/*	is called when the dbus want to add a watch handle. a filedescriptor for the watch will registered in the squeak loop */
 
 static sqInt sqDBusPluginAddWatchwithData(DBusWatch* watch, dbusWatchData data) {
-	sqInt fd;
 	sqInt flag;
+	sqInt fd;
 
 
 	/* get the file descriptor of the watch */
@@ -1557,12 +1958,15 @@ static sqInt sqDBusPluginAddWatchwithData(DBusWatch* watch, dbusWatchData data) 
 	}
 }
 
+
+/*	function is called after a watch is dissabled an the data of the watch can be freed */
+
 static sqInt sqDBusPluginFreeWatchData(dbusWatchData data) {
 	free(data);
 }
 
 
-/*	function which is called when the dbus want to add a watch handle */
+/*	is called when the dbus want to remove a watch handle, the filedescriptor will disabled */
 
 static sqInt sqDBusPluginRemoveWatchwithData(DBusWatch* watch, dbusWatchData data) {
 	sqInt fd;
@@ -1572,7 +1976,7 @@ static sqInt sqDBusPluginRemoveWatchwithData(DBusWatch* watch, dbusWatchData dat
 }
 
 
-/*	 */
+/*	toggle the filedescriptor */
 
 static sqInt sqDBusPluginToggleWatchwithData(DBusWatch* watch, dbusWatchData data) {
 	sqInt enable;
@@ -1587,6 +1991,9 @@ static sqInt sqDBusPluginToggleWatchwithData(DBusWatch* watch, dbusWatchData dat
 		aioDisable(fd);
 	}
 }
+
+
+/*	convert a string oop to an char pointer which stores the content of the oop */
 
 static char * stringOopToChar(sqInt oop) {
 	int size;
@@ -1610,44 +2017,55 @@ static char * stringOopToChar(sqInt oop) {
 
 
 void* DBusPlugin_exports[][3] = {
-	{"DBusPlugin", "primitiveAnswerSeventeen", (void*)primitiveAnswerSeventeen},
+	{"DBusPlugin", "primitiveDBusPopMessageIterator", (void*)primitiveDBusPopMessageIterator},
 	{"DBusPlugin", "primitiveDBusRemoveMatch", (void*)primitiveDBusRemoveMatch},
 	{"DBusPlugin", "getModuleName", (void*)getModuleName},
 	{"DBusPlugin", "primitiveDBusMessageGetSerial", (void*)primitiveDBusMessageGetSerial},
-	{"DBusPlugin", "primitiveDBusArgumentGetArray", (void*)primitiveDBusArgumentGetArray},
+	{"DBusPlugin", "primitiveDBusCreateMessageFrom", (void*)primitiveDBusCreateMessageFrom},
 	{"DBusPlugin", "primitiveDBusArgumentGetObjectPath", (void*)primitiveDBusArgumentGetObjectPath},
-	{"DBusPlugin", "primitiveDBusRegisterName", (void*)primitiveDBusRegisterName},
-	{"DBusPlugin", "primitiveDBusArgumentGetVariant", (void*)primitiveDBusArgumentGetVariant},
-	{"DBusPlugin", "primitiveDBusMessageGetSender", (void*)primitiveDBusMessageGetSender},
-	{"DBusPlugin", "primitiveDBusArgumentGetBool", (void*)primitiveDBusArgumentGetBool},
-	{"DBusPlugin", "primitiveDBusArgumentGetStruct", (void*)primitiveDBusArgumentGetStruct},
-	{"DBusPlugin", "primitiveDBusConnectionRegisterSemaphore", (void*)primitiveDBusConnectionRegisterSemaphore},
-	{"DBusPlugin", "primitiveDBusMessageGetDestination", (void*)primitiveDBusMessageGetDestination},
+	{"DBusPlugin", "primitiveDBusInitializeWriteIterator", (void*)primitiveDBusInitializeWriteIterator},
+	{"DBusPlugin", "primitiveDBusArgumentGetByte", (void*)primitiveDBusArgumentGetByte},
 	{"DBusPlugin", "primitiveDBusNextIterator", (void*)primitiveDBusNextIterator},
-	{"DBusPlugin", "primitiveDBusConnectionDispatchStatus", (void*)primitiveDBusConnectionDispatchStatus},
 	{"DBusPlugin", "primitiveDBusArgumentGetInt32", (void*)primitiveDBusArgumentGetInt32},
 	{"DBusPlugin", "primitiveDBusConnectionPopMessage", (void*)primitiveDBusConnectionPopMessage},
 	{"DBusPlugin", "primitiveDBusArgumentGetType", (void*)primitiveDBusArgumentGetType},
-	{"DBusPlugin", "primitiveDBusReleaseName", (void*)primitiveDBusReleaseName},
-	{"DBusPlugin", "setInterpreter", (void*)setInterpreter},
+	{"DBusPlugin", "primitiveDBusArgumentGetUInt16", (void*)primitiveDBusArgumentGetUInt16},
 	{"DBusPlugin", "primitiveDBusConnectToSessionBus", (void*)primitiveDBusConnectToSessionBus},
-	{"DBusPlugin", "primitiveDBusPopIterator", (void*)primitiveDBusPopIterator},
-	{"DBusPlugin", "primitiveDBusArgumentGetString", (void*)primitiveDBusArgumentGetString},
-	{"DBusPlugin", "primitiveDBusReadWriteConnection", (void*)primitiveDBusReadWriteConnection},
-	{"DBusPlugin", "primitiveDBusMessageGetInterface", (void*)primitiveDBusMessageGetInterface},
-	{"DBusPlugin", "primitiveDBusConnectionDispatch", (void*)primitiveDBusConnectionDispatch},
-	{"DBusPlugin", "primitiveDBusArgumentGetDictionary", (void*)primitiveDBusArgumentGetDictionary},
+	{"DBusPlugin", "primitiveDBusIteratorSignature", (void*)primitiveDBusIteratorSignature},
+	{"DBusPlugin", "primitiveDBusMessageHasArguments", (void*)primitiveDBusMessageHasArguments},
+	{"DBusPlugin", "primitiveDBusArgumentGetSignature", (void*)primitiveDBusArgumentGetSignature},
+	{"DBusPlugin", "primitiveDBusArgumentGetInt64", (void*)primitiveDBusArgumentGetInt64},
+	{"DBusPlugin", "primitiveDBusAppendBasicArgument", (void*)primitiveDBusAppendBasicArgument},
 	{"DBusPlugin", "primitiveDBusMessageGetErrorName", (void*)primitiveDBusMessageGetErrorName},
 	{"DBusPlugin", "shutdownModule", (void*)shutdownModule},
-	{"DBusPlugin", "primitiveDBusSendMessage", (void*)primitiveDBusSendMessage},
-	{"DBusPlugin", "primitiveDBusMessageGetReplySerial", (void*)primitiveDBusMessageGetReplySerial},
-	{"DBusPlugin", "primitiveDBusArgumentGetDouble", (void*)primitiveDBusArgumentGetDouble},
 	{"DBusPlugin", "primitiveDBusMessageGetSignature", (void*)primitiveDBusMessageGetSignature},
 	{"DBusPlugin", "primitiveDBusMessageGetMember", (void*)primitiveDBusMessageGetMember},
+	{"DBusPlugin", "primitiveDBusSendMessage", (void*)primitiveDBusSendMessage},
+	{"DBusPlugin", "primitiveDBusConnectToSystemBus", (void*)primitiveDBusConnectToSystemBus},
+	{"DBusPlugin", "primitiveDBusArgumentGetUInt32", (void*)primitiveDBusArgumentGetUInt32},
+	{"DBusPlugin", "primitiveDBusMessageGetPath", (void*)primitiveDBusMessageGetPath},
+	{"DBusPlugin", "primitiveDBusSendMessageWithReply", (void*)primitiveDBusSendMessageWithReply},
+	{"DBusPlugin", "primitiveDBusRegisterName", (void*)primitiveDBusRegisterName},
+	{"DBusPlugin", "primitiveDBusMessageGetSender", (void*)primitiveDBusMessageGetSender},
+	{"DBusPlugin", "primitiveDBusArgumentGetBool", (void*)primitiveDBusArgumentGetBool},
+	{"DBusPlugin", "primitiveDBusPushMessageIterator", (void*)primitiveDBusPushMessageIterator},
+	{"DBusPlugin", "primitiveDBusConnectionRegisterSemaphore", (void*)primitiveDBusConnectionRegisterSemaphore},
+	{"DBusPlugin", "primitiveDBusArgumentGetUInt64", (void*)primitiveDBusArgumentGetUInt64},
+	{"DBusPlugin", "primitiveDBusMessageGetDestination", (void*)primitiveDBusMessageGetDestination},
+	{"DBusPlugin", "primitiveDBusConnectionClose", (void*)primitiveDBusConnectionClose},
+	{"DBusPlugin", "primitiveDBusConnectionDispatchStatus", (void*)primitiveDBusConnectionDispatchStatus},
+	{"DBusPlugin", "primitiveDBusIterCloseContainer", (void*)primitiveDBusIterCloseContainer},
+	{"DBusPlugin", "primitiveDBusReleaseName", (void*)primitiveDBusReleaseName},
+	{"DBusPlugin", "setInterpreter", (void*)setInterpreter},
+	{"DBusPlugin", "primitiveDBusArgumentGetString", (void*)primitiveDBusArgumentGetString},
+	{"DBusPlugin", "primitiveDBusReadWriteConnection", (void*)primitiveDBusReadWriteConnection},
+	{"DBusPlugin", "primitiveDBusIterOpenContainerContains", (void*)primitiveDBusIterOpenContainerContains},
+	{"DBusPlugin", "primitiveDBusMessageGetInterface", (void*)primitiveDBusMessageGetInterface},
+	{"DBusPlugin", "primitiveDBusMessageGetReplySerial", (void*)primitiveDBusMessageGetReplySerial},
+	{"DBusPlugin", "primitiveDBusArgumentGetDouble", (void*)primitiveDBusArgumentGetDouble},
 	{"DBusPlugin", "initialiseModule", (void*)initialiseModule},
 	{"DBusPlugin", "primitiveDBusAddMatch", (void*)primitiveDBusAddMatch},
-	{"DBusPlugin", "primitiveDBusConnectToSystemBus", (void*)primitiveDBusConnectToSystemBus},
-	{"DBusPlugin", "primitiveDBusMessageGetPath", (void*)primitiveDBusMessageGetPath},
+	{"DBusPlugin", "primitiveDBusArgumentGetInt16", (void*)primitiveDBusArgumentGetInt16},
 	{"DBusPlugin", "primitiveDBusMessageGetNoReply", (void*)primitiveDBusMessageGetNoReply},
 	{NULL, NULL, NULL}
 };
