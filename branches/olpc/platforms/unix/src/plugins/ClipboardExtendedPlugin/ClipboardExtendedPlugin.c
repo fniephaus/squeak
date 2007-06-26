@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on #(9 May 2006 1:40:04 am) */
+/* Automatically generated from Squeak on an Array(30 May 2007 6:15:17 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -57,9 +57,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"ClipboardExtendedPlugin 9 May 2006 (i)"
+	"ClipboardExtendedPlugin 30 May 2007 (i)"
 #else
-	"ClipboardExtendedPlugin 9 May 2006 (e)"
+	"ClipboardExtendedPlugin 30 May 2007 (e)"
 #endif
 ;
 
@@ -221,13 +221,13 @@ static sqInt sqAssert(sqInt aBool) {
 
 
 void* ClipboardExtendedPlugin_exports[][3] = {
-	{"ClipboardExtendedPlugin", "ioClearClipboard", (void*)ioClearClipboard},
-	{"ClipboardExtendedPlugin", "ioReadClipboardData", (void*)ioReadClipboardData},
 	{"ClipboardExtendedPlugin", "ioCreateClipboard", (void*)ioCreateClipboard},
-	{"ClipboardExtendedPlugin", "ioAddClipboardData", (void*)ioAddClipboardData},
 	{"ClipboardExtendedPlugin", "getModuleName", (void*)getModuleName},
-	{"ClipboardExtendedPlugin", "ioGetClipboardFormat", (void*)ioGetClipboardFormat},
+	{"ClipboardExtendedPlugin", "ioClearClipboard", (void*)ioClearClipboard},
 	{"ClipboardExtendedPlugin", "setInterpreter", (void*)setInterpreter},
+	{"ClipboardExtendedPlugin", "ioReadClipboardData", (void*)ioReadClipboardData},
+	{"ClipboardExtendedPlugin", "ioAddClipboardData", (void*)ioAddClipboardData},
+	{"ClipboardExtendedPlugin", "ioGetClipboardFormat", (void*)ioGetClipboardFormat},
 	{NULL, NULL, NULL}
 };
 
