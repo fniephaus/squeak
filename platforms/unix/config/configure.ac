@@ -32,7 +32,7 @@
 
 AC_INIT([config.h.in])
 
-AC_VM_VERSION(3,9,10, 3,9a,7024)
+AC_VM_VERSION(3,9,11, 3,9a,7024)
 
 topdir=`cd ${srcdir}/../../..; pwd`
 cfgdir=`cd ${srcdir}; pwd`
