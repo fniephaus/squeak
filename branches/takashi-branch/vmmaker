@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ ! -d vmm ] ; then
+  svn checkout http://etoys.laptop.org/svn/trunk/vmm
+fi
+cd vmm
+exec ./vmmaker
