@@ -113,7 +113,8 @@ enum XdndState {
   XdndStateOutDropped,
 };
 
-static enum XdndState xdndState= XdndStateIdle;
+#define DndOutStart -1
+
 
 #define xdndEnter_sourceWindow(evt)		( (evt)->data.l[0])
 #define xdndEnter_version(evt)			( (evt)->data.l[1] >> 24)
@@ -322,7 +323,7 @@ static void sendLeave(Window target, Window source)
 }
 
 
-static enum XdndState dndOutPress(enum XdndState state, XButtonEvent * evt)
+static enum XdndState dndOutPress(enum XdndState state)
 {
   if (XdndStateIdle != state) return state;
   XSetSelectionOwner(stDisplay, XdndSelection, DndWindow, CurrentTime);
@@ -475,18 +476,8 @@ static void updateCursor(int isAccepted)
 }
 
 
-static sqInt display_dndOutStart(char * data, int ndata, char * typeName, int ntypeName)
-{
-  if (ndata > 0)
-    display_clipboardWriteWithType(data, ndata, typeName, ntypeName, 1, 0);
-
-  xdndState= dndOutPress(xdndState, NULL); 
-  return 1;
-}
-
-
-static void destroyInTypes()
-/* static void destroyInTypes() */
+static void dndInDestroyTypes()
+/* static void dndInDestroyTypes() */
 {
   if (xdndInTypes == NULL)
     return;
@@ -498,7 +489,7 @@ static void destroyInTypes()
 static void updateInTypes(Atom * newTargets, int targetSize)
 {
   int i;
-  destroyInTypes();
+  dndInDestroyTypes();
   xdndInTypes= (Atom *)calloc(targetSize + 1, sizeof(Atom));
   for (i= 0; i < targetSize;  ++i)
     xdndInTypes[i]= newTargets[i];
@@ -618,56 +609,52 @@ static void dndSendFinished()
 }
 
 
-static void dndEnter(XClientMessageEvent *evt)
+static enum XdndState dndInEnter(enum XdndState state, XClientMessageEvent *evt)
 {
 
   if (xdndEnter_version(evt) < 3)
     {
       fprintf(stderr, "xdnd: protocol version %ld not supported\n", xdndEnter_version(evt));
-      return;
+      return state;
     }
   xdndSourceWindow= xdndEnter_sourceWindow(evt);
   dndGetTypeList(evt);
-  xdndState= XdndStateEntered;
 
   dprintf((stderr, "dndEnter target: 0x%lx source: 0x%lx\n",
 	   evt->window, xdndSourceWindow));
+  return XdndStateEntered;
 }
 
 
-static void dndLeave()
+static enum XdndState dndInLeave(enum XdndState state)
 {
   dprintf((stderr, "dndLeave\n"));
   recordDragEvent(DragLeave, 1);
-  xdndState= XdndStateIdle;
+  return XdndStateIdle;
 }
 
 
-static void dndPosition(XClientMessageEvent *evt)
+static enum XdndState dndInPosition(enum XdndState state, XClientMessageEvent *evt)
 {
   dprintf((stderr, "dndPosition\n"));
 
   if (xdndSourceWindow != xdndPosition_sourceWindow(evt))
     {
       dprintf((stderr, "dndPosition: wrong source window\n"));
-      return;
+      return XdndStateIdle;
     }
 
   getMousePosition();
 
-  if (xdndState == XdndStateEntered)
-    {
-      if (xdndWillAccept)
-	recordDragEvent(DragEnter, 1);
-      xdndState= XdndStateTracking;
-    }
-
-  if (xdndState != XdndStateTracking)
+  if ((state != XdndStateEntered) && (state != XdndStateEntered))
     {
       dprintf((stderr, "dndPosition: wrong state\n"));
-      return;
+      return XdndStateIdle;
     }
-
+  
+  if ((state == XdndStateEntered) && xdndWillAccept)
+    recordDragEvent(DragEnter, 1);
+  
   if (xdndWillAccept)
     {
       Atom action= xdndPosition_action(evt);
@@ -687,11 +674,11 @@ static void dndPosition(XClientMessageEvent *evt)
       dprintf((stderr, "not accepting\n"));
       dndSendStatus(0, XdndActionPrivate);
     }
-
+  return XdndStateTracking;
 }
 
 
-static void dndDrop(XClientMessageEvent *evt)
+enum XdndState dndInDrop(enum XdndState state, XClientMessageEvent *evt)
 {
   dprintf((stderr, "dndDrop\n"));
 
@@ -703,9 +690,9 @@ static void dndDrop(XClientMessageEvent *evt)
     {
       dprintf((stderr, "dndDrop: no url list\n"));
       recordDragEvent(DragDrop, 0);
-      return;
+      return state;
     }
-  destroyInTypes();
+  dndInDestroyTypes();
 
   if (xdndSourceWindow != xdndDrop_sourceWindow(evt))
     dprintf((stderr, "dndDrop: wrong source window\n"));
@@ -732,9 +719,9 @@ static void dndDrop(XClientMessageEvent *evt)
     dprintf((stderr, "refusing selection -- finishing\n"));
 
   dndSendFinished();
-  dndLeave();
+  recordDragEvent(DragLeave, 1);
 
-  xdndState= XdndStateIdle;
+  return XdndStateIdle;
 }
 
 
@@ -777,76 +764,76 @@ static void dndGetSelection(Window owner, Atom property)
 }
 
 
-static void finishDrop ()
-{
-  dndSendFinished();
-  dndLeave();
-}
-
-
-static void dndReadSelectionDestroy()
-{
-  destroyInTypes();
-  finishDrop();
-}
-
-static int dndInSelectionNotify(XSelectionEvent *evt)
+static enum XdndState dndInSelectionNotify(enum XdndState state, XSelectionEvent *evt)
 {
   if (evt->property == XdndSelectionAtom)
     {
       dndGetSelection(evt->requestor, evt->property);
-      finishDrop();
-      return 1;
+      dprintf((stderr, "dndLeave\n"));
+      dndSendFinished();
+      recordDragEvent(DragLeave, 1);
+      return XdndStateIdle;
     }
-  return 0;
+  return state;
 }
 
 
-static int dndInClientMessage(XClientMessageEvent *evt)
+static enum XdndState dndInClientMessage(enum XdndState state, XClientMessageEvent *evt)
 {
-  int handled= 1;
   Atom type= evt->message_type;
-  if      (type == XdndEnter)	 dndEnter(evt);
-  else if (type == XdndPosition) dndPosition(evt);
-  else if (type == XdndDrop)	 dndDrop(evt);
-  else if (type == XdndLeave)	 dndLeave();
-  else				 handled= 0;
-  return handled;
+  if      (type == XdndEnter)	 return dndInEnter(state, evt);
+  else if (type == XdndPosition) return dndInPosition(state, evt);
+  else if (type == XdndDrop)	 return dndInDrop(state, evt);
+  else if (type == XdndLeave)	 return dndInLeave(state);
+  return state;
 }
 
 
 /* Dnd event handler */
 /* TODO: this function should be a state machine for xdndState. */
-static void dndHandleEvent(XEvent * evt)
+static void dndHandleEvent(int type, XEvent * evt)
 {
-  switch(evt->type)
+  static enum XdndState state= XdndStateIdle;
+
+  switch(type)
     {
-    case ButtonPress:
-/*       xdndState= dndOutPress(xdndState, &evt->xbutton); */
-/*       break; */
+    case DndOutStart:
+      state= dndOutPress(state);
+      break;
     case MotionNotify:
       if (XdndSelection != stSelectionName) break;
-      xdndState= dndOutMotion(xdndState, &evt->xmotion);
+      state= dndOutMotion(state, &evt->xmotion);
       break;
     case ClientMessage:
-      dndInClientMessage(&evt->xclient);
+      state= dndInClientMessage(state, &evt->xclient);
       if (XdndSelection != stSelectionName) break;
-      xdndState= dndOutClientMessage(xdndState, &evt->xclient);
+      state= dndOutClientMessage(state, &evt->xclient);
       break;
     case ButtonRelease:
       if (XdndSelection != stSelectionName) break;
-      xdndState= dndOutRelease(xdndState, &evt->xbutton);
+      state= dndOutRelease(state, &evt->xbutton);
       break;
     case SelectionRequest:
       if (XdndSelection != stSelectionName) break;
-      xdndState= dndOutSelectionRequest(xdndState, &evt->xselectionrequest);
+      state= dndOutSelectionRequest(state, &evt->xselectionrequest);
       break;
     case SelectionNotify:
-      dndInSelectionNotify(&evt->xselection);
+      state= dndInSelectionNotify(state, &evt->xselection);
       break;
-
     }
-  updateCursor(XdndStateOutAccepted == xdndState);
+  updateCursor(XdndStateOutAccepted == state);
+}
+
+
+static sqInt display_dndOutStart(char * data, int ndata, char * typeName, int ntypeName)
+{
+  if (ndata > 0)
+    display_clipboardWriteWithType(data, ndata, typeName, ntypeName, 1, 0);
+
+/*   xdndState= dndOutPress(xdndState, NULL);  */
+  dndHandleEvent(DndOutStart, NULL);
+
+  return 1;
 }
 
 

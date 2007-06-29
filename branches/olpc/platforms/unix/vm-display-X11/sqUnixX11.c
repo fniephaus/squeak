@@ -782,14 +782,6 @@ static void getSelection(void)
 {
   char *data;
 
-  if (stOwnsClipboard)
-    {
-#    if defined(DEBUG_SELECTIONS)
-      fprintf(stderr, "getSelection: returning own selection\n");
-#    endif
-      return;
-    }
-
   if (usePrimaryFirst)
     {
       data= getSelectionFrom(XA_PRIMARY);     /* try PRIMARY first */
@@ -1157,6 +1149,7 @@ static void display_clipboardWriteWithType(char * data, size_t ndata,
 
 static sqInt display_clipboardSize(void)
 {
+  if (stOwnsClipboard) return 0;
   getSelection();
   return stPrimarySelectionSize;
 }
@@ -1188,7 +1181,7 @@ static sqInt display_clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqIn
 
 static int dndAvailable();
 static void dndGetTargets(Atom ** types, int * count);
-static void dndReadSelectionDestroy();
+static void dndInDestroyTypes();
 
 /* Answer available types (like "image/png") in XdndSelection or CLIPBOARD.
  * NULL is set after the last element as a sentinel.
@@ -1206,6 +1199,7 @@ static char ** display_clipboardGetTypeNames()
     dndGetTargets(&targets, &ntypeNames);
   else 
     {
+      if (stOwnsClipboard) return NULL;
       targets= (Atom *) getSelectionData(xaClipboard, xaTargets, &bytes);
       if (0 == bytes) return NULL;
       ntypeNames= bytes / sizeof(Atom);
@@ -1232,6 +1226,8 @@ static sqInt display_clipboardSizeWithType(char * typeName, int ntypeName)
   isDnd= dndAvailable();
   inputSelection= isDnd ? xaXdndSelection : xaClipboard;
 
+  if ((!isDnd) && stOwnsClipboard) return 0;
+
   SelectionChunk * chunk= newSelectionChunk();
   type= stringToAtom(typeName, ntypeName);
   getSelectionChunk(chunk, inputSelection, type);
@@ -1240,7 +1236,7 @@ static sqInt display_clipboardSizeWithType(char * typeName, int ntypeName)
   allocateSelectionBuffer(bytes);
   copySelectionChunk(chunk, stPrimarySelection);
   destroySelectionChunk(chunk);
-  if (isDnd) dndReadSelectionDestroy();
+  if (isDnd) dndInDestroyTypes();
 
   return stPrimarySelectionSize;
 }
@@ -1727,7 +1723,7 @@ static void handleEvent(XEvent *evt)
 
     }
   if (useXdnd)
-    dndHandleEvent(evt);
+    dndHandleEvent(evt->type, evt);
 
 # undef noteEventState
 }
@@ -2204,7 +2200,7 @@ void initWindow(char *displayName)
 			  XInternAtom(stDisplay, "_SUGAR_BUNDLE_ID", 0),
 			  XInternAtom(stDisplay, "STRING", 0), 8,
 			  PropModeReplace, 
-			  sugarBundleId, strlen(sugarBundleId));
+			  (unsigned char *) sugarBundleId, strlen(sugarBundleId));
 			  
 	if (sugarActivityId)
 	  XChangeProperty(stDisplay, 
@@ -2212,7 +2208,7 @@ void initWindow(char *displayName)
 			  XInternAtom(stDisplay, "_SUGAR_ACTIVITY_ID", 0),
 			  XInternAtom(stDisplay, "STRING", 0), 8,
 			  PropModeReplace, 
-			  sugarActivityId, strlen(sugarActivityId));
+			  (unsigned char *) sugarActivityId, strlen(sugarActivityId));
 			  
       }
 
