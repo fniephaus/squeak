@@ -782,14 +782,6 @@ static void getSelection(void)
 {
   char *data;
 
-  if (stOwnsClipboard)
-    {
-#    if defined(DEBUG_SELECTIONS)
-      fprintf(stderr, "getSelection: returning own selection\n");
-#    endif
-      return;
-    }
-
   if (usePrimaryFirst)
     {
       data= getSelectionFrom(XA_PRIMARY);     /* try PRIMARY first */
@@ -1157,6 +1149,7 @@ static void display_clipboardWriteWithType(char * data, size_t ndata,
 
 static sqInt display_clipboardSize(void)
 {
+  if (stOwnsClipboard) return 0;
   getSelection();
   return stPrimarySelectionSize;
 }
@@ -1206,6 +1199,7 @@ static char ** display_clipboardGetTypeNames()
     dndGetTargets(&targets, &ntypeNames);
   else 
     {
+      if (stOwnsClipboard) return NULL;
       targets= (Atom *) getSelectionData(xaClipboard, xaTargets, &bytes);
       if (0 == bytes) return NULL;
       ntypeNames= bytes / sizeof(Atom);
@@ -1231,6 +1225,8 @@ static sqInt display_clipboardSizeWithType(char * typeName, int ntypeName)
   
   isDnd= dndAvailable();
   inputSelection= isDnd ? xaXdndSelection : xaClipboard;
+
+  if ((!isDnd) && stOwnsClipboard) return 0;
 
   SelectionChunk * chunk= newSelectionChunk();
   type= stringToAtom(typeName, ntypeName);
