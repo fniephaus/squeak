@@ -1179,69 +1179,6 @@ static sqInt display_clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqIn
 }
 
 
-static int dndAvailable();
-static void dndGetTargets(Atom ** types, int * count);
-static void dndInDestroyTypes();
-
-/* Answer available types (like "image/png") in XdndSelection or CLIPBOARD.
- * NULL is set after the last element as a sentinel.
- * You should free() returned array of string.
- * Answer NULL if error. */
-static char ** display_clipboardGetTypeNames()
-{
-  Atom * targets= NULL;
-  size_t bytes= 0;
-  char ** typeNames= NULL;
-  Status isSuccess= 0;
-  int ntypeNames= 0;
-
-  if (dndAvailable())
-    dndGetTargets(&targets, &ntypeNames);
-  else 
-    {
-      if (stOwnsClipboard) return NULL;
-      targets= (Atom *) getSelectionData(xaClipboard, xaTargets, &bytes);
-      if (0 == bytes) return NULL;
-      ntypeNames= bytes / sizeof(Atom);
-    }
-
-  typeNames= calloc(sizeof(char *), ntypeNames + 1);
-  isSuccess= XGetAtomNames(stDisplay, targets, ntypeNames, typeNames);
-  
-  if (!isSuccess) return NULL;
-  typeNames[ntypeNames]= NULL;
-  return typeNames;
-}
-
-
-/* Read clipboard associated with the type to stPrimarySelection.
- * Answer size of the data. */
-static sqInt display_clipboardSizeWithType(char * typeName, int ntypeName)
-{
-  size_t bytes;
-  Atom type;
-  int isDnd= 0;
-  Atom inputSelection;
-  
-  isDnd= dndAvailable();
-  inputSelection= isDnd ? xaXdndSelection : xaClipboard;
-
-  if ((!isDnd) && stOwnsClipboard) return 0;
-
-  SelectionChunk * chunk= newSelectionChunk();
-  type= stringToAtom(typeName, ntypeName);
-  getSelectionChunk(chunk, inputSelection, type);
-  bytes= sizeSelectionChunk(chunk);
-
-  allocateSelectionBuffer(bytes);
-  copySelectionChunk(chunk, stPrimarySelection);
-  destroySelectionChunk(chunk);
-  if (isDnd) dndInDestroyTypes();
-
-  return stPrimarySelectionSize;
-}
-
-
 /* a modified copy of fullDisplayUpdate() that redraws
    only the damaged parts of the window according to each
    expose event on the queue.
@@ -1502,6 +1439,65 @@ static void waitForCompletions(void)
 
 
 #include "sqUnixXdnd.c"
+
+
+/* Answer available types (like "image/png") in XdndSelection or CLIPBOARD.
+ * NULL is set after the last element as a sentinel.
+ * You should free() returned array of string.
+ * Answer NULL if error. */
+static char ** display_clipboardGetTypeNames()
+{
+  Atom * targets= NULL;
+  size_t bytes= 0;
+  char ** typeNames= NULL;
+  Status isSuccess= 0;
+  int ntypeNames= 0;
+
+  if (dndAvailable())
+    dndGetTargets(&targets, &ntypeNames);
+  else 
+    {
+      if (stOwnsClipboard) return NULL;
+      targets= (Atom *) getSelectionData(xaClipboard, xaTargets, &bytes);
+      if (0 == bytes) return NULL;
+      ntypeNames= bytes / sizeof(Atom);
+    }
+
+  typeNames= calloc(sizeof(char *), ntypeNames + 1);
+  isSuccess= XGetAtomNames(stDisplay, targets, ntypeNames, typeNames);
+  
+  if (!isSuccess) return NULL;
+  typeNames[ntypeNames]= NULL;
+  return typeNames;
+}
+
+
+/* Read clipboard associated with the type to stPrimarySelection.
+ * Answer size of the data. */
+static sqInt display_clipboardSizeWithType(char * typeName, int ntypeName)
+{
+  size_t bytes;
+  Atom type;
+  int isDnd= 0;
+  Atom inputSelection;
+  
+  isDnd= dndAvailable();
+  inputSelection= isDnd ? xaXdndSelection : xaClipboard;
+
+  if ((!isDnd) && stOwnsClipboard) return 0;
+
+  SelectionChunk * chunk= newSelectionChunk();
+  type= stringToAtom(typeName, ntypeName);
+  getSelectionChunk(chunk, inputSelection, type);
+  bytes= sizeSelectionChunk(chunk);
+
+  allocateSelectionBuffer(bytes);
+  copySelectionChunk(chunk, stPrimarySelection);
+  destroySelectionChunk(chunk);
+  if (isDnd) dndHandleEvent(DndInFinished, NULL);
+
+  return stPrimarySelectionSize;
+}
 
 
 static void handleEvent(XEvent *evt)
