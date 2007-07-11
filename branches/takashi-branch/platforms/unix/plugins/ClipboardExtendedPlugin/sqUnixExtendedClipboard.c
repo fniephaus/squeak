@@ -85,7 +85,7 @@ int sqPasteboardCopyItemFlavorsitemNumber (sqInt inPasteboard, int formatNumber)
   if (types == NULL)
     return interpreterProxy->nilObject();
 
-  type= types[formatNumber + 1];
+  type= types[formatNumber - 1];
   if (type == NULL)
     return interpreterProxy->nilObject();
 
