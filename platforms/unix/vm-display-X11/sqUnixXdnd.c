@@ -328,6 +328,9 @@ static enum XdndState dndOutPress(enum XdndState state)
 {
   if (XdndStateIdle != state) return state;
   XSetSelectionOwner(stDisplay, XdndSelection, DndWindow, CurrentTime);
+  /* TODO: The cursor should be shown my the image.
+   * So it should be removed later. */
+  XDefineCursor(stDisplay, stWindow, None);
   return XdndStateOutTracking;
 }
 
