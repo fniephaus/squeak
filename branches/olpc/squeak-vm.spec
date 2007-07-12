@@ -1,11 +1,10 @@
 %define name    squeak-vm
 %define version 3.9
 %define minor   11
-%define release %{minor}olpc1
+%define release %{minor}olpc2
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
-%define root    %{_tmppath}/Squeak-%{version}-%{release}-buildroot
 
 Name:		%{name}
 Summary:	The Squeak virtual machine
@@ -13,23 +12,29 @@ Version:	%{version}
 Release:	%{release}
 Vendor:		Viewpoints Research
 URL:		http://squeakvm.org/unix
-Packager:	Bert Freudenberg <bert@freudenbergs.de>
 License:	MIT
-BuildRoot:      %{root}
+BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 Source:		%{source}.src.tar.gz
 Group:		Development/Languages
 Prefix:		%{prefix}
-AutoReqProv:	no
-Requires:	libc.so.6
-Requires:	libm.so.6
-Requires:	libdl.so.2
-Requires:	libutil.so.1
-Requires:	libnsl.so.1
-Requires:	/lib/ld-linux.so.2
-Requires:	libogg.so.0
-Requires:	libvorbis.so.0
-Requires:	libspeex.so.1
-Requires:	libdbus-1.so.3
+BuildRequires:	gawk
+BuildRequires:	libX11-devel
+BuildRequires:	libvorbis-devel
+BuildRequires:	libtheora-devel
+BuildRequires:	speex-devel
+BuildRequires:	dbus-devel
+BuildRequires:	alsa-lib-devel
+#AutoReqProv:	no
+#Requires:	libc.so.6
+#Requires:	libm.so.6
+#Requires:	libdl.so.2
+#Requires:	libutil.so.1
+#Requires:	libnsl.so.1
+#Requires:	/lib/ld-linux.so.2
+#Requires:	libogg.so.0
+#Requires:	libvorbis.so.0
+#Requires:	libspeex.so.1
+#Requires:	libdbus-1.so.3
 Provides:	%{name}-%{version}
 
 %description
@@ -46,24 +51,30 @@ to install it before you install the Etoys activity.
 mkdir bld
 cd bld
 ../platforms/unix/config/configure --without-gl --prefix=%{prefix}
-make ROOT=%{root}
+make ROOT=%{buildroot}
 
 %install
 cd bld
-[ -n "%{root}" -a "%{root}" != "/" ] && rm -rf %{root}/*
-make install ROOT=%{root}
+[ -n "%{buildroot}" -a "%{buildroot}" != "/" ] && rm -rf %{buildroot}/*
+make install ROOT=%{buildroot} docdir=%{prefix}/share/doc/squeak
 for plugin in %{exclude} ; do
-  rm -f %{root}%{prefix}/lib/squeak/%{version}-%{minor}/$plugin
+  rm -f %{buildroot}%{prefix}/lib/squeak/%{version}-%{minor}/$plugin
 done
+
 
 %clean
 %files
-%{prefix}/bin
+%{prefix}/bin/squeak
 %{prefix}/lib/squeak
-%{prefix}/share
-%{prefix}/doc
+%{prefix}/share/man/man1/squeak.1.gz
+%{prefix}/share/man/man1/inisqueak.1.gz
+%{prefix}/share/doc/squeak
 
 %changelog
+* Mon Jul 02 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-11olpc2: SVN r. 1735
+  - clipboard/dns fixes (tak)
+  - update spec to satisfy rpmlint
 * Tue Jun 26 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-11olpc1: SVN r. 1728
   - IPv6 support (ian)
