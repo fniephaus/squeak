@@ -13,7 +13,6 @@ extern sqExport DropPlugin_exports[];
 extern sqExport DSAPrims_exports[];
 extern sqExport SqueakFFIPrims_exports[];
 extern sqExport FFTPlugin_exports[];
-extern sqExport FileCopyPlugin_exports[];
 extern sqExport FilePlugin_exports[];
 extern sqExport FloatArrayPlugin_exports[];
 extern sqExport FloatMathPlugin_exports[];
@@ -24,6 +23,7 @@ extern sqExport JPEGReadWriter2Plugin_exports[];
 extern sqExport KedamaPlugin2_exports[];
 extern sqExport Klatt_exports[];
 extern sqExport LargeIntegers_exports[];
+extern sqExport LocalePlugin_exports[];
 extern sqExport Matrix2x3Plugin_exports[];
 extern sqExport MiscPrimitivePlugin_exports[];
 extern sqExport Mpeg3Plugin_exports[];
@@ -51,7 +51,6 @@ sqExport *pluginExports[] = {
 	DSAPrims_exports,
 	SqueakFFIPrims_exports,
 	FFTPlugin_exports,
-	FileCopyPlugin_exports,
 	FilePlugin_exports,
 	FloatArrayPlugin_exports,
 	FloatMathPlugin_exports,
@@ -62,6 +61,7 @@ sqExport *pluginExports[] = {
 	KedamaPlugin2_exports,
 	Klatt_exports,
 	LargeIntegers_exports,
+	LocalePlugin_exports,
 	Matrix2x3Plugin_exports,
 	MiscPrimitivePlugin_exports,
 	Mpeg3Plugin_exports,
