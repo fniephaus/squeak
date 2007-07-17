@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.9
 %define minor   11
-%define release %{minor}olpc2
+%define release %{minor}olpc4
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -10,7 +10,6 @@ Name:		%{name}
 Summary:	The Squeak virtual machine
 Version:	%{version}
 Release:	%{release}
-Vendor:		Viewpoints Research
 URL:		http://squeakvm.org/unix
 License:	MIT
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
@@ -19,23 +18,12 @@ Group:		Development/Languages
 Prefix:		%{prefix}
 BuildRequires:	gawk
 BuildRequires:	libX11-devel
+BuildRequires:  libXt-devel
 BuildRequires:	libvorbis-devel
 BuildRequires:	libtheora-devel
 BuildRequires:	speex-devel
 BuildRequires:	dbus-devel
 BuildRequires:	alsa-lib-devel
-#AutoReqProv:	no
-#Requires:	libc.so.6
-#Requires:	libm.so.6
-#Requires:	libdl.so.2
-#Requires:	libutil.so.1
-#Requires:	libnsl.so.1
-#Requires:	/lib/ld-linux.so.2
-#Requires:	libogg.so.0
-#Requires:	libvorbis.so.0
-#Requires:	libspeex.so.1
-#Requires:	libdbus-1.so.3
-Provides:	%{name}-%{version}
 
 %description
 Squeak is a full-featured implementation of the Smalltalk programming
@@ -43,15 +31,16 @@ language and environment based on (and largely compatible with) the original
 Smalltalk-80 system.
 
 This package contains just the Squeak virtual machine.  You will have
-to install it before you install the Etoys activity.
+to install it before you install Etoys.
 
 %prep
 %setup -n %{source}
+
 %build
 mkdir bld
 cd bld
 ../platforms/unix/config/configure --without-gl --prefix=%{prefix}
-make ROOT=%{buildroot}
+make ROOT=%{buildroot} %{?_smp_mflags}
 
 %install
 cd bld
@@ -61,16 +50,29 @@ for plugin in %{exclude} ; do
   rm -f %{buildroot}%{prefix}/lib/squeak/%{version}-%{minor}/$plugin
 done
 
-
 %clean
+[ -n "%{buildroot}" -a "%{buildroot}" != "/" ] && rm -rf %{buildroot}/*
+
 %files
 %{prefix}/bin/squeak
-%{prefix}/lib/squeak
+%{prefix}/lib/squeak/
 %{prefix}/share/man/man1/squeak.1.gz
 %{prefix}/share/man/man1/inisqueak.1.gz
-%{prefix}/share/doc/squeak
+%{prefix}/share/doc/squeak/
 
 %changelog
+* Thu Jul 17 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-11olpc4: SVN r. 1747
+  - added LocalePlugin (ian)
+  - FileCopyPlugin is external now
+  - follow symlinks in npsqueakregister (bf)
+  - explicitely link against libXt (bf)
+* Thu Jul 12 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-11olpc3: SVN r. 1740
+  - fix spec file clean, add _smp_mflags as requested by fedora (bf)
+  - XdndFinished is sent properly in drag-in with multiple types (tak)
+  - Show cursor forced when drag-out (tak)
+  - Fixed a bug about type index for clipboard (tak)
 * Mon Jul 02 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-11olpc2: SVN r. 1735
   - clipboard/dns fixes (tak)
