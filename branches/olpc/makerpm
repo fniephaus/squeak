@@ -16,6 +16,7 @@ rm -f dist/Squeak-${ver}.src.tar.gz
 
 sudo cp dist/Squeak-${ver}.src.tar.gz /usr/src/redhat/SOURCES
 sudo rpmbuild -ba squeak-vm.spec
+cp squeak-vm.spec rpms/squeak-vm-${rpm}.spec
 
 cd rpms
 cp /usr/src/redhat/RPMS/i386/squeak-vm-${rpm}.i386.rpm .
@@ -25,6 +26,7 @@ echo press return to commit to svn
 read
 svn add squeak-vm-${rpm}.i386.rpm
 svn add squeak-vm-${rpm}.src.rpm
+svn add squeak-vm-${rpm}.spec
 svn commit
 
 svn cp squeak-vm-${rpm}.i386.rpm ../yum
