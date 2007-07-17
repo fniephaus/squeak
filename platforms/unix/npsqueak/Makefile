@@ -8,10 +8,10 @@ INC	= -I./include -I/usr/X11R6/include
 CC	= gcc
 CFLAGS	= $(INC) -O2 -fPIC -Wall
 LD	= gcc
-LDFLAGS = 
+LDFLAGS = -lXt
 
 # usually overridden from top level makefile
-VM_VERSION=  3.7b-5
+VM_VERSION=  3.9-11
 bindir=	     /usr/local/bin
 imgdir=	     /usr/local/share/squeak
 plgdir=	     /usr/local/lib/squeak/$(VM_VERSION)
