@@ -2185,6 +2185,7 @@ void initWindow(char *displayName)
       }
     else
       {
+	unsigned long pid= getpid();
 	int s= getSavedWindowSize();
 	if (s)
 	  {
@@ -2215,6 +2216,13 @@ void initWindow(char *displayName)
 			  PropModeReplace, 
 			  (unsigned char *) sugarActivityId, strlen(sugarActivityId));
 			  
+	XChangeProperty(stDisplay, 
+			stParent,
+			XInternAtom(stDisplay, "_NET_WM_PID", 0),
+			XInternAtom(stDisplay, "CARDINAL", 0), 32,
+			PropModeReplace, 
+			(unsigned char *) &pid, 1);
+	
       }
 
     attributes.event_mask= EVENTMASK;
