@@ -106,6 +106,10 @@ static sqInputEvent *allocateInputEvent(int eventType)
   (sqDragDropFilesEvent *)allocateInputEvent(EventTypeDragDropFiles) \
 )
 
+#define allocateWindowEvent() ( \
+  (sqWindowEvent *)allocateInputEvent(EventTypeWindow) \
+)
+
 
 static sqInt getButtonState(void)
 {
@@ -209,6 +213,32 @@ static void recordDragEvent(int dragType, int numFiles)
 #endif
 }
 
+
+static void recordWindowEvent(int action, int v1, int v2, int v3, int v4)
+{
+  sqWindowEvent *evt= allocateWindowEvent();
+  evt->action= action;
+  evt->value1= v1;
+  evt->value2= v2;
+  evt->value3= v3;
+  evt->value4= v4;
+  evt->windowIndex= 0;
+  signalInputEvent();
+#ifdef DEBUG_EVENTS
+  printf("EVENT: window (%d,%d,%d,%d,%d,0) ", action, v1, v2, v3, v4);
+  switch (action)
+    {
+    case WindowEventMetricChange: printf("metric change"); break;
+    case WindowEventClose:        printf("close"); break;
+    case WindowEventIconise:      printf("iconise"); break;
+    case WindowEventActivated:    printf("activated"); break;
+    case WindowEventPaint:        printf("paint"); break;
+    default:                      printf("***UNKNOWN***");
+    }
+  printf("\n");
+#endif  
+  if (0) recordWindowEvent(0,0,0,0,0); /* get rid of stupid declared-but-not-used warning */ 
+}
 
 /* retrieve the next input event from the queue */
 

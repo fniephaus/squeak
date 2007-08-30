@@ -27,7 +27,7 @@
 
 /* Author: Ian Piumarta <ian.piumarta@squeakland.org>
  *
- * Last edited: 2007-02-19 19:18:58 by piumarta on emilia
+ * Last edited: 2007-08-29 07:30:45 by piumarta on emilia
  *
  * Support for more intelligent CLIPBOARD selection handling contributed by:
  *	Ned Konz <ned@bike-nomad.com>
@@ -204,6 +204,9 @@ char		*selectionAtomNames[SELECTION_ATOM_COUNT]= {
 	 "XdndSelection",
 #define xaXdndSelection selectionAtoms[9]
 };
+
+Atom		 wmProtocolsAtom;	/* for window deletion messages */
+Atom		 wmDeleteWindowAtom;
 
 #if defined(USE_XSHM)
 XShmSegmentInfo  stShmInfo;		/* shared memory descriptor */
@@ -1710,6 +1713,12 @@ static void handleEvent(XEvent *evt)
       XRefreshKeyboardMapping(&evt->xmapping);
       break;
 
+    case ClientMessage:
+      if (wmProtocolsAtom == evt->xclient.message_type
+	  && wmDeleteWindowAtom == evt->xclient.data.l[0])
+	recordWindowEvent(WindowEventClose, 0, 0, 0, 0);
+      break;
+
 #  if defined(USE_XSHM)
     default:
       if (evt->type == completionType)
@@ -2270,6 +2279,13 @@ void initWindow(char *displayName)
       }
     XSetWMHints(stDisplay, stParent, wmHints);
     XFree((void *)wmHints);
+  }
+
+  /* tell the WM that we do not want to be destroyed from the title bar close button */
+  {
+    wmProtocolsAtom=    XInternAtom(stDisplay, "WM_PROTOCOLS", False);
+    wmDeleteWindowAtom= XInternAtom(stDisplay, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols(stDisplay, stParent, &wmDeleteWindowAtom, 1);
   }
 
   /* create a suitable graphics context */
