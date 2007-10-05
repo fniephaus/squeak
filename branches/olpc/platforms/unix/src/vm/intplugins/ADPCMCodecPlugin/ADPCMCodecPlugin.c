@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(25 March 2007 9:33:28 am) */
+/* Automatically generated from Squeak on an Array(13 July 2007 11:57:57 am) */
 
 #include <math.h>
 #include <stdio.h>
@@ -60,9 +60,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"ADPCMCodecPlugin 25 March 2007 (i)"
+	"ADPCMCodecPlugin 13 July 2007 (i)"
 #else
-	"ADPCMCodecPlugin 25 March 2007 (e)"
+	"ADPCMCodecPlugin 13 July 2007 (e)"
 #endif
 ;
 

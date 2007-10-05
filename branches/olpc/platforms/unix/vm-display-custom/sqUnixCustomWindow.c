@@ -1,6 +1,6 @@
 /* sqUnixCustomWindow.c -- support for display via your custom window system.
  * 
- * Last edited: 2006-04-17 16:57:12 by piumarta on margaux.local
+ * Last edited: 2007-09-07 13:47:46 by piumarta on emilia
  * 
  * This is a template for creating your own window drivers for Squeak:
  * 
@@ -52,6 +52,29 @@ static sqInt display_clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqIn
   return 0;
 }
 
+
+static char ** display_clipboardGetTypeNames(void)
+{
+  trace();
+  return 0;
+}
+
+static sqInt display_clipboardSizeWithType(char *typeName, int ntypeName)
+{
+  trace();
+  return 0;
+}
+
+static void display_clipboardWriteWithType(char *data, size_t ndata, char *typeName, size_t ntypeName, int isDnd, int isClaiming)
+{
+  trace();
+}
+
+static sqInt display_dndOutStart(char *data, int dataLength, char *aFormat, int formatLength)
+{
+  trace();
+  return 0;
+}
 
 static sqInt display_ioFormPrint(sqInt bitsIndex, sqInt width, sqInt height, sqInt depth, double hScale, double vScale, sqInt landscapeFlag)
 {
@@ -183,12 +206,6 @@ static sqInt display_primitivePluginPostURL(void)		{ return primitiveFail(); }
 static sqInt display_primitivePluginRequestFileHandle(void)	{ return primitiveFail(); }
 static sqInt display_primitivePluginDestroyRequest(void)	{ return primitiveFail(); }
 static sqInt display_primitivePluginRequestState(void)		{ return primitiveFail(); }
-static sqInt display_dndOutStart(char * data, int dataLength, char * aFormat, int formatLength) { return 0; }
-static char ** display_clipboardGetTypeNames() { return NULL; }
-static sqInt display_clipboardSizeWithType(char * typeName, int ntypeName) { return 0; }
-static void display_clipboardWriteWithType(char * data, size_t ndata,
-					   char * typeName, size_t ntypeName,
-					   int isDnd, int isClaiming) {}
 
 SqDisplayDefine(custom);	/* name must match that in makeInterface() below */
 

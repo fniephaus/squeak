@@ -48,7 +48,7 @@ static sqInt display_ioSetCursorWithMask(sqInt bits, sqInt mask, sqInt x, sqInt 
   return 0;
 }
 
-static sqInt display_ioSetCursorARGB(sqInt bits, sqInt w, sqInt h, sqInt x, sqInt y)
+static sqInt display_ioSetCursorARGB(sqInt cursorBitsIndex, sqInt extentX, sqInt extentY, sqInt offsetX, sqInt offsetY)
 {
   return 0;
 }
@@ -93,6 +93,26 @@ static sqInt display_clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqIn
   return 0;
 }
 
+static char **display_clipboardGetTypeNames(void)
+{
+  return 0;
+}
+
+static sqInt display_clipboardSizeWithType(char *typeName, int nTypeName)
+{
+  return 0;
+}
+
+static void display_clipboardWriteWithType(char *data, size_t ndata, char *typeName, size_t nTypeName, int isDnd, int isClaiming)
+{
+  return;
+}
+
+static sqInt display_dndOutStart(char *data, int ndata, char *typeName, int nTypeName)
+{
+  return 0;
+}
+
 static sqInt display_ioGetButtonState(void)		{ return 0; }
 static sqInt display_ioPeekKeystroke(void)		{ return 0; }
 static sqInt display_ioGetKeystroke(void)		{ return 0; }
@@ -115,13 +135,6 @@ static sqInt display_primitivePluginPostURL(void)		{ return primitiveFail(); }
 static sqInt display_primitivePluginRequestFileHandle(void)	{ return primitiveFail(); }
 static sqInt display_primitivePluginDestroyRequest(void)	{ return primitiveFail(); }
 static sqInt display_primitivePluginRequestState(void)		{ return primitiveFail(); }
-
-static sqInt display_dndOutStart(char * data, int dataLength, char * aFormat, int formatLength) { return 0; }
-static char ** display_clipboardGetTypeNames() { return NULL; }
-static sqInt display_clipboardSizeWithType(char * typeName, int ntypeName) { return 0; }
-static void display_clipboardWriteWithType(char * data, size_t ndata,
-					   char * typeName, size_t ntypeName,
-					   int isDnd, int isClaiming) {}
 
 SqDisplayDefine(null);
 

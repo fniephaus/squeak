@@ -1,6 +1,6 @@
 /* sqUnixMain.c -- support for Unix.
  * 
- *   Copyright (C) 1996-2006 by Ian Piumarta and other authors/contributors
+ *   Copyright (C) 1996-2007 by Ian Piumarta and other authors/contributors
  *                              listed elsewhere in this file.
  *   All rights reserved.
  *   
@@ -27,7 +27,7 @@
 
 /* Author: Ian Piumarta <ian.piumarta@squeakland.org>
  *
- * Last edited: 2006-10-18 10:05:29 by piumarta on emilia.local
+ * Last edited: 2007-09-07 13:53:52 by piumarta on emilia
  */
 
 #include "sq.h"
@@ -570,31 +570,26 @@ sqInt clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex)
   return dpy->clipboardReadIntoAt(count, byteArrayIndex, startIndex);
 }
 
+char **clipboardGetTypeNames(void)
+{
+  return dpy->clipboardGetTypeNames();
+}
+
+sqInt clipboardSizeWithType(char *typeName, int ntypeName)
+{
+  return dpy->clipboardSizeWithType(typeName, ntypeName);
+}
+
+void clipboardWriteWithType(char *data, size_t nData, char *typeName, size_t nTypeNames, int isDnd, int isClaiming)
+{
+  dpy->clipboardWriteWithType(data, nData, typeName, nTypeNames, isDnd, isClaiming);
+}
+
 sqInt ioGetButtonState(void)		{ return dpy->ioGetButtonState(); }
 sqInt ioPeekKeystroke(void)		{ return dpy->ioPeekKeystroke(); }
 sqInt ioGetKeystroke(void)		{ return dpy->ioGetKeystroke(); }
 sqInt ioGetNextEvent(sqInputEvent *evt)	{ return dpy->ioGetNextEvent(evt); }
 sqInt ioMousePoint(void)		{ return dpy->ioMousePoint(); }
-
-char ** clipboardGetTypeNames()
-{
-  return dpy->clipboardGetTypeNames();
-}
-
-
-sqInt clipboardSizeWithType(char * typeName, int ntypeName)
-{
-  return dpy->clipboardSizeWithType(typeName, ntypeName);
-}
-
-void clipboardWriteWithType(char * data, size_t ndata,
-			    char * typeName, size_t ntypeName,
-			    int isDnd, int isClaiming)
-{
-  dpy->clipboardWriteWithType(data, ndata, typeName, ntypeName, isDnd, isClaiming);
-}
-
-
 
 /*** Drag and Drop ***/
 
@@ -1253,6 +1248,7 @@ void imgInit(void)
 	  dpy->winImageNotFound();
 	  imageNotFound(shortImageName);
 	}
+#    if 0
       {
 	int fd= open(imageName, O_RDONLY);
 	if (fd < 0) abort();
@@ -1260,6 +1256,7 @@ void imgInit(void)
 	printf("fstat(%d) => %d\n", fd, fstat(fd, &sb));
 #      endif
       }
+#    endif
       recordFullPathForImageName(shortImageName); /* full image path */
       if (extraMemory)
 	useMmap= 0;

@@ -1,6 +1,6 @@
 # Netscape Plugin for Squeak on Unix platforms
 # Author: Bert Freudenberg
-# Last edited: 2006-09-18 12:32:40 by piumarta on wireless-58.media.mit.edu
+# Last edited: 2007-09-09 11:24:34 by piumarta on emilia
 
 ############ Customize flags here #######################
 
@@ -11,7 +11,7 @@ LD	= gcc
 LDFLAGS = -lXt
 
 # usually overridden from top level makefile
-VM_VERSION=  3.9-11
+VM_VERSION=  3.9-12
 bindir=	     /usr/local/bin
 imgdir=	     /usr/local/share/squeak
 plgdir=	     /usr/local/lib/squeak/$(VM_VERSION)

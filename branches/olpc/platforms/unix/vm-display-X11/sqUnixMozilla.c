@@ -2,7 +2,7 @@
  *
  * Author: Bert Freudenberg <bert@isg.cs.uni-magdeburg.de>
  * 
- * Last edited: 2005-03-17 21:37:05 by piumarta on squeak.hpl.hp.com
+ * Last edited: 2007-09-07 13:53:35 by piumarta on emilia
  *
  * Originally based on Andreas Raab's sqWin32PluginSupport
  * 

@@ -20,10 +20,8 @@ extern sqExport GeniePlugin_exports[];
 extern sqExport JoystickTabletPlugin_exports[];
 extern sqExport JPEGReaderPlugin_exports[];
 extern sqExport JPEGReadWriter2Plugin_exports[];
-extern sqExport KedamaPlugin2_exports[];
 extern sqExport Klatt_exports[];
 extern sqExport LargeIntegers_exports[];
-extern sqExport LocalePlugin_exports[];
 extern sqExport Matrix2x3Plugin_exports[];
 extern sqExport MiscPrimitivePlugin_exports[];
 extern sqExport Mpeg3Plugin_exports[];
@@ -58,10 +56,8 @@ sqExport *pluginExports[] = {
 	JoystickTabletPlugin_exports,
 	JPEGReaderPlugin_exports,
 	JPEGReadWriter2Plugin_exports,
-	KedamaPlugin2_exports,
 	Klatt_exports,
 	LargeIntegers_exports,
-	LocalePlugin_exports,
 	Matrix2x3Plugin_exports,
 	MiscPrimitivePlugin_exports,
 	Mpeg3Plugin_exports,
