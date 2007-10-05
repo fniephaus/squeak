@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.9
 %define minor   11
-%define release %{minor}olpc4
+%define release %{minor}olpc5
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -61,6 +61,10 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
+* Thu Jul 17 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-11olpc5: SVN r. 1761
+  - set _NET_WM_PID to our process id (danw)
+  - generate WindowEventClose on delete window message (ian)
 * Thu Jul 17 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-11olpc4: SVN r. 1747
   - added LocalePlugin (ian)
