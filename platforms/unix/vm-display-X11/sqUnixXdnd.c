@@ -1,6 +1,6 @@
 /* sqUnixXdnd.c -- drag-and-drop for the X Window System.	-*- C -*-
  * 
- *   Copyright (C) 1996-2004 by Ian Piumarta and other authors/contributors
+ *   Copyright (C) 1996-2007 by Ian Piumarta and other authors/contributors
  *                              listed elsewhere in this file.
  *   All rights reserved.
  *   
@@ -27,7 +27,7 @@
 
 /* Author: Ian Piumarta <ian.piumarta@inria.fr>
  * 
- * Last edited: 2006-10-18 09:59:25 by piumarta on emilia.local
+ * Last edited: 2007-09-07 13:53:21 by piumarta on emilia
  * 
  * BUGS
  * 
@@ -84,38 +84,31 @@ static	Atom	  XdndTextUriList;
 static	Atom	  XdndSelectionAtom;
 
 static	Window	  xdndSourceWindow= 0;
+static	int	  isUrlList= 0;
+static	int	  xdndWillAccept= 0;
 
-/* 1 if input targets includes "text/uri-list".
- *
- * To keep backword compatibitily, xdndWillAccept is always 1.  But
+/* To keep backword compatibitily, xdndWillAccept is always 1.
  * isUrlList is 1 only if the dropped type includes "text/uri-list".
  * 
- * case isUrlList == 1:
- *   Get url list and send dndFinished immediately. Then record drag event.
- * case isUrlList == 0:
- *   Record drag event anyway (uxDropFileCount= 0).
- *   The image will get the data and send dndFinished.
+ * case isUrlList == 1: Get url list and send dndFinished immediately.  Then record drag event.
+ * case isUrlList == 0: Record drag event anyway (uxDropFileCount= 0).  The image will get the data and send dndFinished.
  */
 
-static	int	  xdndWillAccept= 0;
-static	int	  isUrlList= 0;
-
-static Atom * xdndInTypes= NULL; /* All targets in clipboard */
+static Atom	 *xdndInTypes= 0;	/* all targets in clipboard */
 
 enum XdndState {
   XdndStateIdle,
-
   XdndStateEntered,
   XdndStateTracking,
-
   XdndStateOutTracking,
   XdndStateOutAccepted,
-  XdndStateOutDropped,
+  XdndStateOutDropped
 };
 
-#define DndOutStart -1
-#define DndInFinished -2
-
+enum {
+  DndOutStart	= -1,
+  DndInFinished	= -2
+};
 
 #define xdndEnter_sourceWindow(evt)		( (evt)->data.l[0])
 #define xdndEnter_version(evt)			( (evt)->data.l[1] >> 24)
@@ -145,8 +138,8 @@ enum XdndState {
 # define dprintf(ARGS) do { } while (0)
 #endif
 
-/* Function Prototypes */
 void getMousePosition(void);
+
 
 static void *xmalloc(size_t size)
 {
@@ -223,22 +216,24 @@ static char *uri2string(const char *uri)
   return string;
 }
 
-/* Handle DnD Output */
+
+/*** Handle DnD Output ***/
+
 
 static Window DndOutTarget= None;
+
 #define DndWindow stParent
 
-
-/* Find dndAware window under the cursor,
- * return None if not found */
-static Window dndAwareWindow(Window root, Window child, int * version_return)
+/* Answer dndAware window under the cursor, or None if not found.
+ */
+static Window dndAwareWindow(Window root, Window child, int *versionReturn)
 {
   Atom actualType;
   int actualFormat;
   unsigned long nitems, bytesAfter;
-  unsigned char * data;
-  Window root_return, child_return;
-  int root_x, root_y, win_x, win_y;
+  unsigned char *data;
+  Window rootReturn, childReturn;
+  int rootX, rootY, winX, winY;
   unsigned int mask;
 
   if (None == child) return None;
@@ -248,15 +243,15 @@ static Window dndAwareWindow(Window root, Window child, int * version_return)
 		     &bytesAfter, &data);
   if (nitems > 0)
     {
-      *version_return= (int) * data;
+      *versionReturn= (int)*data;
       return child;
     }
   
-  XQueryPointer(stDisplay, child, &root_return, &child_return, &root_x, &root_y,
-		&win_x, &win_y, &mask);
+  XQueryPointer(stDisplay, child, &rootReturn, &childReturn, &rootX, &rootY, &winX, &winY, &mask);
 
-  if (child_return == None) return None;
-  return dndAwareWindow(root, child_return, version_return);
+  if (childReturn == None) return None;
+
+  return dndAwareWindow(root, childReturn, versionReturn);
 }
 
 
@@ -267,30 +262,30 @@ static Window dndAwareWindow(Window root, Window child, int * version_return)
  * Window target : target window
  * char * type : event type name
  */
-static void sendClientMessage(long * data, Window source, Window target, Atom type)
+static void sendClientMessage(long *data, Window source, Window target, Atom type)
 {
   XEvent e;
-  XClientMessageEvent * evt= &e.xclient;
+  XClientMessageEvent *evt= &e.xclient;
   if (None == target) return;
-  evt->type = ClientMessage;
+  evt->type= ClientMessage;
   evt->serial= 0;
   evt->send_event= 0;
-  evt->display = stDisplay;
-  evt->window = target;
-  evt->message_type = type;
-  evt->format = 32;
+  evt->display= stDisplay;
+  evt->window= target;
+  evt->message_type= type;
+  evt->format= 32;
   evt->data.l[0]= source;
   evt->data.l[1]= data[1];
   evt->data.l[2]= data[2];
   evt->data.l[3]= data[3];
   evt->data.l[4]= data[4];
   XSendEvent(stDisplay, target, 0, 0, &e);
-/*   dprintf((stderr, "Send %s to: 0x%lx\n", type, target)); */
+/*dprintf((stderr, "Send %s to: 0x%lx\n", type, target));*/
 }
 
 static void sendEnter(Window target, Window source)
 {
-  long data[5] = {0, 0, 0, 0, 0};
+  long data[5]= { 0, 0, 0, 0, 0 };
   data[1] |= 0x0UL; /* just three data types */
   data[1] |= XdndVersion << 24; /* version num */
   data[2]= stSelectionType;
@@ -299,10 +294,10 @@ static void sendEnter(Window target, Window source)
   sendClientMessage(data, source, target, XdndEnter);
 }
 
-static void sendPosition(Window target, Window source, int root_x, int root_y, Time timestamp)
+static void sendPosition(Window target, Window source, int rootX, int rootY, Time timestamp)
 {
-  long data[5] = {0, 0, 0, 0, 0};
-  data[2]= (root_x << 16) | root_y;
+  long data[5]= { 0, 0, 0, 0, 0 };
+  data[2]= (rootX << 16) | rootY;
   data[3]= timestamp;
   data[4]= XdndActionCopy;
   sendClientMessage(data, source, target, XdndPosition);
@@ -311,7 +306,7 @@ static void sendPosition(Window target, Window source, int root_x, int root_y, T
 
 static void sendDrop(Window target, Window source, Time timestamp)
 {
-  long data[5] = {0, 0, 0, 0, 0};
+  long data[5]= { 0, 0, 0, 0, 0 };
   data[2]= timestamp;
   sendClientMessage(data, source, target, XdndDrop);
 }
@@ -319,7 +314,7 @@ static void sendDrop(Window target, Window source, Time timestamp)
 
 static void sendLeave(Window target, Window source)
 {
-  long data[5] = {0, 0, 0, 0, 0};
+  long data[5]= { 0, 0, 0, 0, 0 };
   sendClientMessage(data, source, target, XdndLeave);
 }
 
@@ -328,25 +323,24 @@ static enum XdndState dndOutPress(enum XdndState state)
 {
   if (XdndStateIdle != state) return state;
   XSetSelectionOwner(stDisplay, XdndSelection, DndWindow, CurrentTime);
-  /* TODO: The cursor should be shown my the image.
-   * So it should be removed later. */
+  /* TODO: The cursor should be shown by the image, so it should be removed later. */
   XDefineCursor(stDisplay, stWindow, None);
   return XdndStateOutTracking;
 }
 
 
-/* Track the current mouse position */
-static enum XdndState dndOutMotion(enum XdndState state, XMotionEvent * evt)
+/* Track the current mouse position.
+ */
+static enum XdndState dndOutMotion(enum XdndState state, XMotionEvent *evt)
 {
   Window currentWindow= None;
-  int version_return= 0;
+  int versionReturn= 0;
 
   if (XdndSelection != stSelectionName) return state;
-  if ((XdndStateOutTracking != state)
-      && (XdndStateOutAccepted != state)) return state;
+  if ((XdndStateOutTracking != state) && (XdndStateOutAccepted != state)) return state;
 
-  currentWindow= dndAwareWindow(evt->root, evt->root, &version_return);
-  if ((XdndVersion > version_return)
+  currentWindow= dndAwareWindow(evt->root, evt->root, &versionReturn);
+  if ((XdndVersion > versionReturn)
       || (None == currentWindow)
       || (DndWindow == currentWindow))
     {
@@ -362,18 +356,19 @@ static enum XdndState dndOutMotion(enum XdndState state, XMotionEvent * evt)
 
   sendPosition(currentWindow, DndWindow, evt->x_root, evt->y_root, evt->time);
   DndOutTarget= currentWindow;
+
   return state;
 }
 
 
-/* A status message to know accept or not is received. */
-static enum XdndState dndOutStatus(enum XdndState state, XClientMessageEvent * evt)
+/* A status message to know accept or not is received.
+ */
+static enum XdndState dndOutStatus(enum XdndState state, XClientMessageEvent *evt)
 {
-  long * ldata= evt->data.l;
+  long *ldata= evt->data.l;
   if (XdndSelection != stSelectionName) return state;
 
-  if ((XdndStateOutTracking != state)
-      && (XdndStateOutAccepted != state))
+  if ((XdndStateOutTracking != state) && (XdndStateOutAccepted != state))
     {
       printf("%i is not expected in XdndStatus\n", state);
       sendLeave(ldata[0], DndWindow);
@@ -389,8 +384,9 @@ static enum XdndState dndOutStatus(enum XdndState state, XClientMessageEvent * e
 }
 
 
-/* The mouse button is released. */
-static enum XdndState dndOutRelease(enum XdndState state, XButtonEvent * evt)
+/* The mouse button was released.
+*/
+static enum XdndState dndOutRelease(enum XdndState state, XButtonEvent *evt)
 {
   if (XdndSelection != stSelectionName) return state;
   if (XdndStateOutAccepted == state)
@@ -404,7 +400,7 @@ static enum XdndState dndOutRelease(enum XdndState state, XButtonEvent * evt)
 }
 
 
-static void dndOutSelectionSend(XSelectionRequestEvent * req, Atom targetProperty)
+static void dndOutSelectionSend(XSelectionRequestEvent *req, Atom targetProperty)
 {
   XChangeProperty(req->display, req->requestor,
 		  targetProperty, stSelectionType,
@@ -414,32 +410,30 @@ static void dndOutSelectionSend(XSelectionRequestEvent * req, Atom targetPropert
 }
 
 
-/* Another application is requesting the selection. */
-static enum XdndState dndOutSelectionRequest(enum XdndState state, XSelectionRequestEvent * req)
+/* Another application is requesting the selection.
+*/
+static enum XdndState dndOutSelectionRequest(enum XdndState state, XSelectionRequestEvent *req)
 {
   Status xError= 0;
   XEvent notify;
-  XSelectionEvent * res= &notify.xselection;
-  Atom targetProperty= ((None == req->property)
-			? req->target 
-			: req->property);
+  XSelectionEvent *res= &notify.xselection;
+  Atom targetProperty= ((None == req->property) ? req->target : req->property);
 
   if (XdndSelection != stSelectionName) return state;
-  if ((XdndStateOutDropped != state)
-      && (XdndStateOutAccepted != state))
+  if ((XdndStateOutDropped != state) && (XdndStateOutAccepted != state))
     {
       printf("%i is not expected in SelectionRequest\n", state);
       return state;
     }
   
-  res->type= SelectionNotify;
-  res->display= req->display;
-  res->requestor= req->requestor;
-  res->selection= req->selection;
-  res->target= req->target;
-  res->time= req->time;
-  res->send_event= True;
-  res->property= targetProperty; /* override later if error */
+  res->type	  = SelectionNotify;
+  res->display	  = req->display;
+  res->requestor  = req->requestor;
+  res->selection  = req->selection;
+  res->target	  = req->target;
+  res->time	  = req->time;
+  res->send_event = True;
+  res->property	  = targetProperty; /* override later if error */
 
   if (stSelectionType == req->target)
     {
@@ -456,8 +450,9 @@ static enum XdndState dndOutSelectionRequest(enum XdndState state, XSelectionReq
 }
 
 
-/* A finished message is received. */
-static enum XdndState dndOutFinished(enum XdndState state, XClientMessageEvent * evt)
+/* A finished message is received.
+ */
+static enum XdndState dndOutFinished(enum XdndState state, XClientMessageEvent *evt)
 {
   if (XdndSelection != stSelectionName) return state;
   DndOutTarget= None;
@@ -482,7 +477,7 @@ static void updateCursor(int isAccepted)
 }
 
 
-static void dndInDestroyTypes()
+static void dndInDestroyTypes(void)
 {
   if (xdndInTypes == NULL)
     return;
@@ -491,21 +486,22 @@ static void dndInDestroyTypes()
 }
 
 
-static void updateInTypes(Atom * newTargets, int targetSize)
+static void updateInTypes(Atom *newTargets, int targetSize)
 {
   int i;
   dndInDestroyTypes();
   xdndInTypes= (Atom *)calloc(targetSize + 1, sizeof(Atom));
-  for (i= 0; i < targetSize;  ++i)
+  for (i= 0;  i < targetSize;  ++i)
     xdndInTypes[i]= newTargets[i];
   xdndInTypes[targetSize]= None;
 }
 
 
-/* true if dnd input object is available */
-static int dndAvailable()
+/* Answer non-zero if dnd input object is available.
+*/
+static int dndAvailable(void)
 {
-  return useXdnd && (NULL != xdndInTypes);
+  return useXdnd && xdndInTypes;
 }
 
 
@@ -513,13 +509,13 @@ static int dndAvailable()
  * types - returned types (it should be copied by client), or NULL if unavailable.
  * count - number of types.
  */
-static void dndGetTargets(Atom ** types, int * count)
+static void dndGetTargets(Atom **types, int *count)
 {
-  *types= NULL;
-  *count= 0;
   int i;
-  if (NULL == xdndInTypes) return;
-  for (i= 0; None != xdndInTypes[i]; ++i);
+  *types= 0;
+  *count= 0;
+  if (xdndInTypes) return;
+  for (i= 0;  None != xdndInTypes[i];  ++i);
   *count= i;
   *types= xdndInTypes;
 }
@@ -560,7 +556,7 @@ static void dndGetTypeList(XClientMessageEvent *evt)
   /* We only accept filenames (MIME type "text/uri-list"). */
   {
     int i;
-    for (i= 0; xdndInTypes[i]; ++i)
+    for (i= 0;  xdndInTypes[i];  ++i)
       {
 	dprintf((stderr, "  type %d == %ld %s\n", i, xdndInTypes[i], XGetAtomName(stDisplay, xdndInTypes[i])));
 	if (XdndTextUriList == xdndInTypes[i])
@@ -595,10 +591,10 @@ static void dndSendStatus(int willAccept, Atom action)
 	   xdndSourceWindow, willAccept, evt.data.l[1], action, XGetAtomName(stDisplay, action)));
 }
 
-static void dndSendFinished()
+static void dndSendFinished(void)
 {
     XClientMessageEvent evt;
-    memset (&evt, 0, sizeof(evt));
+    memset(&evt, 0, sizeof(evt));
 
     evt.type	     = ClientMessage;
     evt.display	     = stDisplay;
@@ -609,14 +605,12 @@ static void dndSendFinished()
     xdndFinished_targetWindow(&evt)= DndWindow;
     XSendEvent(stDisplay, xdndSourceWindow, 0, 0, (XEvent *)&evt);
 
-    dprintf((stderr, "dndSendFinished target: 0x%lx source: 0x%lx\n",
-	     DndWindow, xdndSourceWindow));
+    dprintf((stderr, "dndSendFinished target: 0x%lx source: 0x%lx\n", DndWindow, xdndSourceWindow));
 }
 
 
 static enum XdndState dndInEnter(enum XdndState state, XClientMessageEvent *evt)
 {
-
   if (xdndEnter_version(evt) < 3)
     {
       fprintf(stderr, "xdnd: protocol version %ld not supported\n", xdndEnter_version(evt));
@@ -625,8 +619,7 @@ static enum XdndState dndInEnter(enum XdndState state, XClientMessageEvent *evt)
   xdndSourceWindow= xdndEnter_sourceWindow(evt);
   dndGetTypeList(evt);
 
-  dprintf((stderr, "dndEnter target: 0x%lx source: 0x%lx\n",
-	   evt->window, xdndSourceWindow));
+  dprintf((stderr, "dndEnter target: 0x%lx source: 0x%lx\n", evt->window, xdndSourceWindow));
   return XdndStateEntered;
 }
 
@@ -791,6 +784,7 @@ static enum XdndState dndInFinished(enum XdndState state)
 
 
 /* DnD client event handler */
+
 static enum XdndState dndHandleClientMessage(enum XdndState state, XClientMessageEvent *evt)
 {
   Atom type= evt->message_type;
@@ -805,44 +799,31 @@ static enum XdndState dndHandleClientMessage(enum XdndState state, XClientMessag
 
 
 /* DnD event handler */
-static void dndHandleEvent(int type, XEvent * evt)
+
+static void dndHandleEvent(int type, XEvent *evt)
 {
   static enum XdndState state= XdndStateIdle;
 
   switch(type)
     {
-    case DndOutStart:
-      state= dndOutPress(state);
-      break;
-    case MotionNotify:
-      state= dndOutMotion(state, &evt->xmotion);
-      break;
-    case ButtonRelease:
-      state= dndOutRelease(state, &evt->xbutton);
-      break;
-    case SelectionRequest:
-      state= dndOutSelectionRequest(state, &evt->xselectionrequest);
-      break;
-    case SelectionNotify:
-      state= dndInSelectionNotify(state, &evt->xselection);
-      break;
-    case DndInFinished:
-      state= dndInFinished(state);
-      break;
-    case ClientMessage:
-      state= dndHandleClientMessage(state, &evt->xclient);
-      break;
+    case DndOutStart:	   state= dndOutPress(state);						break;
+    case MotionNotify:	   state= dndOutMotion(state, &evt->xmotion);				break;
+    case ButtonRelease:	   state= dndOutRelease(state, &evt->xbutton);				break;
+    case SelectionRequest: state= dndOutSelectionRequest(state, &evt->xselectionrequest);	break;
+    case SelectionNotify:  state= dndInSelectionNotify(state, &evt->xselection);		break;
+    case DndInFinished:	   state= dndInFinished(state);						break;
+    case ClientMessage:	   state= dndHandleClientMessage(state, &evt->xclient);			break;
     }
   updateCursor(XdndStateOutAccepted == state);
 }
 
 
-static sqInt display_dndOutStart(char * data, int ndata, char * typeName, int ntypeName)
+static sqInt display_dndOutStart(char *data, int ndata, char *typeName, int nTypeName)
 {
   if (ndata > 0)
     {
-      display_clipboardWriteWithType(data, ndata, typeName, ntypeName, 1, 0);
-      dndHandleEvent(DndOutStart, NULL);
+      display_clipboardWriteWithType(data, ndata, typeName, nTypeName, 1, 0);
+      dndHandleEvent(DndOutStart, 0);
     }
   return 1;
 }
@@ -908,7 +889,7 @@ static void run(void)
 }
 
 
-int main()
+int main(int argc, char **argv)
 {
   stDisplay= XOpenDisplay(0);
   if (!stDisplay) fail("cannot open display");

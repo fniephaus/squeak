@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(19 April 2007 2:28:24 pm) */
+/* Automatically generated from Squeak on an Array(13 July 2007 11:57:48 am) */
 
 #define SQ_USE_GLOBAL_STRUCT 1
 
@@ -189,7 +189,6 @@ void error(char *s) {
 sqInt accessibleObjectAfter(sqInt oop);
 sqInt activateNewMethod(void);
 sqInt addNewMethodToCache(void);
-sqInt addressOfstartingAtsize(sqInt rcvr, sqInt byteOffset, sqInt byteSize);
 sqInt addToExternalPrimitiveTable(void *functionAddress);
 sqInt adjustAllOopsBy(sqInt bytesToShift);
 sqInt allocateChunk(sqInt byteSize);
@@ -272,7 +271,7 @@ sqInt fetchLong32ofObject(sqInt fieldIndex, sqInt oop);
 sqInt fetchPointerofObject(sqInt fieldIndex, sqInt oop);
 sqInt fetchStackPointerOf(sqInt aContext);
 sqInt fetchWordLengthOf(sqInt objectPointer);
-sqInt finalizeReference(sqInt oop);
+sqInt finalizeReference(usqInt oop);
 sqInt findClassOfMethodforReceiver(sqInt meth, sqInt rcvr);
 sqInt findNewMethodInClass(sqInt class);
 sqInt findObsoleteNamedPrimitivelength(char * functionName, sqInt functionLength);
@@ -392,14 +391,6 @@ sqInt primitiveBitOr(void);
 sqInt primitiveBitShift(void);
 sqInt primitiveBitXor(void);
 sqInt primitiveBlockCopy(void);
-#pragma export on
-EXPORT(sqInt) primitiveByteArrayDoubleAt(void);
-EXPORT(sqInt) primitiveByteArrayDoubleAtPut(void);
-EXPORT(sqInt) primitiveByteArrayFloatAt(void);
-EXPORT(sqInt) primitiveByteArrayFloatAtPut(void);
-EXPORT(sqInt) primitiveByteArrayNByteIIntegerAtPut(void);
-EXPORT(sqInt) primitiveByteArrayNByteIntegerAt(void);
-#pragma export off
 sqInt primitiveBytesLeft(void);
 sqInt primitiveCalloutToFFI(void);
 sqInt primitiveChangeClass(void);
@@ -642,683 +633,106 @@ sqInt writeImageFileIO(sqInt imageBytes);
 sqInt writeImageFile(sqInt imageBytes);
 /*** Variables ***/
 struct foo {
-sqInt stackPointer;
 sqInt successFlag;
 sqInt specialObjectsOop;
 sqInt nilObj;
 sqInt argumentCount;
 sqInt trueObj;
 sqInt falseObj;
-sqInt activeContext;
-sqInt freeBlock;
 sqInt interruptCheckCounter;
-sqInt newMethod;
 sqInt nextPollTick;
 sqInt messageSelector;
-sqInt rootTableCount;
 sqInt compilerInitialized;
-sqInt method;
 sqInt remapBufferCount;
-sqInt instructionPointer;
+sqInt rootTableCount;
 sqInt allocationCount;
 sqInt primitiveIndex;
 sqInt allocationsBetweenGCs;
 sqInt lkupClass;
 sqInt receiver;
-sqInt theHomeContext;
-sqInt fwdTableNext;
 sqInt lowSpaceThreshold;
-sqInt compStart;
 sqInt signalLowSpace;
 sqInt lastHash;
-sqInt freeContexts;
 sqInt freeLargeContexts;
-sqInt nextWakeupTick;
 sqInt statGrowMemory;
+sqInt freeContexts;
 sqInt pendingFinalizationSignals;
+sqInt growHeadroom;
 sqInt reclaimableContextCount;
 sqInt statMarkCount;
-sqInt growHeadroom;
-sqInt semaphoresToSignalCountA;
-sqInt semaphoresUseBufferA;
-sqInt semaphoresToSignalCountB;
-sqInt statMkFwdCount;
-sqInt interruptKeycode;
-sqInt fwdTableLast;
-sqInt interruptPending;
-sqInt statCompMoveCount;
-sqInt receiverClass;
-sqInt statSweepCount;
-sqInt newNativeMethod;
-sqInt fullScreenFlag;
+sqInt nextWakeupTick;
 sqInt methodClass;
-sqInt totalObjectCount;
+sqInt statSweepCount;
+sqInt receiverClass;
+sqInt statCompMoveCount;
+sqInt newNativeMethod;
+sqInt statMkFwdCount;
+sqInt semaphoresToSignalCountA;
+sqInt semaphoresToSignalCountB;
+sqInt interruptPending;
+sqInt interruptKeycode;
+sqInt fullScreenFlag;
+sqInt semaphoresUseBufferA;
 sqInt statpendingFinalizationSignals;
-sqInt statShrinkMemory;
 sqInt statGCTime;
-sqInt compEnd;
-sqInt shrinkThreshold;
-sqInt tenuringThreshold;
-sqInt gcBiasToGrow;
 sqInt statIncrGCs;
-sqInt statFullGCMSecs;
-sqInt statFullGCs;
-sqInt statRootTableOverflows;
+sqInt tenuringThreshold;
 sqInt statTenures;
+sqInt statRootTableOverflows;
 sqInt statIncrGCMSecs;
+sqInt statShrinkMemory;
+sqInt shrinkThreshold;
 sqInt gcBiasToGrowGCLimit;
+sqInt statFullGCs;
+sqInt gcBiasToGrow;
+sqInt totalObjectCount;
+sqInt statFullGCMSecs;
+sqInt interruptChecksEveryNms;
 sqInt savedWindowSize;
 sqInt forceTenureFlag;
-sqInt interruptChecksEveryNms;
 sqInt deferDisplayUpdates;
-sqInt weakRootCount;
-sqInt gcBiasToGrowThreshold;
-sqInt lastTick;
-sqInt interruptCheckCounterFeedBackReset;
-sqInt globalSessionID;
-sqInt statAllocationCount;
 sqInt statIGCDeltaTime;
-sqInt statRootTableCount;
 sqInt statSpecialMarkCount;
-sqInt statSurvivorCount;
 sqInt gcSemaphoreIndex;
-void *primitiveFunctionPointer;
-sqInt headerTypeBytes[4];
-sqInt processSignalingLowSpace;
+sqInt globalSessionID;
+sqInt weakRootCount;
+sqInt statSurvivorCount;
+sqInt statAllocationCount;
+sqInt interruptCheckCounterFeedBackReset;
+sqInt lastTick;
+sqInt statRootTableCount;
+sqInt semaphoresToSignalA[501];
+usqInt theHomeContext;
 sqInt atCache[65];
 sqInt semaphoresToSignalB[501];
-sqInt semaphoresToSignalA[501];
+sqInt processSignalingLowSpace;
+usqInt instructionPointer;
+usqInt stackPointer;
+usqInt newMethod;
+usqInt method;
+void *primitiveFunctionPointer;
+sqInt headerTypeBytes[4];
 long methodCache[4097];
 usqInt youngStart;
 usqInt endOfMemory;
-usqInt memoryLimit;
-sqInt weakRoots[2625];
-sqInt remapBuffer[26];
+usqInt freeBlock;
+usqInt compStart;
 sqInt rootTable[2501];
+usqInt memoryLimit;
+usqInt fwdTableNext;
+usqInt compEnd;
+sqInt weakRoots[2625];
+usqInt gcBiasToGrowThreshold;
+usqInt activeContext;
+sqInt remapBuffer[26];
+usqInt fwdTableLast;
 void *externalPrimitiveTable[4097];
  } fum;
 struct foo * foo = &fum;
 
 sqInt extraVMMemory;
+sqInt (*compilerHooks[16])();
 usqInt memory;
-void *primitiveTable[577] = {
-	/* 0*/ (void *)primitiveFail,
-	/* 1*/ (void *)primitiveAdd,
-	/* 2*/ (void *)primitiveSubtract,
-	/* 3*/ (void *)primitiveLessThan,
-	/* 4*/ (void *)primitiveGreaterThan,
-	/* 5*/ (void *)primitiveLessOrEqual,
-	/* 6*/ (void *)primitiveGreaterOrEqual,
-	/* 7*/ (void *)primitiveEqual,
-	/* 8*/ (void *)primitiveNotEqual,
-	/* 9*/ (void *)primitiveMultiply,
-	/* 10*/ (void *)primitiveDivide,
-	/* 11*/ (void *)primitiveMod,
-	/* 12*/ (void *)primitiveDiv,
-	/* 13*/ (void *)primitiveQuo,
-	/* 14*/ (void *)primitiveBitAnd,
-	/* 15*/ (void *)primitiveBitOr,
-	/* 16*/ (void *)primitiveBitXor,
-	/* 17*/ (void *)primitiveBitShift,
-	/* 18*/ (void *)primitiveMakePoint,
-	/* 19*/ (void *)primitiveFail,
-	/* 20*/ (void *)primitiveFail,
-	/* 21*/ (void *)primitiveFail,
-	/* 22*/ (void *)primitiveFail,
-	/* 23*/ (void *)primitiveFail,
-	/* 24*/ (void *)primitiveFail,
-	/* 25*/ (void *)primitiveFail,
-	/* 26*/ (void *)primitiveFail,
-	/* 27*/ (void *)primitiveFail,
-	/* 28*/ (void *)primitiveFail,
-	/* 29*/ (void *)primitiveFail,
-	/* 30*/ (void *)primitiveFail,
-	/* 31*/ (void *)primitiveFail,
-	/* 32*/ (void *)primitiveFail,
-	/* 33*/ (void *)primitiveFail,
-	/* 34*/ (void *)primitiveFail,
-	/* 35*/ (void *)primitiveFail,
-	/* 36*/ (void *)primitiveFail,
-	/* 37*/ (void *)primitiveFail,
-	/* 38*/ (void *)primitiveFail,
-	/* 39*/ (void *)primitiveFail,
-	/* 40*/ (void *)primitiveAsFloat,
-	/* 41*/ (void *)primitiveFloatAdd,
-	/* 42*/ (void *)primitiveFloatSubtract,
-	/* 43*/ (void *)primitiveFloatLessThan,
-	/* 44*/ (void *)primitiveFloatGreaterThan,
-	/* 45*/ (void *)primitiveFloatLessOrEqual,
-	/* 46*/ (void *)primitiveFloatGreaterOrEqual,
-	/* 47*/ (void *)primitiveFloatEqual,
-	/* 48*/ (void *)primitiveFloatNotEqual,
-	/* 49*/ (void *)primitiveFloatMultiply,
-	/* 50*/ (void *)primitiveFloatDivide,
-	/* 51*/ (void *)primitiveTruncated,
-	/* 52*/ (void *)primitiveFractionalPart,
-	/* 53*/ (void *)primitiveExponent,
-	/* 54*/ (void *)primitiveTimesTwoPower,
-	/* 55*/ (void *)primitiveSquareRoot,
-	/* 56*/ (void *)primitiveSine,
-	/* 57*/ (void *)primitiveArctan,
-	/* 58*/ (void *)primitiveLogN,
-	/* 59*/ (void *)primitiveExp,
-	/* 60*/ (void *)primitiveAt,
-	/* 61*/ (void *)primitiveAtPut,
-	/* 62*/ (void *)primitiveSize,
-	/* 63*/ (void *)primitiveStringAt,
-	/* 64*/ (void *)primitiveStringAtPut,
-	/* 65*/ (void *)primitiveNext,
-	/* 66*/ (void *)primitiveNextPut,
-	/* 67*/ (void *)primitiveAtEnd,
-	/* 68*/ (void *)primitiveObjectAt,
-	/* 69*/ (void *)primitiveObjectAtPut,
-	/* 70*/ (void *)primitiveNew,
-	/* 71*/ (void *)primitiveNewWithArg,
-	/* 72*/ (void *)primitiveArrayBecomeOneWay,
-	/* 73*/ (void *)primitiveInstVarAt,
-	/* 74*/ (void *)primitiveInstVarAtPut,
-	/* 75*/ (void *)primitiveAsOop,
-	/* 76*/ (void *)primitiveStoreStackp,
-	/* 77*/ (void *)primitiveSomeInstance,
-	/* 78*/ (void *)primitiveNextInstance,
-	/* 79*/ (void *)primitiveNewMethod,
-	/* 80*/ (void *)primitiveBlockCopy,
-	/* 81*/ (void *)primitiveValue,
-	/* 82*/ (void *)primitiveValueWithArgs,
-	/* 83*/ (void *)primitivePerform,
-	/* 84*/ (void *)primitivePerformWithArgs,
-	/* 85*/ (void *)primitiveSignal,
-	/* 86*/ (void *)primitiveWait,
-	/* 87*/ (void *)primitiveResume,
-	/* 88*/ (void *)primitiveSuspend,
-	/* 89*/ (void *)primitiveFlushCache,
-	/* 90*/ (void *)primitiveMousePoint,
-	/* 91*/ (void *)primitiveTestDisplayDepth,
-	/* 92*/ (void *)primitiveSetDisplayMode,
-	/* 93*/ (void *)primitiveInputSemaphore,
-	/* 94*/ (void *)primitiveGetNextEvent,
-	/* 95*/ (void *)primitiveInputWord,
-	/* 96*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 97*/ (void *)primitiveSnapshot,
-	/* 98*/ (void *)primitiveStoreImageSegment,
-	/* 99*/ (void *)primitiveLoadImageSegment,
-	/* 100*/ (void *)primitivePerformInSuperclass,
-	/* 101*/ (void *)primitiveBeCursor,
-	/* 102*/ (void *)primitiveBeDisplay,
-	/* 103*/ (void *)primitiveScanCharacters,
-	/* 104*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 105*/ (void *)primitiveStringReplace,
-	/* 106*/ (void *)primitiveScreenSize,
-	/* 107*/ (void *)primitiveMouseButtons,
-	/* 108*/ (void *)primitiveKbdNext,
-	/* 109*/ (void *)primitiveKbdPeek,
-	/* 110*/ (void *)primitiveEquivalent,
-	/* 111*/ (void *)primitiveClass,
-	/* 112*/ (void *)primitiveBytesLeft,
-	/* 113*/ (void *)primitiveQuit,
-	/* 114*/ (void *)primitiveExitToDebugger,
-	/* 115*/ (void *)primitiveChangeClass,
-	/* 116*/ (void *)primitiveFlushCacheByMethod,
-	/* 117*/ (void *)primitiveExternalCall,
-	/* 118*/ (void *)primitiveDoPrimitiveWithArgs,
-	/* 119*/ (void *)primitiveFlushCacheSelective,
-	/* 120*/ (void *)primitiveCalloutToFFI,
-	/* 121*/ (void *)primitiveImageName,
-	/* 122*/ (void *)primitiveNoop,
-	/* 123*/ (void *)primitiveValueUninterruptably,
-	/* 124*/ (void *)primitiveLowSpaceSemaphore,
-	/* 125*/ (void *)primitiveSignalAtBytesLeft,
-	/* 126*/ (void *)primitiveDeferDisplayUpdates,
-	/* 127*/ (void *)primitiveShowDisplayRect,
-	/* 128*/ (void *)primitiveArrayBecome,
-	/* 129*/ (void *)primitiveSpecialObjectsOop,
-	/* 130*/ (void *)primitiveFullGC,
-	/* 131*/ (void *)primitiveIncrementalGC,
-	/* 132*/ (void *)primitiveObjectPointsTo,
-	/* 133*/ (void *)primitiveSetInterruptKey,
-	/* 134*/ (void *)primitiveInterruptSemaphore,
-	/* 135*/ (void *)primitiveMillisecondClock,
-	/* 136*/ (void *)primitiveSignalAtMilliseconds,
-	/* 137*/ (void *)primitiveSecondsClock,
-	/* 138*/ (void *)primitiveSomeObject,
-	/* 139*/ (void *)primitiveNextObject,
-	/* 140*/ (void *)primitiveBeep,
-	/* 141*/ (void *)primitiveClipboardText,
-	/* 142*/ (void *)primitiveVMPath,
-	/* 143*/ (void *)primitiveShortAt,
-	/* 144*/ (void *)primitiveShortAtPut,
-	/* 145*/ (void *)primitiveConstantFill,
-	/* 146*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 147*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 148*/ (void *)primitiveClone,
-	/* 149*/ (void *)primitiveGetAttribute,
-	/* 150*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 151*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 152*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 153*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 154*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 155*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 156*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 157*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 158*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 159*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 160*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 161*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 162*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 163*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 164*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 165*/ (void *)primitiveIntegerAt,
-	/* 166*/ (void *)primitiveIntegerAtPut,
-	/* 167*/ (void *)primitiveYield,
-	/* 168*/ (void *)primitiveCopyObject,
-	/* 169*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 170*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 171*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 172*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 173*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 174*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 175*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 176*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 177*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 178*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 179*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 180*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 181*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 182*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 183*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 184*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 185*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 186*/ (void *)primitiveFail,
-	/* 187*/ (void *)primitiveFail,
-	/* 188*/ (void *)primitiveExecuteMethodArgsArray,
-	/* 189*/ (void *)primitiveExecuteMethod,
-	/* 190*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 191*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 192*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 193*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 194*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 195*/ (void *)primitiveFindNextUnwindContext,
-	/* 196*/ (void *)primitiveTerminateTo,
-	/* 197*/ (void *)primitiveFindHandlerContext,
-	/* 198*/ (void *)primitiveMarkUnwindMethod,
-	/* 199*/ (void *)primitiveMarkHandlerMethod,
-	/* 200*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 201*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 202*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 203*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 204*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 205*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 206*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 207*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 208*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 209*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 210*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 211*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 212*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 213*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 214*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 215*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 216*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 217*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 218*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 219*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 220*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 221*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 222*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 223*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 224*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 225*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 226*/ (void *)primitiveFail,
-	/* 227*/ (void *)primitiveFail,
-	/* 228*/ (void *)primitiveFail,
-	/* 229*/ (void *)primitiveFail,
-	/* 230*/ (void *)primitiveRelinquishProcessor,
-	/* 231*/ (void *)primitiveForceDisplayUpdate,
-	/* 232*/ (void *)primitiveFormPrint,
-	/* 233*/ (void *)primitiveSetFullScreen,
-	/* 234*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 235*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 236*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 237*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 238*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 239*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 240*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 241*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 242*/ (void *)primitiveFail,
-	/* 243*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 244*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 245*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 246*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 247*/ (void *)primitiveSnapshotEmbedded,
-	/* 248*/ (void *)primitiveInvokeObjectAsMethod,
-	/* 249*/ (void *)primitiveArrayBecomeOneWayCopyHash,
-	/* 250*/ (void *)clearProfile,
-	/* 251*/ (void *)dumpProfile,
-	/* 252*/ (void *)startProfiling,
-	/* 253*/ (void *)stopProfiling,
-	/* 254*/ (void *)primitiveVMParameter,
-	/* 255*/ (void *)primitiveInstVarsPutFromStack,
-	/* 256*/ (void *)primitivePushSelf,
-	/* 257*/ (void *)primitivePushTrue,
-	/* 258*/ (void *)primitivePushFalse,
-	/* 259*/ (void *)primitivePushNil,
-	/* 260*/ (void *)primitivePushMinusOne,
-	/* 261*/ (void *)primitivePushZero,
-	/* 262*/ (void *)primitivePushOne,
-	/* 263*/ (void *)primitivePushTwo,
-	/* 264*/ (void *)primitiveLoadInstVar,
-	/* 265*/ (void *)primitiveLoadInstVar,
-	/* 266*/ (void *)primitiveLoadInstVar,
-	/* 267*/ (void *)primitiveLoadInstVar,
-	/* 268*/ (void *)primitiveLoadInstVar,
-	/* 269*/ (void *)primitiveLoadInstVar,
-	/* 270*/ (void *)primitiveLoadInstVar,
-	/* 271*/ (void *)primitiveLoadInstVar,
-	/* 272*/ (void *)primitiveLoadInstVar,
-	/* 273*/ (void *)primitiveLoadInstVar,
-	/* 274*/ (void *)primitiveLoadInstVar,
-	/* 275*/ (void *)primitiveLoadInstVar,
-	/* 276*/ (void *)primitiveLoadInstVar,
-	/* 277*/ (void *)primitiveLoadInstVar,
-	/* 278*/ (void *)primitiveLoadInstVar,
-	/* 279*/ (void *)primitiveLoadInstVar,
-	/* 280*/ (void *)primitiveLoadInstVar,
-	/* 281*/ (void *)primitiveLoadInstVar,
-	/* 282*/ (void *)primitiveLoadInstVar,
-	/* 283*/ (void *)primitiveLoadInstVar,
-	/* 284*/ (void *)primitiveLoadInstVar,
-	/* 285*/ (void *)primitiveLoadInstVar,
-	/* 286*/ (void *)primitiveLoadInstVar,
-	/* 287*/ (void *)primitiveLoadInstVar,
-	/* 288*/ (void *)primitiveLoadInstVar,
-	/* 289*/ (void *)primitiveLoadInstVar,
-	/* 290*/ (void *)primitiveLoadInstVar,
-	/* 291*/ (void *)primitiveLoadInstVar,
-	/* 292*/ (void *)primitiveLoadInstVar,
-	/* 293*/ (void *)primitiveLoadInstVar,
-	/* 294*/ (void *)primitiveLoadInstVar,
-	/* 295*/ (void *)primitiveLoadInstVar,
-	/* 296*/ (void *)primitiveLoadInstVar,
-	/* 297*/ (void *)primitiveLoadInstVar,
-	/* 298*/ (void *)primitiveLoadInstVar,
-	/* 299*/ (void *)primitiveLoadInstVar,
-	/* 300*/ (void *)primitiveLoadInstVar,
-	/* 301*/ (void *)primitiveLoadInstVar,
-	/* 302*/ (void *)primitiveLoadInstVar,
-	/* 303*/ (void *)primitiveLoadInstVar,
-	/* 304*/ (void *)primitiveLoadInstVar,
-	/* 305*/ (void *)primitiveLoadInstVar,
-	/* 306*/ (void *)primitiveLoadInstVar,
-	/* 307*/ (void *)primitiveLoadInstVar,
-	/* 308*/ (void *)primitiveLoadInstVar,
-	/* 309*/ (void *)primitiveLoadInstVar,
-	/* 310*/ (void *)primitiveLoadInstVar,
-	/* 311*/ (void *)primitiveLoadInstVar,
-	/* 312*/ (void *)primitiveLoadInstVar,
-	/* 313*/ (void *)primitiveLoadInstVar,
-	/* 314*/ (void *)primitiveLoadInstVar,
-	/* 315*/ (void *)primitiveLoadInstVar,
-	/* 316*/ (void *)primitiveLoadInstVar,
-	/* 317*/ (void *)primitiveLoadInstVar,
-	/* 318*/ (void *)primitiveLoadInstVar,
-	/* 319*/ (void *)primitiveLoadInstVar,
-	/* 320*/ (void *)primitiveLoadInstVar,
-	/* 321*/ (void *)primitiveLoadInstVar,
-	/* 322*/ (void *)primitiveLoadInstVar,
-	/* 323*/ (void *)primitiveLoadInstVar,
-	/* 324*/ (void *)primitiveLoadInstVar,
-	/* 325*/ (void *)primitiveLoadInstVar,
-	/* 326*/ (void *)primitiveLoadInstVar,
-	/* 327*/ (void *)primitiveLoadInstVar,
-	/* 328*/ (void *)primitiveLoadInstVar,
-	/* 329*/ (void *)primitiveLoadInstVar,
-	/* 330*/ (void *)primitiveLoadInstVar,
-	/* 331*/ (void *)primitiveLoadInstVar,
-	/* 332*/ (void *)primitiveLoadInstVar,
-	/* 333*/ (void *)primitiveLoadInstVar,
-	/* 334*/ (void *)primitiveLoadInstVar,
-	/* 335*/ (void *)primitiveLoadInstVar,
-	/* 336*/ (void *)primitiveLoadInstVar,
-	/* 337*/ (void *)primitiveLoadInstVar,
-	/* 338*/ (void *)primitiveLoadInstVar,
-	/* 339*/ (void *)primitiveLoadInstVar,
-	/* 340*/ (void *)primitiveLoadInstVar,
-	/* 341*/ (void *)primitiveLoadInstVar,
-	/* 342*/ (void *)primitiveLoadInstVar,
-	/* 343*/ (void *)primitiveLoadInstVar,
-	/* 344*/ (void *)primitiveLoadInstVar,
-	/* 345*/ (void *)primitiveLoadInstVar,
-	/* 346*/ (void *)primitiveLoadInstVar,
-	/* 347*/ (void *)primitiveLoadInstVar,
-	/* 348*/ (void *)primitiveLoadInstVar,
-	/* 349*/ (void *)primitiveLoadInstVar,
-	/* 350*/ (void *)primitiveLoadInstVar,
-	/* 351*/ (void *)primitiveLoadInstVar,
-	/* 352*/ (void *)primitiveLoadInstVar,
-	/* 353*/ (void *)primitiveLoadInstVar,
-	/* 354*/ (void *)primitiveLoadInstVar,
-	/* 355*/ (void *)primitiveLoadInstVar,
-	/* 356*/ (void *)primitiveLoadInstVar,
-	/* 357*/ (void *)primitiveLoadInstVar,
-	/* 358*/ (void *)primitiveLoadInstVar,
-	/* 359*/ (void *)primitiveLoadInstVar,
-	/* 360*/ (void *)primitiveLoadInstVar,
-	/* 361*/ (void *)primitiveLoadInstVar,
-	/* 362*/ (void *)primitiveLoadInstVar,
-	/* 363*/ (void *)primitiveLoadInstVar,
-	/* 364*/ (void *)primitiveLoadInstVar,
-	/* 365*/ (void *)primitiveLoadInstVar,
-	/* 366*/ (void *)primitiveLoadInstVar,
-	/* 367*/ (void *)primitiveLoadInstVar,
-	/* 368*/ (void *)primitiveLoadInstVar,
-	/* 369*/ (void *)primitiveLoadInstVar,
-	/* 370*/ (void *)primitiveLoadInstVar,
-	/* 371*/ (void *)primitiveLoadInstVar,
-	/* 372*/ (void *)primitiveLoadInstVar,
-	/* 373*/ (void *)primitiveLoadInstVar,
-	/* 374*/ (void *)primitiveLoadInstVar,
-	/* 375*/ (void *)primitiveLoadInstVar,
-	/* 376*/ (void *)primitiveLoadInstVar,
-	/* 377*/ (void *)primitiveLoadInstVar,
-	/* 378*/ (void *)primitiveLoadInstVar,
-	/* 379*/ (void *)primitiveLoadInstVar,
-	/* 380*/ (void *)primitiveLoadInstVar,
-	/* 381*/ (void *)primitiveLoadInstVar,
-	/* 382*/ (void *)primitiveLoadInstVar,
-	/* 383*/ (void *)primitiveLoadInstVar,
-	/* 384*/ (void *)primitiveLoadInstVar,
-	/* 385*/ (void *)primitiveLoadInstVar,
-	/* 386*/ (void *)primitiveLoadInstVar,
-	/* 387*/ (void *)primitiveLoadInstVar,
-	/* 388*/ (void *)primitiveLoadInstVar,
-	/* 389*/ (void *)primitiveLoadInstVar,
-	/* 390*/ (void *)primitiveLoadInstVar,
-	/* 391*/ (void *)primitiveLoadInstVar,
-	/* 392*/ (void *)primitiveLoadInstVar,
-	/* 393*/ (void *)primitiveLoadInstVar,
-	/* 394*/ (void *)primitiveLoadInstVar,
-	/* 395*/ (void *)primitiveLoadInstVar,
-	/* 396*/ (void *)primitiveLoadInstVar,
-	/* 397*/ (void *)primitiveLoadInstVar,
-	/* 398*/ (void *)primitiveLoadInstVar,
-	/* 399*/ (void *)primitiveLoadInstVar,
-	/* 400*/ (void *)primitiveLoadInstVar,
-	/* 401*/ (void *)primitiveLoadInstVar,
-	/* 402*/ (void *)primitiveLoadInstVar,
-	/* 403*/ (void *)primitiveLoadInstVar,
-	/* 404*/ (void *)primitiveLoadInstVar,
-	/* 405*/ (void *)primitiveLoadInstVar,
-	/* 406*/ (void *)primitiveLoadInstVar,
-	/* 407*/ (void *)primitiveLoadInstVar,
-	/* 408*/ (void *)primitiveLoadInstVar,
-	/* 409*/ (void *)primitiveLoadInstVar,
-	/* 410*/ (void *)primitiveLoadInstVar,
-	/* 411*/ (void *)primitiveLoadInstVar,
-	/* 412*/ (void *)primitiveLoadInstVar,
-	/* 413*/ (void *)primitiveLoadInstVar,
-	/* 414*/ (void *)primitiveLoadInstVar,
-	/* 415*/ (void *)primitiveLoadInstVar,
-	/* 416*/ (void *)primitiveLoadInstVar,
-	/* 417*/ (void *)primitiveLoadInstVar,
-	/* 418*/ (void *)primitiveLoadInstVar,
-	/* 419*/ (void *)primitiveLoadInstVar,
-	/* 420*/ (void *)primitiveLoadInstVar,
-	/* 421*/ (void *)primitiveLoadInstVar,
-	/* 422*/ (void *)primitiveLoadInstVar,
-	/* 423*/ (void *)primitiveLoadInstVar,
-	/* 424*/ (void *)primitiveLoadInstVar,
-	/* 425*/ (void *)primitiveLoadInstVar,
-	/* 426*/ (void *)primitiveLoadInstVar,
-	/* 427*/ (void *)primitiveLoadInstVar,
-	/* 428*/ (void *)primitiveLoadInstVar,
-	/* 429*/ (void *)primitiveLoadInstVar,
-	/* 430*/ (void *)primitiveLoadInstVar,
-	/* 431*/ (void *)primitiveLoadInstVar,
-	/* 432*/ (void *)primitiveLoadInstVar,
-	/* 433*/ (void *)primitiveLoadInstVar,
-	/* 434*/ (void *)primitiveLoadInstVar,
-	/* 435*/ (void *)primitiveLoadInstVar,
-	/* 436*/ (void *)primitiveLoadInstVar,
-	/* 437*/ (void *)primitiveLoadInstVar,
-	/* 438*/ (void *)primitiveLoadInstVar,
-	/* 439*/ (void *)primitiveLoadInstVar,
-	/* 440*/ (void *)primitiveLoadInstVar,
-	/* 441*/ (void *)primitiveLoadInstVar,
-	/* 442*/ (void *)primitiveLoadInstVar,
-	/* 443*/ (void *)primitiveLoadInstVar,
-	/* 444*/ (void *)primitiveLoadInstVar,
-	/* 445*/ (void *)primitiveLoadInstVar,
-	/* 446*/ (void *)primitiveLoadInstVar,
-	/* 447*/ (void *)primitiveLoadInstVar,
-	/* 448*/ (void *)primitiveLoadInstVar,
-	/* 449*/ (void *)primitiveLoadInstVar,
-	/* 450*/ (void *)primitiveLoadInstVar,
-	/* 451*/ (void *)primitiveLoadInstVar,
-	/* 452*/ (void *)primitiveLoadInstVar,
-	/* 453*/ (void *)primitiveLoadInstVar,
-	/* 454*/ (void *)primitiveLoadInstVar,
-	/* 455*/ (void *)primitiveLoadInstVar,
-	/* 456*/ (void *)primitiveLoadInstVar,
-	/* 457*/ (void *)primitiveLoadInstVar,
-	/* 458*/ (void *)primitiveLoadInstVar,
-	/* 459*/ (void *)primitiveLoadInstVar,
-	/* 460*/ (void *)primitiveLoadInstVar,
-	/* 461*/ (void *)primitiveLoadInstVar,
-	/* 462*/ (void *)primitiveLoadInstVar,
-	/* 463*/ (void *)primitiveLoadInstVar,
-	/* 464*/ (void *)primitiveLoadInstVar,
-	/* 465*/ (void *)primitiveLoadInstVar,
-	/* 466*/ (void *)primitiveLoadInstVar,
-	/* 467*/ (void *)primitiveLoadInstVar,
-	/* 468*/ (void *)primitiveLoadInstVar,
-	/* 469*/ (void *)primitiveLoadInstVar,
-	/* 470*/ (void *)primitiveLoadInstVar,
-	/* 471*/ (void *)primitiveLoadInstVar,
-	/* 472*/ (void *)primitiveLoadInstVar,
-	/* 473*/ (void *)primitiveLoadInstVar,
-	/* 474*/ (void *)primitiveLoadInstVar,
-	/* 475*/ (void *)primitiveLoadInstVar,
-	/* 476*/ (void *)primitiveLoadInstVar,
-	/* 477*/ (void *)primitiveLoadInstVar,
-	/* 478*/ (void *)primitiveLoadInstVar,
-	/* 479*/ (void *)primitiveLoadInstVar,
-	/* 480*/ (void *)primitiveLoadInstVar,
-	/* 481*/ (void *)primitiveLoadInstVar,
-	/* 482*/ (void *)primitiveLoadInstVar,
-	/* 483*/ (void *)primitiveLoadInstVar,
-	/* 484*/ (void *)primitiveLoadInstVar,
-	/* 485*/ (void *)primitiveLoadInstVar,
-	/* 486*/ (void *)primitiveLoadInstVar,
-	/* 487*/ (void *)primitiveLoadInstVar,
-	/* 488*/ (void *)primitiveLoadInstVar,
-	/* 489*/ (void *)primitiveLoadInstVar,
-	/* 490*/ (void *)primitiveLoadInstVar,
-	/* 491*/ (void *)primitiveLoadInstVar,
-	/* 492*/ (void *)primitiveLoadInstVar,
-	/* 493*/ (void *)primitiveLoadInstVar,
-	/* 494*/ (void *)primitiveLoadInstVar,
-	/* 495*/ (void *)primitiveLoadInstVar,
-	/* 496*/ (void *)primitiveLoadInstVar,
-	/* 497*/ (void *)primitiveLoadInstVar,
-	/* 498*/ (void *)primitiveLoadInstVar,
-	/* 499*/ (void *)primitiveLoadInstVar,
-	/* 500*/ (void *)primitiveLoadInstVar,
-	/* 501*/ (void *)primitiveLoadInstVar,
-	/* 502*/ (void *)primitiveLoadInstVar,
-	/* 503*/ (void *)primitiveLoadInstVar,
-	/* 504*/ (void *)primitiveLoadInstVar,
-	/* 505*/ (void *)primitiveLoadInstVar,
-	/* 506*/ (void *)primitiveLoadInstVar,
-	/* 507*/ (void *)primitiveLoadInstVar,
-	/* 508*/ (void *)primitiveLoadInstVar,
-	/* 509*/ (void *)primitiveLoadInstVar,
-	/* 510*/ (void *)primitiveLoadInstVar,
-	/* 511*/ (void *)primitiveLoadInstVar,
-	/* 512*/ (void *)primitiveLoadInstVar,
-	/* 513*/ (void *)primitiveLoadInstVar,
-	/* 514*/ (void *)primitiveLoadInstVar,
-	/* 515*/ (void *)primitiveLoadInstVar,
-	/* 516*/ (void *)primitiveLoadInstVar,
-	/* 517*/ (void *)primitiveLoadInstVar,
-	/* 518*/ (void *)primitiveLoadInstVar,
-	/* 519*/ (void *)primitiveLoadInstVar,
-	/* 520*/ (void *)primitiveFail,
-	/* 521*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 522*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 523*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 524*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 525*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 526*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 527*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 528*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 529*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 530*/ (void *)primitiveFail,
-	/* 531*/ (void *)primitiveFail,
-	/* 532*/ (void *)primitiveFail,
-	/* 533*/ (void *)primitiveFail,
-	/* 534*/ (void *)primitiveFail,
-	/* 535*/ (void *)primitiveFail,
-	/* 536*/ (void *)primitiveFail,
-	/* 537*/ (void *)primitiveFail,
-	/* 538*/ (void *)primitiveFail,
-	/* 539*/ (void *)primitiveFail,
-	/* 540*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 541*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 542*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 543*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 544*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 545*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 546*/ (void *)primitiveFail,
-	/* 547*/ (void *)primitiveFail,
-	/* 548*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 549*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 550*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 551*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 552*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 553*/ (void *)primitiveObsoleteIndexedPrimitive,
-	/* 554*/ (void *)primitiveFail,
-	/* 555*/ (void *)primitiveFail,
-	/* 556*/ (void *)primitiveFail,
-	/* 557*/ (void *)primitiveFail,
-	/* 558*/ (void *)primitiveFail,
-	/* 559*/ (void *)primitiveFail,
-	/* 560*/ (void *)primitiveFail,
-	/* 561*/ (void *)primitiveFail,
-	/* 562*/ (void *)primitiveFail,
-	/* 563*/ (void *)primitiveFail,
-	/* 564*/ (void *)primitiveFail,
-	/* 565*/ (void *)primitiveFail,
-	/* 566*/ (void *)primitiveFail,
-	/* 567*/ (void *)primitiveFail,
-	/* 568*/ (void *)primitiveFail,
-	/* 569*/ (void *)primitiveFail,
-	/* 570*/ (void *)primitiveFlushExternalPrimitives,
-	/* 571*/ (void *)primitiveUnloadModule,
-	/* 572*/ (void *)primitiveListBuiltinModule,
-	/* 573*/ (void *)primitiveListExternalModule,
-	/* 574*/ (void *)primitiveFail,
-	/* 575*/ (void *)primitiveFail,
- 0 };
 char* obsoleteIndexedPrimitiveTable[][3] = {
 { NULL, NULL, NULL },
 { NULL, NULL, NULL },
@@ -1897,7 +1311,7 @@ char* obsoleteIndexedPrimitiveTable[][3] = {
 { NULL, NULL, NULL },
 { NULL, NULL, NULL }
 };
-const char *interpreterVersion = "Squeak3.9alpha of 4 July 2005 [latest update: #7021]";
+struct VirtualMachine* interpreterProxy;
 const char* obsoleteNamedPrimitiveTable[][3] = {
 { "gePrimitiveMergeFillFrom", "B2DPlugin", "primitiveMergeFillFrom" },
 { "gePrimitiveSetClipRect", "B2DPlugin", "primitiveSetClipRect" },
@@ -1971,9 +1385,586 @@ const char* obsoleteNamedPrimitiveTable[][3] = {
 { "primitiveFFTPermuteData", "FFTPlugin", "primitiveFFTPermuteData" },
 { NULL, NULL, NULL }
 };
-sqInt (*compilerHooks[16])();
 void* showSurfaceFn;
-struct VirtualMachine* interpreterProxy;
+void *primitiveTable[577] = {
+	/* 0*/ (void *)primitiveFail,
+	/* 1*/ (void *)primitiveAdd,
+	/* 2*/ (void *)primitiveSubtract,
+	/* 3*/ (void *)primitiveLessThan,
+	/* 4*/ (void *)primitiveGreaterThan,
+	/* 5*/ (void *)primitiveLessOrEqual,
+	/* 6*/ (void *)primitiveGreaterOrEqual,
+	/* 7*/ (void *)primitiveEqual,
+	/* 8*/ (void *)primitiveNotEqual,
+	/* 9*/ (void *)primitiveMultiply,
+	/* 10*/ (void *)primitiveDivide,
+	/* 11*/ (void *)primitiveMod,
+	/* 12*/ (void *)primitiveDiv,
+	/* 13*/ (void *)primitiveQuo,
+	/* 14*/ (void *)primitiveBitAnd,
+	/* 15*/ (void *)primitiveBitOr,
+	/* 16*/ (void *)primitiveBitXor,
+	/* 17*/ (void *)primitiveBitShift,
+	/* 18*/ (void *)primitiveMakePoint,
+	/* 19*/ (void *)primitiveFail,
+	/* 20*/ (void *)primitiveFail,
+	/* 21*/ (void *)primitiveFail,
+	/* 22*/ (void *)primitiveFail,
+	/* 23*/ (void *)primitiveFail,
+	/* 24*/ (void *)primitiveFail,
+	/* 25*/ (void *)primitiveFail,
+	/* 26*/ (void *)primitiveFail,
+	/* 27*/ (void *)primitiveFail,
+	/* 28*/ (void *)primitiveFail,
+	/* 29*/ (void *)primitiveFail,
+	/* 30*/ (void *)primitiveFail,
+	/* 31*/ (void *)primitiveFail,
+	/* 32*/ (void *)primitiveFail,
+	/* 33*/ (void *)primitiveFail,
+	/* 34*/ (void *)primitiveFail,
+	/* 35*/ (void *)primitiveFail,
+	/* 36*/ (void *)primitiveFail,
+	/* 37*/ (void *)primitiveFail,
+	/* 38*/ (void *)primitiveFail,
+	/* 39*/ (void *)primitiveFail,
+	/* 40*/ (void *)primitiveAsFloat,
+	/* 41*/ (void *)primitiveFloatAdd,
+	/* 42*/ (void *)primitiveFloatSubtract,
+	/* 43*/ (void *)primitiveFloatLessThan,
+	/* 44*/ (void *)primitiveFloatGreaterThan,
+	/* 45*/ (void *)primitiveFloatLessOrEqual,
+	/* 46*/ (void *)primitiveFloatGreaterOrEqual,
+	/* 47*/ (void *)primitiveFloatEqual,
+	/* 48*/ (void *)primitiveFloatNotEqual,
+	/* 49*/ (void *)primitiveFloatMultiply,
+	/* 50*/ (void *)primitiveFloatDivide,
+	/* 51*/ (void *)primitiveTruncated,
+	/* 52*/ (void *)primitiveFractionalPart,
+	/* 53*/ (void *)primitiveExponent,
+	/* 54*/ (void *)primitiveTimesTwoPower,
+	/* 55*/ (void *)primitiveSquareRoot,
+	/* 56*/ (void *)primitiveSine,
+	/* 57*/ (void *)primitiveArctan,
+	/* 58*/ (void *)primitiveLogN,
+	/* 59*/ (void *)primitiveExp,
+	/* 60*/ (void *)primitiveAt,
+	/* 61*/ (void *)primitiveAtPut,
+	/* 62*/ (void *)primitiveSize,
+	/* 63*/ (void *)primitiveStringAt,
+	/* 64*/ (void *)primitiveStringAtPut,
+	/* 65*/ (void *)primitiveNext,
+	/* 66*/ (void *)primitiveNextPut,
+	/* 67*/ (void *)primitiveAtEnd,
+	/* 68*/ (void *)primitiveObjectAt,
+	/* 69*/ (void *)primitiveObjectAtPut,
+	/* 70*/ (void *)primitiveNew,
+	/* 71*/ (void *)primitiveNewWithArg,
+	/* 72*/ (void *)primitiveArrayBecomeOneWay,
+	/* 73*/ (void *)primitiveInstVarAt,
+	/* 74*/ (void *)primitiveInstVarAtPut,
+	/* 75*/ (void *)primitiveAsOop,
+	/* 76*/ (void *)primitiveStoreStackp,
+	/* 77*/ (void *)primitiveSomeInstance,
+	/* 78*/ (void *)primitiveNextInstance,
+	/* 79*/ (void *)primitiveNewMethod,
+	/* 80*/ (void *)primitiveBlockCopy,
+	/* 81*/ (void *)primitiveValue,
+	/* 82*/ (void *)primitiveValueWithArgs,
+	/* 83*/ (void *)primitivePerform,
+	/* 84*/ (void *)primitivePerformWithArgs,
+	/* 85*/ (void *)primitiveSignal,
+	/* 86*/ (void *)primitiveWait,
+	/* 87*/ (void *)primitiveResume,
+	/* 88*/ (void *)primitiveSuspend,
+	/* 89*/ (void *)primitiveFlushCache,
+	/* 90*/ (void *)primitiveMousePoint,
+	/* 91*/ (void *)primitiveTestDisplayDepth,
+	/* 92*/ (void *)primitiveSetDisplayMode,
+	/* 93*/ (void *)primitiveInputSemaphore,
+	/* 94*/ (void *)primitiveGetNextEvent,
+	/* 95*/ (void *)primitiveInputWord,
+	/* 96*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 97*/ (void *)primitiveSnapshot,
+	/* 98*/ (void *)primitiveStoreImageSegment,
+	/* 99*/ (void *)primitiveLoadImageSegment,
+	/* 100*/ (void *)primitivePerformInSuperclass,
+	/* 101*/ (void *)primitiveBeCursor,
+	/* 102*/ (void *)primitiveBeDisplay,
+	/* 103*/ (void *)primitiveScanCharacters,
+	/* 104*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 105*/ (void *)primitiveStringReplace,
+	/* 106*/ (void *)primitiveScreenSize,
+	/* 107*/ (void *)primitiveMouseButtons,
+	/* 108*/ (void *)primitiveKbdNext,
+	/* 109*/ (void *)primitiveKbdPeek,
+	/* 110*/ (void *)primitiveEquivalent,
+	/* 111*/ (void *)primitiveClass,
+	/* 112*/ (void *)primitiveBytesLeft,
+	/* 113*/ (void *)primitiveQuit,
+	/* 114*/ (void *)primitiveExitToDebugger,
+	/* 115*/ (void *)primitiveChangeClass,
+	/* 116*/ (void *)primitiveFlushCacheByMethod,
+	/* 117*/ (void *)primitiveExternalCall,
+	/* 118*/ (void *)primitiveDoPrimitiveWithArgs,
+	/* 119*/ (void *)primitiveFlushCacheSelective,
+	/* 120*/ (void *)primitiveCalloutToFFI,
+	/* 121*/ (void *)primitiveImageName,
+	/* 122*/ (void *)primitiveNoop,
+	/* 123*/ (void *)primitiveValueUninterruptably,
+	/* 124*/ (void *)primitiveLowSpaceSemaphore,
+	/* 125*/ (void *)primitiveSignalAtBytesLeft,
+	/* 126*/ (void *)primitiveDeferDisplayUpdates,
+	/* 127*/ (void *)primitiveShowDisplayRect,
+	/* 128*/ (void *)primitiveArrayBecome,
+	/* 129*/ (void *)primitiveSpecialObjectsOop,
+	/* 130*/ (void *)primitiveFullGC,
+	/* 131*/ (void *)primitiveIncrementalGC,
+	/* 132*/ (void *)primitiveObjectPointsTo,
+	/* 133*/ (void *)primitiveSetInterruptKey,
+	/* 134*/ (void *)primitiveInterruptSemaphore,
+	/* 135*/ (void *)primitiveMillisecondClock,
+	/* 136*/ (void *)primitiveSignalAtMilliseconds,
+	/* 137*/ (void *)primitiveSecondsClock,
+	/* 138*/ (void *)primitiveSomeObject,
+	/* 139*/ (void *)primitiveNextObject,
+	/* 140*/ (void *)primitiveBeep,
+	/* 141*/ (void *)primitiveClipboardText,
+	/* 142*/ (void *)primitiveVMPath,
+	/* 143*/ (void *)primitiveShortAt,
+	/* 144*/ (void *)primitiveShortAtPut,
+	/* 145*/ (void *)primitiveConstantFill,
+	/* 146*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 147*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 148*/ (void *)primitiveClone,
+	/* 149*/ (void *)primitiveGetAttribute,
+	/* 150*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 151*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 152*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 153*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 154*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 155*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 156*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 157*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 158*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 159*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 160*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 161*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 162*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 163*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 164*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 165*/ (void *)primitiveIntegerAt,
+	/* 166*/ (void *)primitiveIntegerAtPut,
+	/* 167*/ (void *)primitiveYield,
+	/* 168*/ (void *)primitiveCopyObject,
+	/* 169*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 170*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 171*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 172*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 173*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 174*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 175*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 176*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 177*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 178*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 179*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 180*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 181*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 182*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 183*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 184*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 185*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 186*/ (void *)primitiveFail,
+	/* 187*/ (void *)primitiveFail,
+	/* 188*/ (void *)primitiveExecuteMethodArgsArray,
+	/* 189*/ (void *)primitiveExecuteMethod,
+	/* 190*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 191*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 192*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 193*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 194*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 195*/ (void *)primitiveFindNextUnwindContext,
+	/* 196*/ (void *)primitiveTerminateTo,
+	/* 197*/ (void *)primitiveFindHandlerContext,
+	/* 198*/ (void *)primitiveMarkUnwindMethod,
+	/* 199*/ (void *)primitiveMarkHandlerMethod,
+	/* 200*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 201*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 202*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 203*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 204*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 205*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 206*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 207*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 208*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 209*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 210*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 211*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 212*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 213*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 214*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 215*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 216*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 217*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 218*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 219*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 220*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 221*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 222*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 223*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 224*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 225*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 226*/ (void *)primitiveFail,
+	/* 227*/ (void *)primitiveFail,
+	/* 228*/ (void *)primitiveFail,
+	/* 229*/ (void *)primitiveFail,
+	/* 230*/ (void *)primitiveRelinquishProcessor,
+	/* 231*/ (void *)primitiveForceDisplayUpdate,
+	/* 232*/ (void *)primitiveFormPrint,
+	/* 233*/ (void *)primitiveSetFullScreen,
+	/* 234*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 235*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 236*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 237*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 238*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 239*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 240*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 241*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 242*/ (void *)primitiveFail,
+	/* 243*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 244*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 245*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 246*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 247*/ (void *)primitiveSnapshotEmbedded,
+	/* 248*/ (void *)primitiveInvokeObjectAsMethod,
+	/* 249*/ (void *)primitiveArrayBecomeOneWayCopyHash,
+	/* 250*/ (void *)clearProfile,
+	/* 251*/ (void *)dumpProfile,
+	/* 252*/ (void *)startProfiling,
+	/* 253*/ (void *)stopProfiling,
+	/* 254*/ (void *)primitiveVMParameter,
+	/* 255*/ (void *)primitiveInstVarsPutFromStack,
+	/* 256*/ (void *)primitivePushSelf,
+	/* 257*/ (void *)primitivePushTrue,
+	/* 258*/ (void *)primitivePushFalse,
+	/* 259*/ (void *)primitivePushNil,
+	/* 260*/ (void *)primitivePushMinusOne,
+	/* 261*/ (void *)primitivePushZero,
+	/* 262*/ (void *)primitivePushOne,
+	/* 263*/ (void *)primitivePushTwo,
+	/* 264*/ (void *)primitiveLoadInstVar,
+	/* 265*/ (void *)primitiveLoadInstVar,
+	/* 266*/ (void *)primitiveLoadInstVar,
+	/* 267*/ (void *)primitiveLoadInstVar,
+	/* 268*/ (void *)primitiveLoadInstVar,
+	/* 269*/ (void *)primitiveLoadInstVar,
+	/* 270*/ (void *)primitiveLoadInstVar,
+	/* 271*/ (void *)primitiveLoadInstVar,
+	/* 272*/ (void *)primitiveLoadInstVar,
+	/* 273*/ (void *)primitiveLoadInstVar,
+	/* 274*/ (void *)primitiveLoadInstVar,
+	/* 275*/ (void *)primitiveLoadInstVar,
+	/* 276*/ (void *)primitiveLoadInstVar,
+	/* 277*/ (void *)primitiveLoadInstVar,
+	/* 278*/ (void *)primitiveLoadInstVar,
+	/* 279*/ (void *)primitiveLoadInstVar,
+	/* 280*/ (void *)primitiveLoadInstVar,
+	/* 281*/ (void *)primitiveLoadInstVar,
+	/* 282*/ (void *)primitiveLoadInstVar,
+	/* 283*/ (void *)primitiveLoadInstVar,
+	/* 284*/ (void *)primitiveLoadInstVar,
+	/* 285*/ (void *)primitiveLoadInstVar,
+	/* 286*/ (void *)primitiveLoadInstVar,
+	/* 287*/ (void *)primitiveLoadInstVar,
+	/* 288*/ (void *)primitiveLoadInstVar,
+	/* 289*/ (void *)primitiveLoadInstVar,
+	/* 290*/ (void *)primitiveLoadInstVar,
+	/* 291*/ (void *)primitiveLoadInstVar,
+	/* 292*/ (void *)primitiveLoadInstVar,
+	/* 293*/ (void *)primitiveLoadInstVar,
+	/* 294*/ (void *)primitiveLoadInstVar,
+	/* 295*/ (void *)primitiveLoadInstVar,
+	/* 296*/ (void *)primitiveLoadInstVar,
+	/* 297*/ (void *)primitiveLoadInstVar,
+	/* 298*/ (void *)primitiveLoadInstVar,
+	/* 299*/ (void *)primitiveLoadInstVar,
+	/* 300*/ (void *)primitiveLoadInstVar,
+	/* 301*/ (void *)primitiveLoadInstVar,
+	/* 302*/ (void *)primitiveLoadInstVar,
+	/* 303*/ (void *)primitiveLoadInstVar,
+	/* 304*/ (void *)primitiveLoadInstVar,
+	/* 305*/ (void *)primitiveLoadInstVar,
+	/* 306*/ (void *)primitiveLoadInstVar,
+	/* 307*/ (void *)primitiveLoadInstVar,
+	/* 308*/ (void *)primitiveLoadInstVar,
+	/* 309*/ (void *)primitiveLoadInstVar,
+	/* 310*/ (void *)primitiveLoadInstVar,
+	/* 311*/ (void *)primitiveLoadInstVar,
+	/* 312*/ (void *)primitiveLoadInstVar,
+	/* 313*/ (void *)primitiveLoadInstVar,
+	/* 314*/ (void *)primitiveLoadInstVar,
+	/* 315*/ (void *)primitiveLoadInstVar,
+	/* 316*/ (void *)primitiveLoadInstVar,
+	/* 317*/ (void *)primitiveLoadInstVar,
+	/* 318*/ (void *)primitiveLoadInstVar,
+	/* 319*/ (void *)primitiveLoadInstVar,
+	/* 320*/ (void *)primitiveLoadInstVar,
+	/* 321*/ (void *)primitiveLoadInstVar,
+	/* 322*/ (void *)primitiveLoadInstVar,
+	/* 323*/ (void *)primitiveLoadInstVar,
+	/* 324*/ (void *)primitiveLoadInstVar,
+	/* 325*/ (void *)primitiveLoadInstVar,
+	/* 326*/ (void *)primitiveLoadInstVar,
+	/* 327*/ (void *)primitiveLoadInstVar,
+	/* 328*/ (void *)primitiveLoadInstVar,
+	/* 329*/ (void *)primitiveLoadInstVar,
+	/* 330*/ (void *)primitiveLoadInstVar,
+	/* 331*/ (void *)primitiveLoadInstVar,
+	/* 332*/ (void *)primitiveLoadInstVar,
+	/* 333*/ (void *)primitiveLoadInstVar,
+	/* 334*/ (void *)primitiveLoadInstVar,
+	/* 335*/ (void *)primitiveLoadInstVar,
+	/* 336*/ (void *)primitiveLoadInstVar,
+	/* 337*/ (void *)primitiveLoadInstVar,
+	/* 338*/ (void *)primitiveLoadInstVar,
+	/* 339*/ (void *)primitiveLoadInstVar,
+	/* 340*/ (void *)primitiveLoadInstVar,
+	/* 341*/ (void *)primitiveLoadInstVar,
+	/* 342*/ (void *)primitiveLoadInstVar,
+	/* 343*/ (void *)primitiveLoadInstVar,
+	/* 344*/ (void *)primitiveLoadInstVar,
+	/* 345*/ (void *)primitiveLoadInstVar,
+	/* 346*/ (void *)primitiveLoadInstVar,
+	/* 347*/ (void *)primitiveLoadInstVar,
+	/* 348*/ (void *)primitiveLoadInstVar,
+	/* 349*/ (void *)primitiveLoadInstVar,
+	/* 350*/ (void *)primitiveLoadInstVar,
+	/* 351*/ (void *)primitiveLoadInstVar,
+	/* 352*/ (void *)primitiveLoadInstVar,
+	/* 353*/ (void *)primitiveLoadInstVar,
+	/* 354*/ (void *)primitiveLoadInstVar,
+	/* 355*/ (void *)primitiveLoadInstVar,
+	/* 356*/ (void *)primitiveLoadInstVar,
+	/* 357*/ (void *)primitiveLoadInstVar,
+	/* 358*/ (void *)primitiveLoadInstVar,
+	/* 359*/ (void *)primitiveLoadInstVar,
+	/* 360*/ (void *)primitiveLoadInstVar,
+	/* 361*/ (void *)primitiveLoadInstVar,
+	/* 362*/ (void *)primitiveLoadInstVar,
+	/* 363*/ (void *)primitiveLoadInstVar,
+	/* 364*/ (void *)primitiveLoadInstVar,
+	/* 365*/ (void *)primitiveLoadInstVar,
+	/* 366*/ (void *)primitiveLoadInstVar,
+	/* 367*/ (void *)primitiveLoadInstVar,
+	/* 368*/ (void *)primitiveLoadInstVar,
+	/* 369*/ (void *)primitiveLoadInstVar,
+	/* 370*/ (void *)primitiveLoadInstVar,
+	/* 371*/ (void *)primitiveLoadInstVar,
+	/* 372*/ (void *)primitiveLoadInstVar,
+	/* 373*/ (void *)primitiveLoadInstVar,
+	/* 374*/ (void *)primitiveLoadInstVar,
+	/* 375*/ (void *)primitiveLoadInstVar,
+	/* 376*/ (void *)primitiveLoadInstVar,
+	/* 377*/ (void *)primitiveLoadInstVar,
+	/* 378*/ (void *)primitiveLoadInstVar,
+	/* 379*/ (void *)primitiveLoadInstVar,
+	/* 380*/ (void *)primitiveLoadInstVar,
+	/* 381*/ (void *)primitiveLoadInstVar,
+	/* 382*/ (void *)primitiveLoadInstVar,
+	/* 383*/ (void *)primitiveLoadInstVar,
+	/* 384*/ (void *)primitiveLoadInstVar,
+	/* 385*/ (void *)primitiveLoadInstVar,
+	/* 386*/ (void *)primitiveLoadInstVar,
+	/* 387*/ (void *)primitiveLoadInstVar,
+	/* 388*/ (void *)primitiveLoadInstVar,
+	/* 389*/ (void *)primitiveLoadInstVar,
+	/* 390*/ (void *)primitiveLoadInstVar,
+	/* 391*/ (void *)primitiveLoadInstVar,
+	/* 392*/ (void *)primitiveLoadInstVar,
+	/* 393*/ (void *)primitiveLoadInstVar,
+	/* 394*/ (void *)primitiveLoadInstVar,
+	/* 395*/ (void *)primitiveLoadInstVar,
+	/* 396*/ (void *)primitiveLoadInstVar,
+	/* 397*/ (void *)primitiveLoadInstVar,
+	/* 398*/ (void *)primitiveLoadInstVar,
+	/* 399*/ (void *)primitiveLoadInstVar,
+	/* 400*/ (void *)primitiveLoadInstVar,
+	/* 401*/ (void *)primitiveLoadInstVar,
+	/* 402*/ (void *)primitiveLoadInstVar,
+	/* 403*/ (void *)primitiveLoadInstVar,
+	/* 404*/ (void *)primitiveLoadInstVar,
+	/* 405*/ (void *)primitiveLoadInstVar,
+	/* 406*/ (void *)primitiveLoadInstVar,
+	/* 407*/ (void *)primitiveLoadInstVar,
+	/* 408*/ (void *)primitiveLoadInstVar,
+	/* 409*/ (void *)primitiveLoadInstVar,
+	/* 410*/ (void *)primitiveLoadInstVar,
+	/* 411*/ (void *)primitiveLoadInstVar,
+	/* 412*/ (void *)primitiveLoadInstVar,
+	/* 413*/ (void *)primitiveLoadInstVar,
+	/* 414*/ (void *)primitiveLoadInstVar,
+	/* 415*/ (void *)primitiveLoadInstVar,
+	/* 416*/ (void *)primitiveLoadInstVar,
+	/* 417*/ (void *)primitiveLoadInstVar,
+	/* 418*/ (void *)primitiveLoadInstVar,
+	/* 419*/ (void *)primitiveLoadInstVar,
+	/* 420*/ (void *)primitiveLoadInstVar,
+	/* 421*/ (void *)primitiveLoadInstVar,
+	/* 422*/ (void *)primitiveLoadInstVar,
+	/* 423*/ (void *)primitiveLoadInstVar,
+	/* 424*/ (void *)primitiveLoadInstVar,
+	/* 425*/ (void *)primitiveLoadInstVar,
+	/* 426*/ (void *)primitiveLoadInstVar,
+	/* 427*/ (void *)primitiveLoadInstVar,
+	/* 428*/ (void *)primitiveLoadInstVar,
+	/* 429*/ (void *)primitiveLoadInstVar,
+	/* 430*/ (void *)primitiveLoadInstVar,
+	/* 431*/ (void *)primitiveLoadInstVar,
+	/* 432*/ (void *)primitiveLoadInstVar,
+	/* 433*/ (void *)primitiveLoadInstVar,
+	/* 434*/ (void *)primitiveLoadInstVar,
+	/* 435*/ (void *)primitiveLoadInstVar,
+	/* 436*/ (void *)primitiveLoadInstVar,
+	/* 437*/ (void *)primitiveLoadInstVar,
+	/* 438*/ (void *)primitiveLoadInstVar,
+	/* 439*/ (void *)primitiveLoadInstVar,
+	/* 440*/ (void *)primitiveLoadInstVar,
+	/* 441*/ (void *)primitiveLoadInstVar,
+	/* 442*/ (void *)primitiveLoadInstVar,
+	/* 443*/ (void *)primitiveLoadInstVar,
+	/* 444*/ (void *)primitiveLoadInstVar,
+	/* 445*/ (void *)primitiveLoadInstVar,
+	/* 446*/ (void *)primitiveLoadInstVar,
+	/* 447*/ (void *)primitiveLoadInstVar,
+	/* 448*/ (void *)primitiveLoadInstVar,
+	/* 449*/ (void *)primitiveLoadInstVar,
+	/* 450*/ (void *)primitiveLoadInstVar,
+	/* 451*/ (void *)primitiveLoadInstVar,
+	/* 452*/ (void *)primitiveLoadInstVar,
+	/* 453*/ (void *)primitiveLoadInstVar,
+	/* 454*/ (void *)primitiveLoadInstVar,
+	/* 455*/ (void *)primitiveLoadInstVar,
+	/* 456*/ (void *)primitiveLoadInstVar,
+	/* 457*/ (void *)primitiveLoadInstVar,
+	/* 458*/ (void *)primitiveLoadInstVar,
+	/* 459*/ (void *)primitiveLoadInstVar,
+	/* 460*/ (void *)primitiveLoadInstVar,
+	/* 461*/ (void *)primitiveLoadInstVar,
+	/* 462*/ (void *)primitiveLoadInstVar,
+	/* 463*/ (void *)primitiveLoadInstVar,
+	/* 464*/ (void *)primitiveLoadInstVar,
+	/* 465*/ (void *)primitiveLoadInstVar,
+	/* 466*/ (void *)primitiveLoadInstVar,
+	/* 467*/ (void *)primitiveLoadInstVar,
+	/* 468*/ (void *)primitiveLoadInstVar,
+	/* 469*/ (void *)primitiveLoadInstVar,
+	/* 470*/ (void *)primitiveLoadInstVar,
+	/* 471*/ (void *)primitiveLoadInstVar,
+	/* 472*/ (void *)primitiveLoadInstVar,
+	/* 473*/ (void *)primitiveLoadInstVar,
+	/* 474*/ (void *)primitiveLoadInstVar,
+	/* 475*/ (void *)primitiveLoadInstVar,
+	/* 476*/ (void *)primitiveLoadInstVar,
+	/* 477*/ (void *)primitiveLoadInstVar,
+	/* 478*/ (void *)primitiveLoadInstVar,
+	/* 479*/ (void *)primitiveLoadInstVar,
+	/* 480*/ (void *)primitiveLoadInstVar,
+	/* 481*/ (void *)primitiveLoadInstVar,
+	/* 482*/ (void *)primitiveLoadInstVar,
+	/* 483*/ (void *)primitiveLoadInstVar,
+	/* 484*/ (void *)primitiveLoadInstVar,
+	/* 485*/ (void *)primitiveLoadInstVar,
+	/* 486*/ (void *)primitiveLoadInstVar,
+	/* 487*/ (void *)primitiveLoadInstVar,
+	/* 488*/ (void *)primitiveLoadInstVar,
+	/* 489*/ (void *)primitiveLoadInstVar,
+	/* 490*/ (void *)primitiveLoadInstVar,
+	/* 491*/ (void *)primitiveLoadInstVar,
+	/* 492*/ (void *)primitiveLoadInstVar,
+	/* 493*/ (void *)primitiveLoadInstVar,
+	/* 494*/ (void *)primitiveLoadInstVar,
+	/* 495*/ (void *)primitiveLoadInstVar,
+	/* 496*/ (void *)primitiveLoadInstVar,
+	/* 497*/ (void *)primitiveLoadInstVar,
+	/* 498*/ (void *)primitiveLoadInstVar,
+	/* 499*/ (void *)primitiveLoadInstVar,
+	/* 500*/ (void *)primitiveLoadInstVar,
+	/* 501*/ (void *)primitiveLoadInstVar,
+	/* 502*/ (void *)primitiveLoadInstVar,
+	/* 503*/ (void *)primitiveLoadInstVar,
+	/* 504*/ (void *)primitiveLoadInstVar,
+	/* 505*/ (void *)primitiveLoadInstVar,
+	/* 506*/ (void *)primitiveLoadInstVar,
+	/* 507*/ (void *)primitiveLoadInstVar,
+	/* 508*/ (void *)primitiveLoadInstVar,
+	/* 509*/ (void *)primitiveLoadInstVar,
+	/* 510*/ (void *)primitiveLoadInstVar,
+	/* 511*/ (void *)primitiveLoadInstVar,
+	/* 512*/ (void *)primitiveLoadInstVar,
+	/* 513*/ (void *)primitiveLoadInstVar,
+	/* 514*/ (void *)primitiveLoadInstVar,
+	/* 515*/ (void *)primitiveLoadInstVar,
+	/* 516*/ (void *)primitiveLoadInstVar,
+	/* 517*/ (void *)primitiveLoadInstVar,
+	/* 518*/ (void *)primitiveLoadInstVar,
+	/* 519*/ (void *)primitiveLoadInstVar,
+	/* 520*/ (void *)primitiveFail,
+	/* 521*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 522*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 523*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 524*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 525*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 526*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 527*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 528*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 529*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 530*/ (void *)primitiveFail,
+	/* 531*/ (void *)primitiveFail,
+	/* 532*/ (void *)primitiveFail,
+	/* 533*/ (void *)primitiveFail,
+	/* 534*/ (void *)primitiveFail,
+	/* 535*/ (void *)primitiveFail,
+	/* 536*/ (void *)primitiveFail,
+	/* 537*/ (void *)primitiveFail,
+	/* 538*/ (void *)primitiveFail,
+	/* 539*/ (void *)primitiveFail,
+	/* 540*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 541*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 542*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 543*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 544*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 545*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 546*/ (void *)primitiveFail,
+	/* 547*/ (void *)primitiveFail,
+	/* 548*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 549*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 550*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 551*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 552*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 553*/ (void *)primitiveObsoleteIndexedPrimitive,
+	/* 554*/ (void *)primitiveFail,
+	/* 555*/ (void *)primitiveFail,
+	/* 556*/ (void *)primitiveFail,
+	/* 557*/ (void *)primitiveFail,
+	/* 558*/ (void *)primitiveFail,
+	/* 559*/ (void *)primitiveFail,
+	/* 560*/ (void *)primitiveFail,
+	/* 561*/ (void *)primitiveFail,
+	/* 562*/ (void *)primitiveFail,
+	/* 563*/ (void *)primitiveFail,
+	/* 564*/ (void *)primitiveFail,
+	/* 565*/ (void *)primitiveFail,
+	/* 566*/ (void *)primitiveFail,
+	/* 567*/ (void *)primitiveFail,
+	/* 568*/ (void *)primitiveFail,
+	/* 569*/ (void *)primitiveFail,
+	/* 570*/ (void *)primitiveFlushExternalPrimitives,
+	/* 571*/ (void *)primitiveUnloadModule,
+	/* 572*/ (void *)primitiveListBuiltinModule,
+	/* 573*/ (void *)primitiveListExternalModule,
+	/* 574*/ (void *)primitiveFail,
+	/* 575*/ (void *)primitiveFail,
+ 0 };
+const char *interpreterVersion = "Squeak3.9alpha of 4 July 2005 [latest update: #7021]";
 
 
 
@@ -1990,7 +1981,7 @@ register struct foo * foo = &fum;
 
 	/* begin objectAfter: */
 	if (DoAssertionChecks) {
-		if (oop >= foo->endOfMemory) {
+		if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 			error("no objects after the end of memory");
 		}
 	}
@@ -2009,13 +2000,13 @@ register struct foo * foo = &fum;
 	l2:	/* end sizeBitsOf: */;
 	}
 	obj = (oop + sz1) + (foo->headerTypeBytes[(longAt(oop + sz1)) & TypeMask]);
-	while (obj < foo->endOfMemory) {
+	while ((((usqInt) obj)) < (((usqInt) foo->endOfMemory))) {
 		if (!(((longAt(obj)) & TypeMask) == HeaderTypeFree)) {
 			return obj;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (obj >= foo->endOfMemory) {
+			if ((((usqInt) obj)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -2076,7 +2067,7 @@ register struct foo * foo = &fum;
 	/* begin storeContextRegisters: */
 	longAtput((foo->activeContext + BaseHeaderSize) + (InstructionPointerIndex << ShiftForWord), ((((foo->instructionPointer - foo->method) - (BaseHeaderSize - 2)) << 1) | 1));
 	longAtput((foo->activeContext + BaseHeaderSize) + (StackPointerIndex << ShiftForWord), (((((((usqInt) ((foo->stackPointer - foo->activeContext) - BaseHeaderSize)) >> ShiftForWord) - TempFrameStart) + 1) << 1) | 1));
-	if (newContext < foo->youngStart) {
+	if ((((usqInt) newContext)) < (((usqInt) foo->youngStart))) {
 		beRootIfOld(newContext);
 	}
 	foo->activeContext = newContext;
@@ -2084,7 +2075,7 @@ register struct foo * foo = &fum;
 	tmp = longAt((newContext + BaseHeaderSize) + (MethodIndex << ShiftForWord));
 	if ((tmp & 1)) {
 		tmp = longAt((newContext + BaseHeaderSize) + (HomeIndex << ShiftForWord));
-		if (tmp < foo->youngStart) {
+		if ((((usqInt) tmp)) < (((usqInt) foo->youngStart))) {
 			beRootIfOld(tmp);
 		}
 	} else {
@@ -2152,79 +2143,6 @@ register struct foo * foo = &fum;
 }
 
 
-/*	Return the int of the address of the (byteSize) slot at btyeOffset in rcvr. Usde for getting byte/word/int/float/double out of Byte/WordArrays */
-
-sqInt addressOfstartingAtsize(sqInt rcvr, sqInt byteOffset, sqInt byteSize) {
-register struct foo * foo = &fum;
-    sqInt addr;
-    sqInt rcvrSize;
-    sqInt slots;
-    sqInt header;
-    sqInt sz;
-
-	if (!(((rcvr & 1) == 0) && (((((usqInt) (longAt(rcvr))) >> 8) & 15) >= 8))) {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		return null;
-	}
-	if (!(byteOffset > 0)) {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		return null;
-	}
-	/* begin byteSizeOf: */
-	flag("Dan");
-	if ((rcvr & 1)) {
-		rcvrSize = 0;
-		goto l3;
-	}
-	/* begin slotSizeOf: */
-	if ((rcvr & 1)) {
-		slots = 0;
-		goto l1;
-	}
-	/* begin lengthOf: */
-	header = longAt(rcvr);
-	/* begin lengthOf:baseHeader:format: */
-	if ((header & TypeMask) == HeaderTypeSizeAndClass) {
-		sz = (longAt(rcvr - (BytesPerWord * 2))) & LongSizeMask;
-	} else {
-		sz = header & SizeMask;
-	}
-	sz -= header & Size4Bit;
-	if (((((usqInt) header) >> 8) & 15) <= 4) {
-		slots = ((usqInt) (sz - BaseHeaderSize)) >> ShiftForWord;
-		goto l2;
-	}
-	if (((((usqInt) header) >> 8) & 15) < 8) {
-		slots = ((usqInt) (sz - BaseHeaderSize)) >> 2;
-		goto l2;
-	} else {
-		slots = (sz - BaseHeaderSize) - (((((usqInt) header) >> 8) & 15) & 3);
-		goto l2;
-	}
-	slots = null;
-l2:	/* end lengthOf: */;
-l1:	/* end slotSizeOf: */;
-	if (((((usqInt) (longAt(rcvr))) >> 8) & 15) >= 8) {
-		rcvrSize = slots;
-		goto l3;
-	} else {
-		rcvrSize = slots * 4;
-		goto l3;
-	}
-l3:	/* end byteSizeOf: */;
-	if (!(((byteOffset + byteSize) - 1) <= rcvrSize)) {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		return null;
-	}
-	addr = ((int) (firstIndexableField(rcvr)));
-	addr = (addr + byteOffset) - 1;
-	return addr;
-}
-
-
 /*	Add the given function address to the external primitive table and return the index where it's stored. This function doesn't need to be fast since it is only called when an external primitive has been looked up (which takes quite a bit of time itself). So there's nothing specifically complicated here.
 	Note: Return index will be one-based (ST convention) */
 
@@ -2264,7 +2182,7 @@ register struct foo * foo = &fum;
 	}
 	totalObjects = 0;
 	oop = memory + (foo->headerTypeBytes[(longAt(memory)) & TypeMask]);
-	while (oop < foo->endOfMemory) {
+	while ((((usqInt) oop)) < (((usqInt) foo->endOfMemory))) {
 		if (!(((longAt(oop)) & TypeMask) == HeaderTypeFree)) {
 			totalObjects += 1;
 			/* begin adjustFieldsAndClassOf:by: */
@@ -2272,7 +2190,7 @@ register struct foo * foo = &fum;
 				goto l1;
 			}
 			fieldAddr = oop + (lastPointerOf(oop));
-			while (fieldAddr > oop) {
+			while ((((usqInt) fieldAddr)) > (((usqInt) oop))) {
 				fieldOop = longAt(fieldAddr);
 				if (!((fieldOop & 1))) {
 					longAtput(fieldAddr, fieldOop + bytesToShift);
@@ -2288,7 +2206,7 @@ register struct foo * foo = &fum;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (oop >= foo->endOfMemory) {
+			if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -2331,7 +2249,7 @@ register struct foo * foo = &fum;
 	}
 	/* begin sufficientSpaceToAllocate: */
 	minFree = (foo->lowSpaceThreshold + byteSize) + BaseHeaderSize;
-	if ((((usqInt ) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt ) minFree))) {
+	if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt) minFree))) {
 		enoughSpace = 1;
 		goto l1;
 	} else {
@@ -2352,7 +2270,7 @@ l1:	/* end sufficientSpaceToAllocate: */;
 			currentProc = longAt((sched + BaseHeaderSize) + (ActiveProcessIndex << ShiftForWord));
 			/* begin storePointer:ofObject:withValue: */
 			oop = foo->specialObjectsOop;
-			if (oop < foo->youngStart) {
+			if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(oop, currentProc);
 			}
 			longAtput((oop + BaseHeaderSize) + (ProcessSignalingLowSpace << ShiftForWord), currentProc);
@@ -2361,7 +2279,7 @@ l1:	/* end sufficientSpaceToAllocate: */;
 		foo->interruptCheckCounter = -1000;
 		foo->nextPollTick = 0;
 	}
-	if ((((usqInt ) ((longAt(foo->freeBlock)) & AllButTypeMask))) < (((usqInt ) (byteSize + BaseHeaderSize)))) {
+	if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) < (((usqInt) (byteSize + BaseHeaderSize)))) {
 		error("out of memory");
 	}
 	newFreeSize = ((longAt(foo->freeBlock)) & AllButTypeMask) - byteSize;
@@ -2436,7 +2354,7 @@ register struct foo * foo = &fum;
 	}
 	/* begin sufficientSpaceToAllocate: */
 	minFree = (foo->lowSpaceThreshold + (byteSize + ((hdrSize - 1) * BytesPerWord))) + BaseHeaderSize;
-	if ((((usqInt ) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt ) minFree))) {
+	if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt) minFree))) {
 		enoughSpace = 1;
 		goto l1;
 	} else {
@@ -2454,7 +2372,7 @@ l1:	/* end sufficientSpaceToAllocate: */;
 			currentProc = longAt((sched + BaseHeaderSize) + (ActiveProcessIndex << ShiftForWord));
 			/* begin storePointer:ofObject:withValue: */
 			oop1 = foo->specialObjectsOop;
-			if (oop1 < foo->youngStart) {
+			if ((((usqInt) oop1)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(oop1, currentProc);
 			}
 			longAtput((oop1 + BaseHeaderSize) + (ProcessSignalingLowSpace << ShiftForWord), currentProc);
@@ -2463,7 +2381,7 @@ l1:	/* end sufficientSpaceToAllocate: */;
 		foo->interruptCheckCounter = -1000;
 		foo->nextPollTick = 0;
 	}
-	if ((((usqInt ) ((longAt(foo->freeBlock)) & AllButTypeMask))) < (((usqInt ) ((byteSize + ((hdrSize - 1) * BytesPerWord)) + BaseHeaderSize)))) {
+	if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) < (((usqInt) ((byteSize + ((hdrSize - 1) * BytesPerWord)) + BaseHeaderSize)))) {
 		error("out of memory");
 	}
 	newFreeSize = ((longAt(foo->freeBlock)) & AllButTypeMask) - (byteSize + ((hdrSize - 1) * BytesPerWord));
@@ -2530,10 +2448,10 @@ register struct foo * foo = &fum;
     sqInt type;
     sqInt header1;
 
-	if (array1 < foo->youngStart) {
+	if ((((usqInt) array1)) < (((usqInt) foo->youngStart))) {
 		return 0;
 	}
-	if (array2 < foo->youngStart) {
+	if ((((usqInt) array2)) < (((usqInt) foo->youngStart))) {
 		return 0;
 	}
 	/* begin lastPointerOf: */
@@ -2587,10 +2505,10 @@ register struct foo * foo = &fum;
 	fieldOffset = (((((usqInt) methodHeader) >> 10) & 255) * BytesPerWord) + BaseHeaderSize;
 l4:	/* end lastPointerOf: */;
 	while (fieldOffset >= BaseHeaderSize) {
-		if ((longAt(array1 + fieldOffset)) < foo->youngStart) {
+		if ((((usqInt) (longAt(array1 + fieldOffset)))) < (((usqInt) foo->youngStart))) {
 			return 0;
 		}
-		if ((longAt(array2 + fieldOffset)) < foo->youngStart) {
+		if ((((usqInt) (longAt(array2 + fieldOffset)))) < (((usqInt) foo->youngStart))) {
 			return 0;
 		}
 		fieldOffset -= BytesPerWord;
@@ -2677,13 +2595,6 @@ register struct foo * foo = &fum;
     sqInt fwdBlock;
     sqInt fwdHeader1;
     sqInt fwdBlock1;
-    sqInt oop21;
-    sqInt hdr11;
-    sqInt fwdBlock2;
-    sqInt hdr21;
-    sqInt oop11;
-    sqInt fwdHeader2;
-    sqInt fwdBlock11;
     sqInt fmt;
     sqInt sz;
     sqInt methodHeader;
@@ -2692,6 +2603,13 @@ register struct foo * foo = &fum;
     sqInt sp;
     sqInt type;
     sqInt header1;
+    sqInt oop21;
+    sqInt hdr11;
+    sqInt fwdBlock2;
+    sqInt hdr21;
+    sqInt oop11;
+    sqInt fwdHeader2;
+    sqInt fwdBlock11;
 
 	if (!(((array1 & 1) == 0) && (((((usqInt) (longAt(array1))) >> 8) & 15) == 2))) {
 		return 0;
@@ -2777,7 +2695,7 @@ register struct foo * foo = &fum;
 						error("attempting to restore the header of an object that has no forwarding block");
 					}
 					/* begin fwdBlockValidate: */
-					if (!((fwdBlock > foo->endOfMemory) && ((fwdBlock <= foo->fwdTableNext) && ((fwdBlock & 3) == 0)))) {
+					if (!(((((usqInt) fwdBlock)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock & 3) == 0)))) {
 						error("invalid fwd table entry");
 					}
 				}
@@ -2790,7 +2708,7 @@ register struct foo * foo = &fum;
 						error("attempting to restore the header of an object that has no forwarding block");
 					}
 					/* begin fwdBlockValidate: */
-					if (!((fwdBlock1 > foo->endOfMemory) && ((fwdBlock1 <= foo->fwdTableNext) && ((fwdBlock1 & 3) == 0)))) {
+					if (!(((((usqInt) fwdBlock1)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock1)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock1 & 3) == 0)))) {
 						error("invalid fwd table entry");
 					}
 				}
@@ -2805,8 +2723,9 @@ register struct foo * foo = &fum;
 	} else {
 		/* begin restoreHeadersAfterForwardBecome: */
 		fwdBlock2 = ((foo->endOfMemory + BaseHeaderSize) + 7) & (WordMask - 7);
-		fwdBlock2 += 16;
-		while (fwdBlock2 <= foo->fwdTableNext) {
+		flag("Dan");
+		fwdBlock2 += BytesPerWord * 4;
+		while ((((usqInt) fwdBlock2)) <= (((usqInt) foo->fwdTableNext))) {
 			oop11 = longAt(fwdBlock2 + (BytesPerWord * 2));
 			oop21 = longAt(fwdBlock2);
 			/* begin restoreHeaderOf: */
@@ -2817,7 +2736,7 @@ register struct foo * foo = &fum;
 					error("attempting to restore the header of an object that has no forwarding block");
 				}
 				/* begin fwdBlockValidate: */
-				if (!((fwdBlock11 > foo->endOfMemory) && ((fwdBlock11 <= foo->fwdTableNext) && ((fwdBlock11 & 3) == 0)))) {
+				if (!(((((usqInt) fwdBlock11)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock11)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock11 & 3) == 0)))) {
 					error("invalid fwd table entry");
 				}
 			}
@@ -2845,7 +2764,7 @@ sqInt beRootIfOld(sqInt oop) {
 register struct foo * foo = &fum;
     sqInt header;
 
-	if ((oop < foo->youngStart) && (!((oop & 1)))) {
+	if (((((usqInt) oop)) < (((usqInt) foo->youngStart))) && (!((oop & 1)))) {
 		/* begin noteAsRoot:headerLoc: */
 		header = longAt(oop);
 		if ((header & RootBit) == 0) {
@@ -2945,7 +2864,7 @@ register struct foo * foo = &fum;
     sqInt header;
 
 	oop = startOop;
-	while (oop < stopAddr) {
+	while ((((usqInt) oop)) < (((usqInt) stopAddr))) {
 		if (!(((longAt(oop)) & TypeMask) == HeaderTypeFree)) {
 			fmt = (((usqInt) (longAt(oop))) >> 8) & 15;
 			if (fmt >= 8) {
@@ -2958,7 +2877,7 @@ register struct foo * foo = &fum;
 				stopAddr1 = oop + (sizeBitsOf(oop));
 				flag("Dan");
 				addr = wordAddr;
-				while (addr < stopAddr1) {
+				while ((((usqInt) addr)) < (((usqInt) stopAddr1))) {
 					longAtput(addr, byteSwapped(longAt(addr)));
 					addr += BytesPerWord;
 				}
@@ -2968,7 +2887,7 @@ register struct foo * foo = &fum;
 				/* begin reverseWordsFrom:to: */
 				stopAddr2 = oop + (sizeBitsOf(oop));
 				addr1 = wordAddr;
-				while (addr1 < stopAddr2) {
+				while ((((usqInt) addr1)) < (((usqInt) stopAddr2))) {
 					longAtput(addr1, wordSwapped(longAt(addr1)));
 					addr1 += BytesPerWord;
 				}
@@ -2976,7 +2895,7 @@ register struct foo * foo = &fum;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (oop >= foo->endOfMemory) {
+			if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -3046,17 +2965,17 @@ sqInt checkedIntegerValueOf(sqInt intOop) {
 sqInt checkedLongAt(sqInt byteAddress) {
 register struct foo * foo = &fum;
 	/* begin checkAddress: */
-	if (byteAddress < memory) {
+	if ((((usqInt) byteAddress)) < (((usqInt) memory))) {
 		error("bad address: negative");
 	}
-	if (byteAddress >= foo->memoryLimit) {
+	if ((((usqInt) byteAddress)) >= (((usqInt) foo->memoryLimit))) {
 		error("bad address: past end of heap");
 	}
 	/* begin checkAddress: */
-	if ((byteAddress + 3) < memory) {
+	if ((((usqInt) (byteAddress + 3))) < (((usqInt) memory))) {
 		error("bad address: negative");
 	}
-	if ((byteAddress + 3) >= foo->memoryLimit) {
+	if ((((usqInt) (byteAddress + 3))) >= (((usqInt) foo->memoryLimit))) {
 		error("bad address: past end of heap");
 	}
 	return longAt(byteAddress);
@@ -3314,13 +3233,13 @@ sqInt classString(void) {
 sqInt clone(sqInt oop) {
 register struct foo * foo = &fum;
     sqInt remappedOop;
-    sqInt fromIndex;
+    usqInt fromIndex;
     sqInt bytes;
     sqInt newChunk;
     sqInt extraHdrBytes;
     sqInt newOop;
     sqInt toIndex;
-    sqInt lastFrom;
+    usqInt lastFrom;
     sqInt hash;
     sqInt header;
     sqInt oop1;
@@ -3360,7 +3279,7 @@ l1:	/* end sizeBitsOf: */;
 	}
 	/* begin sufficientSpaceToAllocate: */
 	minFree = (foo->lowSpaceThreshold + bytes) + BaseHeaderSize;
-	if ((((usqInt ) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt ) minFree))) {
+	if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt) minFree))) {
 		enoughSpace = 1;
 		goto l2;
 	} else {
@@ -3378,7 +3297,7 @@ l2:	/* end sufficientSpaceToAllocate: */;
 			currentProc = longAt((sched + BaseHeaderSize) + (ActiveProcessIndex << ShiftForWord));
 			/* begin storePointer:ofObject:withValue: */
 			oop2 = foo->specialObjectsOop;
-			if (oop2 < foo->youngStart) {
+			if ((((usqInt) oop2)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(oop2, currentProc);
 			}
 			longAtput((oop2 + BaseHeaderSize) + (ProcessSignalingLowSpace << ShiftForWord), currentProc);
@@ -3387,7 +3306,7 @@ l2:	/* end sufficientSpaceToAllocate: */;
 		foo->interruptCheckCounter = -1000;
 		foo->nextPollTick = 0;
 	}
-	if ((((usqInt ) ((longAt(foo->freeBlock)) & AllButTypeMask))) < (((usqInt ) (bytes + BaseHeaderSize)))) {
+	if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) < (((usqInt) (bytes + BaseHeaderSize)))) {
 		error("out of memory");
 	}
 	newFreeSize = ((longAt(foo->freeBlock)) & AllButTypeMask) - bytes;
@@ -3467,12 +3386,12 @@ register struct foo * foo = &fum;
 		if (foo->successFlag) {
 			/* begin commonVariable:at:put:cacheIndex: */
 			stSize = foo->atCache[atIx + AtCacheSize];
-			if (((((usqInt ) index)) >= 1) && ((((usqInt ) index)) <= (((usqInt ) stSize)))) {
+			if (((((usqInt) index)) >= (((usqInt) 1))) && ((((usqInt) index)) <= (((usqInt) stSize)))) {
 				fmt = foo->atCache[atIx + AtCacheFmt];
 				if (fmt <= 4) {
 					fixedFields = foo->atCache[atIx + AtCacheFixedFields];
 					/* begin storePointer:ofObject:withValue: */
-					if (rcvr < foo->youngStart) {
+					if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 						possibleRootStoreIntovalue(rcvr, value);
 					}
 					longAtput((rcvr + BaseHeaderSize) + (((index + fixedFields) - 1) << ShiftForWord), value);
@@ -3595,7 +3514,7 @@ register struct foo * foo = &fum;
     sqInt fixedFields;
 
 	stSize = foo->atCache[atIx + AtCacheSize];
-	if (((((usqInt ) index)) >= 1) && ((((usqInt ) index)) <= (((usqInt ) stSize)))) {
+	if (((((usqInt) index)) >= (((usqInt) 1))) && ((((usqInt) index)) <= (((usqInt) stSize)))) {
 		fmt = foo->atCache[atIx + AtCacheFmt];
 		if (fmt <= 4) {
 			fixedFields = foo->atCache[atIx + AtCacheFixedFields];
@@ -3838,7 +3757,7 @@ register struct foo * foo = &fum;
 		goto l1;
 	}
 l1:	/* end sizeBitsOf: */;
-	if (((lastSeg + extraSize) + bodySize) >= stopAddr) {
+	if ((((usqInt) ((lastSeg + extraSize) + bodySize))) >= (((usqInt) stopAddr))) {
 		/* begin primitiveFail */
 		foo->successFlag = 0;
 		return null;
@@ -3848,7 +3767,7 @@ l1:	/* end sizeBitsOf: */;
 	in = (oop - extraSize) - BytesPerWord;
 	lastIn = in + ((((sqInt) (extraSize + bodySize) >> 2)) * BytesPerWord);
 	out = (lastSeg + BytesPerWord) - BytesPerWord;
-	while (in < lastIn) {
+	while ((((usqInt) in)) < (((usqInt) lastIn))) {
 		longAtput(out += BytesPerWord, longAt(in += BytesPerWord));
 	}
 	hdrAddr = (lastSeg + BytesPerWord) + extraSize;
@@ -3910,7 +3829,7 @@ register struct foo * foo = &fum;
 		in = src - BytesPerWord;
 		lastIn = in + (count * BytesPerWord);
 		out = (argumentArray + BaseHeaderSize) - BytesPerWord;
-		while (in < lastIn) {
+		while ((((usqInt) in)) < (((usqInt) lastIn))) {
 			longAtput(out += BytesPerWord, longAt(in += BytesPerWord));
 		}
 		/* begin pop:thenPush: */
@@ -3920,18 +3839,18 @@ register struct foo * foo = &fum;
 	foo->argumentCount = 1;
 	/* begin storePointer:ofObject:withValue: */
 	valuePointer = foo->messageSelector;
-	if (message < foo->youngStart) {
+	if ((((usqInt) message)) < (((usqInt) foo->youngStart))) {
 		possibleRootStoreIntovalue(message, valuePointer);
 	}
 	longAtput((message + BaseHeaderSize) + (MessageSelectorIndex << ShiftForWord), valuePointer);
 	/* begin storePointer:ofObject:withValue: */
-	if (message < foo->youngStart) {
+	if ((((usqInt) message)) < (((usqInt) foo->youngStart))) {
 		possibleRootStoreIntovalue(message, argumentArray);
 	}
 	longAtput((message + BaseHeaderSize) + (MessageArgumentsIndex << ShiftForWord), argumentArray);
 	if ((lastPointerOf(message)) >= ((MessageLookupClassIndex * BytesPerWord) + BaseHeaderSize)) {
 		/* begin storePointer:ofObject:withValue: */
-		if (message < foo->youngStart) {
+		if ((((usqInt) message)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(message, lookupClass);
 		}
 		longAtput((message + BaseHeaderSize) + (MessageLookupClassIndex << ShiftForWord), lookupClass);
@@ -4274,12 +4193,12 @@ l1:	/* end sizeBitsOf: */;
 /*	Do *not* inline this in sweepPhase - it is quite an unlikely 
 	case to run into a weak reference */
 
-sqInt finalizeReference(sqInt oop) {
+sqInt finalizeReference(usqInt oop) {
 register struct foo * foo = &fum;
     sqInt oopGone;
     sqInt lastField;
     sqInt firstField;
-    sqInt weakOop;
+    usqInt weakOop;
     sqInt chunk;
     sqInt i;
     sqInt fmt;
@@ -4575,13 +4494,13 @@ register struct foo * foo = &fum;
     sqInt header;
 
 	obj = memory + (foo->headerTypeBytes[(longAt(memory)) & TypeMask]);
-	while (obj < foo->endOfMemory) {
+	while ((((usqInt) obj)) < (((usqInt) foo->endOfMemory))) {
 		if (!(((longAt(obj)) & TypeMask) == HeaderTypeFree)) {
 			return obj;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (obj >= foo->endOfMemory) {
+			if ((((usqInt) obj)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -4758,7 +4677,7 @@ register struct foo * foo = &fum;
     sqInt i2;
 
 	oop = memory + (foo->headerTypeBytes[(longAt(memory)) & TypeMask]);
-	while (oop < foo->endOfMemory) {
+	while ((((usqInt) oop)) < (((usqInt) foo->endOfMemory))) {
 		if (!(((longAt(oop)) & TypeMask) == HeaderTypeFree)) {
 			if (((((usqInt) (longAt(oop))) >> 8) & 15) >= 12) {
 				/* begin primitiveIndexOf: */
@@ -4771,7 +4690,7 @@ register struct foo * foo = &fum;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (oop >= foo->endOfMemory) {
+			if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -5072,7 +4991,7 @@ register struct foo * foo = &fum;
 
 	bytesFreed = 0;
 	oop = foo->compStart + (foo->headerTypeBytes[(longAt(foo->compStart)) & TypeMask]);
-	while (oop < foo->endOfMemory) {
+	while ((((usqInt) oop)) < (((usqInt) foo->endOfMemory))) {
 		foo->statMkFwdCount += 1;
 		if (((longAt(oop)) & TypeMask) == HeaderTypeFree) {
 			bytesFreed += (longAt(oop)) & AllButTypeMask;
@@ -5115,7 +5034,7 @@ register struct foo * foo = &fum;
 		if ((header & MarkBit) == 0) {
 			/* begin objectAfter: */
 			if (DoAssertionChecks) {
-				if (oop >= foo->endOfMemory) {
+				if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 					error("no objects after the end of memory");
 				}
 			}
@@ -5139,7 +5058,7 @@ register struct foo * foo = &fum;
 		fwdBlock1 = (header & AllButMarkBitAndTypeMask) << 1;
 		if (DoAssertionChecks) {
 			/* begin fwdBlockValidate: */
-			if (!((fwdBlock1 > foo->endOfMemory) && ((fwdBlock1 <= foo->fwdTableNext) && ((fwdBlock1 & 3) == 0)))) {
+			if (!(((((usqInt) fwdBlock1)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock1)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock1 & 3) == 0)))) {
 				error("invalid fwd table entry");
 			}
 		}
@@ -5171,11 +5090,11 @@ register struct foo * foo = &fum;
     sqInt sz;
     sqInt fwdBlock;
     sqInt newOop;
-    sqInt lastWord;
-    sqInt w;
+    usqInt lastWord;
+    usqInt w;
     sqInt oop;
     sqInt next;
-    sqInt firstWord;
+    usqInt firstWord;
     sqInt header;
     sqInt bytesToMove;
     sqInt header1;
@@ -5188,14 +5107,14 @@ register struct foo * foo = &fum;
 
 	newOop = null;
 	oop = foo->compStart + (foo->headerTypeBytes[(longAt(foo->compStart)) & TypeMask]);
-	while (oop < foo->compEnd) {
+	while ((((usqInt) oop)) < (((usqInt) foo->compEnd))) {
 		foo->statCompMoveCount += 1;
 		/* begin objectAfterWhileForwarding: */
 		header2 = longAt(oop);
 		if ((header2 & MarkBit) == 0) {
 			/* begin objectAfter: */
 			if (DoAssertionChecks) {
-				if (oop >= foo->endOfMemory) {
+				if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 					error("no objects after the end of memory");
 				}
 			}
@@ -5219,7 +5138,7 @@ register struct foo * foo = &fum;
 		fwdBlock1 = (header2 & AllButMarkBitAndTypeMask) << 1;
 		if (DoAssertionChecks) {
 			/* begin fwdBlockValidate: */
-			if (!((fwdBlock1 > foo->endOfMemory) && ((fwdBlock1 <= foo->fwdTableNext) && ((fwdBlock1 & 3) == 0)))) {
+			if (!(((((usqInt) fwdBlock1)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock1)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock1 & 3) == 0)))) {
 				error("invalid fwd table entry");
 			}
 		}
@@ -5235,7 +5154,7 @@ register struct foo * foo = &fum;
 			fwdBlock = ((longAt(oop)) & AllButMarkBitAndTypeMask) << 1;
 			if (DoAssertionChecks) {
 				/* begin fwdBlockValidate: */
-				if (!((fwdBlock > foo->endOfMemory) && ((fwdBlock <= foo->fwdTableNext) && ((fwdBlock & 3) == 0)))) {
+				if (!(((((usqInt) fwdBlock)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock & 3) == 0)))) {
 					error("invalid fwd table entry");
 				}
 			}
@@ -5326,7 +5245,6 @@ register struct foo * foo = &fum;
     sqInt oop;
     sqInt i1;
     sqInt growth;
-    sqInt mem;
     sqInt growSize;
     sqInt limit;
 
@@ -5385,7 +5303,7 @@ register struct foo * foo = &fum;
 			foo->rootTable[i1] = 0;
 		}
 		foo->rootTableCount = 0;
-		if ((((longAt(foo->freeBlock)) & AllButTypeMask) < foo->growHeadroom) && (foo->gcBiasToGrow > 0)) {
+		if (((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) < (((usqInt) foo->growHeadroom))) && (foo->gcBiasToGrow > 0)) {
 			/* begin biasToGrow */
 			/* begin growObjectMemory: */
 			foo->statGrowMemory += 1;
@@ -5406,14 +5324,13 @@ register struct foo * foo = &fum;
 	}
 	if (weDidGrow) {
 		/* begin biasToGrowCheckGCLimit */
-		mem = ((int) memory);
-		growth = (foo->youngStart - mem) - foo->gcBiasToGrowThreshold;
+		growth = (foo->youngStart - memory) - foo->gcBiasToGrowThreshold;
 		if (growth < 0) {
-			foo->gcBiasToGrowThreshold = foo->youngStart - mem;
+			foo->gcBiasToGrowThreshold = foo->youngStart - memory;
 		}
 		if (growth > foo->gcBiasToGrowGCLimit) {
 			fullGC();
-			foo->gcBiasToGrowThreshold = foo->youngStart - mem;
+			foo->gcBiasToGrowThreshold = foo->youngStart - memory;
 		}
 	}
 }
@@ -5475,7 +5392,7 @@ register struct foo * foo = &fum;
 	sched = longAt(((longAt((foo->specialObjectsOop + BaseHeaderSize) + (SchedulerAssociation << ShiftForWord))) + BaseHeaderSize) + (ValueIndex << ShiftForWord));
 	proc = longAt((sched + BaseHeaderSize) + (ActiveProcessIndex << ShiftForWord));
 	foo->activeContext = longAt((proc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord));
-	if (foo->activeContext < foo->youngStart) {
+	if ((((usqInt) foo->activeContext)) < (((usqInt) foo->youngStart))) {
 		beRootIfOld(foo->activeContext);
 	}
 	/* begin fetchContextRegisters: */
@@ -5483,7 +5400,7 @@ register struct foo * foo = &fum;
 	tmp = longAt((activeCntx + BaseHeaderSize) + (MethodIndex << ShiftForWord));
 	if ((tmp & 1)) {
 		tmp = longAt((activeCntx + BaseHeaderSize) + (HomeIndex << ShiftForWord));
-		if (tmp < foo->youngStart) {
+		if ((((usqInt) tmp)) < (((usqInt) foo->youngStart))) {
 			beRootIfOld(tmp);
 		}
 	} else {
@@ -5537,7 +5454,7 @@ register struct foo * foo = &fum;
     sqInt fwdBlockBytes;
 
 	fwdBlockBytes = foo->totalObjectCount & ((WordMask - BytesPerWord) + 1);
-	if (!((foo->memoryLimit - fwdBlockBytes) >= (firstFree + BaseHeaderSize))) {
+	if (!((((usqInt) (foo->memoryLimit - fwdBlockBytes))) >= (((usqInt) (firstFree + BaseHeaderSize))))) {
 		fwdBlockBytes = foo->memoryLimit - (firstFree + BaseHeaderSize);
 	}
 	foo->endOfMemory = foo->memoryLimit - fwdBlockBytes;
@@ -6986,7 +6903,7 @@ register struct foo * foo = &fum;
 				currentBytecode = byteAtPointer(++localIP);
 				rcvr = foo->receiver;
 				top = longAtPointer(localSP);
-				if (rcvr < foo->youngStart) {
+				if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 					possibleRootStoreIntovalue(rcvr, top);
 				}
 				longAtput((rcvr + BaseHeaderSize) + ((96 & 7) << ShiftForWord), top);
@@ -7004,7 +6921,7 @@ register struct foo * foo = &fum;
 				currentBytecode = byteAtPointer(++localIP);
 				rcvr = foo->receiver;
 				top = longAtPointer(localSP);
-				if (rcvr < foo->youngStart) {
+				if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 					possibleRootStoreIntovalue(rcvr, top);
 				}
 				longAtput((rcvr + BaseHeaderSize) + ((97 & 7) << ShiftForWord), top);
@@ -7022,7 +6939,7 @@ register struct foo * foo = &fum;
 				currentBytecode = byteAtPointer(++localIP);
 				rcvr = foo->receiver;
 				top = longAtPointer(localSP);
-				if (rcvr < foo->youngStart) {
+				if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 					possibleRootStoreIntovalue(rcvr, top);
 				}
 				longAtput((rcvr + BaseHeaderSize) + ((98 & 7) << ShiftForWord), top);
@@ -7040,7 +6957,7 @@ register struct foo * foo = &fum;
 				currentBytecode = byteAtPointer(++localIP);
 				rcvr = foo->receiver;
 				top = longAtPointer(localSP);
-				if (rcvr < foo->youngStart) {
+				if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 					possibleRootStoreIntovalue(rcvr, top);
 				}
 				longAtput((rcvr + BaseHeaderSize) + ((99 & 7) << ShiftForWord), top);
@@ -7058,7 +6975,7 @@ register struct foo * foo = &fum;
 				currentBytecode = byteAtPointer(++localIP);
 				rcvr = foo->receiver;
 				top = longAtPointer(localSP);
-				if (rcvr < foo->youngStart) {
+				if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 					possibleRootStoreIntovalue(rcvr, top);
 				}
 				longAtput((rcvr + BaseHeaderSize) + ((100 & 7) << ShiftForWord), top);
@@ -7076,7 +6993,7 @@ register struct foo * foo = &fum;
 				currentBytecode = byteAtPointer(++localIP);
 				rcvr = foo->receiver;
 				top = longAtPointer(localSP);
-				if (rcvr < foo->youngStart) {
+				if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 					possibleRootStoreIntovalue(rcvr, top);
 				}
 				longAtput((rcvr + BaseHeaderSize) + ((101 & 7) << ShiftForWord), top);
@@ -7094,7 +7011,7 @@ register struct foo * foo = &fum;
 				currentBytecode = byteAtPointer(++localIP);
 				rcvr = foo->receiver;
 				top = longAtPointer(localSP);
-				if (rcvr < foo->youngStart) {
+				if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 					possibleRootStoreIntovalue(rcvr, top);
 				}
 				longAtput((rcvr + BaseHeaderSize) + ((102 & 7) << ShiftForWord), top);
@@ -7112,7 +7029,7 @@ register struct foo * foo = &fum;
 				currentBytecode = byteAtPointer(++localIP);
 				rcvr = foo->receiver;
 				top = longAtPointer(localSP);
-				if (rcvr < foo->youngStart) {
+				if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 					possibleRootStoreIntovalue(rcvr, top);
 				}
 				longAtput((rcvr + BaseHeaderSize) + ((103 & 7) << ShiftForWord), top);
@@ -7377,7 +7294,7 @@ register struct foo * foo = &fum;
 					if (foo->reclaimableContextCount > 0) {
 						foo->reclaimableContextCount -= 1;
 						/* begin recycleContextIfPossible: */
-						if (thisCntx >= foo->youngStart) {
+						if ((((usqInt) thisCntx)) >= (((usqInt) foo->youngStart))) {
 							header1 = longAt(thisCntx);
 							if (((((usqInt) header1) >> 12) & 31) == 14) {
 								if ((header1 & SizeMask) == SmallContextSize) {
@@ -7394,14 +7311,14 @@ register struct foo * foo = &fum;
 					thisCntx = contextOfCaller;
 				}
 				foo->activeContext = thisCntx;
-				if (thisCntx < foo->youngStart) {
+				if ((((usqInt) thisCntx)) < (((usqInt) foo->youngStart))) {
 					beRootIfOld(thisCntx);
 				}
 				/* begin internalFetchContextRegisters: */
 				tmp = longAt((thisCntx + BaseHeaderSize) + (MethodIndex << ShiftForWord));
 				if ((tmp & 1)) {
 					tmp = longAt((thisCntx + BaseHeaderSize) + (HomeIndex << ShiftForWord));
-					if (tmp < foo->youngStart) {
+					if ((((usqInt) tmp)) < (((usqInt) foo->youngStart))) {
 						beRootIfOld(tmp);
 					}
 				} else {
@@ -7533,7 +7450,7 @@ register struct foo * foo = &fum;
 					/* begin storePointer:ofObject:withValue: */
 					oop = foo->receiver;
 					valuePointer = longAtPointer(localSP);
-					if (oop < foo->youngStart) {
+					if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 						possibleRootStoreIntovalue(oop, valuePointer);
 					}
 					longAtput((oop + BaseHeaderSize) + (variableIndex << ShiftForWord), valuePointer);
@@ -7550,7 +7467,7 @@ register struct foo * foo = &fum;
 					association = longAt((foo->method + BaseHeaderSize) + ((variableIndex + LiteralStart) << ShiftForWord));
 					/* begin storePointer:ofObject:withValue: */
 					valuePointer1 = longAtPointer(localSP);
-					if (association < foo->youngStart) {
+					if ((((usqInt) association)) < (((usqInt) foo->youngStart))) {
 						possibleRootStoreIntovalue(association, valuePointer1);
 					}
 					longAtput((association + BaseHeaderSize) + (ValueIndex << ShiftForWord), valuePointer1);
@@ -7580,7 +7497,7 @@ register struct foo * foo = &fum;
 					/* begin storePointer:ofObject:withValue: */
 					oop = foo->receiver;
 					valuePointer = longAtPointer(localSP);
-					if (oop < foo->youngStart) {
+					if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 						possibleRootStoreIntovalue(oop, valuePointer);
 					}
 					longAtput((oop + BaseHeaderSize) + (variableIndex << ShiftForWord), valuePointer);
@@ -7597,7 +7514,7 @@ register struct foo * foo = &fum;
 					association = longAt((foo->method + BaseHeaderSize) + ((variableIndex + LiteralStart) << ShiftForWord));
 					/* begin storePointer:ofObject:withValue: */
 					valuePointer1 = longAtPointer(localSP);
-					if (association < foo->youngStart) {
+					if ((((usqInt) association)) < (((usqInt) foo->youngStart))) {
 						possibleRootStoreIntovalue(association, valuePointer1);
 					}
 					longAtput((association + BaseHeaderSize) + (ValueIndex << ShiftForWord), valuePointer1);
@@ -7812,7 +7729,7 @@ register struct foo * foo = &fum;
 				/* begin storePointerUnchecked:ofObject:withValue: */
 				valuePointer1 = (((((((usqInt) ((oopForPointer(localSP)) - (activeCntx + BaseHeaderSize))) >> ShiftForWord) - TempFrameStart) + 1) << 1) | 1);
 				longAtput((activeCntx + BaseHeaderSize) + (StackPointerIndex << ShiftForWord), valuePointer1);
-				if (newContext < foo->youngStart) {
+				if ((((usqInt) newContext)) < (((usqInt) foo->youngStart))) {
 					beRootIfOld(newContext);
 				}
 				foo->activeContext = newContext;
@@ -7820,7 +7737,7 @@ register struct foo * foo = &fum;
 				tmp = longAt((newContext + BaseHeaderSize) + (MethodIndex << ShiftForWord));
 				if ((tmp & 1)) {
 					tmp = longAt((newContext + BaseHeaderSize) + (HomeIndex << ShiftForWord));
-					if (tmp < foo->youngStart) {
+					if ((((usqInt) tmp)) < (((usqInt) foo->youngStart))) {
 						beRootIfOld(tmp);
 					}
 				} else {
@@ -7901,7 +7818,7 @@ register struct foo * foo = &fum;
 					top = longAtPointer(localSP);
 					/* begin storePointer:ofObject:withValue: */
 					oop = foo->receiver;
-					if (oop < foo->youngStart) {
+					if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 						possibleRootStoreIntovalue(oop, top);
 					}
 					longAtput((oop + BaseHeaderSize) + (byte3 << ShiftForWord), top);
@@ -7913,7 +7830,7 @@ register struct foo * foo = &fum;
 					localSP -= 1 * BytesPerWord;
 					/* begin storePointer:ofObject:withValue: */
 					oop1 = foo->receiver;
-					if (oop1 < foo->youngStart) {
+					if ((((usqInt) oop1)) < (((usqInt) foo->youngStart))) {
 						possibleRootStoreIntovalue(oop1, top);
 					}
 					longAtput((oop1 + BaseHeaderSize) + (byte3 << ShiftForWord), top);
@@ -7923,7 +7840,7 @@ register struct foo * foo = &fum;
 					top = longAtPointer(localSP);
 					/* begin storePointer:ofObject:withValue: */
 					oop2 = longAt((foo->method + BaseHeaderSize) + ((byte3 + LiteralStart) << ShiftForWord));
-					if (oop2 < foo->youngStart) {
+					if ((((usqInt) oop2)) < (((usqInt) foo->youngStart))) {
 						possibleRootStoreIntovalue(oop2, top);
 					}
 					longAtput((oop2 + BaseHeaderSize) + (ValueIndex << ShiftForWord), top);
@@ -9191,7 +9108,7 @@ register struct foo * foo = &fum;
 						pt = pointResult1;
 						/* begin storePointer:ofObject:withValue: */
 						valuePointer = longAt(foo->stackPointer - (0 * BytesPerWord));
-						if (pt < foo->youngStart) {
+						if ((((usqInt) pt)) < (((usqInt) foo->youngStart))) {
 							possibleRootStoreIntovalue(pt, valuePointer);
 						}
 						longAtput((pt + BaseHeaderSize) + (1 << ShiftForWord), valuePointer);
@@ -9209,13 +9126,13 @@ register struct foo * foo = &fum;
 					pt = pointResult2;
 					/* begin storePointer:ofObject:withValue: */
 					valuePointer1 = longAt(foo->stackPointer - (1 * BytesPerWord));
-					if (pt < foo->youngStart) {
+					if ((((usqInt) pt)) < (((usqInt) foo->youngStart))) {
 						possibleRootStoreIntovalue(pt, valuePointer1);
 					}
 					longAtput((pt + BaseHeaderSize) + (0 << ShiftForWord), valuePointer1);
 					/* begin storePointer:ofObject:withValue: */
 					valuePointer2 = longAt(foo->stackPointer - (0 * BytesPerWord));
-					if (pt < foo->youngStart) {
+					if ((((usqInt) pt)) < (((usqInt) foo->youngStart))) {
 						possibleRootStoreIntovalue(pt, valuePointer2);
 					}
 					longAtput((pt + BaseHeaderSize) + (1 << ShiftForWord), valuePointer2);
@@ -9465,7 +9382,7 @@ register struct foo * foo = &fum;
 					if ((foo->atCache[atIx + AtCacheOop]) == rcvr) {
 						/* begin commonVariableInternal:at:cacheIndex: */
 						stSize = foo->atCache[atIx + AtCacheSize];
-						if (((((usqInt ) ((index >> 1)))) >= 1) && ((((usqInt ) ((index >> 1)))) <= (((usqInt ) stSize)))) {
+						if (((((usqInt) ((index >> 1)))) >= (((usqInt) 1))) && ((((usqInt) ((index >> 1)))) <= (((usqInt) stSize)))) {
 							fmt = foo->atCache[atIx + AtCacheFmt];
 							if (fmt <= 4) {
 								fixedFields = foo->atCache[atIx + AtCacheFixedFields];
@@ -9533,12 +9450,12 @@ register struct foo * foo = &fum;
 					if ((foo->atCache[atIx + AtCacheOop]) == rcvr) {
 						/* begin commonVariable:at:put:cacheIndex: */
 						stSize = foo->atCache[atIx + AtCacheSize];
-						if (((((usqInt ) ((index >> 1)))) >= 1) && ((((usqInt ) ((index >> 1)))) <= (((usqInt ) stSize)))) {
+						if (((((usqInt) ((index >> 1)))) >= (((usqInt) 1))) && ((((usqInt) ((index >> 1)))) <= (((usqInt) stSize)))) {
 							fmt = foo->atCache[atIx + AtCacheFmt];
 							if (fmt <= 4) {
 								fixedFields = foo->atCache[atIx + AtCacheFixedFields];
 								/* begin storePointer:ofObject:withValue: */
-								if (rcvr < foo->youngStart) {
+								if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 									possibleRootStoreIntovalue(rcvr, value);
 								}
 								longAtput((rcvr + BaseHeaderSize) + (((((index >> 1)) + fixedFields) - 1) << ShiftForWord), value);
@@ -10499,7 +10416,7 @@ sqInt isIndexable(sqInt oop) {
 /*	Return true if the given address is in ST object memory */
 
 sqInt isInMemory(sqInt address) {
-	return (address >= memory) && (address < foo->endOfMemory);
+	return ((((usqInt) address)) >= (((usqInt) memory))) && ((((usqInt) address)) < (((usqInt) foo->endOfMemory)));
 }
 
 sqInt isIntegerObject(sqInt objectPointer) {
@@ -10751,7 +10668,7 @@ register struct foo * foo = &fum;
 	sched = longAt(((longAt((foo->specialObjectsOop + BaseHeaderSize) + (SchedulerAssociation << ShiftForWord))) + BaseHeaderSize) + (ValueIndex << ShiftForWord));
 	proc = longAt((sched + BaseHeaderSize) + (ActiveProcessIndex << ShiftForWord));
 	foo->activeContext = longAt((proc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord));
-	if (foo->activeContext < foo->youngStart) {
+	if ((((usqInt) foo->activeContext)) < (((usqInt) foo->youngStart))) {
 		beRootIfOld(foo->activeContext);
 	}
 	/* begin fetchContextRegisters: */
@@ -10759,7 +10676,7 @@ register struct foo * foo = &fum;
 	tmp = longAt((activeCntx + BaseHeaderSize) + (MethodIndex << ShiftForWord));
 	if ((tmp & 1)) {
 		tmp = longAt((activeCntx + BaseHeaderSize) + (HomeIndex << ShiftForWord));
-		if (tmp < foo->youngStart) {
+		if ((((usqInt) tmp)) < (((usqInt) foo->youngStart))) {
 			beRootIfOld(tmp);
 		}
 	} else {
@@ -10890,7 +10807,7 @@ register struct foo * foo = &fum;
     sqInt oopSize;
 
 	oop = chunk + (foo->headerTypeBytes[(longAt(chunk)) & TypeMask]);
-	while (oop < foo->endOfMemory) {
+	while ((((usqInt) oop)) < (((usqInt) foo->endOfMemory))) {
 		oopHeader = longAt(oop);
 		oopHeaderType = oopHeader & TypeMask;
 		if (oopHeaderType == HeaderTypeFree) {
@@ -10964,7 +10881,7 @@ register struct foo * foo = &fum;
 	probe = 0;
 	for (i1 = 1; i1 <= MethodCacheEntries; i1 += 1) {
 		if (!((foo->methodCache[probe + MethodCacheSelector]) == 0)) {
-			if ((((((foo->methodCache[probe + MethodCacheSelector]) >= memStart) && ((foo->methodCache[probe + MethodCacheSelector]) < memEnd)) || (((foo->methodCache[probe + MethodCacheClass]) >= memStart) && ((foo->methodCache[probe + MethodCacheClass]) < memEnd))) || (((foo->methodCache[probe + MethodCacheMethod]) >= memStart) && ((foo->methodCache[probe + MethodCacheMethod]) < memEnd))) || (((foo->methodCache[probe + MethodCacheNative]) >= memStart) && ((foo->methodCache[probe + MethodCacheNative]) < memEnd))) {
+			if ((((((((usqInt) (foo->methodCache[probe + MethodCacheSelector]))) >= (((usqInt) memStart))) && ((((usqInt) (foo->methodCache[probe + MethodCacheSelector]))) < (((usqInt) memEnd)))) || (((((usqInt) (foo->methodCache[probe + MethodCacheClass]))) >= (((usqInt) memStart))) && ((((usqInt) (foo->methodCache[probe + MethodCacheClass]))) < (((usqInt) memEnd))))) || (((((usqInt) (foo->methodCache[probe + MethodCacheMethod]))) >= (((usqInt) memStart))) && ((((usqInt) (foo->methodCache[probe + MethodCacheMethod]))) < (((usqInt) memEnd))))) || (((((usqInt) (foo->methodCache[probe + MethodCacheNative]))) >= (((usqInt) memStart))) && ((((usqInt) (foo->methodCache[probe + MethodCacheNative]))) < (((usqInt) memEnd))))) {
 				foo->methodCache[probe + MethodCacheSelector] = 0;
 			}
 		}
@@ -11059,7 +10976,7 @@ register struct foo * foo = &fum;
 		return 0;
 	}
 	header = (header & AllButTypeMask) | HeaderTypeGC;
-	if (oop >= foo->youngStart) {
+	if ((((usqInt) oop)) >= (((usqInt) foo->youngStart))) {
 		header = header | MarkBit;
 	}
 	longAtput(oop, header);
@@ -11182,7 +11099,7 @@ register struct foo * foo = &fum;
 		if (action == StartObj) {
 			/* begin startObj */
 			oop1 = child;
-			if (oop1 < youngStartLocal) {
+			if ((((usqInt) oop1)) < (((usqInt) youngStartLocal))) {
 				field = oop1;
 				action = Upward;
 				goto l6;
@@ -11452,7 +11369,7 @@ register struct foo * foo = &fum;
     sqInt header;
 
 	if (DoAssertionChecks) {
-		if (oop >= foo->endOfMemory) {
+		if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 			error("no objects after the end of memory");
 		}
 	}
@@ -11969,13 +11886,13 @@ l2:	/* end lengthOf: */;
 }
 
 
-/*	oop is an old object.  If valueObj is young, mark the object as a root. */
+/*	oop is an old object. If valueObj is young, mark the object as a root. */
 
 sqInt possibleRootStoreIntovalue(sqInt oop, sqInt valueObj) {
 register struct foo * foo = &fum;
     sqInt header;
 
-	if ((valueObj >= foo->youngStart) && (!((valueObj & 1)))) {
+	if (((((usqInt) valueObj)) >= (((usqInt) foo->youngStart))) && (!((valueObj & 1)))) {
 		/* begin noteAsRoot:headerLoc: */
 		header = longAt(oop);
 		if ((header & RootBit) == 0) {
@@ -12004,19 +11921,18 @@ sqInt postGCAction(void) {
 register struct foo * foo = &fum;
     sqInt delta;
     sqInt limit;
-    sqInt index;
 
 	if (foo->compilerInitialized) {
 		compilerPostGC();
 	} else {
-		if (foo->activeContext < foo->youngStart) {
+		if ((((usqInt) foo->activeContext)) < (((usqInt) foo->youngStart))) {
 			beRootIfOld(foo->activeContext);
 		}
-		if (foo->theHomeContext < foo->youngStart) {
+		if ((((usqInt) foo->theHomeContext)) < (((usqInt) foo->youngStart))) {
 			beRootIfOld(foo->theHomeContext);
 		}
 	}
-	if (((longAt(foo->freeBlock)) & AllButTypeMask) > foo->shrinkThreshold) {
+	if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) > (((usqInt) foo->shrinkThreshold))) {
 		/* begin shrinkObjectMemory: */
 		delta = ((longAt(foo->freeBlock)) & AllButTypeMask) - foo->growHeadroom;
 		foo->statShrinkMemory += 1;
@@ -12027,19 +11943,18 @@ register struct foo * foo = &fum;
 		}
 	}
 	/* begin signalSemaphoreWithIndex: */
-	index = foo->gcSemaphoreIndex;
-	if (index <= 0) {
+	if (foo->gcSemaphoreIndex <= 0) {
 		goto l1;
 	}
 	if (foo->semaphoresUseBufferA) {
 		if (foo->semaphoresToSignalCountA < SemaphoresToSignalSize) {
 			foo->semaphoresToSignalCountA += 1;
-			foo->semaphoresToSignalA[foo->semaphoresToSignalCountA] = index;
+			foo->semaphoresToSignalA[foo->semaphoresToSignalCountA] = foo->gcSemaphoreIndex;
 		}
 	} else {
 		if (foo->semaphoresToSignalCountB < SemaphoresToSignalSize) {
 			foo->semaphoresToSignalCountB += 1;
-			foo->semaphoresToSignalB[foo->semaphoresToSignalCountB] = index;
+			foo->semaphoresToSignalB[foo->semaphoresToSignalCountB] = foo->gcSemaphoreIndex;
 		}
 	}
 	/* begin forceInterruptCheck */
@@ -12448,10 +12363,6 @@ register struct foo * foo = &fum;
     sqInt successValue6;
     sqInt successValue7;
     sqInt successValue8;
-    sqInt successValue9;
-    sqInt successValue10;
-    sqInt successValue11;
-    sqInt successValue12;
 
 	flag("Dan");
 	if (BytesPerWord == 8) {
@@ -12470,8 +12381,8 @@ register struct foo * foo = &fum;
 	/* begin success: */
 	foo->successFlag = (foo->argumentCount < 2) && foo->successFlag;
 	/* begin success: */
-	successValue11 = (((cursorObj & 1) == 0) && (((((usqInt) (longAt(cursorObj))) >> 8) & 15) <= 4)) && ((lengthOf(cursorObj)) >= 5);
-	foo->successFlag = successValue11 && foo->successFlag;
+	successValue7 = (((cursorObj & 1) == 0) && (((((usqInt) (longAt(cursorObj))) >> 8) & 15) <= 4)) && ((lengthOf(cursorObj)) >= 5);
+	foo->successFlag = successValue7 && foo->successFlag;
 	if (foo->successFlag) {
 		bitsObj = longAt((cursorObj + BaseHeaderSize) + (0 << ShiftForWord));
 		extentX = fetchIntegerofObject(1, cursorObj);
@@ -12480,47 +12391,30 @@ register struct foo * foo = &fum;
 		offsetObj = longAt((cursorObj + BaseHeaderSize) + (4 << ShiftForWord));
 	}
 	/* begin success: */
-	successValue12 = (((offsetObj & 1) == 0) && (((((usqInt) (longAt(offsetObj))) >> 8) & 15) <= 4)) && ((lengthOf(offsetObj)) >= 2);
-	foo->successFlag = successValue12 && foo->successFlag;
+	successValue8 = (((offsetObj & 1) == 0) && (((((usqInt) (longAt(offsetObj))) >> 8) & 15) <= 4)) && ((lengthOf(offsetObj)) >= 2);
+	foo->successFlag = successValue8 && foo->successFlag;
 	if (foo->successFlag) {
 		offsetX = fetchIntegerofObject(0, offsetObj);
 		offsetY = fetchIntegerofObject(1, offsetObj);
-		if ((foo->argumentCount == 0) && (depth == 32)) {
-			/* begin success: */
-			successValue = (extentX > 0) && (extentY > 0);
-			foo->successFlag = successValue && foo->successFlag;
-			/* begin success: */
-			successValue1 = (offsetX >= (extentX * -1)) && (offsetX <= 0);
-			foo->successFlag = successValue1 && foo->successFlag;
-			/* begin success: */
-			successValue2 = (offsetY >= (extentY * -1)) && (offsetY <= 0);
-			foo->successFlag = successValue2 && foo->successFlag;
-			cursorBitsIndex = bitsObj + BaseHeaderSize;
-			/* begin success: */
-			successValue3 = (((bitsObj & 1) == 0) && (((((usqInt) (longAt(bitsObj))) >> 8) & 15) == 6)) && ((lengthOf(bitsObj)) == (extentX * extentY));
-			foo->successFlag = successValue3 && foo->successFlag;
-			;
-		} else {
-			/* begin success: */
-			successValue4 = (extentX == 16) && ((extentY == 16) && (depth == 1));
-			foo->successFlag = successValue4 && foo->successFlag;
-			/* begin success: */
-			successValue5 = (offsetX >= -16) && (offsetX <= 0);
-			foo->successFlag = successValue5 && foo->successFlag;
-			/* begin success: */
-			successValue6 = (offsetY >= -16) && (offsetY <= 0);
-			foo->successFlag = successValue6 && foo->successFlag;
-			/* begin success: */
-			successValue7 = (((bitsObj & 1) == 0) && (((((usqInt) (longAt(bitsObj))) >> 8) & 15) == 6)) && ((lengthOf(bitsObj)) == 16);
-			foo->successFlag = successValue7 && foo->successFlag;
-			cursorBitsIndex = bitsObj + BaseHeaderSize;
-			;
-		}
+		/* begin success: */
+		successValue = (extentX == 16) && ((extentY == 16) && (depth == 1));
+		foo->successFlag = successValue && foo->successFlag;
+		/* begin success: */
+		successValue1 = (offsetX >= -16) && (offsetX <= 0);
+		foo->successFlag = successValue1 && foo->successFlag;
+		/* begin success: */
+		successValue2 = (offsetY >= -16) && (offsetY <= 0);
+		foo->successFlag = successValue2 && foo->successFlag;
+		/* begin success: */
+		successValue3 = (((bitsObj & 1) == 0) && (((((usqInt) (longAt(bitsObj))) >> 8) & 15) == 6)) && ((lengthOf(bitsObj)) == 16);
+		foo->successFlag = successValue3 && foo->successFlag;
+		cursorBitsIndex = bitsObj + BaseHeaderSize;
+		;
 	}
 	if (foo->argumentCount == 1) {
 		/* begin success: */
-		successValue10 = (((maskObj & 1) == 0) && (((((usqInt) (longAt(maskObj))) >> 8) & 15) <= 4)) && ((lengthOf(maskObj)) >= 5);
-		foo->successFlag = successValue10 && foo->successFlag;
+		successValue6 = (((maskObj & 1) == 0) && (((((usqInt) (longAt(maskObj))) >> 8) & 15) <= 4)) && ((lengthOf(maskObj)) >= 5);
+		foo->successFlag = successValue6 && foo->successFlag;
 		if (foo->successFlag) {
 			bitsObj = longAt((maskObj + BaseHeaderSize) + (0 << ShiftForWord));
 			extentX = fetchIntegerofObject(1, maskObj);
@@ -12529,25 +12423,17 @@ register struct foo * foo = &fum;
 		}
 		if (foo->successFlag) {
 			/* begin success: */
-			successValue8 = (extentX == 16) && ((extentY == 16) && (depth == 1));
-			foo->successFlag = successValue8 && foo->successFlag;
+			successValue4 = (extentX == 16) && ((extentY == 16) && (depth == 1));
+			foo->successFlag = successValue4 && foo->successFlag;
 			/* begin success: */
-			successValue9 = (((bitsObj & 1) == 0) && (((((usqInt) (longAt(bitsObj))) >> 8) & 15) == 6)) && ((lengthOf(bitsObj)) == 16);
-			foo->successFlag = successValue9 && foo->successFlag;
+			successValue5 = (((bitsObj & 1) == 0) && (((((usqInt) (longAt(bitsObj))) >> 8) & 15) == 6)) && ((lengthOf(bitsObj)) == 16);
+			foo->successFlag = successValue5 && foo->successFlag;
 			maskBitsIndex = bitsObj + BaseHeaderSize;
 		}
 	}
 	if (foo->successFlag) {
 		if (foo->argumentCount == 0) {
-			if (depth == 32) {
-				if (!(ioSetCursorARGB(cursorBitsIndex, extentX, extentY, offsetX, offsetY))) {
-					/* begin success: */
-					foo->successFlag = 0 && foo->successFlag;
-					return null;
-				}
-			} else {
-				ioSetCursor(cursorBitsIndex, offsetX, offsetY);
-			}
+			ioSetCursor(cursorBitsIndex, offsetX, offsetY);
 		} else {
 			ioSetCursorWithMask(cursorBitsIndex, maskBitsIndex, offsetX, offsetY);
 		}
@@ -12572,7 +12458,7 @@ register struct foo * foo = &fum;
 	if (foo->successFlag) {
 		/* begin storePointer:ofObject:withValue: */
 		oop = foo->specialObjectsOop;
-		if (oop < foo->youngStart) {
+		if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(oop, rcvr);
 		}
 		longAtput((oop + BaseHeaderSize) + (TheDisplay << ShiftForWord), rcvr);
@@ -12801,449 +12687,6 @@ l1:	/* end sizeBitsOf: */;
 	/* begin pop:thenPush: */
 	longAtput(sp = foo->stackPointer - ((2 - 1) * BytesPerWord), newContext);
 	foo->stackPointer = sp;
-}
-
-
-/*	Return a double from the given byte offset in a ByteArray. */
-
-EXPORT(sqInt) primitiveByteArrayDoubleAt(void) {
-register struct foo * foo = &fum;
-    sqInt rcvr;
-    sqInt addr;
-    double  floatValue;
-    sqInt byteOffset;
-    sqInt integerPointer;
-    sqInt oop;
-
-	/* begin stackIntegerValue: */
-	integerPointer = longAt(foo->stackPointer - (0 * BytesPerWord));
-	/* begin checkedIntegerValueOf: */
-	if ((integerPointer & 1)) {
-		byteOffset = (integerPointer >> 1);
-		goto l2;
-	} else {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		byteOffset = 0;
-		goto l2;
-	}
-l2:	/* end checkedIntegerValueOf: */;
-	/* begin stackObjectValue: */
-	oop = longAt(foo->stackPointer - (1 * BytesPerWord));
-	if ((oop & 1)) {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		rcvr = null;
-		goto l1;
-	}
-	rcvr = oop;
-l1:	/* end stackObjectValue: */;
-	if (!foo->successFlag) {
-		return 0;
-	}
-	addr = addressOfstartingAtsize(rcvr, byteOffset, 8);
-	if (!foo->successFlag) {
-		return 0;
-	}
-	((int*)(&floatValue))[0] = ((int*)addr)[0];
-	((int*)(&floatValue))[1] = ((int*)addr)[1];
-	/* begin pop: */
-	foo->stackPointer -= 2 * BytesPerWord;
-	return pushFloat(floatValue);
-}
-
-
-/*	Store a Double at given byte offset in a ByteArray. */
-
-EXPORT(sqInt) primitiveByteArrayDoubleAtPut(void) {
-register struct foo * foo = &fum;
-    sqInt rcvr;
-    sqInt addr;
-    sqInt floatOop;
-    double  floatValue;
-    sqInt byteOffset;
-    sqInt integerPointer;
-    sqInt oop;
-    sqInt sp;
-
-	floatOop = longAt(foo->stackPointer - (0 * BytesPerWord));
-	if ((floatOop & 1)) {
-		floatValue = ((double) ((floatOop >> 1)));
-	} else {
-		floatValue = ((double) (floatValueOf(floatOop)));
-	}
-	/* begin stackIntegerValue: */
-	integerPointer = longAt(foo->stackPointer - (1 * BytesPerWord));
-	/* begin checkedIntegerValueOf: */
-	if ((integerPointer & 1)) {
-		byteOffset = (integerPointer >> 1);
-		goto l2;
-	} else {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		byteOffset = 0;
-		goto l2;
-	}
-l2:	/* end checkedIntegerValueOf: */;
-	/* begin stackObjectValue: */
-	oop = longAt(foo->stackPointer - (2 * BytesPerWord));
-	if ((oop & 1)) {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		rcvr = null;
-		goto l1;
-	}
-	rcvr = oop;
-l1:	/* end stackObjectValue: */;
-	if (!foo->successFlag) {
-		return 0;
-	}
-	addr = addressOfstartingAtsize(rcvr, byteOffset, 8);
-	if (!foo->successFlag) {
-		return 0;
-	}
-	((int*)addr)[0] = ((int*)(&floatValue))[0];
-	((int*)addr)[1] = ((int*)(&floatValue))[1];
-	/* begin pop: */
-	foo->stackPointer -= 3 * BytesPerWord;
-	/* begin push: */
-	longAtput(sp = foo->stackPointer + BytesPerWord, floatOop);
-	foo->stackPointer = sp;
-	return null;
-}
-
-
-/*	Return a Float from the given byte offset in a ByteArray. */
-
-EXPORT(sqInt) primitiveByteArrayFloatAt(void) {
-register struct foo * foo = &fum;
-    sqInt rcvr;
-    sqInt addr;
-    float  floatValue;
-    sqInt byteOffset;
-    sqInt integerPointer;
-    sqInt oop;
-
-	/* begin stackIntegerValue: */
-	integerPointer = longAt(foo->stackPointer - (0 * BytesPerWord));
-	/* begin checkedIntegerValueOf: */
-	if ((integerPointer & 1)) {
-		byteOffset = (integerPointer >> 1);
-		goto l2;
-	} else {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		byteOffset = 0;
-		goto l2;
-	}
-l2:	/* end checkedIntegerValueOf: */;
-	/* begin stackObjectValue: */
-	oop = longAt(foo->stackPointer - (1 * BytesPerWord));
-	if ((oop & 1)) {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		rcvr = null;
-		goto l1;
-	}
-	rcvr = oop;
-l1:	/* end stackObjectValue: */;
-	if (!foo->successFlag) {
-		return 0;
-	}
-	addr = addressOfstartingAtsize(rcvr, byteOffset, 4);
-	if (!foo->successFlag) {
-		return 0;
-	}
-	((int*)(&floatValue))[0] = ((int*)addr)[0];
-	/* begin pop: */
-	foo->stackPointer -= 2 * BytesPerWord;
-	return pushFloat(floatValue);
-}
-
-
-/*	Store a Float at the given byteOffset in a ByteArray */
-
-EXPORT(sqInt) primitiveByteArrayFloatAtPut(void) {
-register struct foo * foo = &fum;
-    sqInt rcvr;
-    sqInt addr;
-    sqInt floatOop;
-    float  floatValue;
-    sqInt byteOffset;
-    sqInt integerPointer;
-    sqInt oop;
-    sqInt sp;
-
-	floatOop = longAt(foo->stackPointer - (0 * BytesPerWord));
-	if ((floatOop & 1)) {
-		floatValue = ((float) ((floatOop >> 1)));
-	} else {
-		floatValue = ((float) (floatValueOf(floatOop)));
-	}
-	/* begin stackIntegerValue: */
-	integerPointer = longAt(foo->stackPointer - (1 * BytesPerWord));
-	/* begin checkedIntegerValueOf: */
-	if ((integerPointer & 1)) {
-		byteOffset = (integerPointer >> 1);
-		goto l2;
-	} else {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		byteOffset = 0;
-		goto l2;
-	}
-l2:	/* end checkedIntegerValueOf: */;
-	/* begin stackObjectValue: */
-	oop = longAt(foo->stackPointer - (2 * BytesPerWord));
-	if ((oop & 1)) {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		rcvr = null;
-		goto l1;
-	}
-	rcvr = oop;
-l1:	/* end stackObjectValue: */;
-	if (!foo->successFlag) {
-		return 0;
-	}
-	addr = addressOfstartingAtsize(rcvr, byteOffset, 4);
-	if (!foo->successFlag) {
-		return 0;
-	}
-	((int*)addr)[0] = ((int*)(&floatValue))[0];
-	/* begin pop: */
-	foo->stackPointer -= 3 * BytesPerWord;
-	/* begin push: */
-	longAtput(sp = foo->stackPointer + BytesPerWord, floatOop);
-	foo->stackPointer = sp;
-	return null;
-}
-
-
-/*	Store a (signed or unsigned) n byte integer at the given byte offset. */
-
-EXPORT(sqInt) primitiveByteArrayNByteIIntegerAtPut(void) {
-register struct foo * foo = &fum;
-    sqInt value;
-    sqInt rcvr;
-    sqInt byteSize;
-    sqInt addr;
-    sqInt isSigned;
-    sqInt valueOop;
-    sqInt max;
-    sqInt byteOffset;
-    sqInt integerPointer;
-    sqInt integerPointer1;
-    sqInt oop;
-    sqInt sp;
-
-	/* begin booleanValueOf: */
-	if ((longAt(foo->stackPointer - (0 * BytesPerWord))) == foo->trueObj) {
-		isSigned = 1;
-		goto l1;
-	}
-	if ((longAt(foo->stackPointer - (0 * BytesPerWord))) == foo->falseObj) {
-		isSigned = 0;
-		goto l1;
-	}
-	foo->successFlag = 0;
-	isSigned = null;
-l1:	/* end booleanValueOf: */;
-	/* begin stackIntegerValue: */
-	integerPointer = longAt(foo->stackPointer - (1 * BytesPerWord));
-	/* begin checkedIntegerValueOf: */
-	if ((integerPointer & 1)) {
-		byteSize = (integerPointer >> 1);
-		goto l3;
-	} else {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		byteSize = 0;
-		goto l3;
-	}
-l3:	/* end checkedIntegerValueOf: */;
-	valueOop = longAt(foo->stackPointer - (2 * BytesPerWord));
-	/* begin stackIntegerValue: */
-	integerPointer1 = longAt(foo->stackPointer - (3 * BytesPerWord));
-	/* begin checkedIntegerValueOf: */
-	if ((integerPointer1 & 1)) {
-		byteOffset = (integerPointer1 >> 1);
-		goto l4;
-	} else {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		byteOffset = 0;
-		goto l4;
-	}
-l4:	/* end checkedIntegerValueOf: */;
-	/* begin stackObjectValue: */
-	oop = longAt(foo->stackPointer - (4 * BytesPerWord));
-	if ((oop & 1)) {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		rcvr = null;
-		goto l2;
-	}
-	rcvr = oop;
-l2:	/* end stackObjectValue: */;
-	if (!foo->successFlag) {
-		return 0;
-	}
-	if (!((byteOffset > 0) && ((byteSize == 1) || ((byteSize == 2) || (byteSize == 4))))) {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		return null;
-	}
-	addr = addressOfstartingAtsize(rcvr, byteOffset, byteSize);
-	if (!foo->successFlag) {
-		return 0;
-	}
-	if (isSigned) {
-		value = signed32BitValueOf(valueOop);
-	} else {
-		value = positive32BitValueOf(valueOop);
-	}
-	if (!foo->successFlag) {
-		return 0;
-	}
-	if (byteSize < 4) {
-		if (isSigned) {
-			max = 1 << ((8 * byteSize) - 1);
-			if (value >= max) {
-				/* begin primitiveFail */
-				foo->successFlag = 0;
-				return null;
-			}
-			if (value < (0 - max)) {
-				/* begin primitiveFail */
-				foo->successFlag = 0;
-				return null;
-			}
-		} else {
-			if (value >= (1 << (8 * byteSize))) {
-				/* begin primitiveFail */
-				foo->successFlag = 0;
-				return null;
-			}
-		}
-		if (byteSize == 1) {
-			byteAtput(addr, value);
-		} else {
-			*((short int *) addr) = value;
-		}
-	} else {
-		longAtput(addr, value);
-	}
-	/* begin pop: */
-	foo->stackPointer -= 5 * BytesPerWord;
-	/* begin push: */
-	longAtput(sp = foo->stackPointer + BytesPerWord, valueOop);
-	foo->stackPointer = sp;
-	return null;
-}
-
-
-/*	Return a (signed or unsigned) n byte integer from the given byte offset. */
-
-EXPORT(sqInt) primitiveByteArrayNByteIntegerAt(void) {
-register struct foo * foo = &fum;
-    sqInt value;
-    sqInt rcvr;
-    sqInt byteSize;
-    sqInt addr;
-    sqInt mask;
-    sqInt isSigned;
-    sqInt byteOffset;
-    sqInt integerPointer;
-    sqInt integerPointer1;
-    sqInt oop;
-    sqInt sp;
-
-	/* begin booleanValueOf: */
-	if ((longAt(foo->stackPointer - (0 * BytesPerWord))) == foo->trueObj) {
-		isSigned = 1;
-		goto l1;
-	}
-	if ((longAt(foo->stackPointer - (0 * BytesPerWord))) == foo->falseObj) {
-		isSigned = 0;
-		goto l1;
-	}
-	foo->successFlag = 0;
-	isSigned = null;
-l1:	/* end booleanValueOf: */;
-	/* begin stackIntegerValue: */
-	integerPointer = longAt(foo->stackPointer - (1 * BytesPerWord));
-	/* begin checkedIntegerValueOf: */
-	if ((integerPointer & 1)) {
-		byteSize = (integerPointer >> 1);
-		goto l3;
-	} else {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		byteSize = 0;
-		goto l3;
-	}
-l3:	/* end checkedIntegerValueOf: */;
-	/* begin stackIntegerValue: */
-	integerPointer1 = longAt(foo->stackPointer - (2 * BytesPerWord));
-	/* begin checkedIntegerValueOf: */
-	if ((integerPointer1 & 1)) {
-		byteOffset = (integerPointer1 >> 1);
-		goto l4;
-	} else {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		byteOffset = 0;
-		goto l4;
-	}
-l4:	/* end checkedIntegerValueOf: */;
-	/* begin stackObjectValue: */
-	oop = longAt(foo->stackPointer - (3 * BytesPerWord));
-	if ((oop & 1)) {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		rcvr = null;
-		goto l2;
-	}
-	rcvr = oop;
-l2:	/* end stackObjectValue: */;
-	if (!foo->successFlag) {
-		return 0;
-	}
-	if (!((byteOffset > 0) && ((byteSize == 1) || ((byteSize == 2) || (byteSize == 4))))) {
-		/* begin primitiveFail */
-		foo->successFlag = 0;
-		return null;
-	}
-	addr = addressOfstartingAtsize(rcvr, byteOffset, byteSize);
-	if (!foo->successFlag) {
-		return 0;
-	}
-	if (byteSize < 4) {
-		if (byteSize == 1) {
-			value = byteAt(addr);
-		} else {
-			value = *((short int *) addr);
-		}
-		if (isSigned) {
-			mask = 1 << ((byteSize * 8) - 1);
-			value = (value & (mask - 1)) - (value & mask);
-		}
-		value = ((value << 1) | 1);
-	} else {
-		value = longAt(addr);
-		if (isSigned) {
-			value = signed32BitIntegerFor(value);
-		} else {
-			value = positive32BitIntegerFor(value);
-		}
-	}
-	/* begin pop: */
-	foo->stackPointer -= 4 * BytesPerWord;
-	/* begin push: */
-	longAtput(sp = foo->stackPointer + BytesPerWord, value);
-	foo->stackPointer = sp;
-	return null;
 }
 
 
@@ -13517,8 +12960,8 @@ register struct foo * foo = &fum;
     sqInt rcvr;
     sqInt rcvrIsBytes;
     sqInt fillValue;
-    sqInt end;
-    sqInt i;
+    usqInt end;
+    usqInt i;
     sqInt successValue;
     sqInt successValue1;
 
@@ -13637,7 +13080,7 @@ l3:	/* end lengthOf: */;
 	}
 	for (i = 0; i <= (length - 1); i += 1) {
 		/* begin storePointer:ofObject:withValue: */
-		if (rcvr < foo->youngStart) {
+		if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(rcvr, longAt((arg + BaseHeaderSize) + (i << ShiftForWord)));
 		}
 		longAtput((rcvr + BaseHeaderSize) + (i << ShiftForWord), longAt((arg + BaseHeaderSize) + (i << ShiftForWord)));
@@ -14067,7 +13510,7 @@ register struct foo * foo = &fum;
 		in = (argumentArray + BaseHeaderSize) - BytesPerWord;
 		lastIn = in + (argCnt * BytesPerWord);
 		out = dst - BytesPerWord;
-		while (in < lastIn) {
+		while ((((usqInt) in)) < (((usqInt) lastIn))) {
 			longAtput(out += BytesPerWord, longAt(in += BytesPerWord));
 		}
 		/* begin unPop: */
@@ -14994,7 +14437,7 @@ register struct foo * foo = &fum;
 			foo->remapBufferCount -= 1;
 			arg = oop;
 			/* begin storePointer:ofObject:withValue: */
-			if (arg < foo->youngStart) {
+			if ((((usqInt) arg)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(arg, value);
 			}
 			longAtput((arg + BaseHeaderSize) + (i << ShiftForWord), value);
@@ -15222,10 +14665,10 @@ sqInt primitiveIndexOf(sqInt methodPointer) {
 sqInt primitiveInputSemaphore(void) {
 register struct foo * foo = &fum;
     sqInt arg;
+    sqInt top;
     sqInt oop;
     sqInt oop1;
     sqInt valuePointer;
-    sqInt top;
 
 	arg = longAt(foo->stackPointer);
 	if ((arg & 1)) {
@@ -15243,7 +14686,7 @@ register struct foo * foo = &fum;
 	if ((fetchClassOf(arg)) == (longAt((foo->specialObjectsOop + BaseHeaderSize) + (ClassSemaphore << ShiftForWord)))) {
 		/* begin storePointer:ofObject:withValue: */
 		oop = foo->specialObjectsOop;
-		if (oop < foo->youngStart) {
+		if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(oop, arg);
 		}
 		longAtput((oop + BaseHeaderSize) + (TheInputSemaphore << ShiftForWord), arg);
@@ -15251,7 +14694,7 @@ register struct foo * foo = &fum;
 		/* begin storePointer:ofObject:withValue: */
 		oop1 = foo->specialObjectsOop;
 		valuePointer = foo->nilObj;
-		if (oop1 < foo->youngStart) {
+		if ((((usqInt) oop1)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(oop1, valuePointer);
 		}
 		longAtput((oop1 + BaseHeaderSize) + (TheInputSemaphore << ShiftForWord), valuePointer);
@@ -15462,7 +14905,7 @@ l2:	/* end checkedIntegerValueOf: */;
 		/* begin subscript:with:storing:format: */
 		if (fmt <= 4) {
 			/* begin storePointer:ofObject:withValue: */
-			if (rcvr < foo->youngStart) {
+			if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(rcvr, newValue);
 			}
 			longAtput((rcvr + BaseHeaderSize) + ((index - 1) << ShiftForWord), newValue);
@@ -15506,7 +14949,7 @@ register struct foo * foo = &fum;
 	/* Mark dirty so stores below can be unchecked */
 
 	rcvr = longAt(foo->stackPointer - (foo->argumentCount * BytesPerWord));
-	if (rcvr < foo->youngStart) {
+	if ((((usqInt) rcvr)) < (((usqInt) foo->youngStart))) {
 		beRootIfOld(rcvr);
 	}
 	for (i = 0; i <= (foo->argumentCount - 1); i += 1) {
@@ -15716,7 +15159,7 @@ register struct foo * foo = &fum;
 	if ((fetchClassOf(arg)) == (longAt((foo->specialObjectsOop + BaseHeaderSize) + (ClassSemaphore << ShiftForWord)))) {
 		/* begin storePointer:ofObject:withValue: */
 		oop = foo->specialObjectsOop;
-		if (oop < foo->youngStart) {
+		if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(oop, arg);
 		}
 		longAtput((oop + BaseHeaderSize) + (TheInterruptSemaphore << ShiftForWord), arg);
@@ -15724,7 +15167,7 @@ register struct foo * foo = &fum;
 		/* begin storePointer:ofObject:withValue: */
 		oop1 = foo->specialObjectsOop;
 		valuePointer = foo->nilObj;
-		if (oop1 < foo->youngStart) {
+		if ((((usqInt) oop1)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(oop1, valuePointer);
 		}
 		longAtput((oop1 + BaseHeaderSize) + (TheInterruptSemaphore << ShiftForWord), valuePointer);
@@ -15763,7 +15206,7 @@ register struct foo * foo = &fum;
 	in = src - BytesPerWord;
 	lastIn = in + (count * BytesPerWord);
 	out = (runArgs + BaseHeaderSize) - BytesPerWord;
-	while (in < lastIn) {
+	while ((((usqInt) in)) < (((usqInt) lastIn))) {
 		longAtput(out += BytesPerWord, longAt(in += BytesPerWord));
 	}
 	runSelector = foo->messageSelector;
@@ -15865,7 +15308,7 @@ l1:	/* end stackObjectValue: */;
 		/* begin pop: */
 		foo->stackPointer -= (foo->argumentCount + 1) * BytesPerWord;
 		/* begin pushBool: */
-		trueOrFalse = oop >= foo->youngStart;
+		trueOrFalse = (((usqInt) oop)) >= (((usqInt) foo->youngStart));
 		if (trueOrFalse) {
 			/* begin push: */
 			longAtput(sp = foo->stackPointer + BytesPerWord, foo->trueObj);
@@ -16179,19 +15622,19 @@ sqInt primitiveLoadImageSegment(void) {
 register struct foo * foo = &fum;
     sqInt doingClass;
     sqInt extraSize;
-    sqInt fieldPtr;
+    usqInt fieldPtr;
     sqInt fieldOop;
-    sqInt lastOut;
-    sqInt lastPtr;
+    usqInt lastOut;
+    usqInt lastPtr;
     sqInt segmentWordArray;
     sqInt mapOop;
     sqInt hdrTypeBits;
-    sqInt segOop;
+    usqInt segOop;
     sqInt data;
     sqInt outPointerArray;
-    sqInt endSeg;
+    usqInt endSeg;
     sqInt header;
-    sqInt outPtr;
+    usqInt outPtr;
     sqInt addr;
     sqInt addr1;
     sqInt sp;
@@ -16220,7 +15663,7 @@ register struct foo * foo = &fum;
 		/* begin reverseBytesFrom:to: */
 		flag("Dan");
 		addr1 = segmentWordArray + BaseHeaderSize;
-		while (addr1 < (endSeg + BytesPerWord)) {
+		while ((((usqInt) addr1)) < (((usqInt) (endSeg + BytesPerWord)))) {
 			longAtput(addr1, byteSwapped(longAt(addr1)));
 			addr1 += BytesPerWord;
 		}
@@ -16229,7 +15672,7 @@ register struct foo * foo = &fum;
 			/* begin reverseBytesFrom:to: */
 			flag("Dan");
 			addr = segmentWordArray + BaseHeaderSize;
-			while (addr < (endSeg + BytesPerWord)) {
+			while ((((usqInt) addr)) < (((usqInt) (endSeg + BytesPerWord)))) {
 				longAtput(addr, byteSwapped(longAt(addr)));
 				addr += BytesPerWord;
 			}
@@ -16309,7 +15752,7 @@ register struct foo * foo = &fum;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (segOop >= foo->endOfMemory) {
+			if ((((usqInt) segOop)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -16356,7 +15799,7 @@ register struct foo * foo = &fum;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (segOop >= foo->endOfMemory) {
+			if ((((usqInt) segOop)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -16442,7 +15885,7 @@ register struct foo * foo = &fum;
 	if ((fetchClassOf(arg)) == (longAt((foo->specialObjectsOop + BaseHeaderSize) + (ClassSemaphore << ShiftForWord)))) {
 		/* begin storePointer:ofObject:withValue: */
 		oop = foo->specialObjectsOop;
-		if (oop < foo->youngStart) {
+		if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(oop, arg);
 		}
 		longAtput((oop + BaseHeaderSize) + (TheLowSpaceSemaphore << ShiftForWord), arg);
@@ -16450,7 +15893,7 @@ register struct foo * foo = &fum;
 		/* begin storePointer:ofObject:withValue: */
 		oop1 = foo->specialObjectsOop;
 		valuePointer = foo->nilObj;
-		if (oop1 < foo->youngStart) {
+		if ((((usqInt) oop1)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(oop1, valuePointer);
 		}
 		longAtput((oop1 + BaseHeaderSize) + (TheLowSpaceSemaphore << ShiftForWord), valuePointer);
@@ -16487,7 +15930,7 @@ register struct foo * foo = &fum;
 			pt = pointResult1;
 			/* begin storePointer:ofObject:withValue: */
 			valuePointer = longAt(foo->stackPointer - (0 * BytesPerWord));
-			if (pt < foo->youngStart) {
+			if ((((usqInt) pt)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(pt, valuePointer);
 			}
 			longAtput((pt + BaseHeaderSize) + (1 << ShiftForWord), valuePointer);
@@ -16505,13 +15948,13 @@ register struct foo * foo = &fum;
 		pt = pointResult2;
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer1 = longAt(foo->stackPointer - (1 * BytesPerWord));
-		if (pt < foo->youngStart) {
+		if ((((usqInt) pt)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(pt, valuePointer1);
 		}
 		longAtput((pt + BaseHeaderSize) + (0 << ShiftForWord), valuePointer1);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer2 = longAt(foo->stackPointer - (0 * BytesPerWord));
-		if (pt < foo->youngStart) {
+		if ((((usqInt) pt)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(pt, valuePointer2);
 		}
 		longAtput((pt + BaseHeaderSize) + (1 << ShiftForWord), valuePointer2);
@@ -16728,14 +16171,14 @@ register struct foo * foo = &fum;
 	}
 	/* begin sufficientSpaceToAllocate: */
 	minFree = (foo->lowSpaceThreshold + (2500 + (0 * atomSize))) + BaseHeaderSize;
-	if ((((usqInt ) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt ) minFree))) {
+	if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt) minFree))) {
 		spaceOkay = 1;
-		goto l1;
+		goto l2;
 	} else {
 		spaceOkay = sufficientSpaceAfterGC(minFree);
-		goto l1;
+		goto l2;
 	}
-	spaceOkay = null;
+l2:	/* end sufficientSpaceToAllocate: */;
 l1:	/* end sufficientSpaceToInstantiate:indexableSize: */;
 	/* begin success: */
 	foo->successFlag = spaceOkay && foo->successFlag;
@@ -16756,12 +16199,12 @@ register struct foo * foo = &fum;
     sqInt i;
     sqInt size;
     sqInt header;
-    sqInt valuePointer;
     sqInt top;
     sqInt integerPointer;
     sqInt top1;
     sqInt top2;
     sqInt sp;
+    sqInt valuePointer;
 
 	/* begin popStack */
 	top = longAt(foo->stackPointer);
@@ -16796,7 +16239,7 @@ l1:	/* end checkedIntegerValueOf: */;
 	size = ((((((usqInt) header) >> 10) & 255) + 1) * BytesPerWord) + bytecodeCount;
 	theMethod = instantiateClassindexableSize(class, size);
 	/* begin storePointer:ofObject:withValue: */
-	if (theMethod < foo->youngStart) {
+	if ((((usqInt) theMethod)) < (((usqInt) foo->youngStart))) {
 		possibleRootStoreIntovalue(theMethod, header);
 	}
 	longAtput((theMethod + BaseHeaderSize) + (HeaderIndex << ShiftForWord), header);
@@ -16804,7 +16247,7 @@ l1:	/* end checkedIntegerValueOf: */;
 	for (i = 1; i <= literalCount; i += 1) {
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer = foo->nilObj;
-		if (theMethod < foo->youngStart) {
+		if ((((usqInt) theMethod)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(theMethod, valuePointer);
 		}
 		longAtput((theMethod + BaseHeaderSize) + (i << ShiftForWord), valuePointer);
@@ -16846,14 +16289,14 @@ register struct foo * foo = &fum;
 		}
 		/* begin sufficientSpaceToAllocate: */
 		minFree = (foo->lowSpaceThreshold + (2500 + (size * atomSize))) + BaseHeaderSize;
-		if ((((usqInt ) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt ) minFree))) {
+		if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt) minFree))) {
 			spaceOkay = 1;
-			goto l1;
+			goto l2;
 		} else {
 			spaceOkay = sufficientSpaceAfterGC(minFree);
-			goto l1;
+			goto l2;
 		}
-		spaceOkay = null;
+	l2:	/* end sufficientSpaceToAllocate: */;
 	l1:	/* end sufficientSpaceToInstantiate:indexableSize: */;
 		/* begin success: */
 		foo->successFlag = spaceOkay && foo->successFlag;
@@ -17040,12 +16483,12 @@ register struct foo * foo = &fum;
 	index += 1;
 	/* begin commonVariable:at:put:cacheIndex: */
 	stSize = foo->atCache[atIx + AtCacheSize];
-	if (((((usqInt ) index)) >= 1) && ((((usqInt ) index)) <= (((usqInt ) stSize)))) {
+	if (((((usqInt) index)) >= (((usqInt) 1))) && ((((usqInt) index)) <= (((usqInt) stSize)))) {
 		fmt = foo->atCache[atIx + AtCacheFmt];
 		if (fmt <= 4) {
 			fixedFields = foo->atCache[atIx + AtCacheFixedFields];
 			/* begin storePointer:ofObject:withValue: */
-			if (array < foo->youngStart) {
+			if ((((usqInt) array)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(array, value);
 			}
 			longAtput((array + BaseHeaderSize) + (((index + fixedFields) - 1) << ShiftForWord), value);
@@ -17233,7 +16676,7 @@ l1:	/* end popInteger */;
 	foo->successFlag = (index <= (((((usqInt) (longAt((thisReceiver + BaseHeaderSize) + (HeaderIndex << ShiftForWord)))) >> 10) & 255) + LiteralStart)) && foo->successFlag;
 	if (foo->successFlag) {
 		/* begin storePointer:ofObject:withValue: */
-		if (thisReceiver < foo->youngStart) {
+		if ((((usqInt) thisReceiver)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(thisReceiver, newValue);
 		}
 		longAtput((thisReceiver + BaseHeaderSize) + ((index - 1) << ShiftForWord), newValue);
@@ -17437,7 +16880,7 @@ register struct foo * foo = &fum;
 	fromIndex = fromOop + ((selectorIndex + 1) * BytesPerWord);
 	toIndex = toOop + (selectorIndex * BytesPerWord);
 	lastFrom = fromIndex + (count * BytesPerWord);
-	while (fromIndex < lastFrom) {
+	while ((((usqInt) fromIndex)) < (((usqInt) lastFrom))) {
 		fromIndex += BytesPerWord;
 		toIndex += BytesPerWord;
 		longAtput(toIndex, longAt(fromIndex));
@@ -17473,7 +16916,7 @@ l1:	/* end fetchClassOf: */;
 			fieldIndex = ((foo->argumentCount - i) + 1) + selectorIndex;
 			oop = foo->activeContext;
 			valuePointer = longAt((foo->activeContext + BaseHeaderSize) + (((foo->argumentCount - i) + selectorIndex) << ShiftForWord));
-			if (oop < foo->youngStart) {
+			if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(oop, valuePointer);
 			}
 			longAtput((oop + BaseHeaderSize) + (fieldIndex << ShiftForWord), valuePointer);
@@ -17483,7 +16926,7 @@ l1:	/* end fetchClassOf: */;
 		/* begin storePointer:ofObject:withValue: */
 		oop1 = foo->activeContext;
 		valuePointer1 = foo->messageSelector;
-		if (oop1 < foo->youngStart) {
+		if ((((usqInt) oop1)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(oop1, valuePointer1);
 		}
 		longAtput((oop1 + BaseHeaderSize) + (selectorIndex << ShiftForWord), valuePointer1);
@@ -17907,7 +17350,7 @@ register struct foo * foo = &fum;
 	for (i = 1; i <= sz; i += 1) {
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer = foo->rootTable[i];
-		if (oop < foo->youngStart) {
+		if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(oop, valuePointer);
 		}
 		longAtput((oop + BaseHeaderSize) + ((i - 1) << ShiftForWord), valuePointer);
@@ -18832,7 +18275,7 @@ l1:	/* end popInteger */;
 		if ((fetchClassOf(sema)) == (longAt((foo->specialObjectsOop + BaseHeaderSize) + (ClassSemaphore << ShiftForWord)))) {
 			/* begin storePointer:ofObject:withValue: */
 			oop = foo->specialObjectsOop;
-			if (oop < foo->youngStart) {
+			if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(oop, sema);
 			}
 			longAtput((oop + BaseHeaderSize) + (TheTimerSemaphore << ShiftForWord), sema);
@@ -18841,7 +18284,7 @@ l1:	/* end popInteger */;
 			/* begin storePointer:ofObject:withValue: */
 			oop1 = foo->specialObjectsOop;
 			valuePointer = foo->nilObj;
-			if (oop1 < foo->youngStart) {
+			if ((((usqInt) oop1)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(oop1, valuePointer);
 			}
 			longAtput((oop1 + BaseHeaderSize) + (TheTimerSemaphore << ShiftForWord), valuePointer);
@@ -18923,14 +18366,14 @@ register struct foo * foo = &fum;
 	/* begin initialInstanceOf: */
 	/* begin firstAccessibleObject */
 	obj = memory + (foo->headerTypeBytes[(longAt(memory)) & TypeMask]);
-	while (obj < foo->endOfMemory) {
+	while ((((usqInt) obj)) < (((usqInt) foo->endOfMemory))) {
 		if (!(((longAt(obj)) & TypeMask) == HeaderTypeFree)) {
 			thisObj = obj;
 			goto l4;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (obj >= foo->endOfMemory) {
+			if ((((usqInt) obj)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -19001,14 +18444,14 @@ register struct foo * foo = &fum;
 	/* begin push: */
 	/* begin firstAccessibleObject */
 	obj = memory + (foo->headerTypeBytes[(longAt(memory)) & TypeMask]);
-	while (obj < foo->endOfMemory) {
+	while ((((usqInt) obj)) < (((usqInt) foo->endOfMemory))) {
 		if (!(((longAt(obj)) & TypeMask) == HeaderTypeFree)) {
 			object = obj;
 			goto l2;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (obj >= foo->endOfMemory) {
+			if ((((usqInt) obj)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -19075,27 +18518,27 @@ In case of either success or failure, the headers must be restored.  In the even
 
 sqInt primitiveStoreImageSegment(void) {
 register struct foo * foo = &fum;
-    sqInt hdrBaseIn;
-    sqInt lastIn;
-    sqInt firstIn;
+    usqInt hdrBaseIn;
+    usqInt lastIn;
+    usqInt firstIn;
     sqInt doingClass;
     sqInt versionOffset;
-    sqInt firstOut;
+    usqInt firstOut;
     sqInt extraSize;
     sqInt arrayOfRoots;
-    sqInt fieldPtr;
+    usqInt fieldPtr;
     sqInt fieldOop;
-    sqInt lastOut;
-    sqInt lastPtr;
-    sqInt lastSeg;
+    usqInt lastOut;
+    usqInt lastPtr;
+    usqInt lastSeg;
     sqInt segmentWordArray;
     sqInt mapOop;
     sqInt hdrTypeBits;
-    sqInt segOop;
-    sqInt savedYoungStart;
-    sqInt hdrBaseOut;
+    usqInt segOop;
+    usqInt savedYoungStart;
+    usqInt hdrBaseOut;
     sqInt outPointerArray;
-    sqInt endSeg;
+    usqInt endSeg;
     sqInt header;
     sqInt i;
     sqInt lastAddr;
@@ -19305,7 +18748,7 @@ register struct foo * foo = &fum;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (segOop >= foo->endOfMemory) {
+			if ((((usqInt) segOop)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -19351,7 +18794,7 @@ register struct foo * foo = &fum;
 	in = (segmentWordArray - extraSize) - BytesPerWord;
 	lastIn1 = in + (3 * BytesPerWord);
 	out = (lastOut + BytesPerWord) - BytesPerWord;
-	while (in < lastIn1) {
+	while ((((usqInt) in)) < (((usqInt) lastIn1))) {
 		longAtput(out += BytesPerWord, longAt(in += BytesPerWord));
 	}
 	longAtput(lastOut + BytesPerWord, (((outPointerArray + (lastPointerOf(outPointerArray))) - lastOut) - extraSize) + hdrTypeBits);
@@ -19362,7 +18805,7 @@ register struct foo * foo = &fum;
 	in1 = (segmentWordArray - extraSize) - BytesPerWord;
 	lastIn2 = in1 + (3 * BytesPerWord);
 	out1 = (lastSeg + BytesPerWord) - BytesPerWord;
-	while (in1 < lastIn2) {
+	while ((((usqInt) in1)) < (((usqInt) lastIn2))) {
 		longAtput(out1 += BytesPerWord, longAt(in1 += BytesPerWord));
 	}
 	longAtput(segmentWordArray - extraSize, ((lastSeg - segmentWordArray) + BaseHeaderSize) + hdrTypeBits);
@@ -19403,9 +18846,9 @@ register struct foo * foo = &fum;
 	}
 l2:	/* end checkedIntegerValueOf: */;
 	/* begin success: */
-	foo->successFlag = (newStackp >= 0) && foo->successFlag;
+	foo->successFlag = ((((usqInt) newStackp)) >= (((usqInt) 0))) && foo->successFlag;
 	/* begin success: */
-	foo->successFlag = (newStackp <= ((((sqInt) (LargeContextSize - BaseHeaderSize) >> 2)) - CtxtTempFrameStart)) && foo->successFlag;
+	foo->successFlag = ((((usqInt) newStackp)) <= (((usqInt) ((((sqInt) (LargeContextSize - BaseHeaderSize) >> 2)) - CtxtTempFrameStart)))) && foo->successFlag;
 	if (!(foo->successFlag)) {
 		/* begin primitiveFail */
 		foo->successFlag = 0;
@@ -19419,11 +18862,11 @@ l2:	/* end checkedIntegerValueOf: */;
 	}
 	stackp = (sp >> 1);
 l1:	/* end fetchStackPointerOf: */;
-	if (newStackp > stackp) {
+	if ((((usqInt) newStackp)) > (((usqInt) stackp))) {
 		for (i = (stackp + 1); i <= newStackp; i += 1) {
 			/* begin storePointer:ofObject:withValue: */
 			valuePointer = foo->nilObj;
-			if (ctxt < foo->youngStart) {
+			if ((((usqInt) ctxt)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(ctxt, valuePointer);
 			}
 			longAtput((ctxt + BaseHeaderSize) + (((i + CtxtTempFrameStart) - 1) << ShiftForWord), valuePointer);
@@ -19656,7 +19099,7 @@ l7:	/* end fixedFieldsOf:format:length: */;
 	if (arrayFmt <= 4) {
 		for (i = ((start + arrayInstSize) - 1); i <= ((stop + arrayInstSize) - 1); i += 1) {
 			/* begin storePointer:ofObject:withValue: */
-			if (array < foo->youngStart) {
+			if ((((usqInt) array)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(array, longAt((repl + BaseHeaderSize) + (srcIndex << ShiftForWord)));
 			}
 			longAtput((array + BaseHeaderSize) + (i << ShiftForWord), longAt((repl + BaseHeaderSize) + (srcIndex << ShiftForWord)));
@@ -19745,12 +19188,12 @@ register struct foo * foo = &fum;
 		while (!(currentCntx == aContext)) {
 			nextCntx = longAt((currentCntx + BaseHeaderSize) + (SenderIndex << ShiftForWord));
 			/* begin storePointer:ofObject:withValue: */
-			if (currentCntx < foo->youngStart) {
+			if ((((usqInt) currentCntx)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(currentCntx, nilOop);
 			}
 			longAtput((currentCntx + BaseHeaderSize) + (SenderIndex << ShiftForWord), nilOop);
 			/* begin storePointer:ofObject:withValue: */
-			if (currentCntx < foo->youngStart) {
+			if ((((usqInt) currentCntx)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(currentCntx, nilOop);
 			}
 			longAtput((currentCntx + BaseHeaderSize) + (InstructionPointerIndex << ShiftForWord), nilOop);
@@ -19758,7 +19201,7 @@ register struct foo * foo = &fum;
 		}
 	}
 	/* begin storePointer:ofObject:withValue: */
-	if (thisCntx < foo->youngStart) {
+	if ((((usqInt) thisCntx)) < (((usqInt) foo->youngStart))) {
 		possibleRootStoreIntovalue(thisCntx, aContext);
 	}
 	longAtput((thisCntx + BaseHeaderSize) + (SenderIndex << ShiftForWord), aContext);
@@ -19944,7 +19387,7 @@ l1:	/* end checkedIntegerValueOf: */;
 		fromIndex = fromOop + (firstFrom * BytesPerWord);
 		toIndex = blockContext + (TempFrameStart * BytesPerWord);
 		lastFrom = fromIndex + (count * BytesPerWord);
-		while (fromIndex < lastFrom) {
+		while ((((usqInt) fromIndex)) < (((usqInt) lastFrom))) {
 			fromIndex += BytesPerWord;
 			toIndex += BytesPerWord;
 			longAtput(toIndex, longAt(fromIndex));
@@ -19960,7 +19403,7 @@ l1:	/* end checkedIntegerValueOf: */;
 		/* begin storeContextRegisters: */
 		longAtput((foo->activeContext + BaseHeaderSize) + (InstructionPointerIndex << ShiftForWord), ((((foo->instructionPointer - foo->method) - (BaseHeaderSize - 2)) << 1) | 1));
 		longAtput((foo->activeContext + BaseHeaderSize) + (StackPointerIndex << ShiftForWord), (((((((usqInt) ((foo->stackPointer - foo->activeContext) - BaseHeaderSize)) >> ShiftForWord) - TempFrameStart) + 1) << 1) | 1));
-		if (blockContext < foo->youngStart) {
+		if ((((usqInt) blockContext)) < (((usqInt) foo->youngStart))) {
 			beRootIfOld(blockContext);
 		}
 		foo->activeContext = blockContext;
@@ -19968,7 +19411,7 @@ l1:	/* end checkedIntegerValueOf: */;
 		tmp = longAt((blockContext + BaseHeaderSize) + (MethodIndex << ShiftForWord));
 		if ((tmp & 1)) {
 			tmp = longAt((blockContext + BaseHeaderSize) + (HomeIndex << ShiftForWord));
-			if (tmp < foo->youngStart) {
+			if ((((usqInt) tmp)) < (((usqInt) foo->youngStart))) {
 				beRootIfOld(tmp);
 			}
 		} else {
@@ -20061,7 +19504,7 @@ l2:	/* end argumentCountOfBlock: */;
 		fromIndex = argumentArray + (0 * BytesPerWord);
 		toIndex = blockContext + (TempFrameStart * BytesPerWord);
 		lastFrom = fromIndex + (arrayArgumentCount * BytesPerWord);
-		while (fromIndex < lastFrom) {
+		while ((((usqInt) fromIndex)) < (((usqInt) lastFrom))) {
 			fromIndex += BytesPerWord;
 			toIndex += BytesPerWord;
 			longAtput(toIndex, longAt(fromIndex));
@@ -20075,7 +19518,7 @@ l2:	/* end argumentCountOfBlock: */;
 		/* begin storeContextRegisters: */
 		longAtput((foo->activeContext + BaseHeaderSize) + (InstructionPointerIndex << ShiftForWord), ((((foo->instructionPointer - foo->method) - (BaseHeaderSize - 2)) << 1) | 1));
 		longAtput((foo->activeContext + BaseHeaderSize) + (StackPointerIndex << ShiftForWord), (((((((usqInt) ((foo->stackPointer - foo->activeContext) - BaseHeaderSize)) >> ShiftForWord) - TempFrameStart) + 1) << 1) | 1));
-		if (blockContext < foo->youngStart) {
+		if ((((usqInt) blockContext)) < (((usqInt) foo->youngStart))) {
 			beRootIfOld(blockContext);
 		}
 		foo->activeContext = blockContext;
@@ -20083,7 +19526,7 @@ l2:	/* end argumentCountOfBlock: */;
 		tmp = longAt((blockContext + BaseHeaderSize) + (MethodIndex << ShiftForWord));
 		if ((tmp & 1)) {
 			tmp = longAt((blockContext + BaseHeaderSize) + (HomeIndex << ShiftForWord));
-			if (tmp < foo->youngStart) {
+			if ((((usqInt) tmp)) < (((usqInt) foo->youngStart))) {
 				beRootIfOld(tmp);
 			}
 		} else {
@@ -20191,193 +19634,193 @@ register struct foo * foo = &fum;
 		result = instantiateClassindexableSize(longAt((foo->specialObjectsOop + BaseHeaderSize) + (ClassArray << ShiftForWord)), paramsArraySize);
 		for (i = 0; i <= (paramsArraySize - 1); i += 1) {
 			/* begin storePointer:ofObject:withValue: */
-			if (result < foo->youngStart) {
+			if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(result, ConstZero);
 			}
 			longAtput((result + BaseHeaderSize) + (i << ShiftForWord), ConstZero);
 		}
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer = (((foo->youngStart - mem) << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer);
 		}
 		longAtput((result + BaseHeaderSize) + (0 << ShiftForWord), valuePointer);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer1 = (((foo->freeBlock - mem) << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer1);
 		}
 		longAtput((result + BaseHeaderSize) + (1 << ShiftForWord), valuePointer1);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer2 = (((foo->endOfMemory - mem) << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer2);
 		}
 		longAtput((result + BaseHeaderSize) + (2 << ShiftForWord), valuePointer2);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer3 = ((foo->allocationCount << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer3);
 		}
 		longAtput((result + BaseHeaderSize) + (3 << ShiftForWord), valuePointer3);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer4 = ((foo->allocationsBetweenGCs << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer4);
 		}
 		longAtput((result + BaseHeaderSize) + (4 << ShiftForWord), valuePointer4);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer5 = ((foo->tenuringThreshold << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer5);
 		}
 		longAtput((result + BaseHeaderSize) + (5 << ShiftForWord), valuePointer5);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer6 = ((foo->statFullGCs << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer6);
 		}
 		longAtput((result + BaseHeaderSize) + (6 << ShiftForWord), valuePointer6);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer7 = ((foo->statFullGCMSecs << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer7);
 		}
 		longAtput((result + BaseHeaderSize) + (7 << ShiftForWord), valuePointer7);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer8 = ((foo->statIncrGCs << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer8);
 		}
 		longAtput((result + BaseHeaderSize) + (8 << ShiftForWord), valuePointer8);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer9 = ((foo->statIncrGCMSecs << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer9);
 		}
 		longAtput((result + BaseHeaderSize) + (9 << ShiftForWord), valuePointer9);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer10 = ((foo->statTenures << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer10);
 		}
 		longAtput((result + BaseHeaderSize) + (10 << ShiftForWord), valuePointer10);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer11 = ((foo->rootTableCount << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer11);
 		}
 		longAtput((result + BaseHeaderSize) + (20 << ShiftForWord), valuePointer11);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer12 = ((foo->statRootTableOverflows << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer12);
 		}
 		longAtput((result + BaseHeaderSize) + (21 << ShiftForWord), valuePointer12);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer13 = ((extraVMMemory << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer13);
 		}
 		longAtput((result + BaseHeaderSize) + (22 << ShiftForWord), valuePointer13);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer14 = ((foo->shrinkThreshold << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer14);
 		}
 		longAtput((result + BaseHeaderSize) + (23 << ShiftForWord), valuePointer14);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer15 = ((foo->growHeadroom << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer15);
 		}
 		longAtput((result + BaseHeaderSize) + (24 << ShiftForWord), valuePointer15);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer16 = ((foo->interruptChecksEveryNms << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer16);
 		}
 		longAtput((result + BaseHeaderSize) + (25 << ShiftForWord), valuePointer16);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer17 = ((foo->statMarkCount << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer17);
 		}
 		longAtput((result + BaseHeaderSize) + (26 << ShiftForWord), valuePointer17);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer18 = ((foo->statSweepCount << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer18);
 		}
 		longAtput((result + BaseHeaderSize) + (27 << ShiftForWord), valuePointer18);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer19 = ((foo->statMkFwdCount << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer19);
 		}
 		longAtput((result + BaseHeaderSize) + (28 << ShiftForWord), valuePointer19);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer20 = ((foo->statCompMoveCount << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer20);
 		}
 		longAtput((result + BaseHeaderSize) + (29 << ShiftForWord), valuePointer20);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer21 = ((foo->statGrowMemory << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer21);
 		}
 		longAtput((result + BaseHeaderSize) + (30 << ShiftForWord), valuePointer21);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer22 = ((foo->statShrinkMemory << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer22);
 		}
 		longAtput((result + BaseHeaderSize) + (31 << ShiftForWord), valuePointer22);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer23 = ((foo->statRootTableCount << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer23);
 		}
 		longAtput((result + BaseHeaderSize) + (32 << ShiftForWord), valuePointer23);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer24 = ((foo->statAllocationCount << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer24);
 		}
 		longAtput((result + BaseHeaderSize) + (33 << ShiftForWord), valuePointer24);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer25 = ((foo->statSurvivorCount << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer25);
 		}
 		longAtput((result + BaseHeaderSize) + (34 << ShiftForWord), valuePointer25);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer26 = ((foo->statGCTime << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer26);
 		}
 		longAtput((result + BaseHeaderSize) + (35 << ShiftForWord), valuePointer26);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer27 = ((foo->statSpecialMarkCount << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer27);
 		}
 		longAtput((result + BaseHeaderSize) + (36 << ShiftForWord), valuePointer27);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer28 = ((foo->statIGCDeltaTime << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer28);
 		}
 		longAtput((result + BaseHeaderSize) + (37 << ShiftForWord), valuePointer28);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer29 = ((foo->statpendingFinalizationSignals << 1) | 1);
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, valuePointer29);
 		}
 		longAtput((result + BaseHeaderSize) + (38 << ShiftForWord), valuePointer29);
 		/* begin storePointer:ofObject:withValue: */
-		if (result < foo->youngStart) {
+		if ((((usqInt) result)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(result, ((BytesPerWord << 1) | 1));
 		}
 		longAtput((result + BaseHeaderSize) + (39 << ShiftForWord), ((BytesPerWord << 1) | 1));
@@ -20623,25 +20066,25 @@ l1:	/* end assertClassOf:is: */;
 			/* begin addLastLink:toList: */
 			if ((longAt((sema + BaseHeaderSize) + (FirstLinkIndex << ShiftForWord))) == foo->nilObj) {
 				/* begin storePointer:ofObject:withValue: */
-				if (sema < foo->youngStart) {
+				if ((((usqInt) sema)) < (((usqInt) foo->youngStart))) {
 					possibleRootStoreIntovalue(sema, activeProc);
 				}
 				longAtput((sema + BaseHeaderSize) + (FirstLinkIndex << ShiftForWord), activeProc);
 			} else {
 				lastLink = longAt((sema + BaseHeaderSize) + (LastLinkIndex << ShiftForWord));
 				/* begin storePointer:ofObject:withValue: */
-				if (lastLink < foo->youngStart) {
+				if ((((usqInt) lastLink)) < (((usqInt) foo->youngStart))) {
 					possibleRootStoreIntovalue(lastLink, activeProc);
 				}
 				longAtput((lastLink + BaseHeaderSize) + (NextLinkIndex << ShiftForWord), activeProc);
 			}
 			/* begin storePointer:ofObject:withValue: */
-			if (sema < foo->youngStart) {
+			if ((((usqInt) sema)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(sema, activeProc);
 			}
 			longAtput((sema + BaseHeaderSize) + (LastLinkIndex << ShiftForWord), activeProc);
 			/* begin storePointer:ofObject:withValue: */
-			if (activeProc < foo->youngStart) {
+			if ((((usqInt) activeProc)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(activeProc, sema);
 			}
 			longAtput((activeProc + BaseHeaderSize) + (MyListIndex << ShiftForWord), sema);
@@ -20669,25 +20112,25 @@ register struct foo * foo = &fum;
 		/* begin addLastLink:toList: */
 		if ((longAt((processList + BaseHeaderSize) + (FirstLinkIndex << ShiftForWord))) == foo->nilObj) {
 			/* begin storePointer:ofObject:withValue: */
-			if (processList < foo->youngStart) {
+			if ((((usqInt) processList)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(processList, activeProc);
 			}
 			longAtput((processList + BaseHeaderSize) + (FirstLinkIndex << ShiftForWord), activeProc);
 		} else {
 			lastLink = longAt((processList + BaseHeaderSize) + (LastLinkIndex << ShiftForWord));
 			/* begin storePointer:ofObject:withValue: */
-			if (lastLink < foo->youngStart) {
+			if ((((usqInt) lastLink)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(lastLink, activeProc);
 			}
 			longAtput((lastLink + BaseHeaderSize) + (NextLinkIndex << ShiftForWord), activeProc);
 		}
 		/* begin storePointer:ofObject:withValue: */
-		if (processList < foo->youngStart) {
+		if ((((usqInt) processList)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(processList, activeProc);
 		}
 		longAtput((processList + BaseHeaderSize) + (LastLinkIndex << ShiftForWord), activeProc);
 		/* begin storePointer:ofObject:withValue: */
-		if (activeProc < foo->youngStart) {
+		if ((((usqInt) activeProc)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(activeProc, processList);
 		}
 		longAtput((activeProc + BaseHeaderSize) + (MyListIndex << ShiftForWord), processList);
@@ -20712,7 +20155,7 @@ register struct foo * foo = &fum;
 	printf("\n");
 	printCallStackOf(foo->activeContext);
 	oop = memory + (foo->headerTypeBytes[(longAt(memory)) & TypeMask]);
-	while (oop < foo->endOfMemory) {
+	while ((((usqInt) oop)) < (((usqInt) foo->endOfMemory))) {
 		if ((fetchClassOf(oop)) == (longAt((foo->specialObjectsOop + BaseHeaderSize) + (ClassSemaphore << ShiftForWord)))) {
 			/* begin cr */
 			printf("\n");
@@ -20730,7 +20173,7 @@ register struct foo * foo = &fum;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (oop >= foo->endOfMemory) {
+			if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -21124,7 +20567,7 @@ register struct foo * foo = &fum;
 		stopAddr = foo->endOfMemory;
 		flag("Dan");
 		addr = startAddr;
-		while (addr < stopAddr) {
+		while ((((usqInt) addr)) < (((usqInt) stopAddr))) {
 			longAtput(addr, byteSwapped(longAt(addr)));
 			addr += BytesPerWord;
 		}
@@ -21149,7 +20592,7 @@ register struct foo * foo = &fum;
 		fwdBlock = ((longAt(oop)) & AllButMarkBitAndTypeMask) << 1;
 		if (DoAssertionChecks) {
 			/* begin fwdBlockValidate: */
-			if (!((fwdBlock > foo->endOfMemory) && ((fwdBlock <= foo->fwdTableNext) && ((fwdBlock & 3) == 0)))) {
+			if (!(((((usqInt) fwdBlock)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock & 3) == 0)))) {
 				error("invalid fwd table entry");
 			}
 		}
@@ -21175,27 +20618,27 @@ register struct foo * foo = &fum;
 	if (first == last) {
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer = foo->nilObj;
-		if (aList < foo->youngStart) {
+		if ((((usqInt) aList)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(aList, valuePointer);
 		}
 		longAtput((aList + BaseHeaderSize) + (FirstLinkIndex << ShiftForWord), valuePointer);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer1 = foo->nilObj;
-		if (aList < foo->youngStart) {
+		if ((((usqInt) aList)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(aList, valuePointer1);
 		}
 		longAtput((aList + BaseHeaderSize) + (LastLinkIndex << ShiftForWord), valuePointer1);
 	} else {
 		next = longAt((first + BaseHeaderSize) + (NextLinkIndex << ShiftForWord));
 		/* begin storePointer:ofObject:withValue: */
-		if (aList < foo->youngStart) {
+		if ((((usqInt) aList)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(aList, next);
 		}
 		longAtput((aList + BaseHeaderSize) + (FirstLinkIndex << ShiftForWord), next);
 	}
 	/* begin storePointer:ofObject:withValue: */
 	valuePointer2 = foo->nilObj;
-	if (first < foo->youngStart) {
+	if ((((usqInt) first)) < (((usqInt) foo->youngStart))) {
 		possibleRootStoreIntovalue(first, valuePointer2);
 	}
 	longAtput((first + BaseHeaderSize) + (NextLinkIndex << ShiftForWord), valuePointer2);
@@ -21214,27 +20657,27 @@ register struct foo * foo = &fum;
     sqInt header1;
 
 	tablePtr = firstIn;
-	while (tablePtr <= lastIn) {
+	while ((((usqInt) tablePtr)) <= (((usqInt) lastIn))) {
 		oop = longAt(tablePtr);
 		header = longAt(hdrBaseIn + (tablePtr - firstIn));
 		longAtput(oop, header);
 		tablePtr += BytesPerWord;
 	}
 	tablePtr = firstOut;
-	while (tablePtr <= lastOut) {
+	while ((((usqInt) tablePtr)) <= (((usqInt) lastOut))) {
 		oop = longAt(tablePtr);
 		header = longAt(hdrBaseOut + (tablePtr - firstOut));
 		longAtput(oop, header);
 		tablePtr += BytesPerWord;
 	}
 	oop = memory + (foo->headerTypeBytes[(longAt(memory)) & TypeMask]);
-	while (oop < foo->endOfMemory) {
+	while ((((usqInt) oop)) < (((usqInt) foo->endOfMemory))) {
 		if (!(((longAt(oop)) & TypeMask) == HeaderTypeFree)) {
 			longAtput(oop, (longAt(oop)) & AllButMarkBit);
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (oop >= foo->endOfMemory) {
+			if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -21281,25 +20724,25 @@ register struct foo * foo = &fum;
 		/* begin addLastLink:toList: */
 		if ((longAt((processList + BaseHeaderSize) + (FirstLinkIndex << ShiftForWord))) == foo->nilObj) {
 			/* begin storePointer:ofObject:withValue: */
-			if (processList < foo->youngStart) {
+			if ((((usqInt) processList)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(processList, activeProc);
 			}
 			longAtput((processList + BaseHeaderSize) + (FirstLinkIndex << ShiftForWord), activeProc);
 		} else {
 			lastLink = longAt((processList + BaseHeaderSize) + (LastLinkIndex << ShiftForWord));
 			/* begin storePointer:ofObject:withValue: */
-			if (lastLink < foo->youngStart) {
+			if ((((usqInt) lastLink)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(lastLink, activeProc);
 			}
 			longAtput((lastLink + BaseHeaderSize) + (NextLinkIndex << ShiftForWord), activeProc);
 		}
 		/* begin storePointer:ofObject:withValue: */
-		if (processList < foo->youngStart) {
+		if ((((usqInt) processList)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(processList, activeProc);
 		}
 		longAtput((processList + BaseHeaderSize) + (LastLinkIndex << ShiftForWord), activeProc);
 		/* begin storePointer:ofObject:withValue: */
-		if (activeProc < foo->youngStart) {
+		if ((((usqInt) activeProc)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(activeProc, processList);
 		}
 		longAtput((activeProc + BaseHeaderSize) + (MyListIndex << ShiftForWord), processList);
@@ -21312,25 +20755,25 @@ register struct foo * foo = &fum;
 		/* begin addLastLink:toList: */
 		if ((longAt((processList1 + BaseHeaderSize) + (FirstLinkIndex << ShiftForWord))) == foo->nilObj) {
 			/* begin storePointer:ofObject:withValue: */
-			if (processList1 < foo->youngStart) {
+			if ((((usqInt) processList1)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(processList1, aProcess);
 			}
 			longAtput((processList1 + BaseHeaderSize) + (FirstLinkIndex << ShiftForWord), aProcess);
 		} else {
 			lastLink1 = longAt((processList1 + BaseHeaderSize) + (LastLinkIndex << ShiftForWord));
 			/* begin storePointer:ofObject:withValue: */
-			if (lastLink1 < foo->youngStart) {
+			if ((((usqInt) lastLink1)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(lastLink1, aProcess);
 			}
 			longAtput((lastLink1 + BaseHeaderSize) + (NextLinkIndex << ShiftForWord), aProcess);
 		}
 		/* begin storePointer:ofObject:withValue: */
-		if (processList1 < foo->youngStart) {
+		if ((((usqInt) processList1)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(processList1, aProcess);
 		}
 		longAtput((processList1 + BaseHeaderSize) + (LastLinkIndex << ShiftForWord), aProcess);
 		/* begin storePointer:ofObject:withValue: */
-		if (aProcess < foo->youngStart) {
+		if ((((usqInt) aProcess)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(aProcess, processList1);
 		}
 		longAtput((aProcess + BaseHeaderSize) + (MyListIndex << ShiftForWord), processList1);
@@ -21811,7 +21254,7 @@ register struct foo * foo = &fum;
 	activeProc = longAt(((longAt(((longAt((foo->specialObjectsOop + BaseHeaderSize) + (SchedulerAssociation << ShiftForWord))) + BaseHeaderSize) + (ValueIndex << ShiftForWord))) + BaseHeaderSize) + (ActiveProcessIndex << ShiftForWord));
 	/* begin storePointer:ofObject:withValue: */
 	valuePointer = foo->activeContext;
-	if (activeProc < foo->youngStart) {
+	if ((((usqInt) activeProc)) < (((usqInt) foo->youngStart))) {
 		possibleRootStoreIntovalue(activeProc, valuePointer);
 	}
 	longAtput((activeProc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord), valuePointer);
@@ -21819,7 +21262,7 @@ register struct foo * foo = &fum;
 	fullGC();
 	/* begin snapshotCleanUp */
 	oop = memory + (foo->headerTypeBytes[(longAt(memory)) & TypeMask]);
-	while (oop < foo->endOfMemory) {
+	while ((((usqInt) oop)) < (((usqInt) foo->endOfMemory))) {
 		if (!(((longAt(oop)) & TypeMask) == HeaderTypeFree)) {
 			header = longAt(oop);
 			fmt = (((usqInt) header) >> 8) & 15;
@@ -21846,7 +21289,7 @@ register struct foo * foo = &fum;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (oop >= foo->endOfMemory) {
+			if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -22047,7 +21490,7 @@ l3:	/* end fixedFieldsOf:format:length: */;
 	} else {
 		stSize = totalLength - fixedFields;
 	}
-	if (((((usqInt ) index)) >= 1) && ((((usqInt ) index)) <= (((usqInt ) stSize)))) {
+	if (((((usqInt) index)) >= (((usqInt) 1))) && ((((usqInt) index)) <= (((usqInt) stSize)))) {
 		/* begin subscript:with:format: */
 		if (fmt <= 4) {
 			return longAt((array + BaseHeaderSize) + (((index + fixedFields) - 1) << ShiftForWord));
@@ -22140,11 +21583,11 @@ l3:	/* end fixedFieldsOf:format:length: */;
 	} else {
 		stSize = totalLength - fixedFields;
 	}
-	if (((((usqInt ) index)) >= 1) && ((((usqInt ) index)) <= (((usqInt ) stSize)))) {
+	if (((((usqInt) index)) >= (((usqInt) 1))) && ((((usqInt) index)) <= (((usqInt) stSize)))) {
 		/* begin subscript:with:storing:format: */
 		if (fmt <= 4) {
 			/* begin storePointer:ofObject:withValue: */
-			if (array < foo->youngStart) {
+			if ((((usqInt) array)) < (((usqInt) foo->youngStart))) {
 				possibleRootStoreIntovalue(array, value);
 			}
 			longAtput((array + BaseHeaderSize) + (((index + fixedFields) - 1) << ShiftForWord), value);
@@ -22188,7 +21631,7 @@ sqInt storeIntegerofObjectwithValue(sqInt fieldIndex, sqInt objectPointer, sqInt
 /*	Note must check here for stores of young objects into old ones. */
 
 sqInt storePointerofObjectwithValue(sqInt fieldIndex, sqInt oop, sqInt valuePointer) {
-	if (oop < foo->youngStart) {
+	if ((((usqInt) oop)) < (((usqInt) foo->youngStart))) {
 		possibleRootStoreIntovalue(oop, valuePointer);
 	}
 	return longAtput((oop + BaseHeaderSize) + (fieldIndex << ShiftForWord), valuePointer);
@@ -22283,7 +21726,7 @@ register struct foo * foo = &fum;
     sqInt limit;
 
 	incrementalGC();
-	if ((((usqInt ) ((longAt(foo->freeBlock)) & AllButTypeMask))) < (((usqInt ) minFree))) {
+	if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) < (((usqInt) minFree))) {
 		if (foo->signalLowSpace) {
 			return 0;
 		}
@@ -22299,7 +21742,7 @@ register struct foo * foo = &fum;
 			foo->memoryLimit = limit - 24;
 			initializeMemoryFirstFree(foo->freeBlock);
 		}
-		if ((((usqInt ) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= ((((usqInt ) minFree)) + 15000)) {
+		if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt) (minFree + 15000)))) {
 			return 1;
 		}
 		return 0;
@@ -22318,7 +21761,7 @@ register struct foo * foo = &fum;
 	/* check for low-space */
 
 	minFree = (foo->lowSpaceThreshold + bytes) + BaseHeaderSize;
-	if ((((usqInt ) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt ) minFree))) {
+	if ((((usqInt) ((longAt(foo->freeBlock)) & AllButTypeMask))) >= (((usqInt) minFree))) {
 		return 1;
 	} else {
 		return sufficientSpaceAfterGC(minFree);
@@ -22349,11 +21792,11 @@ sqInt superclassOf(sqInt classPointer) {
 
 sqInt sweepPhase(void) {
 register struct foo * foo = &fum;
-    sqInt endOfMemoryLocal;
+    usqInt endOfMemoryLocal;
     sqInt firstFree;
     sqInt oopHeader;
     sqInt freeChunkSize;
-    sqInt oop;
+    usqInt oop;
     sqInt entriesAvailable;
     sqInt freeChunk;
     sqInt hdrBytes;
@@ -22472,7 +21915,7 @@ register struct foo * foo = &fum;
 	sched = longAt(((longAt((foo->specialObjectsOop + BaseHeaderSize) + (SchedulerAssociation << ShiftForWord))) + BaseHeaderSize) + (ValueIndex << ShiftForWord));
 	oldProc = longAt((sched + BaseHeaderSize) + (ActiveProcessIndex << ShiftForWord));
 	/* begin storePointer:ofObject:withValue: */
-	if (sched < foo->youngStart) {
+	if ((((usqInt) sched)) < (((usqInt) foo->youngStart))) {
 		possibleRootStoreIntovalue(sched, newProc);
 	}
 	longAtput((sched + BaseHeaderSize) + (ActiveProcessIndex << ShiftForWord), newProc);
@@ -22481,7 +21924,7 @@ register struct foo * foo = &fum;
 	} else {
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer = foo->activeContext;
-		if (oldProc < foo->youngStart) {
+		if ((((usqInt) oldProc)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(oldProc, valuePointer);
 		}
 		longAtput((oldProc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord), valuePointer);
@@ -22489,7 +21932,7 @@ register struct foo * foo = &fum;
 		/* begin storeContextRegisters: */
 		longAtput((foo->activeContext + BaseHeaderSize) + (InstructionPointerIndex << ShiftForWord), ((((foo->instructionPointer - foo->method) - (BaseHeaderSize - 2)) << 1) | 1));
 		longAtput((foo->activeContext + BaseHeaderSize) + (StackPointerIndex << ShiftForWord), (((((((usqInt) ((foo->stackPointer - foo->activeContext) - BaseHeaderSize)) >> ShiftForWord) - TempFrameStart) + 1) << 1) | 1));
-		if ((longAt((newProc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord))) < foo->youngStart) {
+		if ((((usqInt) (longAt((newProc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord))))) < (((usqInt) foo->youngStart))) {
 			beRootIfOld(longAt((newProc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord)));
 		}
 		foo->activeContext = longAt((newProc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord));
@@ -22497,7 +21940,7 @@ register struct foo * foo = &fum;
 		tmp = longAt(((longAt((newProc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord))) + BaseHeaderSize) + (MethodIndex << ShiftForWord));
 		if ((tmp & 1)) {
 			tmp = longAt(((longAt((newProc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord))) + BaseHeaderSize) + (HomeIndex << ShiftForWord));
-			if (tmp < foo->youngStart) {
+			if ((((usqInt) tmp)) < (((usqInt) foo->youngStart))) {
 				beRootIfOld(tmp);
 			}
 		} else {
@@ -22512,7 +21955,7 @@ register struct foo * foo = &fum;
 		foo->stackPointer = ((longAt((newProc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord))) + BaseHeaderSize) + (((TempFrameStart + tmp) - 1) * BytesPerWord);
 		/* begin storePointer:ofObject:withValue: */
 		valuePointer1 = foo->nilObj;
-		if (newProc < foo->youngStart) {
+		if ((((usqInt) newProc)) < (((usqInt) foo->youngStart))) {
 			possibleRootStoreIntovalue(newProc, valuePointer1);
 		}
 		longAtput((newProc + BaseHeaderSize) + (SuspendedContextIndex << ShiftForWord), valuePointer1);
@@ -22562,7 +22005,7 @@ register struct foo * foo = &fum;
     sqInt header12;
 
 	oop = memStart + (foo->headerTypeBytes[(longAt(memStart)) & TypeMask]);
-	while (oop < memEnd) {
+	while ((((usqInt) oop)) < (((usqInt) memEnd))) {
 		if (!(((longAt(oop)) & TypeMask) == HeaderTypeFree)) {
 			/* begin remapFieldsAndClassOf: */
 			/* begin lastPointerWhileForwarding: */
@@ -22571,7 +22014,7 @@ register struct foo * foo = &fum;
 				fwdBlock2 = (header3 & AllButMarkBitAndTypeMask) << 1;
 				if (DoAssertionChecks) {
 					/* begin fwdBlockValidate: */
-					if (!((fwdBlock2 > foo->endOfMemory) && ((fwdBlock2 <= foo->fwdTableNext) && ((fwdBlock2 & 3) == 0)))) {
+					if (!(((((usqInt) fwdBlock2)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock2)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock2 & 3) == 0)))) {
 						error("invalid fwd table entry");
 					}
 				}
@@ -22584,12 +22027,12 @@ register struct foo * foo = &fum;
 					sp = longAt((oop + BaseHeaderSize) + (StackPointerIndex << ShiftForWord));
 					if (!((sp & 1))) {
 						contextSize = 0;
-						goto l1;
+						goto l2;
 					}
 					contextSize = (sp >> 1);
-				l1:	/* end fetchStackPointerOf: */;
+				l2:	/* end fetchStackPointerOf: */;
 					fieldOffset = (CtxtTempFrameStart + contextSize) * BytesPerWord;
-					goto l2;
+					goto l1;
 				}
 				if ((header3 & TypeMask) == HeaderTypeSizeAndClass) {
 					size = (longAt(oop - (BytesPerWord * 2))) & AllButTypeMask;
@@ -22597,35 +22040,35 @@ register struct foo * foo = &fum;
 					size = header3 & SizeMask;
 				}
 				fieldOffset = size - BaseHeaderSize;
-				goto l2;
+				goto l1;
 			}
 			if (fmt < 12) {
 				fieldOffset = 0;
-				goto l2;
+				goto l1;
 			}
 			methodHeader = longAt(oop + BaseHeaderSize);
 			fieldOffset = (((((usqInt) methodHeader) >> 10) & 255) * BytesPerWord) + BaseHeaderSize;
-		l2:	/* end lastPointerWhileForwarding: */;
+		l1:	/* end lastPointerWhileForwarding: */;
 			while (fieldOffset >= BaseHeaderSize) {
 				fieldOop = longAt(oop + fieldOffset);
 				if (((fieldOop & 1) == 0) && (((longAt(fieldOop)) & MarkBit) != 0)) {
 					fwdBlock = ((longAt(fieldOop)) & AllButMarkBitAndTypeMask) << 1;
 					if (DoAssertionChecks) {
 						/* begin fwdBlockValidate: */
-						if (!((fwdBlock > foo->endOfMemory) && ((fwdBlock <= foo->fwdTableNext) && ((fwdBlock & 3) == 0)))) {
+						if (!(((((usqInt) fwdBlock)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock & 3) == 0)))) {
 							error("invalid fwd table entry");
 						}
 					}
 					newOop = longAt(fwdBlock);
 					longAtput(oop + fieldOffset, newOop);
-					if ((oop < foo->youngStart) && (newOop >= foo->youngStart)) {
+					if (((((usqInt) oop)) < (((usqInt) foo->youngStart))) && ((((usqInt) newOop)) >= (((usqInt) foo->youngStart)))) {
 						/* begin beRootWhileForwarding: */
 						header = longAt(oop);
 						if ((header & MarkBit) != 0) {
 							fwdBlock1 = (header & AllButMarkBitAndTypeMask) << 1;
 							if (DoAssertionChecks) {
 								/* begin fwdBlockValidate: */
-								if (!((fwdBlock1 > foo->endOfMemory) && ((fwdBlock1 <= foo->fwdTableNext) && ((fwdBlock1 & 3) == 0)))) {
+								if (!(((((usqInt) fwdBlock1)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock1)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock1 & 3) == 0)))) {
 									error("invalid fwd table entry");
 								}
 							}
@@ -22677,21 +22120,21 @@ register struct foo * foo = &fum;
 				fwdBlock3 = ((longAt(classOop)) & AllButMarkBitAndTypeMask) << 1;
 				if (DoAssertionChecks) {
 					/* begin fwdBlockValidate: */
-					if (!((fwdBlock3 > foo->endOfMemory) && ((fwdBlock3 <= foo->fwdTableNext) && ((fwdBlock3 & 3) == 0)))) {
+					if (!(((((usqInt) fwdBlock3)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock3)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock3 & 3) == 0)))) {
 						error("invalid fwd table entry");
 					}
 				}
 				newClassOop = longAt(fwdBlock3);
 				newClassHeader = newClassOop | (classHeader & TypeMask);
 				longAtput(oop - BytesPerWord, newClassHeader);
-				if ((oop < foo->youngStart) && (newClassOop >= foo->youngStart)) {
+				if (((((usqInt) oop)) < (((usqInt) foo->youngStart))) && ((((usqInt) newClassOop)) >= (((usqInt) foo->youngStart)))) {
 					/* begin beRootWhileForwarding: */
 					header4 = longAt(oop);
 					if ((header4 & MarkBit) != 0) {
 						fwdBlock11 = (header4 & AllButMarkBitAndTypeMask) << 1;
 						if (DoAssertionChecks) {
 							/* begin fwdBlockValidate: */
-							if (!((fwdBlock11 > foo->endOfMemory) && ((fwdBlock11 <= foo->fwdTableNext) && ((fwdBlock11 & 3) == 0)))) {
+							if (!(((((usqInt) fwdBlock11)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock11)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock11 & 3) == 0)))) {
 								error("invalid fwd table entry");
 							}
 						}
@@ -22738,7 +22181,7 @@ register struct foo * foo = &fum;
 		if ((header5 & MarkBit) == 0) {
 			/* begin objectAfter: */
 			if (DoAssertionChecks) {
-				if (oop >= foo->endOfMemory) {
+				if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 					error("no objects after the end of memory");
 				}
 			}
@@ -22762,7 +22205,7 @@ register struct foo * foo = &fum;
 		fwdBlock4 = (header5 & AllButMarkBitAndTypeMask) << 1;
 		if (DoAssertionChecks) {
 			/* begin fwdBlockValidate: */
-			if (!((fwdBlock4 > foo->endOfMemory) && ((fwdBlock4 <= foo->fwdTableNext) && ((fwdBlock4 & 3) == 0)))) {
+			if (!(((((usqInt) fwdBlock4)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock4)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock4 & 3) == 0)))) {
 				error("invalid fwd table entry");
 			}
 		}
@@ -22811,7 +22254,7 @@ register struct foo * foo = &fum;
 
 	for (i = 1; i <= foo->rootTableCount; i += 1) {
 		oop = foo->rootTable[i];
-		if ((oop < memStart) || (oop >= memEnd)) {
+		if (((((usqInt) oop)) < (((usqInt) memStart))) || ((((usqInt) oop)) >= (((usqInt) memEnd)))) {
 			/* begin remapFieldsAndClassOf: */
 			/* begin lastPointerWhileForwarding: */
 			header3 = longAt(oop);
@@ -22819,7 +22262,7 @@ register struct foo * foo = &fum;
 				fwdBlock2 = (header3 & AllButMarkBitAndTypeMask) << 1;
 				if (DoAssertionChecks) {
 					/* begin fwdBlockValidate: */
-					if (!((fwdBlock2 > foo->endOfMemory) && ((fwdBlock2 <= foo->fwdTableNext) && ((fwdBlock2 & 3) == 0)))) {
+					if (!(((((usqInt) fwdBlock2)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock2)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock2 & 3) == 0)))) {
 						error("invalid fwd table entry");
 					}
 				}
@@ -22832,12 +22275,12 @@ register struct foo * foo = &fum;
 					sp = longAt((oop + BaseHeaderSize) + (StackPointerIndex << ShiftForWord));
 					if (!((sp & 1))) {
 						contextSize = 0;
-						goto l1;
+						goto l2;
 					}
 					contextSize = (sp >> 1);
-				l1:	/* end fetchStackPointerOf: */;
+				l2:	/* end fetchStackPointerOf: */;
 					fieldOffset = (CtxtTempFrameStart + contextSize) * BytesPerWord;
-					goto l2;
+					goto l1;
 				}
 				if ((header3 & TypeMask) == HeaderTypeSizeAndClass) {
 					size = (longAt(oop - (BytesPerWord * 2))) & AllButTypeMask;
@@ -22845,35 +22288,35 @@ register struct foo * foo = &fum;
 					size = header3 & SizeMask;
 				}
 				fieldOffset = size - BaseHeaderSize;
-				goto l2;
+				goto l1;
 			}
 			if (fmt < 12) {
 				fieldOffset = 0;
-				goto l2;
+				goto l1;
 			}
 			methodHeader = longAt(oop + BaseHeaderSize);
 			fieldOffset = (((((usqInt) methodHeader) >> 10) & 255) * BytesPerWord) + BaseHeaderSize;
-		l2:	/* end lastPointerWhileForwarding: */;
+		l1:	/* end lastPointerWhileForwarding: */;
 			while (fieldOffset >= BaseHeaderSize) {
 				fieldOop = longAt(oop + fieldOffset);
 				if (((fieldOop & 1) == 0) && (((longAt(fieldOop)) & MarkBit) != 0)) {
 					fwdBlock = ((longAt(fieldOop)) & AllButMarkBitAndTypeMask) << 1;
 					if (DoAssertionChecks) {
 						/* begin fwdBlockValidate: */
-						if (!((fwdBlock > foo->endOfMemory) && ((fwdBlock <= foo->fwdTableNext) && ((fwdBlock & 3) == 0)))) {
+						if (!(((((usqInt) fwdBlock)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock & 3) == 0)))) {
 							error("invalid fwd table entry");
 						}
 					}
 					newOop = longAt(fwdBlock);
 					longAtput(oop + fieldOffset, newOop);
-					if ((oop < foo->youngStart) && (newOop >= foo->youngStart)) {
+					if (((((usqInt) oop)) < (((usqInt) foo->youngStart))) && ((((usqInt) newOop)) >= (((usqInt) foo->youngStart)))) {
 						/* begin beRootWhileForwarding: */
 						header = longAt(oop);
 						if ((header & MarkBit) != 0) {
 							fwdBlock1 = (header & AllButMarkBitAndTypeMask) << 1;
 							if (DoAssertionChecks) {
 								/* begin fwdBlockValidate: */
-								if (!((fwdBlock1 > foo->endOfMemory) && ((fwdBlock1 <= foo->fwdTableNext) && ((fwdBlock1 & 3) == 0)))) {
+								if (!(((((usqInt) fwdBlock1)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock1)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock1 & 3) == 0)))) {
 									error("invalid fwd table entry");
 								}
 							}
@@ -22925,21 +22368,21 @@ register struct foo * foo = &fum;
 				fwdBlock3 = ((longAt(classOop)) & AllButMarkBitAndTypeMask) << 1;
 				if (DoAssertionChecks) {
 					/* begin fwdBlockValidate: */
-					if (!((fwdBlock3 > foo->endOfMemory) && ((fwdBlock3 <= foo->fwdTableNext) && ((fwdBlock3 & 3) == 0)))) {
+					if (!(((((usqInt) fwdBlock3)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock3)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock3 & 3) == 0)))) {
 						error("invalid fwd table entry");
 					}
 				}
 				newClassOop = longAt(fwdBlock3);
 				newClassHeader = newClassOop | (classHeader & TypeMask);
 				longAtput(oop - BytesPerWord, newClassHeader);
-				if ((oop < foo->youngStart) && (newClassOop >= foo->youngStart)) {
+				if (((((usqInt) oop)) < (((usqInt) foo->youngStart))) && ((((usqInt) newClassOop)) >= (((usqInt) foo->youngStart)))) {
 					/* begin beRootWhileForwarding: */
 					header4 = longAt(oop);
 					if ((header4 & MarkBit) != 0) {
 						fwdBlock11 = (header4 & AllButMarkBitAndTypeMask) << 1;
 						if (DoAssertionChecks) {
 							/* begin fwdBlockValidate: */
-							if (!((fwdBlock11 > foo->endOfMemory) && ((fwdBlock11 <= foo->fwdTableNext) && ((fwdBlock11 & 3) == 0)))) {
+							if (!(((((usqInt) fwdBlock11)) > (((usqInt) foo->endOfMemory))) && (((((usqInt) fwdBlock11)) <= (((usqInt) foo->fwdTableNext))) && ((fwdBlock11 & 3) == 0)))) {
 								error("invalid fwd table entry");
 							}
 						}
@@ -22996,9 +22439,9 @@ register struct foo * foo = &fum;
 sqInt validateRoots(void) {
 register struct foo * foo = &fum;
     sqInt badRoot;
-    sqInt oop;
-    sqInt fieldOop;
-    sqInt fieldAddr;
+    usqInt oop;
+    usqInt fieldOop;
+    usqInt fieldAddr;
     sqInt header;
     sqInt sz;
     sqInt header1;
@@ -23026,7 +22469,7 @@ register struct foo * foo = &fum;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (oop >= foo->endOfMemory) {
+			if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -23056,7 +22499,7 @@ register struct foo * foo = &fum;
     sqInt header;
 
 	oop = memory + (foo->headerTypeBytes[(longAt(memory)) & TypeMask]);
-	while (oop < foo->endOfMemory) {
+	while ((((usqInt) oop)) < (((usqInt) foo->endOfMemory))) {
 		if (((longAt(oop)) & TypeMask) == HeaderTypeFree) {
 			if (!((objectAfter(oop)) == foo->endOfMemory)) {
 				error("Invalid obj with HeaderTypeBits = Free.");
@@ -23068,7 +22511,7 @@ register struct foo * foo = &fum;
 		}
 		/* begin objectAfter: */
 		if (DoAssertionChecks) {
-			if (oop >= foo->endOfMemory) {
+			if ((((usqInt) oop)) >= (((usqInt) foo->endOfMemory))) {
 				error("no objects after the end of memory");
 			}
 		}
@@ -23219,22 +22662,16 @@ sqInt writeImageFile(sqInt imageBytes) {
 
 
 void* vm_exports[][3] = {
+	{"", "primitiveSetGCSemaphore", (void*)primitiveSetGCSemaphore},
+	{"", "primitiveRootTable", (void*)primitiveRootTable},
 	{"", "primitiveSetGCBiasToGrowGCLimit", (void*)primitiveSetGCBiasToGrowGCLimit},
 	{"", "primitiveScreenDepth", (void*)primitiveScreenDepth},
 	{"", "primitiveSetGCBiasToGrow", (void*)primitiveSetGCBiasToGrow},
-	{"", "primitiveIsYoung", (void*)primitiveIsYoung},
-	{"", "primitiveByteArrayNByteIntegerAt", (void*)primitiveByteArrayNByteIntegerAt},
-	{"", "primitiveRootTableAt", (void*)primitiveRootTableAt},
-	{"", "primitiveSetGCSemaphore", (void*)primitiveSetGCSemaphore},
-	{"", "primitiveByteArrayDoubleAt", (void*)primitiveByteArrayDoubleAt},
-	{"", "primitiveRootTable", (void*)primitiveRootTable},
-	{"", "primitiveByteArrayNByteIIntegerAtPut", (void*)primitiveByteArrayNByteIIntegerAtPut},
 	{"", "primitiveIsRoot", (void*)primitiveIsRoot},
-	{"", "primitiveByteArrayDoubleAtPut", (void*)primitiveByteArrayDoubleAtPut},
 	{"", "primitiveForceTenure", (void*)primitiveForceTenure},
 	{"", "moduleUnloaded", (void*)moduleUnloaded},
 	{"", "primitiveDisablePowerManager", (void*)primitiveDisablePowerManager},
-	{"", "primitiveByteArrayFloatAt", (void*)primitiveByteArrayFloatAt},
-	{"", "primitiveByteArrayFloatAtPut", (void*)primitiveByteArrayFloatAtPut},
+	{"", "primitiveIsYoung", (void*)primitiveIsYoung},
+	{"", "primitiveRootTableAt", (void*)primitiveRootTableAt},
 	{NULL, NULL, NULL}
 };
