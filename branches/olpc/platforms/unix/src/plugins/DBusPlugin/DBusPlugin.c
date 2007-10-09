@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(25 June 2007 6:19:23 pm) */
+/* Automatically generated from Squeak on an Array(9 October 2007 7:00:22 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -28,12 +28,11 @@
 #include "aio.h"
 	#define DBUS_API_SUBJECT_TO_CHANGE
 #include <dbus/dbus.h>
-	struct sqDBusData{
+	typedef struct sqDBusData {
 		DBusConnection* con;
 		DBusWatch* watch;
 		int semaphore;
-	};
-	typedef struct sqDBusData* dbusWatchData;
+	} sqDBusData;
 
 #include "sqMemoryAccess.h"
 
@@ -66,14 +65,14 @@ EXPORT(const char*) getModuleName(void);
 static DBusConnection * getSessionBusConnection(void);
 static DBusConnection * getSystemBusConnection(void);
 static sqInt halt(void);
-static sqInt handleReadForFDwithDataandFlag(int fd, dbusWatchData data, int flag);
+static sqInt handleReadForFDwithDataandFlag(int fd, sqDBusData* data, int flag);
 static sqInt handleflag(int fd, int flag);
 #pragma export on
 EXPORT(sqInt) initialiseModule(void);
 #pragma export off
 static sqInt iterOpenContainercontains(sqInt t, char* s);
 static sqInt msg(char * s);
-static dbusWatchData newDataStructWitchConnectionandSemaphore(DBusConnection * con, int semaphore);
+static sqDBusData* newDataStructWithConnectionandSemaphore(DBusConnection * con, int semaphore);
 #pragma export on
 EXPORT(sqInt) primitiveDBusAddMatch(void);
 EXPORT(sqInt) primitiveDBusAppendBasicArgument(void);
@@ -125,10 +124,10 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 EXPORT(sqInt) shutdownModule(void);
 #pragma export off
 static sqInt sqAssert(sqInt aBool);
-static sqInt sqDBusPluginAddWatchwithData(DBusWatch* watch, dbusWatchData data);
-static sqInt sqDBusPluginFreeWatchData(dbusWatchData data);
-static sqInt sqDBusPluginRemoveWatchwithData(DBusWatch* watch, dbusWatchData data);
-static sqInt sqDBusPluginToggleWatchwithData(DBusWatch* watch, dbusWatchData data);
+static dbus_bool_t sqDBusPluginAddWatchwithData(DBusWatch* watch, void* data);
+static void sqDBusPluginFreeWatchData(void* data);
+static void sqDBusPluginRemoveWatchwithData(DBusWatch* watch, void* data);
+static void sqDBusPluginToggleWatchwithData(DBusWatch* watch, void* data);
 static char * stringOopToChar(sqInt oop);
 /*** Variables ***/
 static DBusConnection* connections[2];
@@ -144,9 +143,9 @@ static DBusMessage* message;
 static DBusMessageIter messageIter[DBUS_MAXIMUM_TYPE_RECURSION_DEPTH];
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DBusPlugin 25 June 2007 (i)"
+	"DBusPlugin 9 October 2007 (i)"
 #else
-	"DBusPlugin 25 June 2007 (e)"
+	"DBusPlugin 9 October 2007 (e)"
 #endif
 ;
 static DBusMessage* writeMessage;
@@ -506,7 +505,7 @@ static sqInt halt(void) {
 
 /*	a handler function which is called when new messages arrived in the dbus queue */
 
-static sqInt handleReadForFDwithDataandFlag(int fd, dbusWatchData data, int flag) {
+static sqInt handleReadForFDwithDataandFlag(int fd, sqDBusData* data, int flag) {
 	sqInt semaphore;
 
 	dbus_watch_handle(data->watch, DBUS_WATCH_READABLE);
@@ -543,13 +542,13 @@ static sqInt msg(char * s) {
 }
 
 
-/*	answers an new data stuct which is needed for handling watchers */
+/*	answers an new data struct which is needed for handling watchers */
 
-static dbusWatchData newDataStructWitchConnectionandSemaphore(DBusConnection * con, int semaphore) {
-	dbusWatchData t;
+static sqDBusData* newDataStructWithConnectionandSemaphore(DBusConnection * con, int semaphore) {
+	sqDBusData* t;
 
 	t = null;
-	t = (dbusWatchData)malloc(sizeof(dbusWatchData));
+	t = (sqDBusData*)malloc(sizeof(sqDBusData));
 	if (t == null) {
 		msg("Cannot allocate memory for data structure");
 		return null;
@@ -1095,7 +1094,7 @@ EXPORT(sqInt) primitiveDBusConnectionPopMessage(void) {
 EXPORT(sqInt) primitiveDBusConnectionRegisterSemaphore(void) {
 	DBusConnection* conn;
 	sqInt rcvOop;
-	dbusWatchData data;
+	sqDBusData* data;
 	sqInt semaphore;
 
 	semaphore = interpreterProxy->stackIntegerValue(0);
@@ -1107,16 +1106,17 @@ EXPORT(sqInt) primitiveDBusConnectionRegisterSemaphore(void) {
 	/* create a new data structure */
 
 	conn = getConnectionFromOop(rcvOop);
-	data = newDataStructWitchConnectionandSemaphore(conn, semaphore);
+	data = newDataStructWithConnectionandSemaphore(conn, semaphore);
 	if (data == null) {
 		interpreterProxy->primitiveFail();
 		return null;
 	}
-	if (!(dbus_connection_set_watch_functions(conn, (DBusAddWatchFunction) sqDBusPluginAddWatchwithData,
-															(DBusRemoveWatchFunction) sqDBusPluginRemoveWatchwithData,
-															(DBusWatchToggledFunction) sqDBusPluginToggleWatchwithData, 
-															data,
-															(DBusFreeFunction) sqDBusPluginFreeWatchData))) {
+	if (!(dbus_connection_set_watch_functions(conn,
+		sqDBusPluginAddWatchwithData,
+		sqDBusPluginRemoveWatchwithData,
+		sqDBusPluginToggleWatchwithData, 
+		data,
+		sqDBusPluginFreeWatchData))) {
 		msg("Can not set the watch functions");
 		interpreterProxy->primitiveFail();
 		return null;
@@ -1939,7 +1939,7 @@ static sqInt sqAssert(sqInt aBool) {
 
 /*	is called when the dbus want to add a watch handle. a filedescriptor for the watch will registered in the squeak loop */
 
-static sqInt sqDBusPluginAddWatchwithData(DBusWatch* watch, dbusWatchData data) {
+static dbus_bool_t sqDBusPluginAddWatchwithData(DBusWatch* watch, void* data) {
 	sqInt flag;
 	sqInt fd;
 
@@ -1951,24 +1951,25 @@ static sqInt sqDBusPluginAddWatchwithData(DBusWatch* watch, dbusWatchData data) 
 	/* set watch in data structure */
 
 	fd = dbus_watch_get_fd(watch);
-	data->watch = watch;
+	((sqDBusData*)data)->watch = watch;
 	if (flag & DBUS_WATCH_READABLE) {
 		aioEnable(fd, data, NULL);
 							aioHandle(fd, handleReadForFDwithDataandFlag , 1<<0 | 1<<1 | 1<<3);
 	}
+	return 1;
 }
 
 
 /*	function is called after a watch is dissabled an the data of the watch can be freed */
 
-static sqInt sqDBusPluginFreeWatchData(dbusWatchData data) {
+static void sqDBusPluginFreeWatchData(void* data) {
 	free(data);
 }
 
 
 /*	is called when the dbus want to remove a watch handle, the filedescriptor will disabled */
 
-static sqInt sqDBusPluginRemoveWatchwithData(DBusWatch* watch, dbusWatchData data) {
+static void sqDBusPluginRemoveWatchwithData(DBusWatch* watch, void* data) {
 	sqInt fd;
 
 	fd = dbus_watch_get_fd(watch);
@@ -1978,14 +1979,14 @@ static sqInt sqDBusPluginRemoveWatchwithData(DBusWatch* watch, dbusWatchData dat
 
 /*	toggle the filedescriptor */
 
-static sqInt sqDBusPluginToggleWatchwithData(DBusWatch* watch, dbusWatchData data) {
+static void sqDBusPluginToggleWatchwithData(DBusWatch* watch, void* data) {
 	sqInt enable;
 	sqInt fd;
 
 	enable = dbus_watch_get_enabled(watch);
 	fd = dbus_watch_get_fd(watch);
 	if (enable) {
-		data->watch = watch;
+		((sqDBusData*)data)->watch = watch;
 		aioEnable(fd, data, NULL);
 	} else {
 		aioDisable(fd);
