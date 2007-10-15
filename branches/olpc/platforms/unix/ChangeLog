@@ -1,3 +1,18 @@
+2007-10-12  Ian Piumarta  <com -dot- gmail -at- piumarta (backwards)>
+
+	* vm-display-Quartz/sqUnixQuartz.m ([Squeak -interpret:]): Squash unused
+	warning for recordWindowEvent().
+
+	* vm-display-fbdev/sqUnixFBDev.c (display_winInit): Squash unused
+	warning for recordWindowEvent().
+
+	* npsqueak/Makefile: Remove duplicate 'LDFLAGS ='.
+
+2007-10-11  Ian Piumarta  <com -dot- gmail -at- piumarta (backwards)>
+
+	* vm-display-X11/sqUnixX11.c (handleEvent): Record key events when
+	ucs4 is valid even if keyCode is not.
+
 2007-09-14  Ian Piumarta  <com -dot- gmail -at- piumarta (backwards)>
 
 	* vm-display-X11/sqUnixX11.c (xkeysym2ucs4): Added.
