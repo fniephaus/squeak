@@ -27,7 +27,7 @@
 
 /* Author: Ian Piumarta <ian.piumarta@squeakland.org>
  *
- * Last edited: 2007-09-14 12:11:03 by piumarta on emilia.local
+ * Last edited: 2007-10-12 20:10:44 by piumarta on emilia
  *
  * NOTE: this file is included by the window support files that need it.
  */
@@ -238,7 +238,6 @@ static void recordWindowEvent(int action, int v1, int v2, int v3, int v4)
     }
   printf("\n");
 #endif
-  if (0) recordWindowEvent(0,0,0,0,0); /* get rid of stupid declared-but-not-used warning */ 
 }
 
 

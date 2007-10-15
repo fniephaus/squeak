@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.9
-%define minor   11
-%define release %{minor}olpc5
+%define minor   12
+%define release %{minor}olpc1
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -39,7 +39,7 @@ to install it before you install Etoys.
 %build
 mkdir bld
 cd bld
-../platforms/unix/config/configure --without-gl --prefix=%{prefix}
+CFLAGS=-DSUGAR ../platforms/unix/config/configure --without-gl --prefix=%{prefix}
 make ROOT=%{buildroot} %{?_smp_mflags}
 
 %install
@@ -61,7 +61,13 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
-* Thu Jul 17 2007 Bert Freudenberg <bert@freudenbergs.de>
+* Mon Oct 15 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-12olpc1: SVN r. 1776
+  - merged with trunk (bf)
+  - signed oop fixes (dave)
+  - unicode key events (ian)
+  - fix dbus plugin (bf)
+* Thu Aug 30 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-11olpc5: SVN r. 1761
   - set _NET_WM_PID to our process id (danw)
   - generate WindowEventClose on delete window message (ian)

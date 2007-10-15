@@ -1,6 +1,6 @@
 # Netscape Plugin for Squeak on Unix platforms
 # Author: Bert Freudenberg
-# Last edited: 2007-09-09 11:24:34 by piumarta on emilia
+# Last edited: 2007-10-12 20:03:33 by piumarta on emilia
 
 ############ Customize flags here #######################
 
