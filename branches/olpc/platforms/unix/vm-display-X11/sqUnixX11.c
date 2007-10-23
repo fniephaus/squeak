@@ -107,6 +107,9 @@
 #define XK_MISCELLANY
 #define XK_XKB_KEYS
 #include <X11/keysymdef.h>
+#if defined(SUGAR)
+# include <X11/XF86keysym.h>
+#endif
 #if defined(USE_XSHM)
 #  include <sys/ipc.h>
 #  include <sys/shm.h>
@@ -2700,6 +2703,10 @@ static int translateCode(KeySym symbolic)
     /* XKB extensions */
 # if defined(XK_ISO_Left_Tab)
     case XK_ISO_Left_Tab: return  9;	/* shift-tab */
+# endif
+
+# if defined(XF86XK_Start)
+    case XF86XK_Start:  return ALT+','; /* OLPC view source */
 # endif
 
     default:		return -1;
