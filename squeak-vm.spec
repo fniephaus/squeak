@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.9
 %define minor   12
-%define release %{minor}olpc1
+%define release %{minor}olpc2
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -39,7 +39,7 @@ to install it before you install Etoys.
 %build
 mkdir bld
 cd bld
-CFLAGS=-DSUGAR ../platforms/unix/config/configure --without-gl --prefix=%{prefix}
+CPPFLAGS=-DSUGAR ../platforms/unix/config/configure --without-gl --prefix=%{prefix}
 make ROOT=%{buildroot} %{?_smp_mflags}
 
 %install
@@ -61,6 +61,10 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
+* Tue Oct 23 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-12olpc2: SVN r. 1779
+  - use CPPFLAGS not CFLAGS for -DSUGAR
+  - handle view-source key (bf)
 * Mon Oct 15 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-12olpc1: SVN r. 1776
   - merged with trunk (bf)
