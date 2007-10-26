@@ -1,0 +1,2 @@
+# Automatically generated makefile include for external plugins
+EXTERNAL_PLUGINS = B3DAcceleratorPlugin ClipboardExtendedPlugin DBusPlugin Squeak3D KedamaPlugin2 MIDIPlugin OggPlugin PseudoTTYPlugin UnixOSProcessPlugin UUIDPlugin VideoForLinuxPlugin XDisplayControlPlugin  
