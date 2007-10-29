@@ -514,7 +514,7 @@ static void dndGetTargets(Atom **types, int *count)
   int i;
   *types= 0;
   *count= 0;
-  if (xdndInTypes) return;
+  if (!xdndInTypes) return;
   for (i= 0;  None != xdndInTypes[i];  ++i);
   *count= i;
   *types= xdndInTypes;
@@ -644,7 +644,7 @@ static enum XdndState dndInPosition(enum XdndState state, XClientMessageEvent *e
 
   getMousePosition();
 
-  if ((state != XdndStateEntered) && (state != XdndStateEntered))
+  if ((state != XdndStateEntered) && (state != XdndStateTracking))
     {
       dprintf((stderr, "dndPosition: wrong state\n"));
       return XdndStateIdle;
