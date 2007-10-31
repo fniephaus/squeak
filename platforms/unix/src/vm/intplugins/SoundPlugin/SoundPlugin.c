@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:56 pm) */
+/* Automatically generated from Squeak on an Array(31 October 2007 9:57:08 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -45,13 +45,16 @@ static sqInt msg(char * s);
 #pragma export on
 EXPORT(sqInt) primitiveSoundAvailableSpace(void);
 EXPORT(sqInt) primitiveSoundGetRecordingSampleRate(void);
+EXPORT(sqInt) primitiveSoundGetSwitch(void);
 EXPORT(sqInt) primitiveSoundGetVolume(void);
 EXPORT(sqInt) primitiveSoundInsertSamples(void);
 EXPORT(sqInt) primitiveSoundPlaySamples(void);
 EXPORT(sqInt) primitiveSoundPlaySilence(void);
 EXPORT(sqInt) primitiveSoundRecordSamples(void);
+EXPORT(sqInt) primitiveSoundSetDevice(void);
 EXPORT(sqInt) primitiveSoundSetLeftVolume(void);
 EXPORT(sqInt) primitiveSoundSetRecordLevel(void);
+EXPORT(sqInt) primitiveSoundSetSwitch(void);
 EXPORT(sqInt) primitiveSoundStart(void);
 EXPORT(sqInt) primitiveSoundStartRecording(void);
 EXPORT(sqInt) primitiveSoundStartWithSemaphore(void);
@@ -69,9 +72,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"SoundPlugin 11 October 2006 (i)"
+	"SoundPlugin 31 October 2007 (i)"
 #else
-	"SoundPlugin 11 October 2006 (e)"
+	"SoundPlugin 31 October 2007 (e)"
 #endif
 ;
 
@@ -141,6 +144,38 @@ EXPORT(sqInt) primitiveSoundGetRecordingSampleRate(void) {
 		return null;
 	}
 	interpreterProxy->popthenPush(1, _return_value);
+	return null;
+}
+
+
+/*	Get the switch of device at id.  captureFlag specifies the direction of operation, and chennel specifies the channel of the device. */
+
+EXPORT(sqInt) primitiveSoundGetSwitch(void) {
+	sqInt ret;
+	sqInt id;
+	sqInt captureFlag;
+	sqInt channel;
+	sqInt _return_value;
+
+	id = interpreterProxy->stackIntegerValue(2);
+	captureFlag = interpreterProxy->booleanValueOf(interpreterProxy->stackValue(1));
+	channel = interpreterProxy->stackIntegerValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	ret = snd_GetSwitch(id, captureFlag, channel);
+	if (ret < 0) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	_return_value = (ret) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(4, _return_value);
 	return null;
 }
 
@@ -287,6 +322,57 @@ EXPORT(sqInt) primitiveSoundRecordSamples(void) {
 }
 
 
+/*	Set the device slot specified by id with deviceName. */
+
+EXPORT(sqInt) primitiveSoundSetDevice(void) {
+	sqInt ret;
+	sqInt i;
+	sqInt s;
+	char buffer[128];
+	char *deviceName;
+	sqInt isArgNil;
+	sqInt id;
+	sqInt deviceNameOop;
+	sqInt _return_value;
+
+	id = interpreterProxy->stackIntegerValue(1);
+	deviceNameOop = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	;
+	isArgNil = (interpreterProxy->nilObject()) == deviceNameOop;
+	if (!(isArgNil || (interpreterProxy->isBytes(deviceNameOop)))) {
+		primitiveFail();
+		return null;
+	}
+	if ((!isArgNil) && ((s = interpreterProxy->stSizeOf(deviceNameOop)) > 127)) {
+		primitiveFail();
+		return null;
+	}
+	if (isArgNil) {
+		ret = snd_SetDevice(id, NULL);
+	} else {
+		deviceName = interpreterProxy->firstIndexableField(deviceNameOop);
+		for (i = 0; i <= (s - 1); i += 1) {
+			buffer[i] = (deviceName[i]);
+		}
+		buffer[s] = 0;
+		ret = snd_SetDevice(id, buffer);
+	}
+	if (ret < 0) {
+		primitiveFail();
+		return null;
+	}
+	_return_value = (ret) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(3, _return_value);
+	return null;
+}
+
+
 /*	Set the sound input recording level. */
 
 EXPORT(sqInt) primitiveSoundSetLeftVolume(void) {
@@ -325,6 +411,38 @@ EXPORT(sqInt) primitiveSoundSetRecordLevel(void) {
 		return null;
 	}
 	interpreterProxy->pop(1);
+	return null;
+}
+
+
+/*	Set the switch of device at id.  captureFlag specifies the direction of operation, and parameter is the new value. */
+
+EXPORT(sqInt) primitiveSoundSetSwitch(void) {
+	sqInt ret;
+	sqInt id;
+	sqInt captureFlag;
+	sqInt parameter;
+	sqInt _return_value;
+
+	id = interpreterProxy->stackIntegerValue(2);
+	captureFlag = interpreterProxy->booleanValueOf(interpreterProxy->stackValue(1));
+	parameter = interpreterProxy->booleanValueOf(interpreterProxy->stackValue(0));
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	ret = snd_SetSwitch(id, captureFlag, parameter);
+	if (ret < 0) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	_return_value = (ret) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(4, _return_value);
 	return null;
 }
 
@@ -452,14 +570,17 @@ void* SoundPlugin_exports[][3] = {
 	{"SoundPlugin", "getModuleName", (void*)getModuleName},
 	{"SoundPlugin", "setInterpreter", (void*)setInterpreter},
 	{"SoundPlugin", "primitiveSoundAvailableSpace", (void*)primitiveSoundAvailableSpace},
+	{"SoundPlugin", "primitiveSoundSetSwitch", (void*)primitiveSoundSetSwitch},
 	{"SoundPlugin", "primitiveSoundSetRecordLevel", (void*)primitiveSoundSetRecordLevel},
 	{"SoundPlugin", "primitiveSoundGetRecordingSampleRate", (void*)primitiveSoundGetRecordingSampleRate},
 	{"SoundPlugin", "primitiveSoundGetVolume", (void*)primitiveSoundGetVolume},
 	{"SoundPlugin", "primitiveSoundStop", (void*)primitiveSoundStop},
+	{"SoundPlugin", "primitiveSoundGetSwitch", (void*)primitiveSoundGetSwitch},
 	{"SoundPlugin", "primitiveSoundSetLeftVolume", (void*)primitiveSoundSetLeftVolume},
 	{"SoundPlugin", "primitiveSoundPlaySamples", (void*)primitiveSoundPlaySamples},
 	{"SoundPlugin", "primitiveSoundInsertSamples", (void*)primitiveSoundInsertSamples},
 	{"SoundPlugin", "shutdownModule", (void*)shutdownModule},
+	{"SoundPlugin", "primitiveSoundSetDevice", (void*)primitiveSoundSetDevice},
 	{"SoundPlugin", "primitiveSoundRecordSamples", (void*)primitiveSoundRecordSamples},
 	{"SoundPlugin", "primitiveSoundStart", (void*)primitiveSoundStart},
 	{"SoundPlugin", "initialiseModule", (void*)initialiseModule},
