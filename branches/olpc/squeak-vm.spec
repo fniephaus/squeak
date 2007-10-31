@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.9
 %define minor   12
-%define release %{minor}olpc2
+%define release %{minor}olpc3
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -61,6 +61,11 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
+* Wed Oct 31 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-12olpc3: SVN r. 1787
+  - fixed errors about state checking in drag and drop (tak)
+  - make cursor keys work with utf32 char code (yo)
+  - add SetSwitch, GetSwitch, and SetDevice mixer functions (yo)
 * Tue Oct 23 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-12olpc2: SVN r. 1779
   - use CPPFLAGS not CFLAGS for -DSUGAR
