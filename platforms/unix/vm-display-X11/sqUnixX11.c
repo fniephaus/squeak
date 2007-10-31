@@ -1636,12 +1636,20 @@ static int xkeysym2ucs4(KeySym keysym)
   /* 24-bit UCS */
   if ((keysym & 0xff000000) == 0x01000000) return keysym & 0x00ffffff;
 
+  static unsigned short const sqSpecialKey[] = {1, 28, 30, 29, 31, 5, 11, 12, 4};
   /* control keys with ASCII equivalents */
   if (keysym > 0xff00 && keysym < 0xff10) return keysym & 0x001f;
-  if (keysym > 0xff4f && keysym < 0xff5f) return keysym & 0x001f;
+  if (keysym > 0xff4f && keysym < 0xff59)
+    {
+      return sqSpecialKey[keysym - 0xff50];
+    }
+  if (keysym > 0xff58 && keysym < 0xff5f) return keysym & 0x007f; /* could be return 0; */
+  if (keysym > 0xff94 && keysym < 0xff9d)
+    {
+      return sqSpecialKey[keysym - 0xff95];
+    }
   if (keysym          ==          0xff1b) return keysym & 0x001f;
   if (keysym          ==          0xffff) return keysym & 0x007f;
-  if (keysym > 0xff4f && keysym < 0xff5f) return keysym & 0x001f;
 
   /* explicitly mapped */
 #define map(lo, hi) if (keysym >= 0x##lo && keysym <= 0x##hi) return ucs4_##lo##_##hi[keysym - 0x##lo];
