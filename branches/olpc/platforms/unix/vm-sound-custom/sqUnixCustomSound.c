@@ -106,6 +106,23 @@ static sqInt sound_SetRecordLevel(sqInt level)
   return level;
 }
 
+static sqInt sound_SetSwitch(sqInt id, sqInt captureFlag, sqInt parameter)
+{
+  trace();
+  return -1;
+}
+
+static sqInt sound_GetSwitch(sqInt id, sqInt captureFlag, sqInt channel)
+{
+  trace();
+  return -1
+}
+
+static sqInt sound_SetDevice(sqInt id, char *arg)
+{
+  trace();
+  return -1;
+}
 
 #include "SqSound.h"
 
