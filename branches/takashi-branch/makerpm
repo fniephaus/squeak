@@ -1,0 +1,37 @@
+#!/bin/sh
+rpm=`rpm --specfile squeak-vm.spec -q|head -n 1|sed 's/.*[^0-9]-//'`
+ver=`echo $rpm|sed 's/[a-z].*//'`
+
+if [ -r  /usr/src/redhat/RPMS/i386/squeak-vm-${rpm}.i386.rpm ] ; then
+    echo squeak-vm-${rpm}.i386.rpm already exists
+    echo 'forgot to update squeak-vm.spec?'
+    echo press return to continue anyway
+    read
+fi
+
+rm -f dist/Squeak-${ver}.src.tar.gz
+(cd bld; make dist-src)
+
+#(cd dist;wget http://squeakvm.org/unix/release/Squeak-${ver}.src.tar.gz)
+
+sudo cp dist/Squeak-${ver}.src.tar.gz /usr/src/redhat/SOURCES
+sudo rpmbuild -ba squeak-vm.spec
+cp squeak-vm.spec rpms/squeak-vm-${rpm}.spec
+
+cd rpms
+cp /usr/src/redhat/RPMS/i386/squeak-vm-${rpm}.i386.rpm .
+cp /usr/src/redhat/RPMS/i386/squeak-vm-debuginfo-${rpm}.i386.rpm .
+cp /usr/src/redhat/SRPMS/squeak-vm-${rpm}.src.rpm .
+
+echo Now upload using the following commands in cadaver:
+echo
+echo mput \
+    squeak-vm-${rpm}.i386.rpm \
+    squeak-vm-debuginfo-${rpm}.i386.rpm \
+    squeak-vm-${rpm}.src.rpm \
+    squeak-vm-${rpm}.spec
+
+echo cp squeak-vm-${rpm}.i386.rpm ../yum
+echo
+
+cadaver http://tinlizzie.org/olpc/sugar/rpm
