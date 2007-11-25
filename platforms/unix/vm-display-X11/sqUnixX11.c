@@ -107,6 +107,9 @@
 #define XK_MISCELLANY
 #define XK_XKB_KEYS
 #include <X11/keysymdef.h>
+#if defined(SUGAR)
+# include <X11/XF86keysym.h>
+#endif
 #if defined(USE_XSHM)
 #  include <sys/ipc.h>
 #  include <sys/shm.h>
@@ -1633,12 +1636,20 @@ static int xkeysym2ucs4(KeySym keysym)
   /* 24-bit UCS */
   if ((keysym & 0xff000000) == 0x01000000) return keysym & 0x00ffffff;
 
+  static unsigned short const sqSpecialKey[] = {1, 28, 30, 29, 31, 5, 11, 12, 4};
   /* control keys with ASCII equivalents */
   if (keysym > 0xff00 && keysym < 0xff10) return keysym & 0x001f;
-  if (keysym > 0xff4f && keysym < 0xff5f) return keysym & 0x001f;
+  if (keysym > 0xff4f && keysym < 0xff59)
+    {
+      return sqSpecialKey[keysym - 0xff50];
+    }
+  if (keysym > 0xff58 && keysym < 0xff5f) return keysym & 0x007f; /* could be return 0; */
+  if (keysym > 0xff94 && keysym < 0xff9d)
+    {
+      return sqSpecialKey[keysym - 0xff95];
+    }
   if (keysym          ==          0xff1b) return keysym & 0x001f;
   if (keysym          ==          0xffff) return keysym & 0x007f;
-  if (keysym > 0xff4f && keysym < 0xff5f) return keysym & 0x001f;
 
   /* explicitly mapped */
 #define map(lo, hi) if (keysym >= 0x##lo && keysym <= 0x##hi) return ucs4_##lo##_##hi[keysym - 0x##lo];
@@ -2489,9 +2500,12 @@ void initWindow(char *displayName)
                           XInternAtom(stDisplay, "_SUGAR_ACTIVITY_ID", 0), XInternAtom(stDisplay, "STRING", 0), 8,
                           PropModeReplace, (unsigned char *)sugarActivityId, strlen(sugarActivityId));
 
-        XChangeProperty(stDisplay, stParent,
-                        XInternAtom(stDisplay, "_NET_WM_PID", 0), XInternAtom(stDisplay, "CARDINAL", 0), 32,
-                        PropModeReplace, (unsigned char *)&pid, 1);
+        {
+	  unsigned long pid= getpid();
+	  XChangeProperty(stDisplay, stParent,
+			  XInternAtom(stDisplay, "_NET_WM_PID", 0), XInternAtom(stDisplay, "CARDINAL", 0), 32,
+			  PropModeReplace, (unsigned char *)&pid, 1);
+	}
 #      endif
       }
 
@@ -2697,6 +2711,10 @@ static int translateCode(KeySym symbolic)
     /* XKB extensions */
 # if defined(XK_ISO_Left_Tab)
     case XK_ISO_Left_Tab: return  9;	/* shift-tab */
+# endif
+
+# if defined(XF86XK_Start)
+    case XF86XK_Start:  return ALT+','; /* OLPC view source */
 # endif
 
     default:		return -1;
@@ -4968,6 +4986,10 @@ static int display_parseArgument(int argc, char **argv)
       if      (!strcmp(arg, "-display")) displayName= argv[1];
       else if (!strcmp(arg, "-optmod"))	 optMapIndex= Mod1MapIndex + atoi(argv[1]) - 1;
       else if (!strcmp(arg, "-cmdmod"))  cmdMapIndex= Mod1MapIndex + atoi(argv[1]) - 1;
+#if defined(SUGAR)
+      else if (!strcmp(arg, "-sugarBundleId")) sugarBundleId= argv[1];
+      else if (!strcmp(arg, "-sugarActivityId")) sugarActivityId= argv[1];
+#endif
       else if (!strcmp(arg, "-browserWindow"))
 	{
 	  sscanf(argv[1], "%lu", (unsigned long *)&browserWindow);

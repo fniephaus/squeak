@@ -971,6 +971,20 @@ static sqInt sound_SetRecordLevel(sqInt level)
   return setVolume(1, (double)level / 1000.0L, (double)level / 1000.0L);
 }
 
+static sqInt sound_SetSwitch(sqInt id, sqInt captureFlag, sqInt parameter)
+{
+  return -1;
+}
+
+static sqInt sound_GetSwitch(sqInt id, sqInt captureFlag, sqInt channel)
+{
+  return -1
+}
+
+static sqInt sound_SetDevice(sqInt id, char *arg)
+{
+  return -1;
+}
 
 /// 
 /// debugging
