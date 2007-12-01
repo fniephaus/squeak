@@ -82,6 +82,31 @@ void sqDndOutStart(char * data, int dataLength, char * aFormat, int formatLength
 {
   dndOutStart(data, dataLength, aFormat, formatLength);
 }
+void sqDndOutStart2(char * formats, int formatsLength)
+{
+  dndOutStart2(formats, formatsLength);
+}
+int sqDndOutAcceptedType()
+{
+  int outData;
+  char * dest;
+  size_t nbuf;
+  char buf[256];
+
+  int result= dndOutAcceptedType(buf, 256);
+  if (result == 0) return interpreterProxy->nilObject();
+
+  nbuf= strlen(buf);
+  outData = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classString(), nbuf);
+  dest = ((char *) (interpreterProxy->firstIndexableField(outData)));
+  memcpy(dest, buf, nbuf);
+
+  return outData;
+}
+void sqDndOutSend(char * aByteArray, int nbytes)
+{
+  dndOutSend(aByteArray, nbytes);
+}
 
 int  sqSecFileAccessCallback(void *callback)		 { return 0; }
 void sqSetNumberOfDropFiles(int numberOfFiles)		 { }

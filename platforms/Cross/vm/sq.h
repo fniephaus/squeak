@@ -288,6 +288,7 @@ typedef struct sqDragDropFilesEvent
 #define DragMove	2 /* drag operation from OS moved within Squeak window */
 #define DragLeave	3 /* drag operation from OS left Squeak window	 */
 #define DragDrop	4 /* drag operation dropped contents onto Squeak.      */
+#define DragRequest	5 /* data request from other app.      */
 
 /* menu event */
 typedef struct sqMenuEvent

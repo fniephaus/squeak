@@ -45,6 +45,9 @@ struct SqDisplay
   sqInt  (*clipboardSizeWithType)(char *typeName, int ntypeName);
   void   (*clipboardWriteWithType)(char *data, size_t nData, char *typeName, size_t nTypeName, int isDnd, int isClaiming);
   sqInt  (*dndOutStart)(char *data, int dataLength, char *aFormat, int formatLength);
+  sqInt  (*dndOutStart2)(char *formats, int nformats);
+  sqInt  (*dndOutAcceptedType)(char * type, int ntype);
+  void   (*dndOutSend)(char *bytes, int nbytes);
   sqInt  (*ioGetButtonState)(void);
   sqInt  (*ioPeekKeystroke)(void);
   sqInt  (*ioGetKeystroke)(void);
@@ -100,6 +103,9 @@ static struct SqDisplay display_##NAME##_itf= {	\
   display_clipboardSizeWithType,		\
   display_clipboardWriteWithType,		\
   display_dndOutStart,				\
+  display_dndOutStart2,				\
+  display_dndOutAcceptedType,  			\
+  display_dndOutSend,				\
   display_ioGetButtonState,			\
   display_ioPeekKeystroke,			\
   display_ioGetKeystroke,			\
