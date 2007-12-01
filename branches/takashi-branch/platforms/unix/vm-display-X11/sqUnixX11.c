@@ -636,6 +636,8 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
     }
   else if ((stSelectionType == requestEv->target) && (None != stSelectionType))
     {
+      if (None != stSelectionName) return 0;
+
       /* In case of type other than image/png */
       XChangeProperty(requestEv->display, requestEv->requestor,
 		      targetProperty, requestEv->target,
@@ -1740,7 +1742,6 @@ static char **display_clipboardGetTypeNames(void)
   Atom    *targets= NULL;
   size_t   bytes= 0;
   char   **typeNames= NULL;
-  Status   success= 0;
   int      nTypeNames= 0;
 
   if (dndAvailable())
@@ -2307,9 +2308,9 @@ static int xError(Display *dpy, XErrorEvent *evt)
   XGetErrorText(dpy, evt->error_code, buf, sizeof(buf));
   fprintf(stderr,
 	  "X Error: %s\n"
-	  "  Major opcode of failed request:  %lu\n"
-	  "  Minor opcode of failed request:  %lu\n"
-	  "  Serial number of failed request: %d\n",
+	  "  Major opcode of failed request:  %i\n"
+	  "  Minor opcode of failed request:  %i\n"
+	  "  Serial number of failed request: %lu\n",
 	  buf,
 	  evt->request_code,
 	  evt->minor_code,

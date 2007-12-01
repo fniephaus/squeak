@@ -597,6 +597,18 @@ sqInt dndOutStart(char * data, int ndata, char * typeName, int ntypeName)
 {
   return dpy->dndOutStart(data, ndata, typeName, ntypeName);
 }
+void dndOutStart2(char * formats, int nformats)
+{
+  dpy->dndOutStart2(formats, nformats);
+}
+sqInt dndOutAcceptedType(char * type, int ntype)
+{
+  return dpy->dndOutAcceptedType(type, ntype);
+}
+void dndOutSend(char * bytes, int nbytes)
+{
+  dpy->dndOutSend(bytes, nbytes);
+}
 
 /*** OpenGL ***/
 
