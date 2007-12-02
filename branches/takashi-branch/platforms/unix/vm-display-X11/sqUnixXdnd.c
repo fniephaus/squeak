@@ -93,10 +93,9 @@ static	int	  xdndWillAccept= 0;
  * case isUrlList == 0: Record drag event anyway (uxDropFileCount= 0).  The image will get the data and send dndFinished.
  */
 
-static Atom	 *xdndInTypes= 0;	/* all targets in clipboard */
-static Atom      *xdndOutTypes= 0; /* Types offered by source window */
-static Atom      xdndOutAcceptedType= 0; /* The type current target accepted */
-static XSelectionRequestEvent xdndOutRequestEvent;
+static Atom	 *xdndInTypes= 0;   /* all targets in clipboard */
+static Atom      *xdndOutTypes= 0;  /* Types offered by source window */
+static XSelectionRequestEvent xdndOutRequestEvent; /* RequestEvent from target */
 
 enum XdndState {
   XdndStateIdle,
@@ -290,7 +289,7 @@ static void sendEnter(Window target, Window source)
   long data[5]= { 0, 0, 0, 0, 0 };
   data[1] |= 0x0UL; /* just three data types */
   data[1] |= XdndVersion << 24; /* version num */
-  data[2]= stSelectionType;
+  data[2]= xdndOutTypes[0];
   data[3]= 0;
   data[4]= 0;
   sendClientMessage(data, source, target, XdndEnter);
@@ -325,7 +324,7 @@ static void sendLeave(Window target, Window source)
 static enum XdndState dndOutPress(enum XdndState state)
 {
   dprintf((stderr, "Internal signal DndOutStart (output)\n"));
-  if (XdndStateIdle != state) return state;
+/*   if (XdndStateIdle != state) return state; */
   XSetSelectionOwner(stDisplay, XdndSelection, DndWindow, CurrentTime);
   /* TODO: The cursor should be shown by the image, so it should be removed later. */
   XDefineCursor(stDisplay, stWindow, None);
@@ -373,7 +372,7 @@ static enum XdndState dndOutStatus(enum XdndState state, XClientMessageEvent *ev
 {
   long *ldata= evt->data.l;
   dprintf((stderr, "Receive XdndStatus (output)\n"));
-  if (XdndSelection != stSelectionName) return state;
+/*   if (XdndSelection != stSelectionName) return state; */
 
   if ((XdndStateOutTracking != state) && (XdndStateOutAccepted != state))
     {
@@ -395,7 +394,7 @@ static enum XdndState dndOutStatus(enum XdndState state, XClientMessageEvent *ev
 */
 static enum XdndState dndOutRelease(enum XdndState state, XButtonEvent *evt)
 {
-  if (XdndSelection != stSelectionName) return state;
+/*   if (XdndSelection != stSelectionName) return state; */
   dprintf((stderr, "Receive ButtonRelease (output)\n"));
   if (XdndStateOutAccepted == state)
     {
@@ -426,9 +425,10 @@ static enum XdndState dndOutSelectionRequest(enum XdndState state, XSelectionReq
   XEvent notify;
   XSelectionEvent *res= &notify.xselection;
   Atom targetProperty= ((None == req->property) ? req->target : req->property);
-  dprintf((stderr, "Receive SelectionRequest for %s (output)\n",
-	   XGetAtomName(stDisplay, req->target)));
-  if (XdndSelection != stSelectionName) return state;
+  dprintf((stderr, "Receive SelectionRequest for %s from 0x%lx(output)\n",
+	   XGetAtomName(stDisplay, req->target),
+	   req->requestor));
+/*   if (XdndSelection != stSelectionName) return state; */
   if ((XdndStateOutDropped != state) && (XdndStateOutAccepted != state))
     {
       printf("%i is not expected in SelectionRequest\n", state);
@@ -436,7 +436,6 @@ static enum XdndState dndOutSelectionRequest(enum XdndState state, XSelectionReq
     }
   memcpy(&xdndOutRequestEvent, req, sizeof(xdndOutRequestEvent));
   recordDragEvent(DragRequest, 1);
-  xdndOutAcceptedType= req->target;
   
   res->type	  = SelectionNotify;
   res->display	  = req->display;
@@ -453,11 +452,11 @@ static enum XdndState dndOutSelectionRequest(enum XdndState state, XSelectionReq
     }
   else
     {
-      printf("Unsupported target %s.\n", XGetAtomName(stDisplay, req->target));
-      res->property= None;
+/*       printf("Unsupported target %s.\n", XGetAtomName(stDisplay, req->target)); */
+/*       res->property= None; */
     }
   
-  xError= XSendEvent(req->display, req->requestor, False, 0, &notify);
+/*   xError= XSendEvent(req->display, req->requestor, False, 0, &notify); */
   return state;
 }
 
@@ -467,7 +466,7 @@ static enum XdndState dndOutSelectionRequest(enum XdndState state, XSelectionReq
 static enum XdndState dndOutFinished(enum XdndState state, XClientMessageEvent *evt)
 {
   dprintf((stderr, "Receive XdndFinished (output)\n"));
-  if (XdndSelection != stSelectionName) return state;
+/*   if (XdndSelection != stSelectionName) return state; */
   DndOutTarget= None;
   return XdndStateIdle;
 }
@@ -863,7 +862,7 @@ static sqInt display_dndOutStart2(char *formats, int nformats)
   for (i= 0; i < formats_size; i++)
     dprintf((stderr, "dndOutStart2: %s\n", XGetAtomName(stDisplay, xdndOutTypes[i])));
   dndHandleEvent(DndOutStart, 0);
-  xdndOutAcceptedType= 0;
+  memset(&xdndOutRequestEvent, 0, sizeof(xdndOutRequestEvent));
 
   return 1;
 }
@@ -892,12 +891,16 @@ static void display_dndOutSend (char *bytes, int nbytes)
 		  nbytes);
 
   XSendEvent(stDisplay, res->requestor, False, 0, &notify);
+  dprintf((stderr, "Send data for %s from 0x%lx(output)\n",
+	   XGetAtomName(stDisplay, res->target),
+	   res->requestor));
+
 }
 static sqInt display_dndOutAcceptedType(char * buf, int nbuf)
 {
   char *type;
-  if (xdndOutAcceptedType == None) return 0;
-  type= XGetAtomName(stDisplay, xdndOutAcceptedType);
+  if (xdndOutRequestEvent.target == None) return 0;
+  type= XGetAtomName(stDisplay, xdndOutRequestEvent.target);
   strncpy(buf, type, nbuf);
   XFree(type);
   return 1;
