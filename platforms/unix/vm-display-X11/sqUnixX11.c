@@ -767,7 +767,7 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 #endif
 
   /* on MULTIPLE requests, we notify only once */
-  if (!isMultiple)
+  if (!isMultiple && (xaXdndSelection != requestEv->selection))
     {
       notifyEv.type= SelectionNotify;
       notifyEv.display= requestEv->display;
