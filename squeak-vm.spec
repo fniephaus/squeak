@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.9
 %define minor   12
-%define release %{minor}olpc3
+%define release %{minor}olpc4
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -61,6 +61,9 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
+* Mon Dec 03 2007 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-12olpc4: SVN r. 1795
+  - fix dbus plugin not zero-terminating some strings (bf)
 * Wed Oct 31 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-12olpc3: SVN r. 1787
   - fixed errors about state checking in drag and drop (tak)
