@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(9 October 2007 7:00:22 pm) */
+/* Automatically generated from Squeak on an Array(3 December 2007 4:21:24 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -143,9 +143,9 @@ static DBusMessage* message;
 static DBusMessageIter messageIter[DBUS_MAXIMUM_TYPE_RECURSION_DEPTH];
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DBusPlugin 9 October 2007 (i)"
+	"DBusPlugin 3 December 2007 (i)"
 #else
-	"DBusPlugin 9 October 2007 (e)"
+	"DBusPlugin 3 December 2007 (e)"
 #endif
 ;
 static DBusMessage* writeMessage;
@@ -565,13 +565,17 @@ static sqDBusData* newDataStructWithConnectionandSemaphore(DBusConnection * con,
 EXPORT(sqInt) primitiveDBusAddMatch(void) {
 	DBusConnection * conn;
 	DBusError error;
+	char* rule;
 	sqInt rcvOop;
-	char *rule;
+	sqInt ruleOop;
 	sqInt _return_value;
 
-	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
-	rule = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
+	ruleOop = interpreterProxy->stackValue(0);
 	rcvOop = interpreterProxy->stackValue(1);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	rule = stringOopToChar(ruleOop);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -581,12 +585,13 @@ EXPORT(sqInt) primitiveDBusAddMatch(void) {
 	conn = getConnectionFromOop(rcvOop);
 	dbus_error_init(&error);
 	dbus_bus_add_match( conn, rule, &error);
-		dbus_connection_flush(conn);
+	dbus_connection_flush(conn);
 	if (dbus_error_is_set(&error)) {
 		msg(((char*) (error.message)));
 		dbus_error_free(&error);
 		interpreterProxy->primitiveFail();
 	}
+	free(rule);
 	_return_value = interpreterProxy->trueObject();
 	if (interpreterProxy->failed()) {
 		return null;
@@ -1717,13 +1722,17 @@ EXPORT(sqInt) primitiveDBusRegisterName(void) {
 	DBusConnection * conn;
 	DBusError error;
 	sqInt rcvOop;
+	char* name;
 	int ret;
-	char *name;
+	sqInt nameOop;
 	sqInt _return_value;
 
-	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
-	name = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
+	nameOop = interpreterProxy->stackValue(0);
 	rcvOop = interpreterProxy->stackValue(1);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	name = stringOopToChar(nameOop);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -1739,6 +1748,7 @@ EXPORT(sqInt) primitiveDBusRegisterName(void) {
 		dbus_error_free(&error);
 		interpreterProxy->primitiveFail();
 	}
+	free(name);
 	_return_value = interpreterProxy->integerObjectOf(ret);
 	if (interpreterProxy->failed()) {
 		return null;
@@ -1754,13 +1764,17 @@ EXPORT(sqInt) primitiveDBusReleaseName(void) {
 	DBusConnection * conn;
 	DBusError error;
 	sqInt rcvOop;
+	char* name;
 	int ret;
-	char *name;
+	sqInt nameOop;
 	sqInt _return_value;
 
-	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
-	name = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
+	nameOop = interpreterProxy->stackValue(0);
 	rcvOop = interpreterProxy->stackValue(1);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	name = stringOopToChar(nameOop);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -1776,6 +1790,7 @@ EXPORT(sqInt) primitiveDBusReleaseName(void) {
 		dbus_error_free(&error);
 		interpreterProxy->primitiveFail();
 	}
+	free(name);
 	_return_value = interpreterProxy->integerObjectOf(ret);
 	if (interpreterProxy->failed()) {
 		return null;
@@ -1790,13 +1805,17 @@ EXPORT(sqInt) primitiveDBusReleaseName(void) {
 EXPORT(sqInt) primitiveDBusRemoveMatch(void) {
 	DBusConnection * conn;
 	DBusError error;
+	char* rule;
 	sqInt rcvOop;
-	char *rule;
+	sqInt ruleOop;
 	sqInt _return_value;
 
-	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
-	rule = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
+	ruleOop = interpreterProxy->stackValue(0);
 	rcvOop = interpreterProxy->stackValue(1);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	rule = stringOopToChar(ruleOop);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -1806,12 +1825,13 @@ EXPORT(sqInt) primitiveDBusRemoveMatch(void) {
 
 	conn = getConnectionFromOop(rcvOop);
 	dbus_bus_remove_match( conn, rule, &error);
-				dbus_connection_flush(conn);
+	dbus_connection_flush(conn);
 	if (dbus_error_is_set(&error)) {
 		msg(((char*) (error.message)));
 		dbus_error_free(&error);
 		interpreterProxy->primitiveFail();
 	}
+	free(rule);
 	_return_value = interpreterProxy->trueObject();
 	if (interpreterProxy->failed()) {
 		return null;
