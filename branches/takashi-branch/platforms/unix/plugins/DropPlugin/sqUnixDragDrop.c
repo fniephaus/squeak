@@ -78,13 +78,9 @@ int dropRequestFileHandle(int dropIndex)
   return interpreterProxy->nilObject();
 }
 
-void sqDndOutStart(char * data, int dataLength, char * aFormat, int formatLength)
+void sqDndOutStart(char * types, int ntypes)
 {
-  dndOutStart(data, dataLength, aFormat, formatLength);
-}
-void sqDndOutStart2(char * formats, int formatsLength)
-{
-  dndOutStart2(formats, formatsLength);
+  dndOutStart(types, ntypes);
 }
 int sqDndOutAcceptedType()
 {

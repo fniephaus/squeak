@@ -593,13 +593,9 @@ sqInt ioMousePoint(void)		{ return dpy->ioMousePoint(); }
 
 /*** Drag and Drop ***/
 
-sqInt dndOutStart(char * data, int ndata, char * typeName, int ntypeName)
+void dndOutStart(char * types, int ntypes)
 {
-  return dpy->dndOutStart(data, ndata, typeName, ntypeName);
-}
-void dndOutStart2(char * formats, int nformats)
-{
-  dpy->dndOutStart2(formats, nformats);
+  dpy->dndOutStart(types, ntypes);
 }
 sqInt dndOutAcceptedType(char * type, int ntype)
 {
