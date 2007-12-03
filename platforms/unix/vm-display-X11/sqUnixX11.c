@@ -174,7 +174,6 @@ int		 stOwnsSelection= 0;	/* true if we own the X selection */
 int		 stOwnsClipboard= 0;	/* true if we own the X clipboard */
 int		 usePrimaryFirst= 0;	/* true if we should look to PRIMARY before CLIPBOARD */
 Time		 stSelectionTime;	/* Time of setting the selection */
-Atom		 stSelectionName= None; /* None or XdndSelection */
 Atom		 stSelectionType= None; /* type to send selection (multiple types should be supported) */
 XColor		 stColorBlack;		/* black pixel value in stColormap */
 XColor		 stColorWhite;		/* white pixel value in stColormap */
@@ -599,6 +598,9 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 			? requestEv->target 
 			: requestEv->property);
 
+  /* XDnd is not handled here. */
+  if (xaXdndSelection == requestEv->selection) return 0;
+
   notifyEv.property= targetProperty;
 
 #if defined(DEBUG_SELECTIONS)
@@ -636,8 +638,6 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
     }
   else if ((stSelectionType == requestEv->target) && (None != stSelectionType))
     {
-      if (None != stSelectionName) return 0;
-
       /* In case of type other than image/png */
       XChangeProperty(requestEv->display, requestEv->requestor,
 		      targetProperty, requestEv->target,
@@ -767,7 +767,7 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 #endif
 
   /* on MULTIPLE requests, we notify only once */
-  if (!isMultiple && (xaXdndSelection != requestEv->selection))
+  if (!isMultiple)
     {
       notifyEv.type= SelectionNotify;
       notifyEv.display= requestEv->display;
@@ -1137,7 +1137,6 @@ static void display_clipboardWriteWithType(char *data, size_t ndata, char *typeN
   if (allocateSelectionBuffer(ndata))
     {
       Atom type= stringToAtom(typeName, nTypeName);
-      stSelectionName= isDnd ? xaXdndSelection : None;
       memcpy((void *)stPrimarySelection, data, ndata);
       stPrimarySelection[ndata]= '\0';
       stSelectionType= type;

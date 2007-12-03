@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(1 December 2007 11:01:12 am) */
+/* Automatically generated from Squeak on an Array(2 December 2007 6:17:45 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -44,10 +44,8 @@ EXPORT(sqInt) initialiseModule(void);
 static sqInt msg(char * s);
 #pragma export on
 EXPORT(sqInt) primitiveDndOutAcceptedType(void);
-EXPORT(sqInt) primitiveDndOutEnd(void);
 EXPORT(sqInt) primitiveDndOutSend(void);
 EXPORT(sqInt) primitiveDndOutStart(void);
-EXPORT(sqInt) primitiveDndOutStart2(void);
 EXPORT(sqInt) primitiveDropRequestFileHandle(void);
 EXPORT(sqInt) primitiveDropRequestFileName(void);
 EXPORT(sqInt) setFileAccessCallback(int address);
@@ -63,9 +61,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DropPlugin 1 December 2007 (i)"
+	"DropPlugin 2 December 2007 (i)"
 #else
-	"DropPlugin 1 December 2007 (e)"
+	"DropPlugin 2 December 2007 (e)"
 #endif
 ;
 
@@ -110,13 +108,6 @@ EXPORT(sqInt) primitiveDndOutAcceptedType(void) {
 	return null;
 }
 
-EXPORT(sqInt) primitiveDndOutEnd(void) {
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	return null;
-}
-
 EXPORT(sqInt) primitiveDndOutSend(void) {
 	sqInt nbytes;
 	char *bytes;
@@ -135,43 +126,20 @@ EXPORT(sqInt) primitiveDndOutSend(void) {
 	return null;
 }
 
-EXPORT(sqInt) primitiveDndOutStart(void) {
-	sqInt dataLength;
-	sqInt formatLength;
-	char *aByteArray;
-	char *aFormat;
-
-	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(1)));
-	aByteArray = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(1))));
-	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
-	aFormat = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	dataLength = interpreterProxy->slotSizeOf(((sqInt)(long)(aByteArray) - 4));
-	formatLength = interpreterProxy->slotSizeOf(((sqInt)(long)(aFormat) - 4));
-	sqDndOutStart(aByteArray, dataLength, aFormat, formatLength);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->pop(2);
-	return null;
-}
-
 
 /*	Start drag out session. Formats are types for the data separated with NULL. */
 
-EXPORT(sqInt) primitiveDndOutStart2(void) {
-	sqInt formatsLength;
-	char *formats;
+EXPORT(sqInt) primitiveDndOutStart(void) {
+	sqInt ntypes;
+	char *types;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
-	formats = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
+	types = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	formatsLength = interpreterProxy->slotSizeOf(((sqInt)(long)(formats) - 4));
-	sqDndOutStart2(formats, formatsLength);
+	ntypes = interpreterProxy->slotSizeOf(((sqInt)(long)(types) - 4));
+	sqDndOutStart(types, ntypes);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -270,10 +238,8 @@ void* DropPlugin_exports[][3] = {
 	{"DropPlugin", "primitiveDndOutAcceptedType", (void*)primitiveDndOutAcceptedType},
 	{"DropPlugin", "primitiveDndOutStart", (void*)primitiveDndOutStart},
 	{"DropPlugin", "setInterpreter", (void*)setInterpreter},
-	{"DropPlugin", "primitiveDndOutStart2", (void*)primitiveDndOutStart2},
 	{"DropPlugin", "setFileAccessCallback", (void*)setFileAccessCallback},
 	{"DropPlugin", "initialiseModule", (void*)initialiseModule},
-	{"DropPlugin", "primitiveDndOutEnd", (void*)primitiveDndOutEnd},
 	{"DropPlugin", "primitiveDropRequestFileHandle", (void*)primitiveDropRequestFileHandle},
 	{"DropPlugin", "primitiveDndOutSend", (void*)primitiveDndOutSend},
 	{NULL, NULL, NULL}
