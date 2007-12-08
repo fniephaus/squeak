@@ -29,7 +29,7 @@ BEGIN {
 }
 
 
-(stage == 0) && /^sqInt interpret\(void\) \{/ {
+(stage == 0) && /^sqInt interpret\(INTERPRETER_ARG\) \{/ {
   print "interpret: adding static register assignments" > "/dev/stderr";
   stage= 1;
   print;
@@ -119,15 +119,15 @@ BEGIN {
   next;
 }
 
-(stage == 4) && /^sqInt primitiveResponse\(/ {
-  print;
-  print "primitiveResponse: adding primitive dispatch table" > "/dev/stderr";
-  print "    PRIM_TABLE;\n";
-  print "primitiveResponse: rewriting case labels" > "/dev/stderr";
-  stage= 5;
-  FS="[ 	:]+";
-  next;
-}
+#(stage == 4) && /^sqInt primitiveResponse\(/ {
+#  print;
+#  print "primitiveResponse: adding primitive dispatch table" > "/dev/stderr";
+#  print "    PRIM_TABLE;\n";
+#  print "primitiveResponse: rewriting case labels" > "/dev/stderr";
+#  stage= 5;
+#  FS="[ 	:]+";
+#  next;
+#}
 
 
 (stage == 5) && /^	switch \(primitiveIndex\) {/ {
