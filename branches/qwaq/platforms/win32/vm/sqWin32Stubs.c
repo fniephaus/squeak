@@ -6,13 +6,13 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id: sqWin32Stubs.c,v 1.1 2001/10/24 23:14:28 rowledge Exp $
+*   RCSID:   $Id$
 *
 *   NOTES:
 *****************************************************************************/
 #include "sq.h"
 
-int ioDisablePowerManager(int disableIfNonZero) { return success(false); }
+int ioDisablePowerManager(int disableIfNonZero) { return success(MAIN_VM_ARG_COMMA false); }
 
 #ifdef NO_SOUND
 int snd_AvailableSpace(void) { return success(false); }
@@ -103,7 +103,7 @@ int asyncFileWriteStart(AsyncFile *f, int fPosition, int bufferPtr, int bufferSi
 #endif
 
 #ifdef NO_TABLET
-int tabletGetParameters(int cursorIndex, int result[]) { return success(false); }
-int tabletRead(int cursorIndex, int result[]) { return success(false); }
-int tabletResultSize(void) { return success(false); }
+int tabletGetParameters(int cursorIndex, int result[]) { return success(MAIN_VM_ARG_COMMA false); }
+int tabletRead(int cursorIndex, int result[]) { return success(MAIN_VM_ARG_COMMA false); }
+int tabletResultSize(void) { return success(MAIN_VM_ARG_COMMA false); }
 #endif

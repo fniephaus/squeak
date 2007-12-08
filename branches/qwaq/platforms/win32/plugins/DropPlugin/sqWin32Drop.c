@@ -742,7 +742,7 @@ int dropRequestFileHandle(int dropIndex) {
   char *dropName = dropRequestFileName(dropIndex);
   if(!dropName)
     return interpreterProxy->nilObject();
-  fileHandle = instantiateClassindexableSize(classByteArray(), fileRecordSize());
+  fileHandle = instantiateClassindexableSize(MAIN_VM_ARG_COMMA classByteArray(MAIN_VM_ARG), fileRecordSize());
   wasBrowserMode = fBrowserMode;
   fBrowserMode = false;
   sqFileOpen(fileValueOf(fileHandle),(int)dropName, strlen(dropName), 0);

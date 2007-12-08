@@ -17,11 +17,26 @@
 
 #include "sqConfig.h"
 #include "sqMemoryAccess.h"
-#include "sqVirtualMachine.h"
 
 #define true	1
 #define false	0
 #define null	0  /* using "null" because nil is predefined in Think C */
+
+#ifdef VM_OBJECTIFIED
+
+extern struct Interpreter * mainVM;
+
+/* Main VM */
+# define MAIN_VM_ARG mainVM
+# define MAIN_VM_ARG_COMMA mainVM,
+
+#else
+
+# define MAIN_VM_ARG
+# define MAIN_VM_ARG_COMMA 
+
+#endif
+
 
 /* Pluggable primitives macros. */
 
@@ -146,20 +161,8 @@ sqInt sqGetFilenameFromString(char * aCharBuffer, char * aFilenameString, sqInt 
 /* Platform-specific header file may redefine earlier definitions and macros. */
 
 #include "sqPlatformSpecific.h"
-
-/* Interpreter entry points. */
-
-void error(char *s);
-sqInt checkedByteAt(sqInt byteAddress);
-sqInt checkedByteAtput(sqInt byteAddress, sqInt byte);
-sqInt checkedLongAt(sqInt byteAddress);
-sqInt checkedLongAtput(sqInt byteAddress, sqInt a32BitInteger);
-sqInt fullDisplayUpdate(void);
-sqInt initializeInterpreter(sqInt bytesToShift);
-sqInt interpret(void);
-sqInt primitiveFail(void);
-sqInt signalSemaphoreWithIndex(sqInt semaIndex);
-sqInt success(sqInt);
+#include "sqVirtualMachine.h"
+#include "interp_prototypes.h"
 
 /* Display, mouse, keyboard, time. */
 
@@ -343,35 +346,16 @@ sqInt ioCanRenameImage(void);
 sqInt ioCanWriteImage(void);
 sqInt ioDisableImageWrite(void);
 
-/* Save/restore. */
-/* Read the image from the given file starting at the given image offset */
-sqInt readImageFromFileHeapSizeStartingAt(sqImageFile f, sqInt desiredHeapSize, squeakFileOffsetType imageOffset);
-/* NOTE: The following is obsolete - it is only provided for compatibility */
-#define readImageFromFileHeapSize(f, s) readImageFromFileHeapSizeStartingAt(f,s,0)
-
 /* Clipboard (cut/copy/paste). */
 sqInt clipboardSize(void);
 sqInt clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex);
 sqInt clipboardWriteFromAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex);
 
-
-/* Interpreter entry points needed by compiled primitives. */
-void *arrayValueOf(sqInt arrayOop);
-sqInt checkedIntegerValueOf(sqInt intOop);
-void *fetchArrayofObject(sqInt fieldIndex, sqInt objectPointer);
-double fetchFloatofObject(sqInt fieldIndex, sqInt objectPointer);
-sqInt fetchIntegerofObject(sqInt fieldIndex, sqInt objectPointer);
-double floatValueOf(sqInt floatOop);
-sqInt pop(sqInt nItems);
-sqInt pushInteger(sqInt integerValue);
-sqInt sizeOfSTArrayFromCPrimitive(void *cPtr);
-sqInt storeIntegerofObjectwithValue(sqInt fieldIndex, sqInt objectPointer, sqInt integerValue);
-
 /* Profiling. */
-sqInt clearProfile(void);
-sqInt dumpProfile(void);
-sqInt startProfiling(void);
-sqInt stopProfiling(void);
+sqInt clearProfile(INTERPRETER_ARG);
+sqInt dumpProfile(INTERPRETER_ARG);
+sqInt startProfiling(INTERPRETER_ARG);
+sqInt stopProfiling(INTERPRETER_ARG);
 
 /* System attributes. */
 sqInt attributeSize(sqInt id);

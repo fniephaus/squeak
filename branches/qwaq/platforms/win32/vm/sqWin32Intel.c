@@ -21,12 +21,6 @@
 #include "sq.h"
 #include "sqWin32Args.h"
 
-/*** Crash debug -- Imported from Virtual Machine ***/
-int getFullScreenFlag(void);
-int methodPrimitiveIndex(void);
-int getCurrentBytecode(void);
-int printCallStack(void);
-
 extern TCHAR squeakIniName[];
 
 /* Import from sqWin32Alloc.c */
@@ -692,7 +686,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
      If this fails the IP is probably wrong */
   TRY {
 #ifndef JITTER
-    byteCode = getCurrentBytecode();
+    byteCode = getCurrentBytecode(MAIN_VM_ARG);
 #else
     byteCode = -1;
 #endif
@@ -712,7 +706,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 					 exp->ExceptionRecord->ExceptionCode,
 					 exp->ExceptionRecord->ExceptionAddress,
                      byteCode,
-                     methodPrimitiveIndex(),
+                     methodPrimitiveIndex(MAIN_VM_ARG),
                      vmPath,
                      TEXT("crash.dmp"));
   if(!fHeadlessImage)
@@ -765,7 +759,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 	    "Current byte code: %d\n"
 	    "Primitive index: %d\n",
 	    byteCode,
-	    methodPrimitiveIndex());
+	    methodPrimitiveIndex(MAIN_VM_ARG));
     fflush(f);
     /* print loaded plugins */
     fprintf(f,"\nLoaded plugins:\n");
@@ -787,7 +781,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 	  FILE tmpStdout;
 	  tmpStdout = *stdout;
 	  *stdout = *f;
-	  printCallStack();
+	  printCallStack(MAIN_VM_ARG);
 	  *f = *stdout;
 	  *stdout = tmpStdout;
 	  fprintf(f,"\n");
@@ -838,7 +832,7 @@ void __cdecl Cleanup(void)
 { /* not all of these are essential, but they're polite... */
 
   if(!inCleanExit) {
-    printCallStack();
+    printCallStack(MAIN_VM_ARG);
   }
   ioShutdownAllModules();
 #ifndef NO_PLUGIN_SUPPORT
@@ -1114,19 +1108,19 @@ int sqMain(char *lpCmdLine, int nCmdShow)
     /* read the image file */
     if(!imageFile) {
       imageFile = sqImageFileOpen(imageName,"rb");
-      readImageFromFileHeapSizeStartingAt(imageFile, virtualMemory, 0);
+      readImageFromFileHeapSizeStartingAt(MAIN_VM_ARG_COMMA imageFile, virtualMemory, 0);
     } else {
-      readImageFromFileHeapSizeStartingAt(imageFile, virtualMemory, sqImageFilePosition(imageFile));
+      readImageFromFileHeapSizeStartingAt(MAIN_VM_ARG_COMMA imageFile, virtualMemory, sqImageFilePosition(imageFile));
     }
     sqImageFileClose(imageFile);
 
     if(fHeadlessImage) HideSplashScreen(); /* need to do it manually */
     SetWindowSize();
-    ioSetFullScreen(getFullScreenFlag());
+    ioSetFullScreen(getFullScreenFlag(MAIN_VM_ARG));
 
     /* run Squeak */
     ioInitSecurity();
-    interpret();
+    interpret(MAIN_VM_ARG);
 #ifdef _MSC_VER
   } __except(squeakExceptionHandler(GetExceptionInformation())) {
     /* Do nothing */

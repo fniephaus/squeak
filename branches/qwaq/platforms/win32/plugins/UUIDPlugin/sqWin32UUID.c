@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: 
 *   EMAIL:   Andreas.Raab@gmx.de
-*   RCSID:   $Id: sqWin32UUID.c,v 1.1 2002/05/04 23:20:28 andreasraab Exp $
+*   RCSID:   $Id$
 *
 *   NOTES:
 *****************************************************************************/
@@ -24,7 +24,7 @@ int sqUUIDShutdown(void) {
 
 int MakeUUID(char *location) {
   if(CoCreateGuid((GUID*)location) == S_OK) return 1;
-  primitiveFail();
+  primitiveFail(MAIN_VM_ARG);
   return 0;
 }
 

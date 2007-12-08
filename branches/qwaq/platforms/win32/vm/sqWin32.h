@@ -5,7 +5,7 @@
    since if we don't have CURRENT_VERSION around anymore
    and we may want to check for the image version we need it */
 
-int readableFormat(int imageVersion);
+/* int readableFormat(int imageVersion); */
 
 /*************************************************************/
 /* NOTE: For a list of possible definitions see file README. */

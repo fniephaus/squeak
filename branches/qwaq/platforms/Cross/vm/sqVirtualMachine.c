@@ -3,159 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "sqVirtualMachine.h"
-
-/*** Function prototypes ***/
-
-/* InterpreterProxy methodsFor: 'stack access' */
-sqInt  pop(sqInt nItems);
-sqInt  popthenPush(sqInt nItems, sqInt oop);
-sqInt  push(sqInt object);
-sqInt  pushBool(sqInt trueOrFalse);
-sqInt  pushFloat(double f);
-sqInt  pushInteger(sqInt integerValue);
-double stackFloatValue(sqInt offset);
-sqInt  stackIntegerValue(sqInt offset);
-sqInt  stackObjectValue(sqInt offset);
-sqInt  stackValue(sqInt offset);
-
-/*** variables ***/
-
-extern sqInt (*compilerHooks[])();
-extern sqInt setCompilerInitialized(sqInt flagValue);
-
-/* InterpreterProxy methodsFor: 'object access' */
-sqInt  argumentCountOf(sqInt methodPointer);
-void  *arrayValueOf(sqInt oop);
-sqInt  byteSizeOf(sqInt oop);
-void  *fetchArrayofObject(sqInt fieldIndex, sqInt objectPointer);
-sqInt  fetchClassOf(sqInt oop);
-double fetchFloatofObject(sqInt fieldIndex, sqInt objectPointer);
-sqInt  fetchIntegerofObject(sqInt fieldIndex, sqInt objectPointer);
-sqInt  fetchPointerofObject(sqInt index, sqInt oop);
-/* sqInt  fetchWordofObject(sqInt fieldIndex, sqInt oop);     *
- * has been rescinded as of VMMaker 3.8 and the 64bitclean VM *
- * work. To support old plugins we keep a valid function in   *
- * the same location in the VM struct but rename it to        *
- * something utterly horrible to scare off the natives. A new *
- * equivalent but 64 bit valid function is added as           *
- * 'fetchLong32OfObject'                                      */
-sqInt  obsoleteDontUseThisFetchWordofObject(sqInt index, sqInt oop);
-sqInt  fetchLong32ofObject(sqInt index, sqInt oop); 
-void  *firstFixedField(sqInt oop);
-void  *firstIndexableField(sqInt oop);
-sqInt  literalofMethod(sqInt offset, sqInt methodPointer);
-sqInt  literalCountOf(sqInt methodPointer);
-sqInt  methodArgumentCount(void);
-sqInt  methodPrimitiveIndex(void);
-sqInt  primitiveMethod(void);
-sqInt  primitiveIndexOf(sqInt methodPointer);
-sqInt  sizeOfSTArrayFromCPrimitive(void *cPtr);
-sqInt  slotSizeOf(sqInt oop);
-sqInt  stObjectat(sqInt array, sqInt index);
-sqInt  stObjectatput(sqInt array, sqInt index, sqInt value);
-sqInt  stSizeOf(sqInt oop);
-sqInt  storeIntegerofObjectwithValue(sqInt index, sqInt oop, sqInt integer);
-sqInt  storePointerofObjectwithValue(sqInt index, sqInt oop, sqInt valuePointer);
-
-
-/* InterpreterProxy methodsFor: 'testing' */
-sqInt isKindOf(sqInt oop, char *aString);
-sqInt isMemberOf(sqInt oop, char *aString);
-sqInt isBytes(sqInt oop);
-sqInt isFloatObject(sqInt oop);
-sqInt isIndexable(sqInt oop);
-sqInt isIntegerObject(sqInt objectPointer);
-sqInt isIntegerValue(sqInt intValue);
-sqInt isPointers(sqInt oop);
-sqInt isWeak(sqInt oop);
-sqInt isWords(sqInt oop);
-sqInt isWordsOrBytes(sqInt oop);
-sqInt includesBehaviorThatOf(sqInt aClass, sqInt aSuperClass);
-sqInt isArray(sqInt oop);
-
-/* InterpreterProxy methodsFor: 'converting' */
-sqInt  booleanValueOf(sqInt obj);
-sqInt  checkedIntegerValueOf(sqInt intOop);
-sqInt  floatObjectOf(double aFloat);
-double floatValueOf(sqInt oop);
-sqInt  integerObjectOf(sqInt value);
-sqInt  integerValueOf(sqInt oop);
-sqInt  positive32BitIntegerFor(sqInt integerValue);
-sqInt  positive32BitValueOf(sqInt oop);
-sqInt  signed32BitIntegerFor(sqInt integerValue);
-sqInt  signed32BitValueOf(sqInt oop);
-sqInt  positive64BitIntegerFor(sqLong integerValue);
-sqLong positive64BitValueOf(sqInt oop);
-sqInt  signed64BitIntegerFor(sqLong integerValue);
-sqLong signed64BitValueOf(sqInt oop);
-
-/* InterpreterProxy methodsFor: 'special objects' */
-sqInt characterTable(void);
-sqInt displayObject(void);
-sqInt falseObject(void);
-sqInt nilObject(void);
-sqInt trueObject(void);
-
-
-/* InterpreterProxy methodsFor: 'special classes' */
-sqInt classArray(void);
-sqInt classBitmap(void);
-sqInt classByteArray(void);
-sqInt classCharacter(void);
-sqInt classFloat(void);
-sqInt classLargePositiveInteger(void);
-sqInt classLargeNegativeInteger(void);
-sqInt classPoint(void);
-sqInt classSemaphore(void);
-sqInt classSmallInteger(void);
-sqInt classString(void);
-
-
-/* InterpreterProxy methodsFor: 'instance creation' */
-sqInt clone(sqInt oop);
-sqInt instantiateClassindexableSize(sqInt classPointer, sqInt size);
-sqInt makePointwithxValueyValue(sqInt xValue, sqInt yValue);
-sqInt popRemappableOop(void);
-sqInt pushRemappableOop(sqInt oop);
-
-
-/* InterpreterProxy methodsFor: 'other' */
-sqInt becomewith(sqInt array1, sqInt array2);
-sqInt byteSwapped(sqInt w);
-sqInt failed(void);
-sqInt fullDisplayUpdate(void);
-sqInt fullGC(void);
-sqInt incrementalGC(void);
-sqInt primitiveFail(void);
-sqInt showDisplayBitsLeftTopRightBottom(sqInt aForm, sqInt l, sqInt t, sqInt r, sqInt b);
-sqInt signalSemaphoreWithIndex(sqInt semaIndex);
-sqInt success(sqInt aBoolean);
-sqInt superclassOf(sqInt classPointer);
-sqInt ioMicroMSecs(void);
-sqInt forceInterruptCheck(void);
-sqInt getThisSessionID(void);
-sqInt ioFilenamefromStringofLengthresolveAliases(char* aCharBuffer, char* filenameIndex, sqInt filenameLength, sqInt resolveFlag);
-sqInt  vmEndianness(void);	
-
-/* InterpreterProxy methodsFor: 'BitBlt support' */
-sqInt loadBitBltFrom(sqInt bbOop);
-sqInt copyBits(void);
-sqInt copyBitsFromtoat(sqInt leftX, sqInt rightX, sqInt yValue);
-
-/* InterpreterProxy methodsFor: 'FFI support' */
-sqInt classExternalAddress(void);
-sqInt classExternalData(void);
-sqInt classExternalFunction(void);
-sqInt classExternalLibrary(void);
-sqInt classExternalStructure(void);
-sqInt ioLoadModuleOfLength(sqInt moduleNameIndex, sqInt moduleNameLength);
-sqInt ioLoadSymbolOfLengthFromModule(sqInt functionNameIndex, sqInt functionNameLength, sqInt moduleHandle);
-sqInt isInMemory(sqInt address);
-
-void *ioLoadFunctionFrom(char *fnName, char *modName);
-
-struct VirtualMachine *VM = NULL;
+#include "sq.h"
+#include "interp_prototypes.h"
 
 static sqInt majorVersion(void) {
 	return VM_PROXY_MAJOR;
@@ -165,176 +14,643 @@ static sqInt minorVersion(void) {
 	return VM_PROXY_MINOR;
 }
 
-static CompilerHook *compilerHookVector(void) {
-  return compilerHooks;
+#ifdef VM_OBJECTIFIED
+
+
+/* Functions for support of legacy plugins */
+sqInt legacy_isInMemory(sqInt address) {
+	return isInMemory(mainVM, address);
 }
+sqInt legacy_positive64BitIntegerFor(sqLong integerValue) {
+	return positive64BitIntegerFor(mainVM, integerValue);
+}
+sqInt legacy_stackIntegerValue(sqInt offset) {
+	return stackIntegerValue(mainVM, offset);
+}
+sqInt legacy_copyBits() {
+	return copyBits(mainVM);
+}
+#define legacy_ioFilenamefromStringofLengthresolveAliases ioFilenamefromStringofLengthresolveAliases
+sqInt legacy_setCompilerInitialized(sqInt newFlag) {
+	return setCompilerInitialized(mainVM, newFlag);
+}
+sqInt legacy_pushFloat(double  f) {
+	return pushFloat(mainVM, f);
+}
+double legacy_floatValueOf(sqInt oop) {
+	return floatValueOf(mainVM, oop);
+}
+sqInt legacy_pushRemappableOop(sqInt oop) {
+	return pushRemappableOop(mainVM, oop);
+}
+sqInt legacy_displayObject() {
+	return displayObject(mainVM);
+}
+sqInt legacy_classPoint() {
+	return classPoint(mainVM);
+}
+sqInt legacy_includesBehaviorThatOf(sqInt aClass, sqInt aSuperclass) {
+	return includesBehaviorThatOf(mainVM, aClass, aSuperclass);
+}
+#define legacy_integerValueOf integerValueOf
+#define legacy_vmEndianness vmEndianness
+sqInt legacy_makePointwithxValueyValue(sqInt xValue, sqInt yValue) {
+	return makePointwithxValueyValue(mainVM, xValue, yValue);
+}
+sqInt legacy_classExternalStructure() {
+	return classExternalStructure(mainVM);
+}
+#define legacy_integerObjectOf integerObjectOf
+sqInt legacy_stackValue(sqInt offset) {
+	return stackValue(mainVM, offset);
+}
+#define legacy_byteSizeOf byteSizeOf
+#define legacy_byteSwapped byteSwapped
+sqInt legacy_stSizeOf(sqInt oop) {
+	return stSizeOf(mainVM, oop);
+}
+sqInt legacy_classSemaphore() {
+	return classSemaphore(mainVM);
+}
+sqInt legacy_classExternalLibrary() {
+	return classExternalLibrary(mainVM);
+}
+sqInt legacy_failed() {
+	return failed(mainVM);
+}
+sqInt legacy_positive32BitIntegerFor(sqInt integerValue) {
+	return positive32BitIntegerFor(mainVM, integerValue);
+}
+sqInt legacy_popRemappableOop() {
+	return popRemappableOop(mainVM);
+}
+sqInt legacy_forceInterruptCheck() {
+	return forceInterruptCheck(mainVM);
+}
+#define legacy_isIndexable isIndexable
+sqLong legacy_positive64BitValueOf(sqInt oop) {
+	return positive64BitValueOf(mainVM, oop);
+}
+#define legacy_fetchPointerofObject fetchPointerofObject
+sqInt legacy_fullDisplayUpdate() {
+	return fullDisplayUpdate(mainVM);
+}
+sqInt legacy_stackObjectValue(sqInt offset) {
+	return stackObjectValue(mainVM, offset);
+}
+sqInt legacy_nilObject() {
+	return nilObject(mainVM);
+}
+sqInt legacy_pushBool(sqInt trueOrFalse) {
+	return pushBool(mainVM, trueOrFalse);
+}
+sqInt legacy_methodPrimitiveIndex() {
+	return methodPrimitiveIndex(mainVM);
+}
+sqInt legacy_stObjectat(sqInt array, sqInt index) {
+	return stObjectat(mainVM, array, index);
+}
+sqInt legacy_falseObject() {
+	return falseObject(mainVM);
+}
+sqInt legacy_push(sqInt object) {
+	return push(mainVM, object);
+}
+sqInt legacy_classExternalData() {
+	return classExternalData(mainVM);
+}
+sqInt legacy_isFloatObject(sqInt oop) {
+	return isFloatObject(mainVM, oop);
+}
+void * legacy_compilerHookVector() {
+	return compilerHookVector(mainVM);
+}
+#define legacy_isIntegerObject isIntegerObject
+sqInt legacy_signalSemaphoreWithIndex(sqInt index) {
+	return signalSemaphoreWithIndex(mainVM, index);
+}
+#define legacy_literalofMethod literalofMethod
+sqInt legacy_storePointerofObjectwithValue(sqInt fieldIndex, sqInt oop, sqInt valuePointer) {
+	return storePointerofObjectwithValue(mainVM, fieldIndex, oop, valuePointer);
+}
+sqInt legacy_primitiveFail() {
+	return primitiveFail(mainVM);
+}
+sqInt legacy_sizeOfSTArrayFromCPrimitive(void * cPtr) {
+	return sizeOfSTArrayFromCPrimitive(mainVM, cPtr);
+}
+#define legacy_firstFixedField firstFixedField
+sqInt legacy_isKindOf(sqInt oop, char * className) {
+	return isKindOf(mainVM, oop, className);
+}
+sqInt legacy_signed64BitIntegerFor(sqLong integerValue) {
+	return signed64BitIntegerFor(mainVM, integerValue);
+}
+sqInt legacy_floatObjectOf(double  aFloat) {
+	return floatObjectOf(mainVM, aFloat);
+}
+#define legacy_arrayValueOf arrayValueOf
+double legacy_fetchFloatofObject(sqInt fieldIndex, sqInt objectPointer) {
+	return fetchFloatofObject(mainVM, fieldIndex, objectPointer);
+}
+sqInt legacy_characterTable() {
+	return characterTable(mainVM);
+}
+void * legacy_firstIndexableField(sqInt oop) {
+	return firstIndexableField(mainVM, oop);
+}
+#define legacy_isArray isArray
+sqInt legacy_stObjectatput(sqInt array, sqInt index, sqInt value) {
+	return stObjectatput(mainVM, array, index, value);
+}
+sqInt legacy_signed32BitValueOf(sqInt oop) {
+	return signed32BitValueOf(mainVM, oop);
+}
+#define legacy_isWordsOrBytes isWordsOrBytes
+sqInt legacy_success(sqInt successValue) {
+	return success(mainVM, successValue);
+}
+sqInt legacy_classFloat() {
+	return classFloat(mainVM);
+}
+double legacy_stackFloatValue(sqInt offset) {
+	return stackFloatValue(mainVM, offset);
+}
+#define legacy_obsoleteDontUseThisFetchWordofObject obsoleteDontUseThisFetchWordofObject
+sqInt legacy_fullGC() {
+	return fullGC(mainVM);
+}
+sqInt legacy_classByteArray() {
+	return classByteArray(mainVM);
+}
+sqInt legacy_getThisSessionID() {
+	return getThisSessionID(mainVM);
+}
+#define legacy_argumentCountOf argumentCountOf
+sqInt legacy_clone(sqInt oop) {
+	return clone(mainVM, oop);
+}
+sqInt legacy_classString() {
+	return classString(mainVM);
+}
+sqInt legacy_copyBitsFromtoat(sqInt x0, sqInt x1, sqInt y) {
+	return copyBitsFromtoat(mainVM, x0, x1, y);
+}
+#define legacy_isWords isWords
+#define legacy_literalCountOf literalCountOf
+sqInt legacy_classLargePositiveInteger() {
+	return classLargePositiveInteger(mainVM);
+}
+sqInt legacy_checkedIntegerValueOf(sqInt intOop) {
+	return checkedIntegerValueOf(mainVM, intOop);
+}
+sqInt legacy_classLargeNegativeInteger() {
+	return classLargeNegativeInteger(mainVM);
+}
+sqInt legacy_signed32BitIntegerFor(sqInt integerValue) {
+	return signed32BitIntegerFor(mainVM, integerValue);
+}
+sqInt legacy_instantiateClassindexableSize(sqInt classPointer, sqInt size) {
+	return instantiateClassindexableSize(mainVM, classPointer, size);
+}
+sqInt legacy_popthenPush(sqInt nItems, sqInt oop) {
+	return popthenPush(mainVM, nItems, oop);
+}
+sqInt legacy_incrementalGC() {
+	return incrementalGC(mainVM);
+}
+sqInt legacy_classCharacter() {
+	return classCharacter(mainVM);
+}
+void * legacy_fetchArrayofObject(sqInt fieldIndex, sqInt objectPointer) {
+	return fetchArrayofObject(mainVM, fieldIndex, objectPointer);
+}
+sqInt legacy_primitiveMethod() {
+	return primitiveMethod(mainVM);
+}
+#define legacy_isPointers isPointers
+sqInt legacy_classBitmap() {
+	return classBitmap(mainVM);
+}
+#define legacy_slotSizeOf slotSizeOf
+sqInt legacy_becomewith(sqInt array1, sqInt array2) {
+	return becomewith(mainVM, array1, array2);
+}
+sqInt legacy_showDisplayBitsLeftTopRightBottom(sqInt aForm, sqInt l, sqInt t, sqInt r, sqInt b) {
+	return showDisplayBitsLeftTopRightBottom(mainVM, aForm, l, t, r, b);
+}
+sqInt legacy_pushInteger(sqInt integerValue) {
+	return pushInteger(mainVM, integerValue);
+}
+sqInt legacy_fetchClassOf(sqInt oop) {
+	return fetchClassOf(mainVM, oop);
+}
+sqInt legacy_fetchIntegerofObject(sqInt fieldIndex, sqInt objectPointer) {
+	return fetchIntegerofObject(mainVM, fieldIndex, objectPointer);
+}
+sqLong legacy_signed64BitValueOf(sqInt oop) {
+	return signed64BitValueOf(mainVM, oop);
+}
+sqInt legacy_classSmallInteger() {
+	return classSmallInteger(mainVM);
+}
+sqInt legacy_classExternalAddress() {
+	return classExternalAddress(mainVM);
+}
+sqInt legacy_isMemberOf(sqInt oop, char * className) {
+	return isMemberOf(mainVM, oop, className);
+}
+sqInt legacy_classExternalFunction() {
+	return classExternalFunction(mainVM);
+}
+#define legacy_superclassOf superclassOf
+sqInt legacy_classArray() {
+	return classArray(mainVM);
+}
+sqInt legacy_storeIntegerofObjectwithValue(sqInt fieldIndex, sqInt objectPointer, sqInt integerValue) {
+	return storeIntegerofObjectwithValue(mainVM, fieldIndex, objectPointer, integerValue);
+}
+sqInt legacy_trueObject() {
+	return trueObject(mainVM);
+}
+#define legacy_primitiveIndexOf primitiveIndexOf
+sqInt legacy_booleanValueOf(sqInt obj) {
+	return booleanValueOf(mainVM, obj);
+}
+sqInt legacy_positive32BitValueOf(sqInt oop) {
+	return positive32BitValueOf(mainVM, oop);
+}
+sqInt legacy_loadBitBltFrom(sqInt bb) {
+	return loadBitBltFrom(mainVM, bb);
+}
+#define legacy_isBytes isBytes
+#define legacy_fetchLong32ofObject fetchLong32ofObject
+sqInt legacy_methodArgumentCount() {
+	return methodArgumentCount(mainVM);
+}
+#define legacy_isIntegerValue isIntegerValue
+sqInt legacy_pop(sqInt nItems) {
+	return pop(mainVM, nItems);
+}
+#define legacy_isWeak isWeak
+
+#define VM_FN(name) legacy_##name
+
+#else
+
+#define VM_FN(name) name
+
+#endif
 
 
-struct VirtualMachine* sqGetInterpreterProxy(void)
-{
-	if(VM) return VM;
-	VM = (struct VirtualMachine *)calloc(1, sizeof(VirtualMachine));
-	/* Initialize Function pointers */
-	VM->majorVersion = majorVersion;
-	VM->minorVersion = minorVersion;
+
+
+
+struct VirtualMachine VM = { 
+	minorVersion,
+	majorVersion,
 
 	/* InterpreterProxy methodsFor: 'stack access' */
-	VM->pop = pop;
-	VM->popthenPush = popthenPush;
-	VM->push = push;
-	VM->pushBool = pushBool;
-	VM->pushFloat = pushFloat;
-	VM->pushInteger = pushInteger;
-	VM->stackFloatValue = stackFloatValue;
-	VM->stackIntegerValue = stackIntegerValue;
-	VM->stackObjectValue = stackObjectValue;
-	VM->stackValue = stackValue;
+	VM_FN(pop),
+	VM_FN(popthenPush),
+	VM_FN(push),
+	VM_FN(pushBool),
+	VM_FN(pushFloat),
+	VM_FN(pushInteger),
+	VM_FN(stackFloatValue),
+	VM_FN(stackIntegerValue),
+	VM_FN(stackObjectValue),
+	VM_FN(stackValue),
 	
 	/* InterpreterProxy methodsFor: 'object access' */
-	VM->argumentCountOf = argumentCountOf;
-	VM->arrayValueOf = arrayValueOf;
-	VM->byteSizeOf = byteSizeOf;
-	VM->fetchArrayofObject = fetchArrayofObject;
-	VM->fetchClassOf = fetchClassOf;
-	VM->fetchFloatofObject = fetchFloatofObject;
-	VM->fetchIntegerofObject = fetchIntegerofObject;
-	VM->fetchPointerofObject = fetchPointerofObject;
-	VM->obsoleteDontUseThisFetchWordofObject = obsoleteDontUseThisFetchWordofObject;
-	VM->firstFixedField = firstFixedField;
-	VM->firstIndexableField = firstIndexableField;
-	VM->literalofMethod = literalofMethod;
-	VM->literalCountOf = literalCountOf;
-	VM->methodArgumentCount = methodArgumentCount;
-	VM->methodPrimitiveIndex = methodPrimitiveIndex;
-	VM->primitiveIndexOf = primitiveIndexOf;
-	VM->primitiveMethod = primitiveMethod;
-	VM->sizeOfSTArrayFromCPrimitive = sizeOfSTArrayFromCPrimitive;
-	VM->slotSizeOf = slotSizeOf;
-	VM->stObjectat = stObjectat;
-	VM->stObjectatput = stObjectatput;
-	VM->stSizeOf = stSizeOf;
-	VM->storeIntegerofObjectwithValue = storeIntegerofObjectwithValue;
-	VM->storePointerofObjectwithValue = storePointerofObjectwithValue;
-	
+	VM_FN(argumentCountOf),
+	VM_FN(arrayValueOf),
+	VM_FN(byteSizeOf),
+	VM_FN(fetchArrayofObject),
+	VM_FN(fetchClassOf),
+	VM_FN(fetchFloatofObject),
+	VM_FN(fetchIntegerofObject),
+	VM_FN(fetchPointerofObject),
+	VM_FN(obsoleteDontUseThisFetchWordofObject),
+	VM_FN(firstFixedField),
+	VM_FN(firstIndexableField),
+	VM_FN(literalofMethod),
+	VM_FN(literalCountOf),
+	VM_FN(methodArgumentCount),
+	VM_FN(methodPrimitiveIndex),
+	VM_FN(primitiveIndexOf),
+	VM_FN(sizeOfSTArrayFromCPrimitive),
+	VM_FN(slotSizeOf),
+	VM_FN(stObjectat),
+	VM_FN(stObjectatput),
+	VM_FN(stSizeOf),
+	VM_FN(storeIntegerofObjectwithValue),
+	VM_FN(storePointerofObjectwithValue),
+
 	/* InterpreterProxy methodsFor: 'testing' */
-	VM->isKindOf = isKindOf;
-	VM->isMemberOf = isMemberOf;
-	VM->isBytes = isBytes;
-	VM->isFloatObject = isFloatObject;
-	VM->isIndexable = isIndexable;
-	VM->isIntegerObject = isIntegerObject;
-	VM->isIntegerValue = isIntegerValue;
-	VM->isPointers = isPointers;
-	VM->isWeak = isWeak;
-	VM->isWords = isWords;
-	VM->isWordsOrBytes = isWordsOrBytes;
-
+	VM_FN(isKindOf),
+	VM_FN(isMemberOf),
+	VM_FN(isBytes),
+	VM_FN(isFloatObject),
+	VM_FN(isIndexable),
+	VM_FN(isIntegerObject),
+	VM_FN(isIntegerValue),
+	VM_FN(isPointers),
+	VM_FN(isWeak),
+	VM_FN(isWords),
+	VM_FN(isWordsOrBytes),
+	      
 	/* InterpreterProxy methodsFor: 'converting' */
-	VM->booleanValueOf = booleanValueOf;
-	VM->checkedIntegerValueOf = checkedIntegerValueOf;
-	VM->floatObjectOf = floatObjectOf;
-	VM->floatValueOf = floatValueOf;
-	VM->integerObjectOf = integerObjectOf;
-	VM->integerValueOf = integerValueOf;
-	VM->positive32BitIntegerFor = positive32BitIntegerFor;
-	VM->positive32BitValueOf = positive32BitValueOf;
-
+	VM_FN(booleanValueOf),
+	VM_FN(checkedIntegerValueOf),
+	VM_FN(floatObjectOf),
+	VM_FN(floatValueOf),
+	VM_FN(integerObjectOf),
+	VM_FN(integerValueOf),
+	VM_FN(positive32BitIntegerFor),
+	VM_FN(positive32BitValueOf),
+       
 	/* InterpreterProxy methodsFor: 'special objects' */
-	VM->characterTable = characterTable;
-	VM->displayObject = displayObject;
-	VM->falseObject = falseObject;
-	VM->nilObject = nilObject;
-	VM->trueObject = trueObject;
+	VM_FN(characterTable),
+	VM_FN(displayObject),
+	VM_FN(falseObject),
+	VM_FN(nilObject),
+	VM_FN(trueObject),
 	
 	/* InterpreterProxy methodsFor: 'special classes' */
-	VM->classArray = classArray;
-	VM->classBitmap = classBitmap;
-	VM->classByteArray = classByteArray;
-	VM->classCharacter = classCharacter;
-	VM->classFloat = classFloat;
-	VM->classLargePositiveInteger = classLargePositiveInteger;
-	VM->classPoint = classPoint;
-	VM->classSemaphore = classSemaphore;
-	VM->classSmallInteger = classSmallInteger;
-	VM->classString = classString;
+	VM_FN(classArray),
+	VM_FN(classBitmap),
+	VM_FN(classByteArray),
+	VM_FN(classCharacter),
+	VM_FN(classFloat),
+	VM_FN(classLargePositiveInteger),
+	VM_FN(classPoint),
+	VM_FN(classSemaphore),
+	VM_FN(classSmallInteger),
+	VM_FN(classString),
 	
 	/* InterpreterProxy methodsFor: 'instance creation' */
-	VM->clone = clone;
-	VM->instantiateClassindexableSize = instantiateClassindexableSize;
-	VM->makePointwithxValueyValue = makePointwithxValueyValue;
-	VM->popRemappableOop = popRemappableOop;
-	VM->pushRemappableOop = pushRemappableOop;
-
+	VM_FN(clone),
+	VM_FN(instantiateClassindexableSize),
+	VM_FN(makePointwithxValueyValue),
+	VM_FN(popRemappableOop),
+	VM_FN(pushRemappableOop),
+	
 	/* InterpreterProxy methodsFor: 'other' */
-	VM->becomewith = becomewith;
-	VM->byteSwapped = byteSwapped;
-	VM->failed = failed;
-	VM->fullDisplayUpdate = fullDisplayUpdate;
-	VM->fullGC = fullGC;
-	VM->incrementalGC = incrementalGC;
-	VM->primitiveFail = primitiveFail;
-	VM->showDisplayBitsLeftTopRightBottom = showDisplayBitsLeftTopRightBottom;
-	VM->signalSemaphoreWithIndex = signalSemaphoreWithIndex;
-	VM->success = success;
-	VM->superclassOf = superclassOf;
+	VM_FN(becomewith),
+	VM_FN(byteSwapped),
+	VM_FN(failed),
+	VM_FN(fullDisplayUpdate),
+	VM_FN(fullGC),
+	VM_FN(incrementalGC),
+	VM_FN(primitiveFail),
+	VM_FN(showDisplayBitsLeftTopRightBottom),
+	VM_FN(signalSemaphoreWithIndex),
+	VM_FN(success),
+	VM_FN(superclassOf),
 
-	VM->compilerHookVector= compilerHookVector;
-	VM->setCompilerInitialized= setCompilerInitialized;
+	(CompilerHook *(*)(void))VM_FN(compilerHookVector),
+	VM_FN(setCompilerInitialized),
 
 #if VM_PROXY_MINOR > 1
 
 	/* InterpreterProxy methodsFor: 'BitBlt support' */
-	VM->loadBitBltFrom = loadBitBltFrom;
-	VM->copyBits = copyBits;
-	VM->copyBitsFromtoat = copyBitsFromtoat;
+	VM_FN(loadBitBltFrom),
+	VM_FN(copyBits),
+	VM_FN(copyBitsFromtoat),
 
 #endif
 
 #if VM_PROXY_MINOR > 2
 
+	VM_FN(classLargeNegativeInteger),
+	VM_FN(signed32BitIntegerFor),
+	VM_FN(signed32BitValueOf),
+	VM_FN(includesBehaviorThatOf),
+	VM_FN(primitiveMethod),
+
 	/* InterpreterProxy methodsFor: 'FFI support' */
-	VM->classExternalAddress = classExternalAddress;
-	VM->classExternalData = classExternalData;
-	VM->classExternalFunction = classExternalFunction;
-	VM->classExternalLibrary = classExternalLibrary;
-	VM->classExternalStructure = classExternalStructure;
-	VM->ioLoadModuleOfLength = ioLoadModuleOfLength;
-	VM->ioLoadSymbolOfLengthFromModule = ioLoadSymbolOfLengthFromModule;
-	VM->isInMemory = isInMemory;
-	VM->signed32BitIntegerFor = signed32BitIntegerFor;
-	VM->signed32BitValueOf = signed32BitValueOf;
-	VM->includesBehaviorThatOf = includesBehaviorThatOf;
-	VM->classLargeNegativeInteger = classLargeNegativeInteger;
+	VM_FN(classExternalAddress),
+	VM_FN(classExternalData),
+	VM_FN(classExternalFunction),
+	VM_FN(classExternalLibrary),
+	VM_FN(classExternalStructure),
+/**/	ioLoadModuleOfLength,
+/**/	ioLoadSymbolOfLengthFromModule,
+	VM_FN(isInMemory),
 
 #endif
 
 #if VM_PROXY_MINOR > 3
 
-	VM->ioLoadFunctionFrom = ioLoadFunctionFrom;
-	VM->ioMicroMSecs = ioMicroMSecs;
+/**/	ioLoadFunctionFrom,
+/**/	ioMicroMSecs,
 
 #endif
 
 #if VM_PROXY_MINOR > 4
 
-	VM->positive64BitIntegerFor = positive64BitIntegerFor;
-	VM->positive64BitValueOf = positive64BitValueOf;
-	VM->signed64BitIntegerFor = signed64BitIntegerFor;
-	VM->signed64BitValueOf = signed64BitValueOf;
-
+	VM_FN(positive64BitIntegerFor),
+	VM_FN(positive64BitValueOf),
+	VM_FN(signed64BitIntegerFor),
+	VM_FN(signed64BitValueOf),
 #endif
 
 #if VM_PROXY_MINOR > 5
-	VM->isArray = isArray;
-	VM->forceInterruptCheck = forceInterruptCheck;
+	VM_FN(isArray),
+	VM_FN(forceInterruptCheck),
 #endif
 
 #if VM_PROXY_MINOR > 6
-	VM->fetchLong32ofObject = fetchLong32ofObject;
-	VM->getThisSessionID = getThisSessionID;
-	VM->ioFilenamefromStringofLengthresolveAliases = ioFilenamefromStringofLengthresolveAliases;
-	VM->vmEndianness = vmEndianness;
+	VM_FN(fetchLong32ofObject),
+	VM_FN(getThisSessionID),
+	VM_FN(ioFilenamefromStringofLengthresolveAliases),
+	VM_FN(vmEndianness)
 #endif
 
-	return VM;
+};
+
+struct VirtualMachine* sqGetInterpreterProxy(void)
+{
+	return &VM;
 }
+
+/*************** VM Proxy for objectified VM ***********************************/
+
+#ifdef VM_OBJECTIFIED
+
+sqInt objVMminorVersion(void)
+{
+	return OBJVM_PROXY_MINOR;
+}
+sqInt objVMmajorVersion(void)
+{
+	return OBJVM_PROXY_MAJOR;
+}
+
+struct ObjVirtualMachine ObjVM = { 
+
+	objVMminorVersion,
+	objVMmajorVersion,
+
+	/* InterpreterProxy methodsFor: 'stack access' */
+	pop,
+        popthenPush,
+	push,
+	pushBool,
+	pushFloat,
+	pushInteger,
+	stackFloatValue,
+	stackIntegerValue,
+	stackObjectValue,
+	stackValue,
+
+	/* InterpreterProxy methodsFor: 'object access' */
+
+	argumentCountOf,
+	arrayValueOf,
+	byteSizeOf,
+	fetchArrayofObject,
+	fetchClassOf,
+	fetchFloatofObject,
+	fetchIntegerofObject,
+	fetchPointerofObject,
+	firstFixedField,
+	firstIndexableField,
+	literalofMethod,
+	literalCountOf,
+	methodArgumentCount,
+	methodPrimitiveIndex,
+	primitiveIndexOf,
+	sizeOfSTArrayFromCPrimitive,
+	slotSizeOf,
+	stObjectat,
+	stObjectatput,
+	stSizeOf,
+	storeIntegerofObjectwithValue,
+	storePointerofObjectwithValue,
+
+	/* InterpreterProxy methodsFor: 'testing' */
+
+	isKindOf,
+	isMemberOf,
+	isBytes,
+	isFloatObject,
+	isIndexable,
+	isIntegerObject,
+	isIntegerValue,
+	isPointers,
+	isWeak,
+	isWords,
+	isWordsOrBytes,
+
+	/* InterpreterProxy methodsFor: 'converting' */
+
+	booleanValueOf,
+	checkedIntegerValueOf,
+	floatObjectOf,
+	floatValueOf,
+	integerObjectOf,
+	integerValueOf,
+	positive32BitIntegerFor,
+	positive32BitValueOf,
+
+	/* InterpreterProxy methodsFor: 'special objects' */
+
+	characterTable,
+	displayObject,
+	falseObject,
+	nilObject,
+	trueObject,
+
+	/* InterpreterProxy methodsFor: 'special classes' */
+
+	classArray,
+	classBitmap,
+	classByteArray,
+	classCharacter,
+	classFloat,
+	classLargePositiveInteger,
+	classPoint,
+	classSemaphore,
+	classSmallInteger,
+	classString,
+
+	/* InterpreterProxy methodsFor: 'instance creation' */
+
+	clone,
+	instantiateClassindexableSize,
+	makePointwithxValueyValue,
+	popRemappableOop,
+	pushRemappableOop,
+
+	/* InterpreterProxy methodsFor: 'other' */
+
+	becomewith,
+	byteSwapped,
+	failed,
+	fullDisplayUpdate,
+	fullGC,
+	incrementalGC,
+	primitiveFail,
+	showDisplayBitsLeftTopRightBottom,
+	signalSemaphoreWithIndex,
+	success,
+	superclassOf,
+
+	/* InterpreterProxy methodsFor: 'compiler' */
+
+	(CompilerHook *(*)(INTERPRETER_ARG))compilerHookVector,
+	setCompilerInitialized,
+
+	/* InterpreterProxy methodsFor: 'BitBlt support' */
+
+	loadBitBltFrom,
+	copyBits,
+	copyBitsFromtoat,
+
+	classLargeNegativeInteger,
+	signed32BitIntegerFor,
+	signed32BitValueOf,
+	includesBehaviorThatOf,
+	primitiveMethod,
+
+	/* InterpreterProxy methodsFor: 'FFI support' */
+
+	classExternalAddress,
+	classExternalData,
+	classExternalFunction,
+	classExternalLibrary,
+	classExternalStructure,
+	ioLoadModuleOfLength,
+	ioLoadSymbolOfLengthFromModule,
+	isInMemory,
+
+	ioLoadFunctionFrom,
+	ioMicroMSecs,
+
+	positive64BitIntegerFor,
+	positive64BitValueOf,
+	signed64BitIntegerFor,
+	signed64BitValueOf,
+
+	isArray,
+	forceInterruptCheck,
+	fetchLong32ofObject,
+	getThisSessionID,
+	ioFilenamefromStringofLengthresolveAliases,
+	vmEndianness
+
+#if OBJVM_PROXY_MINOR > 1
+	/* put new functions here */
+#endif
+
+};
+
+
+struct ObjVirtualMachine* sqGetObjInterpreterProxy(void)
+{
+	return &ObjVM;
+}
+
+#endif /* VM_OBJECTIFIED */

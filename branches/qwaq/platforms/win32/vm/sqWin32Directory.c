@@ -286,7 +286,8 @@ dir_GetMacFileTypeAndCreator(char *filename, int filenameSize,
 			     char *fType, char *fCreator)
 {
   /* Win32 files are untyped, and the creator is correct by default */
-  return interpreterProxy->primitiveFail();
+  /* return interpreterProxy->primitiveFail(); */
+  return 0;
 }
 
 int dir_Delete(char *pathString, int pathLength) {

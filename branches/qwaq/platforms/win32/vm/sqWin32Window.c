@@ -32,16 +32,6 @@
 static TCHAR RCSID[]= TEXT("$Id$");
 #endif
 
-/****************************************************************************/
-/* General Squeak declarations and definitions                              */
-/****************************************************************************/
-
-int setInterruptPending(int);
-int setInterruptCheckCounter(int);
-int getInterruptKeycode(void);
-int setFullScreenFlag(int);
-extern int deferDisplayUpdates;
-
 
 /*** Variables -- image and path names ***/
 #define IMAGE_NAME_SIZE MAX_PATH
@@ -156,6 +146,7 @@ void SetSystemTrayIcon(BOOL on);
 
 sqInputEvent *sqNextEventPut(void);
 
+void HideSplashScreen(void);
 
 /****************************************************************************/
 /*                      Synchronization functions                           */
@@ -176,7 +167,7 @@ int synchronizedSignalSemaphoreWithIndex(int semaIndex)
   /* wait until we have access */
   WaitForSingleObject(vmSemaphoreMutex, INFINITE);
   /* do our job */
-  result = signalSemaphoreWithIndex(semaIndex);
+  result = signalSemaphoreWithIndex(MAIN_VM_ARG_COMMA semaIndex);
   /* wake up interpret() if sleeping */
   SetEvent(vmWakeUpEvent);
   /* and release access */
@@ -389,7 +380,7 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
     if (!IsRectEmpty(&updateRect)) {
       /* force redraw the next time ioShowDisplay() is called */
       updateRightNow = TRUE;
-      fullDisplayUpdate();  /* this makes VM call ioShowDisplay */
+      fullDisplayUpdate(MAIN_VM_ARG);  /* this makes VM call ioShowDisplay */
     }
     break;
   case WM_SIZE:
@@ -479,7 +470,7 @@ int _lowResMSecs = 0;
 
 void CALLBACK timerCallback(UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2) {
   _lowResMSecs++;
-  setInterruptCheckCounter(0);
+  setInterruptCheckCounter(MAIN_VM_ARG_COMMA 0);
 }
 
 #include <mmsystem.h>
@@ -1219,8 +1210,8 @@ int recordVirtualKey(UINT message, WPARAM wParam, LPARAM lParam)
     return 1;
   }
   if(wParam == VK_CANCEL) {
-    setInterruptPending(true);
-    setInterruptCheckCounter(0);
+    setInterruptPending(MAIN_VM_ARG_COMMA true);
+    setInterruptCheckCounter(MAIN_VM_ARG_COMMA 0);
     return 1;
   }
   keystate = mapVirtualKey(wParam);
@@ -1242,11 +1233,11 @@ int recordKeystroke(UINT msg, WPARAM wParam, LPARAM lParam)
   /* add the modifiers */
   keystate = keystate | ((buttonState >> 3) << 8);
   /* check for interrupt key */
-  if(keystate == getInterruptKeycode())
+  if(keystate == getInterruptKeycode(MAIN_VM_ARG))
     {
       /* NOTE: Interrupt key is meta, not recorded as key stroke */
-      setInterruptPending(true);
-      setInterruptCheckCounter(0);
+      setInterruptPending(MAIN_VM_ARG_COMMA true);
+      setInterruptCheckCounter(MAIN_VM_ARG_COMMA 0);
 	  return 1;
     }
   recordKey(keystate);
@@ -1538,20 +1529,20 @@ int ioSetCursorWithMask(int cursorBitsIndex, int cursorMaskIndex, int offsetX, i
       */
       for (i=0; i<16; i++)
         {
-          andMask[i*cx/8+0] = ~(checkedLongAt(cursorMaskIndex + (4 * i)) >> 24) & 0xFF;
-          andMask[i*cx/8+1] = ~(checkedLongAt(cursorMaskIndex + (4 * i)) >> 16) & 0xFF;
+          andMask[i*cx/8+0] = ~(checkedLongAt(MAIN_VM_ARG_COMMA cursorMaskIndex + (4 * i)) >> 24) & 0xFF;
+          andMask[i*cx/8+1] = ~(checkedLongAt(MAIN_VM_ARG_COMMA cursorMaskIndex + (4 * i)) >> 16) & 0xFF;
         }
       for (i=0; i<16; i++)
         {
-          xorMask[i*cx/8+0] = (~(checkedLongAt(cursorBitsIndex + (4 * i)) >> 24) & 0xFF) ^ (andMask[i*cx/8+0]);
-          xorMask[i*cx/8+1] = (~(checkedLongAt(cursorBitsIndex + (4 * i)) >> 16) & 0xFF) ^ (andMask[i*cx/8+1]);
+          xorMask[i*cx/8+0] = (~(checkedLongAt(MAIN_VM_ARG_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF) ^ (andMask[i*cx/8+0]);
+          xorMask[i*cx/8+1] = (~(checkedLongAt(MAIN_VM_ARG_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF) ^ (andMask[i*cx/8+1]);
         }
     }
   else /* Old Cursor: Just make all 1-bits black */
     for (i=0; i<16; i++)
       {
-        andMask[i*cx/8+0] = ~(checkedLongAt(cursorBitsIndex + (4 * i)) >> 24) & 0xFF;
-        andMask[i*cx/8+1] = ~(checkedLongAt(cursorBitsIndex + (4 * i)) >> 16) & 0xFF;
+        andMask[i*cx/8+0] = ~(checkedLongAt(MAIN_VM_ARG_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF;
+        andMask[i*cx/8+1] = ~(checkedLongAt(MAIN_VM_ARG_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF;
       }
 
   currentCursor = CreateCursor(hInstance,-offsetX,-offsetY,cx,cy,andMask,xorMask);
@@ -1606,7 +1597,7 @@ int ioSetFullScreen(int fullScreen)
 #else /* !defined(_WIN32_WCE) */
       ShowWindow(stWindow,SW_SHOWNORMAL);
 #endif /* !defined(_WIN32_WCE) */
-      setFullScreenFlag(1);
+      setFullScreenFlag(MAIN_VM_ARG_COMMA 1);
     }
   else
     {
@@ -1623,7 +1614,7 @@ int ioSetFullScreen(int fullScreen)
       }
 #endif /* !defined(_WIN32_WCE) */
       ShowWindow(stWindow,SW_SHOWNORMAL);
-      setFullScreenFlag(0);
+      setFullScreenFlag(MAIN_VM_ARG_COMMA 0);
     }
   /* get us back in the foreground */
   SetForegroundWindow(stWindow);
@@ -1876,7 +1867,7 @@ int ioForceDisplayUpdate(void) {
      b) The window is valid
      c) The Interpreter does not defer updates by itself
   */
-  if(fDeferredUpdate && IsWindow(stWindow) && !deferDisplayUpdates)
+  if(fDeferredUpdate && IsWindow(stWindow) && !getDeferDisplayUpdates(MAIN_VM_ARG))
     {
       UpdateWindow(stWindow);
     }
@@ -2076,7 +2067,7 @@ int ioShowDisplay(int dispBits, int width, int height, int depth,
       updateRect.bottom = affectedB;
       /* Acknowledge the request for deferred updates only
          if the interpreter is not deferring these by itself */
-      if(fDeferredUpdate && !deferDisplayUpdates)
+      if(fDeferredUpdate && !getDeferDisplayUpdates(MAIN_VM_ARG))
         {
           /* Wait until the next WM_PAINT gets processed */
           InvalidateRect(stWindow,&updateRect,FALSE);
@@ -2414,10 +2405,10 @@ int clipboardReadIntoAt(int count, int byteArrayIndex, int startIndex) {
 /*                          Profiling                                       */
 /****************************************************************************/
 #ifndef PROFILE
-int clearProfile(void) { return 1;}
-int dumpProfile(void) {return 1;}
-int startProfiling(void) {return 1;}
-int stopProfiling(void) {return 1;}
+int clearProfile(INTERPRETER_ARG) { return 1;}
+int dumpProfile(INTERPRETER_ARG) {return 1;}
+int startProfiling(INTERPRETER_ARG) {return 1;}
+int stopProfiling(INTERPRETER_ARG) {return 1;}
 #endif
 
 /****************************************************************************/
@@ -2559,7 +2550,7 @@ char * GetAttributeString(int id) {
 int attributeSize(int id) {
   char *attrValue;
   attrValue = GetAttributeString(id);
-  if(!attrValue) return primitiveFail();
+  if(!attrValue) return primitiveFail(MAIN_VM_ARG);
   return strlen(attrValue);
 }
 

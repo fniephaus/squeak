@@ -18,24 +18,9 @@ DWORD g_WM_INVALIDATE = 0;   /* Invalidate portion of window */
 DWORD g_WM_BROWSER_PIPE = 0; /* Browser pipe */
 DWORD g_WM_CLIENT_PIPE = 0;  /* Client pipe */
 
-
-int stackObjectValue(int);
-int stackIntegerValue(int);
-int isBytes(int);
-int byteSizeOf(int);
-void *firstIndexableField(int);
-int push(int);
-int pop(int);
-int positive32BitIntegerFor(int);
-int nilObject(void);
-int instantiateClassindexableSize(int, int);
-int classByteArray(void);
+/* from FilePlugin */
 int fileRecordSize(void);
 SQFile *fileValueOf(int);
-int failed(void);
-int pushBool(int);
-
-extern int fullScreenFlag;
 
 void pluginGetURLRequest(int id, void* urlIndex, int urlSize, 
 			 void* targetIndex, int targetSize);
@@ -56,11 +41,11 @@ static HANDLE hBrowserPipe = NULL;
 static HANDLE hClientReadEnd = NULL;
 static HANDLE hClientWriteEnd = NULL;
 
-static int isFileURL(int urlOop) {
+static int isFileURL(INTERPRETER_ARG_COMMA int urlOop) {
   int urlLen;
   char *urlPtr;
   urlLen = byteSizeOf(urlOop);
-  urlPtr = firstIndexableField(urlOop);
+  urlPtr = (char*)firstIndexableField(INTERPRETER_PARAM_COMMA urlOop);
   while(*urlPtr == ' ' && urlLen) {
     urlPtr++;
     urlLen--;
@@ -75,15 +60,15 @@ static int isFileURL(int urlOop) {
   has been established. Only necessary if some
   sort of asynchronous communications are used.
 */
-EXPORT(int) primitivePluginBrowserReady(void)
+EXPORT(int) primitivePluginBrowserReady(INTERPRETER_ARG)
 {
   if(!fBrowserMode) {
     /* fast failure is better when not in browser */
     DPRINTF(("fBrowserMode == 0\n"));
-    return primitiveFail();
+    return primitiveFail(INTERPRETER_PARAM);
   }
-  pop(1);
-  pushBool(hBrowserPipe != NULL);
+  pop(INTERPRETER_PARAM_COMMA 1);
+  pushBool(INTERPRETER_PARAM_COMMA hBrowserPipe != NULL);
   return 1;
 }
 
@@ -95,35 +80,35 @@ EXPORT(int) primitivePluginBrowserReady(void)
   Returns a handle used in subsequent calls to plugin
   stream functions.
 */
-EXPORT(int) primitivePluginRequestURLStream(void)
+EXPORT(int) primitivePluginRequestURLStream(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int id, url, length, semaIndex;
 
-  if(!browserWindow) return primitiveFail();
+  if(!browserWindow) return primitiveFail(INTERPRETER_PARAM);
   for(id=0; id<MAX_REQUESTS;id++) {
     if(!requests[id]) break;
   }
-  if(id >= MAX_REQUESTS) return primitiveFail();
+  if(id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
   
-  semaIndex = stackIntegerValue(0);
-  url = stackObjectValue(1);
-  if(failed()) return 0;
+  semaIndex = stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+  url = stackObjectValue(INTERPRETER_PARAM_COMMA 1);
+  if(failed(INTERPRETER_PARAM)) return 0;
 
-  if(!isBytes(url)) return primitiveFail();
-  if(isFileURL(url)) return primitiveFail();
+  if(!isBytes(url)) return primitiveFail(INTERPRETER_PARAM);
+  if(isFileURL(INTERPRETER_PARAM_COMMA url)) return primitiveFail(INTERPRETER_PARAM);
 
   req = calloc(1, sizeof(sqStreamRequest));
-  if(!req) return primitiveFail();
+  if(!req) return primitiveFail(INTERPRETER_PARAM);
   req->localName = NULL;
   req->semaIndex = semaIndex;
   req->state = -1;
   requests[id] = req;
 
   length = byteSizeOf(url);
-  pluginGetURLRequest(id, firstIndexableField(url), length, NULL, 0);
-  pop(3);
-  push(positive32BitIntegerFor(id));
+  pluginGetURLRequest(id, firstIndexableField(INTERPRETER_PARAM_COMMA url), length, NULL, 0);
+  pop(INTERPRETER_PARAM_COMMA 3);
+  push(INTERPRETER_PARAM_COMMA positive32BitIntegerFor(INTERPRETER_PARAM_COMMA id));
   return 1;
 }
 
@@ -131,42 +116,42 @@ EXPORT(int) primitivePluginRequestURLStream(void)
   primitivePluginRequestURL: url target: target semaIndex: semaIndex
   Request a URL into the given target.
 */
-EXPORT(int) primitivePluginRequestURL(void)
+EXPORT(int) primitivePluginRequestURL(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int url, urlLength;
   int target, targetLength;
   int id, semaIndex;
 
-  if(!browserWindow) return primitiveFail();
+  if(!browserWindow) return primitiveFail(INTERPRETER_PARAM);
   for(id=0; id<MAX_REQUESTS;id++) {
     if(!requests[id]) break;
   }
 
-  if(id >= MAX_REQUESTS) return primitiveFail();
+  if(id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
 
-  semaIndex = stackIntegerValue(0);
-  target = stackObjectValue(1);
-  url = stackObjectValue(2);
+  semaIndex = stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+  target = stackObjectValue(INTERPRETER_PARAM_COMMA 1);
+  url = stackObjectValue(INTERPRETER_PARAM_COMMA 2);
 
-  if(failed()) return 0;
-  if(!isBytes(url) || !isBytes(target)) return primitiveFail();
-  if(isFileURL(url)) return primitiveFail();
+  if(failed(INTERPRETER_PARAM)) return 0;
+  if(!isBytes(url) || !isBytes(target)) return primitiveFail(INTERPRETER_PARAM);
+  if(isFileURL(INTERPRETER_PARAM_COMMA url)) return primitiveFail(INTERPRETER_PARAM);
 
   urlLength = byteSizeOf(url);
   targetLength = byteSizeOf(target);
 
   req = calloc(1, sizeof(sqStreamRequest));
-  if(!req) return primitiveFail();
+  if(!req) return primitiveFail(INTERPRETER_PARAM);
   req->localName = NULL;
   req->semaIndex = semaIndex;
   req->state = -1;
   requests[id] = req;
 
-  pluginGetURLRequest(id, firstIndexableField(url), urlLength, 
-		      firstIndexableField(target), targetLength);
-  pop(4);
-  push(positive32BitIntegerFor(id));
+  pluginGetURLRequest(id, firstIndexableField(INTERPRETER_PARAM_COMMA url), urlLength, 
+		      firstIndexableField(INTERPRETER_PARAM_COMMA target), targetLength);
+  pop(INTERPRETER_PARAM_COMMA 4);
+  push(INTERPRETER_PARAM_COMMA positive32BitIntegerFor(INTERPRETER_PARAM_COMMA id));
   return 1;
 }
 
@@ -174,7 +159,7 @@ EXPORT(int) primitivePluginRequestURL(void)
   primitivePluginPostURL: url target: target data: data semaIndex: semaIndex
   Post data to a URL.
 */
-EXPORT(int) primitivePluginPostURL(void)
+EXPORT(int) primitivePluginPostURL(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int url, urlLength;
@@ -182,28 +167,28 @@ EXPORT(int) primitivePluginPostURL(void)
   int data, dataLength;
   int id, semaIndex;
 
-  if(!browserWindow) return primitiveFail();
-  if(methodArgumentCount() != 4) return primitiveFail();
+  if(!browserWindow) return primitiveFail(INTERPRETER_PARAM);
+  if(methodArgumentCount(INTERPRETER_PARAM) != 4) return primitiveFail(INTERPRETER_PARAM);
   for(id=0; id<MAX_REQUESTS;id++) {
     if(!requests[id]) break;
   }
 
-  if(id >= MAX_REQUESTS) return primitiveFail();
+  if(id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
 
-  semaIndex = stackIntegerValue(0);
-  data = stackObjectValue(1);
-  target = stackObjectValue(2);
-  url = stackObjectValue(3);
+  semaIndex = stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+  data = stackObjectValue(INTERPRETER_PARAM_COMMA 1);
+  target = stackObjectValue(INTERPRETER_PARAM_COMMA 2);
+  url = stackObjectValue(INTERPRETER_PARAM_COMMA 3);
 
-  if(failed()) return 0;
-  if(!isBytes(url) || !isBytes(data)) return primitiveFail();
-  if(isFileURL(url)) return primitiveFail();
+  if(failed(INTERPRETER_PARAM)) return 0;
+  if(!isBytes(url) || !isBytes(data)) return primitiveFail(INTERPRETER_PARAM);
+  if(isFileURL(INTERPRETER_PARAM_COMMA url)) return primitiveFail(INTERPRETER_PARAM);
 
-  if(target == nilObject()) {
+  if(target == nilObject(INTERPRETER_PARAM)) {
     target = 0;
     targetLength = 0;
   } else {
-    if(!isBytes(target)) return primitiveFail();
+    if(!isBytes(target)) return primitiveFail(INTERPRETER_PARAM);
     targetLength = byteSizeOf(target);
   }
 
@@ -211,18 +196,18 @@ EXPORT(int) primitivePluginPostURL(void)
   dataLength = byteSizeOf(data);
 
   req = calloc(1, sizeof(sqStreamRequest));
-  if(!req) return primitiveFail();
+  if(!req) return primitiveFail(INTERPRETER_PARAM);
   req->localName = NULL;
   req->semaIndex = semaIndex;
   req->state = -1;
   requests[id] = req;
 
   pluginPostURLRequest(id, 
-		firstIndexableField(url), urlLength, 
-		target ? (firstIndexableField(target)) : NULL, targetLength,
-		firstIndexableField(data), dataLength);
-  pop(4);
-  push(positive32BitIntegerFor(id));
+		firstIndexableField(INTERPRETER_PARAM_COMMA url), urlLength, 
+		target ? (firstIndexableField(INTERPRETER_PARAM_COMMA target)) : NULL, targetLength,
+		firstIndexableField(INTERPRETER_PARAM_COMMA data), dataLength);
+  pop(INTERPRETER_PARAM_COMMA 4);
+  push(INTERPRETER_PARAM_COMMA positive32BitIntegerFor(INTERPRETER_PARAM_COMMA id));
   return 1;
 }
 
@@ -234,29 +219,29 @@ EXPORT(int) primitivePluginPostURL(void)
    security reasons.
 */
 
-EXPORT(int) primitivePluginRequestFileHandle(void)
+EXPORT(int) primitivePluginRequestFileHandle(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int id, fileHandle;
 
-  id = stackIntegerValue(0);
-  if(failed()) return 0;
-  if(id < 0 || id >= MAX_REQUESTS) return primitiveFail();
+  id = stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+  if(failed(INTERPRETER_PARAM)) return 0;
+  if(id < 0 || id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
   req = requests[id];
-  if(!req || !req->localName) return primitiveFail();
-  fileHandle = nilObject();
+  if(!req || !req->localName) return primitiveFail(INTERPRETER_PARAM);
+  fileHandle = nilObject(INTERPRETER_PARAM);
   if(req->localName) {
 #if 0
     MessageBox(NULL, req->localName, "Creating file handle for:", MB_OK);
 #endif
-    fileHandle = instantiateClassindexableSize(classByteArray(), fileRecordSize());
+    fileHandle = instantiateClassindexableSize(INTERPRETER_PARAM_COMMA classByteArray(INTERPRETER_PARAM), fileRecordSize());
     fBrowserMode = false;
     sqFileOpen(fileValueOf(fileHandle),(int)req->localName, strlen(req->localName), 0);
     fBrowserMode = true;
-    if(failed()) return 0;
+    if(failed(INTERPRETER_PARAM)) return 0;
   }
-  pop(2);
-  push(fileHandle);
+  pop(INTERPRETER_PARAM_COMMA 2);
+  push(INTERPRETER_PARAM_COMMA fileHandle);
   return 1;
 }
 
@@ -264,20 +249,20 @@ EXPORT(int) primitivePluginRequestFileHandle(void)
   primitivePluginDestroyRequest: id
   Destroy a request that has been issued before.
 */
-EXPORT(int) primitivePluginDestroyRequest(void)
+EXPORT(int) primitivePluginDestroyRequest(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int id;
 
-  id = stackIntegerValue(0);
-  if(id < 0 || id >= MAX_REQUESTS) return primitiveFail();
+  id = stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+  if(id < 0 || id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
   req = requests[id];
   if(req) {
     if(req->localName) free(req->localName);
     free(req);
   }
   requests[id] = NULL;
-  pop(1);
+  pop(INTERPRETER_PARAM_COMMA 1);
   return 1;
 }
 
@@ -287,18 +272,18 @@ EXPORT(int) primitivePluginDestroyRequest(void)
   Return false if the operation was aborted.
   Return nil if the operation is still in progress.
 */
-EXPORT(int) primitivePluginRequestState(void)
+EXPORT(int) primitivePluginRequestState(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int id;
 
-  id = stackIntegerValue(0);
-  if(id < 0 || id >= MAX_REQUESTS) return primitiveFail();
+  id = stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+  if(id < 0 || id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
   req = requests[id];
-  if(!req) return primitiveFail();
-  pop(2);
-  if(req->state == -1) push(nilObject());
-  pushBool(req->state);
+  if(!req) return primitiveFail(INTERPRETER_PARAM);
+  pop(INTERPRETER_PARAM_COMMA 2);
+  if(req->state == -1) push(INTERPRETER_PARAM_COMMA nilObject(INTERPRETER_PARAM));
+  pushBool(INTERPRETER_PARAM_COMMA req->state);
   return 1;
 }
 
@@ -480,7 +465,7 @@ void pluginHandleEvent(MSG *msg)
   /* Messages posted from a different process */
   if(msg->message == g_WM_QUIT_SESSION) exit(0);
   if(msg->message == g_WM_INVALIDATE) {
-    if(!fullScreenFlag && IsWindow(browserWindow)) {
+    if(!getFullScreenFlag(MAIN_VM_ARG) && IsWindow(browserWindow)) {
       /* adjust to size of browser window */
       RECT r;
       GetClientRect(browserWindow, &r);
@@ -490,7 +475,7 @@ void pluginHandleEvent(MSG *msg)
     InvalidateRect(stWindow, NULL, FALSE);
   } else if(msg->message == g_WM_BWND_SIZE) {
     /* Window position changed */
-    if(!fullScreenFlag) {
+    if(!getFullScreenFlag(MAIN_VM_ARG)) {
       SetWindowPos(stWindow, NULL, 0, 0, msg->wParam, msg->lParam, SWP_NOMOVE | SWP_NOZORDER);
     }
   } else if(msg->message == g_WM_RECEIVE_DATA) {
