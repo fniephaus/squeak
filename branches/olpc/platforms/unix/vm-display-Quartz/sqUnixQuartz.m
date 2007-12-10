@@ -1062,10 +1062,9 @@ static void display_clipboardWriteWithType(char *data, size_t nData, char *typeN
   return;
 }
 
-static sqInt display_dndOutStart(char *data, int dataLength, char *aFormat, int formatLength)
-{
-  return 0;
-}
+static sqInt display_dndOutStart(char *types, int ntypes) { return 0; }
+static void display_dndOutSend (char *bytes, int nbytes) {}
+static sqInt display_dndOutAcceptedType(char * buf, int nbuf) { return 0; }
 
 static void display_winExit(void)
 {

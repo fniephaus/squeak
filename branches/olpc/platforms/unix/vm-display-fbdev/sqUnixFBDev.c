@@ -404,7 +404,9 @@ static sqInt  display_clipboardSizeWithType(char *typeName, int ntypeName)					{
 
 static void  display_clipboardWriteWithType(char *data, size_t ndata, char *typeName, size_t ntypeName, int isDnd, int isClaiming) {}
 
-static sqInt display_dndOutStart(char *data, int dataLength, char *aFormat, int formatLength)		{ return 0; }
+static sqInt display_dndOutStart(char *types, int ntypes) { return 0; }
+static void  display_dndOutSend (char *bytes, int nbytes) {}
+static sqInt display_dndOutAcceptedType(char * buf, int nbuf) { return 0; }
 
 static sqInt display_ioFormPrint(sqInt bits, sqInt w, sqInt h, sqInt d, double hs, double vs, sqInt l)	{ return 0; }
 static sqInt display_ioSetFullScreen(sqInt fullScreen)							{ return 0; }
