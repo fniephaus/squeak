@@ -61,7 +61,7 @@
 #include <X11/Xatom.h>
 
 
-#define DEBUG_XDND	1
+#define DEBUG_XDND	0
 
 
 static	Atom	  XdndVersion= (Atom)3;
@@ -384,7 +384,7 @@ static enum XdndState dndOutStatus(enum XdndState state, XClientMessageEvent *ev
 
   if ((XdndStateOutTracking != state) && (XdndStateOutAccepted != state))
     {
-      printf("%i is not expected in XdndStatus\n", state);
+/*       printf("%i is not expected in XdndStatus\n", state); */
       sendLeave(ldata[0], DndWindow);
       return state;
     }
@@ -424,7 +424,7 @@ static enum XdndState dndOutSelectionRequest(enum XdndState state, XSelectionReq
 	   req->requestor));
   if (XdndStateOutAccepted != state)
     {
-      printf("%i is not expected in SelectionRequest\n", state);
+/*       printf("%i is not expected in SelectionRequest\n", state); */
       return state;
     }
   memcpy(&xdndOutRequestEvent, req, sizeof(xdndOutRequestEvent));
@@ -807,20 +807,26 @@ static void dndHandleEvent(int type, XEvent *evt)
 static sqInt display_dndOutStart(char *types, int ntypes)
 {
   int pos, i;
-  int types_size= 0;
+  int typesSize= 0;
 
-  if (xdndOutTypes != 0) free(xdndOutTypes);
+  if (xdndOutTypes != 0)
+    {
+      free(xdndOutTypes);
+      xdndOutTypes= 0;
+    }
 
   for (pos= 0; pos < ntypes; pos += strlen(types + pos) + 1)
-    types_size++;
+    typesSize++;
 
-  xdndOutTypes= malloc(sizeof(Atom) * (types_size + 1));
-  xdndOutTypes[types_size]= None;
+  if (typesSize > 3) return 0; /* Supported types are up to 3 now */
+
+  xdndOutTypes= xmalloc(sizeof(Atom) * (typesSize + 1));
+  xdndOutTypes[typesSize]= None;
 
   for (pos= 0, i= 0; pos < ntypes; pos += strlen(types + pos) + 1, i++)
     xdndOutTypes[i]= XInternAtom(stDisplay, types + pos, False);
 
-  for (i= 0; i < types_size; i++)
+  for (i= 0; i < typesSize; i++)
     dprintf((stderr, "dndOutStart: %s\n", XGetAtomName(stDisplay, xdndOutTypes[i])));
   dndHandleEvent(DndOutStart, 0);
 
