@@ -81,6 +81,7 @@ int sqPasteboardCopyItemFlavorsitemNumber (sqInt inPasteboard, int formatNumber)
     return interpreterProxy->nilObject();
   
   /* TODO: clipboardGetTypeNames() is should be cached. */
+  /* TODO: types should be free(). */
   types= clipboardGetTypeNames();
   if (types == NULL)
     return interpreterProxy->nilObject();

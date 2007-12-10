@@ -174,7 +174,6 @@ int		 stOwnsSelection= 0;	/* true if we own the X selection */
 int		 stOwnsClipboard= 0;	/* true if we own the X clipboard */
 int		 usePrimaryFirst= 0;	/* true if we should look to PRIMARY before CLIPBOARD */
 Time		 stSelectionTime;	/* Time of setting the selection */
-Atom		 stSelectionName= None; /* None or XdndSelection */
 Atom		 stSelectionType= None; /* type to send selection (multiple types should be supported) */
 XColor		 stColorBlack;		/* black pixel value in stColormap */
 XColor		 stColorWhite;		/* white pixel value in stColormap */
@@ -598,6 +597,9 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
   Atom targetProperty= ((None == requestEv->property)
 			? requestEv->target 
 			: requestEv->property);
+
+  /* XDnd is not handled here. */
+  if (xaXdndSelection == requestEv->selection) return 0;
 
   notifyEv.property= targetProperty;
 
@@ -1135,7 +1137,6 @@ static void display_clipboardWriteWithType(char *data, size_t ndata, char *typeN
   if (allocateSelectionBuffer(ndata))
     {
       Atom type= stringToAtom(typeName, nTypeName);
-      stSelectionName= isDnd ? xaXdndSelection : None;
       memcpy((void *)stPrimarySelection, data, ndata);
       stPrimarySelection[ndata]= '\0';
       stSelectionType= type;
@@ -1740,7 +1741,6 @@ static char **display_clipboardGetTypeNames(void)
   Atom    *targets= NULL;
   size_t   bytes= 0;
   char   **typeNames= NULL;
-  Status   success= 0;
   int      nTypeNames= 0;
 
   if (dndAvailable())
