@@ -65,13 +65,22 @@ static sqInt display_clipboardSizeWithType(char *typeName, int ntypeName)
   return 0;
 }
 
-static void display_clipboardWriteWithType(char *data, size_t ndata, char *typeName, size_t ntypeName, int isDnd, int isClaiming)
+static sqInt display_dndOutStart(char *data, int dataLength, char *aFormat, int formatLength)
 {
+  trace();
+  return 0;
+}
+
+static sqInt display_dndOutStart(char *types, int ntypes) {
+  trace();
+  return 0;
+}
+
+static void display_dndOutSend (char *bytes, int nbytes) {
   trace();
 }
 
-static sqInt display_dndOutStart(char *data, int dataLength, char *aFormat, int formatLength)
-{
+static sqInt display_dndOutAcceptedType(char * buf, int nbuf) {
   trace();
   return 0;
 }

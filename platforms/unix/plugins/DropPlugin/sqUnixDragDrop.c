@@ -80,7 +80,9 @@ int dropRequestFileHandle(int dropIndex)
 
 void sqDndOutStart(char * types, int ntypes)
 {
-  dndOutStart(types, ntypes);
+  /* Now Squeak XDnD support up to 3 types */
+  if (! dndOutStart(types, ntypes))
+    interpreterProxy->success(false);
 }
 int sqDndOutAcceptedType()
 {
