@@ -400,3 +400,16 @@ sqInt ioFreeModule(void *moduleHandle);
 
 /* The Squeak version from which this interpreter was generated. */
 extern const char *interpreterVersion;
+
+
+/* Multithreading support (see implementation in sqWin32utils.c) */
+
+/* Functions should return 0 if operation failed */
+sqInt ioCreateMutex(sqInt initialOwner);
+sqInt ioMutexLock(sqInt mutexHandle);
+sqInt ioMutexUnlock(sqInt mutexHandle);
+sqInt ioDeleteMutex(sqInt mutexHandle);
+sqInt ioMutexWaitmilliseconds(sqInt mutexHandle, sqInt milliseconds);
+
+
+

@@ -17,10 +17,10 @@
 *
 *****************************************************************************/
 #include <windows.h>
-#include "sq.h"
+//#include "sq.h"
+#include "FilePlugin_imports.h"
 #include "FilePlugin.h"
-
-extern struct VirtualMachine *interpreterProxy;
+                                               
 
 #ifdef WIN32_FILE_SUPPORT
 
@@ -28,7 +28,7 @@ extern struct VirtualMachine *interpreterProxy;
 #define false 0
 
 #define FILE_HANDLE(f) ((HANDLE) (f)->file)
-#define FAIL() return interpreterProxy->primitiveFail()
+#define FAIL() return vmFunction(primitiveFail)()
 
 /***
     The state of a file is kept in the following structure,

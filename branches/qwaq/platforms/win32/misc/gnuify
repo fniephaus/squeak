@@ -29,7 +29,7 @@ BEGIN {
 }
 
 
-(stage == 0) && /^sqInt interpret\(INTERPRETER_ARG\) \{/ {
+(stage == 0) && /^sqInt interpret\(.*\) \{/ {
   print "interpret: adding static register assignments" > "/dev/stderr";
   stage= 1;
   print;

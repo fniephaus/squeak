@@ -16,11 +16,6 @@
 #include "sq.h"
 #include <mmsystem.h>
 
-#ifdef MAIN_VM_ARG
-#undef MAIN_VM_ARG
-#undef MAIN_VM_ARG_COMMA
-#endif
-
 #ifndef NO_JOYSTICK
 
 #ifndef NO_RCSID

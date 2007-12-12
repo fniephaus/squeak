@@ -20,7 +20,8 @@
 *****************************************************************************/
 #include <windows.h>
 #include <winsock.h>
-#include "sq.h"
+#include <stdlib.h>
+#include "SocketPlugin_imports.h"
 #include "SocketPlugin.h"
 
 #ifndef NO_NETWORK
@@ -198,8 +199,7 @@ static privateSocketStruct *firstSocket = NULL;
 #define SOCKETERROR(s) (PSP(s)->sockError)
 #define ADDRESS(s)      ((struct sockaddr_in*)(&PSP(s)->peer))
 
-extern struct VirtualMachine *interpreterProxy;
-#define FAIL()         interpreterProxy->primitiveFail()
+#define FAIL()         vmFunction(primitiveFail)()
 
 #define LOCKSOCKET(mutex, duration) \
   if(WaitForSingleObject(mutex, duration) == WAIT_FAILED)\
@@ -1329,7 +1329,7 @@ void sqSocketSetReusable (SocketPtr s)
   *(int *)buf = 1;
   bufSize = 4;
   err = setsockopt(SOCKET(s), SOL_SOCKET, SO_REUSEADDR, buf, bufSize);
-  if(err < 0) interpreterProxy->success(false);
+  if(err < 0) vmFunction(success)(false);
 }
 
 /*****************************************************************************
@@ -1504,10 +1504,10 @@ sqInt sqSocketReceiveUDPDataBufCountaddressportmoreFlag(SocketPtr s, char *buf, 
 {
   int nRead;
   if(UDPSocketType != s->socketType)
-    return interpreterProxy->primitiveFail();
+    return vmFunction(primitiveFail)();
   /* bind UDP socket*/
   sqSocketConnectToPort(s, *address, *port);
-  if(interpreterProxy->failed()) return 0;
+  if(vmFunction(failed)()) return 0;
   /* receive data */
   nRead = sqSocketReceiveDataBufCount(s, buf, bufSize);
   if(nRead >= 0) {
@@ -1520,10 +1520,10 @@ sqInt sqSocketReceiveUDPDataBufCountaddressportmoreFlag(SocketPtr s, char *buf, 
 sqInt	sqSockettoHostportSendDataBufCount(SocketPtr s, sqInt address, sqInt port, char *buf, sqInt bufSize)
 {
   if(UDPSocketType != s->socketType)
-    return interpreterProxy->primitiveFail();
+    return vmFunction(primitiveFail)();
   /* bind UDP socket */
   sqSocketConnectToPort(s, address, port);
-  if(interpreterProxy->failed()) return 0;
+  if(vmFunction(failed)()) return 0;
   /* send data */
   return sqSocketSendDataBufCount(s, buf, bufSize);
 }
@@ -1674,7 +1674,7 @@ sqInt sqSocketSetOptionsoptionNameStartoptionNameSizeoptionValueStartoptionValue
     return 0;
   }
  barf:
-  interpreterProxy->success(false);
+  vmFunction(success)(false);
   return false;
 }
 
@@ -1735,7 +1735,7 @@ sqInt sqSocketGetOptionsoptionNameStartoptionNameSizereturnedValue
 #endif
 
  barf:
-  interpreterProxy->success(false);
+  vmFunction(success)(false);
   return errno;
 }
 

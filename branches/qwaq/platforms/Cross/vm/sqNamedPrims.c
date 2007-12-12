@@ -11,6 +11,7 @@
 *   NOTES:
 *
 *****************************************************************************/
+#include <stdio.h>
 #include "sq.h"
 
 
@@ -22,9 +23,8 @@ typedef struct {
 
 #include "sqNamedPrims.h"
 
-#undef DEBUG
-
 #ifdef DEBUG
+
 #define dprintf(what) printf what
 #else
 #define dprintf(what)
@@ -97,7 +97,6 @@ static int removeFromList(ModuleEntry *entry)
 static void *findExternalFunctionIn(char *functionName, ModuleEntry *module)
 {
 	void *result;
-
 	dprintf(("Looking (externally) for %s in %s... ", functionName,module->name));
 	if(module->handle)
 		result = ioFindExternalFunctionIn(functionName, module->handle);
@@ -195,16 +194,30 @@ static int callInitializersIn(ModuleEntry *module)
 		/* Note: older plugins may not export the compiled module name */
 		dprintf(("WARNING: getModuleName() not found in %s\n", module->name));
 	}
-	if(!init1) { 
+
+	if (init1)
+	{
+		/* First, we should check, if plugin supports objectified VM */
+#ifdef VM_OBJECTIFIED
+		okay = ((sqInt (*) (struct ObjVirtualMachine*))init1)(sqGetObjInterpreterProxy());
+#else
+		okay = 0;
+#endif
+		if(!okay) {
+			okay = ((sqInt (*) (struct VirtualMachine*))init1)(sqGetInterpreterProxy());
+			if (!okay)
+			{
+				dprintf(("ERROR: setObjInterpreter() returned false\n"));
+				return 0;
+			}
+		}
+
+	}
+	else {
 		dprintf(("ERROR: setInterpreter() not found\n"));
 		return 0;
 	}
-	/* call setInterpreter */
-	okay = ((sqInt (*) (struct VirtualMachine*))init1)(sqGetInterpreterProxy());
-	if(!okay) {
-		dprintf(("ERROR: setInterpreter() returned false\n"));
-		return 0;
-	}
+
 	if(init2) {
 		okay = ((sqInt (*) (void)) init2)();
 		if(!okay) {

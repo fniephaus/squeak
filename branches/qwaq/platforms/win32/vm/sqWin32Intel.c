@@ -167,6 +167,8 @@ int OutputConsoleString(char *string)
   return 1;
 }
 
+#ifndef USE_STDIO_PRINTF
+
 int __cdecl printf(const char *fmt, ...)
 { va_list al;
 
@@ -201,6 +203,8 @@ int __cdecl putchar(int c)
 {
   return printf("%c",c);
 }
+
+#endif
 
 /****************************************************************************/
 /*                   Message Processing                                     */
@@ -1135,11 +1139,19 @@ int sqMain(char *lpCmdLine, int nCmdShow)
 /****************************************************************************/
 /*                        WinMain                                           */
 /****************************************************************************/
-int WINAPI WinMain (HINSTANCE hInst,
+/* int WINAPI WinMain (HINSTANCE hInst,
                     HINSTANCE hPrevInstance,
                     LPSTR  lpCmdLine,
-                    int    nCmdShow)
+                    int    nCmdShow) */
+
+int main(int argc, char ** argv)
 {
+  HINSTANCE hInst;
+  LPSTR  lpCmdLine;
+  int nCmdShow = SW_SHOW;
+  hInst = (HINSTANCE) GetModuleHandle(0);
+  lpCmdLine = "";
+
   /* a few things which need to be done first */
   gatherSystemInfo();
 

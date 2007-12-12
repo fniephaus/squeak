@@ -15,6 +15,8 @@
 #undef putchar
 #include "sqWin32Alloc.h"
 
+#include <stddef.h>  /* Need this for use size_t */
+
 #ifdef _MSC_VER
 #define squeakFileOffsetType __int64
 #else

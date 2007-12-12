@@ -1,5 +1,5 @@
-#include "sqVirtualMachine.h"
-extern struct VirtualMachine * interpreterProxy;
+#include "Mpeg3Plugin_imports.h"
+
 void sqFilenameFromStringOpen(char *buffer,long fileIndex, long fileLength, int flag) {
-    interpreterProxy->ioFilenamefromStringofLengthresolveAliases(buffer,fileIndex, fileLength, flag);
+    vmFunction(ioFilenamefromStringofLengthresolveAliases)(buffer,fileIndex, fileLength, flag);
 }

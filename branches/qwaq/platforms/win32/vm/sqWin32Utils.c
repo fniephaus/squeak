@@ -13,6 +13,13 @@
 #include <windows.h>
 #include "sq.h"
 
+
+#ifdef DEBUG
+#define dprintf(what) printf what
+#else
+#define dprintf(what)
+#endif
+
 /*****************************************************************************
   String conversions: Unicode / Ansi / Squeak
   NOTES: 
@@ -187,3 +194,42 @@ void printLastError(TCHAR *prefix)
   LocalFree( lpMsgBuf );
 }
 #endif
+
+/****************************************************************************/
+/*                      Multithreading support                              */
+/****************************************************************************/
+
+/* Functions should return 0 if operation failed */
+
+sqInt ioCreateMutex(sqInt initialOwner)
+{ sqInt result;
+  result = (sqInt) CreateMutex(0,(BOOL)initialOwner, 0);
+  dprintf(("ioCreateMutex %s\n", result ? "ok" : "failed"));
+  return result;
+}
+
+sqInt ioMutexLock(sqInt mutexHandle)
+{ DWORD result;
+  
+  result = WaitForSingleObject((HANDLE)mutexHandle, INFINITE);
+  dprintf(("ioMutexLock %s\n", (result == WAIT_OBJECT_0) ? "ok" : "failed"));
+  return result == WAIT_OBJECT_0;
+}
+
+sqInt ioMutexUnlock(sqInt mutexHandle)
+{
+  return ReleaseMutex((HANDLE)mutexHandle);
+}
+
+sqInt ioDeleteMutex(sqInt mutexHandle)
+{
+  return CloseHandle((HANDLE)mutexHandle);
+}
+
+sqInt ioMutexWaitmilliseconds(sqInt mutexHandle, sqInt milliseconds)
+{ DWORD result;
+  
+  result = WaitForSingleObject((HANDLE)mutexHandle, (DWORD) milliseconds);
+  return result == WAIT_OBJECT_0;
+}
+

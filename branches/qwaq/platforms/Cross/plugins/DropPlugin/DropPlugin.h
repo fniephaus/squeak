@@ -1,5 +1,12 @@
 /* drop support primitives */
 
+#ifndef DragEnter
+#define DragEnter	1 /* drag operation from OS entered Squeak window	 */
+#define DragMove	2 /* drag operation from OS moved within Squeak window */
+#define DragLeave	3 /* drag operation from OS left Squeak window	 */
+#define DragDrop	4 /* drag operation dropped contents onto Squeak.      */
+#endif
+
 /* module initialization/shutdown */
 int dropInit(void);
 int dropShutdown(void);

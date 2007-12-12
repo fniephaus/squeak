@@ -17,6 +17,12 @@
 #include <assert.h>
 #include "sq.h"
 
+#ifdef DEBUG
+#define dprintf printf
+#else
+#define dprintf(what)
+#endif
+
 HANDLE tryLoading(TCHAR *prefix, TCHAR *baseName, TCHAR *postfix)
 {
   TCHAR libName[300];
@@ -57,6 +63,7 @@ void *ioLoadModule(char *pluginName)
 	if(handle) return handle;
 	handle = tryLoading(imagePath,name,TEXT("32.dll"));
 	if(handle) return handle;
+//	dprintf("External module '%s' not found.\n", pluginName);
 	return 0;
 }
 

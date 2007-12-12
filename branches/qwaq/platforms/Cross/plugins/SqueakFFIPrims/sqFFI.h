@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: Walt Disney Imagineering, Glendale, CA
 *   EMAIL:   andreasr@wdi.disney.com
-*   RCSID:   $Id: sqFFI.h,v 1.1 2001/10/24 23:12:24 rowledge Exp $
+*   RCSID:   $Id$
 *
 *   NOTES:
 *
@@ -79,42 +79,42 @@ int ffiAlloc(int byteSize);
 int ffiFree(int ptr);
 
 /* general <=32bit integer loads */
-int ffiPushSignedByte(int value);
-int ffiPushUnsignedByte(int value);
-int ffiPushSignedShort(int value);
-int ffiPushUnsignedShort(int value);
-int ffiPushSignedInt(int value);
-int ffiPushUnsignedInt(int value);
+int ffiPushSignedByte(PLUGIN_IARG_COMMA int value);
+int ffiPushUnsignedByte(PLUGIN_IARG_COMMA int value);
+int ffiPushSignedShort(PLUGIN_IARG_COMMA int value);
+int ffiPushUnsignedShort(PLUGIN_IARG_COMMA int value);
+int ffiPushSignedInt(PLUGIN_IARG_COMMA int value);
+int ffiPushUnsignedInt(PLUGIN_IARG_COMMA int value);
 
 /* 64bit integer loads */
-int ffiPushSignedLongLong(int lowWord, int highWord);
-int ffiPushUnsignedLongLong(int lowWord, int highWord);
+int ffiPushSignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord);
+int ffiPushUnsignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord);
 /* 64bit integer returns */
 int ffiLongLongResultLow(void);
 int ffiLongLongResultHigh(void);
 
 /* special <=32bit loads */
-int ffiPushSignedChar(int value);
-int ffiPushUnsignedChar(int value);
+int ffiPushSignedChar(PLUGIN_IARG_COMMA int value);
+int ffiPushUnsignedChar(PLUGIN_IARG_COMMA int value);
 
 /* float loads */
-int ffiPushSingleFloat(double value);
-int ffiPushDoubleFloat(double value);
+int ffiPushSingleFloat(PLUGIN_IARG_COMMA double value);
+int ffiPushDoubleFloat(PLUGIN_IARG_COMMA double value);
 
 /* structure loads */
-int ffiPushStructureOfLength(int pointer, int* structSpec, int specSize);
+int ffiPushStructureOfLength(PLUGIN_IARG_COMMA int pointer, int* structSpec, int specSize);
 
 /* pointer loads */
-int ffiPushPointer(int pointer);
+int ffiPushPointer(PLUGIN_IARG_COMMA int pointer);
 
 /* string loads */
-int ffiPushStringOfLength(int srcIndex, int length);
+int ffiPushStringOfLength(PLUGIN_IARG_COMMA int srcIndex, int length);
 
 /* return true if calling convention is supported */
 int ffiSupportsCallingConvention(int callType);
 
 /* return true if these types can be returned */
-int ffiCanReturn(int* structSpec, int specSize);
+int ffiCanReturn(PLUGIN_IARG_COMMA int* structSpec, int specSize);
 
 /* call the appropriate function w/ the given return type */
 int ffiCallAddressOfWithPointerReturn(int fn, int callType);
