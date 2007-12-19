@@ -236,7 +236,7 @@ EXPORT(int) primitivePluginRequestFileHandle(INTERPRETER_ARG)
 #endif
     fileHandle = instantiateClassindexableSize(INTERPRETER_PARAM_COMMA classByteArray(INTERPRETER_PARAM), fileRecordSize());
     fBrowserMode = false;
-    sqFileOpen(fileValueOf(fileHandle),(int)req->localName, strlen(req->localName), 0);
+    sqFileOpen(fileValueOf(fileHandle),req->localName, strlen(req->localName), 0);
     fBrowserMode = true;
     if(failed(INTERPRETER_PARAM)) return 0;
   }
@@ -312,7 +312,7 @@ void pluginReceiveData(MSG *msg)
   if(req) {
     req->localName = localName;
     req->state = ok;
-    synchronizedSignalSemaphoreWithIndex(req->semaIndex);
+    synchronizedSignalSemaphoreWithIndex(MAIN_VM_COMMA req->semaIndex);
   }
 }
 
@@ -465,7 +465,7 @@ void pluginHandleEvent(MSG *msg)
   /* Messages posted from a different process */
   if(msg->message == g_WM_QUIT_SESSION) exit(0);
   if(msg->message == g_WM_INVALIDATE) {
-    if(!getFullScreenFlag(MAIN_VM_ARG) && IsWindow(browserWindow)) {
+    if(!getFullScreenFlag(MAIN_VM) && IsWindow(browserWindow)) {
       /* adjust to size of browser window */
       RECT r;
       GetClientRect(browserWindow, &r);
@@ -475,7 +475,7 @@ void pluginHandleEvent(MSG *msg)
     InvalidateRect(stWindow, NULL, FALSE);
   } else if(msg->message == g_WM_BWND_SIZE) {
     /* Window position changed */
-    if(!getFullScreenFlag(MAIN_VM_ARG)) {
+    if(!getFullScreenFlag(MAIN_VM)) {
       SetWindowPos(stWindow, NULL, 0, 0, msg->wParam, msg->lParam, SWP_NOMOVE | SWP_NOZORDER);
     }
   } else if(msg->message == g_WM_RECEIVE_DATA) {

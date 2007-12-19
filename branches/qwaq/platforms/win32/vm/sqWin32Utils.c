@@ -212,7 +212,7 @@ sqInt ioMutexLock(sqInt mutexHandle)
 { DWORD result;
   
   result = WaitForSingleObject((HANDLE)mutexHandle, INFINITE);
-  dprintf(("ioMutexLock %s\n", (result == WAIT_OBJECT_0) ? "ok" : "failed"));
+//  dprintf(("ioMutexLock %s\n", (result == WAIT_OBJECT_0) ? "ok" : "failed"));
   return result == WAIT_OBJECT_0;
 }
 
@@ -233,3 +233,56 @@ sqInt ioMutexWaitmilliseconds(sqInt mutexHandle, sqInt milliseconds)
   return result == WAIT_OBJECT_0;
 }
 
+/* Atomic event queue functions 
+	Note to non-windows porters: on x86 architecture, atomic CAS is 'lock cmpxchg'.
+
+*/
+#define AtomicCAS(value_ptr, new_value, comparand) InterlockedCompareExchange(value_ptr, new_value, comparand)
+
+void ioInitEventQueue(struct vmEventQueue * queue)
+{
+	queue->head.next = 0;
+	queue->tail = &queue->head;
+}
+
+void ioEnqueueEventInto(struct vmEvent * event , struct vmEventQueue * queue)
+{
+	struct vmEvent * tail;
+	struct vmEvent * old_next;
+	
+	/* add event to tail */
+	event->next = 0;
+	do {
+		tail = queue->tail;
+		old_next = (struct vmEvent *)AtomicCAS(&tail->next, event, 0);
+		if (old_next != 0)
+		{
+			AtomicCAS(&queue->tail, old_next, tail);
+		}
+	} while (old_next != 0);
+	AtomicCAS(&queue->tail, event, tail);
+}
+
+struct vmEvent * ioDequeueEventFrom(struct vmEventQueue * queue)
+{
+	struct vmEvent * event;
+	struct vmEvent * oldhead;
+	do {
+		event = queue->head.next;
+		if (!event)
+			return 0;
+		oldhead = (struct vmEvent *)AtomicCAS(&queue->head.next, event->next, event);
+	} while (oldhead != event);
+
+	/* To prevent queue damage, when queue tail points to just dequeued event, 
+		we should replace tail with head */
+	if (event->next == 0)
+	{
+		/* queue->head.next should be 0, put it as tail */
+		if ( 0 == AtomicCAS(&event->next, &queue->head, 0))
+		{
+			AtomicCAS(&queue->tail, &queue->head, event);
+		}
+	}
+	return event;
+}

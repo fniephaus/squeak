@@ -94,7 +94,7 @@ MD=	mkdir
 #       The switch '-mwindows' gives us a GUI app instead of a console app.
 #
 LD=	 gcc
-# LDFLAGS= -mwindows
+#LDFLAGS= -mwindows
 STDLIBS= -lddraw -ldinput -lopengl32 -lwsock32 -lcomdlg32 -lole32 -lwinmm \
 	 -luser32 -lgdi32 -lkernel32 -lcrtdll -lversion
 #LIBS=	 $(STDLIBS) $(CRTLIB)
@@ -142,7 +142,7 @@ print-settings:
 $(VMEXE): gnu-interp.c $(VMOBJ) $(LIBS) $(VMEXP) resource.o
 	$(LD) $(LDFLAGS) -o $(OBJDIR)/$(VMEXE) $(addprefix $(OBJDIR)/,$(VMOBJ)) $(OBJDIR)/$(VMEXP) $(OBJDIR)/resource.o $(addprefix $(OBJDIR)/,$(LIBS)) $(STDLIBS)
 	$(RM) $(OBJDIR)/version.o
-	strip --strip-all $(OBJDIR)/$(VMEXE)
+#	strip --strip-all $(OBJDIR)/$(VMEXE)
 
 $(OBJDIR):
 	mkdir $(subst /,\,$(OBJDIR))

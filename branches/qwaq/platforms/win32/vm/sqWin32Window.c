@@ -161,13 +161,13 @@ void HideSplashScreen(void);
          does not use this synchronization when accessing the external
          semaphores. */
 
-int synchronizedSignalSemaphoreWithIndex(int semaIndex)
+int synchronizedSignalSemaphoreWithIndex(INTERPRETER_ARG_COMMA int semaIndex)
 { int result;
 
   /* wait until we have access */
   WaitForSingleObject(vmSemaphoreMutex, INFINITE);
   /* do our job */
-  result = signalSemaphoreWithIndex(MAIN_VM_ARG_COMMA semaIndex);
+  result = signalSemaphoreWithIndex(INTERPRETER_PARAM_COMMA semaIndex);
   /* wake up interpret() if sleeping */
   SetEvent(vmWakeUpEvent);
   /* and release access */
@@ -380,7 +380,7 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
     if (!IsRectEmpty(&updateRect)) {
       /* force redraw the next time ioShowDisplay() is called */
       updateRightNow = TRUE;
-      fullDisplayUpdate(MAIN_VM_ARG);  /* this makes VM call ioShowDisplay */
+      fullDisplayUpdate(MAIN_VM);  /* this makes VM call ioShowDisplay */
     }
     break;
   case WM_SIZE:
@@ -470,7 +470,7 @@ int _lowResMSecs = 0;
 
 void CALLBACK timerCallback(UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2) {
   _lowResMSecs++;
-  setInterruptCheckCounter(MAIN_VM_ARG_COMMA 0);
+  setInterruptCheckCounter(MAIN_VM_COMMA 0);
 }
 
 #include <mmsystem.h>
@@ -1210,8 +1210,8 @@ int recordVirtualKey(UINT message, WPARAM wParam, LPARAM lParam)
     return 1;
   }
   if(wParam == VK_CANCEL) {
-    setInterruptPending(MAIN_VM_ARG_COMMA true);
-    setInterruptCheckCounter(MAIN_VM_ARG_COMMA 0);
+    setInterruptPending(MAIN_VM_COMMA true);
+    setInterruptCheckCounter(MAIN_VM_COMMA 0);
     return 1;
   }
   keystate = mapVirtualKey(wParam);
@@ -1233,11 +1233,11 @@ int recordKeystroke(UINT msg, WPARAM wParam, LPARAM lParam)
   /* add the modifiers */
   keystate = keystate | ((buttonState >> 3) << 8);
   /* check for interrupt key */
-  if(keystate == getInterruptKeycode(MAIN_VM_ARG))
+  if(keystate == getInterruptKeycode(MAIN_VM))
     {
       /* NOTE: Interrupt key is meta, not recorded as key stroke */
-      setInterruptPending(MAIN_VM_ARG_COMMA true);
-      setInterruptCheckCounter(MAIN_VM_ARG_COMMA 0);
+      setInterruptPending(MAIN_VM_COMMA true);
+      setInterruptCheckCounter(MAIN_VM_COMMA 0);
 	  return 1;
     }
   recordKey(keystate);
@@ -1529,20 +1529,20 @@ int ioSetCursorWithMask(int cursorBitsIndex, int cursorMaskIndex, int offsetX, i
       */
       for (i=0; i<16; i++)
         {
-          andMask[i*cx/8+0] = ~(checkedLongAt(MAIN_VM_ARG_COMMA cursorMaskIndex + (4 * i)) >> 24) & 0xFF;
-          andMask[i*cx/8+1] = ~(checkedLongAt(MAIN_VM_ARG_COMMA cursorMaskIndex + (4 * i)) >> 16) & 0xFF;
+          andMask[i*cx/8+0] = ~(checkedLongAt(MAIN_VM_COMMA cursorMaskIndex + (4 * i)) >> 24) & 0xFF;
+          andMask[i*cx/8+1] = ~(checkedLongAt(MAIN_VM_COMMA cursorMaskIndex + (4 * i)) >> 16) & 0xFF;
         }
       for (i=0; i<16; i++)
         {
-          xorMask[i*cx/8+0] = (~(checkedLongAt(MAIN_VM_ARG_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF) ^ (andMask[i*cx/8+0]);
-          xorMask[i*cx/8+1] = (~(checkedLongAt(MAIN_VM_ARG_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF) ^ (andMask[i*cx/8+1]);
+          xorMask[i*cx/8+0] = (~(checkedLongAt(MAIN_VM_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF) ^ (andMask[i*cx/8+0]);
+          xorMask[i*cx/8+1] = (~(checkedLongAt(MAIN_VM_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF) ^ (andMask[i*cx/8+1]);
         }
     }
   else /* Old Cursor: Just make all 1-bits black */
     for (i=0; i<16; i++)
       {
-        andMask[i*cx/8+0] = ~(checkedLongAt(MAIN_VM_ARG_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF;
-        andMask[i*cx/8+1] = ~(checkedLongAt(MAIN_VM_ARG_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF;
+        andMask[i*cx/8+0] = ~(checkedLongAt(MAIN_VM_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF;
+        andMask[i*cx/8+1] = ~(checkedLongAt(MAIN_VM_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF;
       }
 
   currentCursor = CreateCursor(hInstance,-offsetX,-offsetY,cx,cy,andMask,xorMask);
@@ -1597,7 +1597,7 @@ int ioSetFullScreen(int fullScreen)
 #else /* !defined(_WIN32_WCE) */
       ShowWindow(stWindow,SW_SHOWNORMAL);
 #endif /* !defined(_WIN32_WCE) */
-      setFullScreenFlag(MAIN_VM_ARG_COMMA 1);
+      setFullScreenFlag(MAIN_VM_COMMA 1);
     }
   else
     {
@@ -1614,7 +1614,7 @@ int ioSetFullScreen(int fullScreen)
       }
 #endif /* !defined(_WIN32_WCE) */
       ShowWindow(stWindow,SW_SHOWNORMAL);
-      setFullScreenFlag(MAIN_VM_ARG_COMMA 0);
+      setFullScreenFlag(MAIN_VM_COMMA 0);
     }
   /* get us back in the foreground */
   SetForegroundWindow(stWindow);
@@ -1867,7 +1867,7 @@ int ioForceDisplayUpdate(void) {
      b) The window is valid
      c) The Interpreter does not defer updates by itself
   */
-  if(fDeferredUpdate && IsWindow(stWindow) && !getDeferDisplayUpdates(MAIN_VM_ARG))
+  if(fDeferredUpdate && IsWindow(stWindow) && !getDeferDisplayUpdates(MAIN_VM))
     {
       UpdateWindow(stWindow);
     }
@@ -2067,7 +2067,7 @@ int ioShowDisplay(int dispBits, int width, int height, int depth,
       updateRect.bottom = affectedB;
       /* Acknowledge the request for deferred updates only
          if the interpreter is not deferring these by itself */
-      if(fDeferredUpdate && !getDeferDisplayUpdates(MAIN_VM_ARG))
+      if(fDeferredUpdate && !getDeferDisplayUpdates(MAIN_VM))
         {
           /* Wait until the next WM_PAINT gets processed */
           InvalidateRect(stWindow,&updateRect,FALSE);
@@ -2550,7 +2550,7 @@ char * GetAttributeString(int id) {
 int attributeSize(int id) {
   char *attrValue;
   attrValue = GetAttributeString(id);
-  if(!attrValue) return primitiveFail(MAIN_VM_ARG);
+  if(!attrValue) return primitiveFail(MAIN_VM);
   return strlen(attrValue);
 }
 

@@ -43,6 +43,12 @@ size_t sqImageFileWrite(void *ptr, size_t sz, size_t count, sqImageFile h);
 
 #endif /* WIN32_FILE_SUPPORT */
 
+/********************************************************/
+/* external SYNCHRONIZED signaling of semaphores        */
+/********************************************************/
+int synchronizedSignalSemaphoreWithIndex(INTERPRETER_ARG_COMMA int semaIndex);
+
+
 /* pluggable primitive support */
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #  undef EXPORT

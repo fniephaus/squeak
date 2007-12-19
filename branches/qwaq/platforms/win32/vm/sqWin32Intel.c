@@ -690,7 +690,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
      If this fails the IP is probably wrong */
   TRY {
 #ifndef JITTER
-    byteCode = getCurrentBytecode(MAIN_VM_ARG);
+    byteCode = getCurrentBytecode(MAIN_VM);
 #else
     byteCode = -1;
 #endif
@@ -710,7 +710,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 					 exp->ExceptionRecord->ExceptionCode,
 					 exp->ExceptionRecord->ExceptionAddress,
                      byteCode,
-                     methodPrimitiveIndex(MAIN_VM_ARG),
+                     methodPrimitiveIndex(MAIN_VM),
                      vmPath,
                      TEXT("crash.dmp"));
   if(!fHeadlessImage)
@@ -763,7 +763,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 	    "Current byte code: %d\n"
 	    "Primitive index: %d\n",
 	    byteCode,
-	    methodPrimitiveIndex(MAIN_VM_ARG));
+	    methodPrimitiveIndex(MAIN_VM));
     fflush(f);
     /* print loaded plugins */
     fprintf(f,"\nLoaded plugins:\n");
@@ -785,7 +785,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 	  FILE tmpStdout;
 	  tmpStdout = *stdout;
 	  *stdout = *f;
-	  printCallStack(MAIN_VM_ARG);
+	  printCallStack(MAIN_VM);
 	  *f = *stdout;
 	  *stdout = tmpStdout;
 	  fprintf(f,"\n");
@@ -836,7 +836,7 @@ void __cdecl Cleanup(void)
 { /* not all of these are essential, but they're polite... */
 
   if(!inCleanExit) {
-    printCallStack(MAIN_VM_ARG);
+    printCallStack(MAIN_VM);
   }
   ioShutdownAllModules();
 #ifndef NO_PLUGIN_SUPPORT
@@ -958,7 +958,7 @@ static vmArg args[] = {
 int sqMain(char *lpCmdLine, int nCmdShow)
 { 
   int virtualMemory;
-  
+
 #ifdef NO_MULTIBLE_INSTANCES    
   HANDLE hMutex;
   hMutex = CreateMutex(NULL, TRUE, VM_NAME); /*more unique value needed here ?!*/
@@ -1109,22 +1109,27 @@ int sqMain(char *lpCmdLine, int nCmdShow)
     if(fHeadlessImage && (!fRunService || fWindows95))
       SetSystemTrayIcon(1);
     
+#ifdef VM_OBJECTIFIED
+	initializeVM();
+	MAIN_VM = newInterpreterInstance();
+#endif
+
     /* read the image file */
     if(!imageFile) {
       imageFile = sqImageFileOpen(imageName,"rb");
-      readImageFromFileHeapSizeStartingAt(MAIN_VM_ARG_COMMA imageFile, virtualMemory, 0);
+      readImageFromFileHeapSizeStartingAt(MAIN_VM_COMMA imageFile, virtualMemory, 0);
     } else {
-      readImageFromFileHeapSizeStartingAt(MAIN_VM_ARG_COMMA imageFile, virtualMemory, sqImageFilePosition(imageFile));
+      readImageFromFileHeapSizeStartingAt(MAIN_VM_COMMA imageFile, virtualMemory, sqImageFilePosition(imageFile));
     }
     sqImageFileClose(imageFile);
 
     if(fHeadlessImage) HideSplashScreen(); /* need to do it manually */
     SetWindowSize();
-    ioSetFullScreen(getFullScreenFlag(MAIN_VM_ARG));
+    ioSetFullScreen(getFullScreenFlag(MAIN_VM));
 
     /* run Squeak */
     ioInitSecurity();
-    interpret(MAIN_VM_ARG);
+    interpret(MAIN_VM);
 #ifdef _MSC_VER
   } __except(squeakExceptionHandler(GetExceptionInformation())) {
     /* Do nothing */
@@ -1142,8 +1147,8 @@ int sqMain(char *lpCmdLine, int nCmdShow)
 /* int WINAPI WinMain (HINSTANCE hInst,
                     HINSTANCE hPrevInstance,
                     LPSTR  lpCmdLine,
-                    int    nCmdShow) */
-
+                    int    nCmdShow) 
+ {*/
 int main(int argc, char ** argv)
 {
   HINSTANCE hInst;

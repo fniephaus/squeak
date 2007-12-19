@@ -189,11 +189,6 @@ int findImageFile();
 int openImageFile();
 
 /********************************************************/
-/* external SYNCHRONIZED signaling of semaphores        */
-/********************************************************/
-int synchronizedSignalSemaphoreWithIndex(int semaIndex);
-
-/********************************************************/
 /* Image options / VM options                           */
 /********************************************************/
 char *GetImageOption(int id);

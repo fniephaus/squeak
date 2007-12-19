@@ -401,11 +401,11 @@ void HandlePrefsMenu(int cmd) {
 #endif
     break;
   case ID_DBGPRINTSTACK:
-    printCallStack(MAIN_VM_ARG);
+    printCallStack(MAIN_VM);
     break;
   case ID_PRINTALLSTACKS:
     printf("Printing all processes:\n");
-    printAllStacks(MAIN_VM_ARG);
+    printAllStacks(MAIN_VM);
     break;
   case ID_PRIORITYBOOST:
     fPriorityBoost = !fPriorityBoost;

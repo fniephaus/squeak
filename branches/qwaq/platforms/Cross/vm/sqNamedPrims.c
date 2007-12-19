@@ -225,6 +225,7 @@ static int callInitializersIn(ModuleEntry *module)
 			return 0;
 		}
 	}
+	initializeAllNewAttachedStates();  /* initialize all newly created attached states */
 	dprintf(("SUCCESS: Module %s is now initialized\n", module->name));
 	return 1;
 }
@@ -292,7 +293,9 @@ static ModuleEntry *findOrLoadModule(char *pluginName, int ffiLoad)
 	module = findLoadedModule(pluginName);
 	if(!module) {
 		/* if not try loading it */
+		vmGlobalLock();
 		module = findAndLoadModule(pluginName, ffiLoad);
+		vmGlobalUnlock();
 	}
 	return module; /* module not found */
 }

@@ -27,13 +27,13 @@
 extern struct Interpreter * mainVM;
 
 /* Main VM */
-# define MAIN_VM_ARG mainVM
-# define MAIN_VM_ARG_COMMA mainVM,
+# define MAIN_VM mainVM
+# define MAIN_VM_COMMA mainVM,
 
 #else
 
-# define MAIN_VM_ARG
-# define MAIN_VM_ARG_COMMA 
+# define MAIN_VM
+# define MAIN_VM_COMMA 
 
 #endif
 
@@ -237,6 +237,7 @@ sqInt ioProcessEvents(void);
 /* generic input event */
 typedef struct sqInputEvent
 {
+//  struct sqInputEvent * next;
   int type;			/* type of event; either one of EventTypeXXX */
   unsigned int timeStamp;	/* time stamp */
   /* the interpretation of the following fields depend on the type of the event */
@@ -329,8 +330,11 @@ typedef struct sqWindowEvent
 
 /* Set an asynchronous input semaphore index for events. */
 sqInt ioSetInputSemaphore(sqInt semaIndex);
+
 /* Retrieve the next input event from the OS. */
 sqInt ioGetNextEvent(sqInputEvent *evt);
+/* recycle used input event */
+sqInt ioRecycleEvent(sqInputEvent * evt);
 
 /* Image file and VM path names. */
 extern char imageName[];
@@ -411,5 +415,10 @@ sqInt ioMutexUnlock(sqInt mutexHandle);
 sqInt ioDeleteMutex(sqInt mutexHandle);
 sqInt ioMutexWaitmilliseconds(sqInt mutexHandle, sqInt milliseconds);
 
+
+/* Atomic event queue functions. */
+void ioInitEventQueue(struct vmEventQueue * queue);
+void ioEnqueueEventInto(struct vmEvent * event , struct vmEventQueue * queue);
+struct vmEvent * ioDequeueEventFrom(struct vmEventQueue * queue);
 
 
