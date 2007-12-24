@@ -38,7 +38,6 @@
 
 #define NO_TABLET
 
-
 #ifdef _WIN32_WCE
 /*************************************************************/
 /*                          Windows CE                       */
@@ -242,7 +241,12 @@ int sqMain(char *lpCmdLine, int nCmdShow);
 */
 #define VM_VERSION TEXT(VM_NAME) TEXT(" ") TEXT(VM_VERSIONINFO) TEXT(" from ") TEXT(__DATE__) \
 	TEXT("\n") TEXT("Compiler: ") TEXT(COMPILER) TEXT(VERSION)
-	
+
+/********************************************************/
+/* Threads support										*/
+/********************************************************/
+typedef LPTHREAD_START_ROUTINE ThreadFunction;
+
 /********************************************************/
 /* image reversal functions                             */
 /********************************************************/
@@ -264,6 +268,7 @@ extern const TCHAR U_OFF[];
 extern const TCHAR U_GLOBAL[];
 extern const TCHAR U_SLASH[];
 extern const TCHAR U_BACKSLASH[];
+
 
 #ifndef NO_PREFERENCES
 extern HMENU vmPrefsMenu;         /* preferences menu */
@@ -300,9 +305,6 @@ extern BOOL  fShowAllocations; /* Show memory allocations */
 extern BOOL  fPriorityBoost; /* thread priority boost */
 extern BOOL  fEnableAltF4Quit; /* can we quit using Alt-F4? */
 extern BOOL  fEnableF2Menu;    /* can we get prefs menu via F2? */
-
-extern HANDLE vmSemaphoreMutex;   /* the mutex for synchronization */
-extern HANDLE vmWakeUpEvent;      /* wakeup event for interpret() */
 
 /* variables for cached display */
 extern RECT updateRect;		     /*	the rectangle to update */
@@ -440,6 +442,20 @@ typedef struct _NOTIFYICONDATAA {
 extern DWORD ticksForReversal; /* time needed for byte/word reversal */
 extern DWORD ticksForBlitting; /* time needed for actual blts */
 #endif
+
+
+/* Per-Interpreter system state */
+extern int win32stateId;
+
+typedef struct Win32AttachedState {
+	HANDLE wakeUpEvent;
+	HANDLE timer;
+
+} Win32AttachedState;
+
+#define DECL_WIN32_STATE() struct Win32AttachedState * win32state = getAttachedStateBuffer(intr, win32stateId)
+#define WIN32_STATE(name) win32state->name
+
 
 #endif /* _WINDOWS_ */
 

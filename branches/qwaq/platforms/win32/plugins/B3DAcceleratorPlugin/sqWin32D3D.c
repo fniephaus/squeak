@@ -26,7 +26,6 @@
 
 #include "B3DAcceleratorPlugin_imports.h"
 #include "../SurfacePlugin/SurfacePlugin.h"
-#include "B3DAcceleratorPlugin.h"
 
 #if defined(B3DX_D3D)
 

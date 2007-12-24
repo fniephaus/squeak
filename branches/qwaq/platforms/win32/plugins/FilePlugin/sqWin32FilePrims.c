@@ -17,10 +17,7 @@
 *
 *****************************************************************************/
 #include <windows.h>
-//#include "sq.h"
 #include "FilePlugin_imports.h"
-#include "FilePlugin.h"
-                                               
 
 #ifdef WIN32_FILE_SUPPORT
 
@@ -28,7 +25,7 @@
 #define false 0
 
 #define FILE_HANDLE(f) ((HANDLE) (f)->file)
-#define FAIL() return vmFunction(primitiveFail)()
+#define FAIL() return vmFunction(primitiveFail)(PLUGIN_IPARAM)
 
 /***
     The state of a file is kept in the following structure,
@@ -51,7 +48,16 @@
 
 /**********************************************************************/
 #include "sqWin32HandleTable.h"
-static HandleTable *win32Files = NULL;
+
+typedef struct LocalPluginState {
+	HandleTable * win32Files;
+} LocalPluginState;
+
+static sqInt localStateId = 0;
+#define DECL_LOCAL_STATE() struct LocalPluginState * pstate = vmFunction(getAttachedStateBuffer)(PLUGIN_IPARAM_COMMA localStateId)
+#define LOCAL_STATE(name) pstate->name
+
+// static HandleTable *win32Files = NULL;
 /**********************************************************************/
 
 /*** Variables ***/
@@ -73,28 +79,28 @@ sqInt sqFileThisSession(void) {
   return thisSession;
 }
 
-sqInt sqFileAtEnd(SQFile *f) {
+sqInt sqFileAtEnd(PLUGIN_IARG_COMMA SQFile *f) {
   win32FileOffset ofs;
   /* Return true if the file's read/write head is at the end of the file. */
-  if (!sqFileValid(f)) FAIL();
+  if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) FAIL();
   ofs.offset = 0;
   ofs.dwLow = SetFilePointer(FILE_HANDLE(f), 0, &ofs.dwHigh, FILE_CURRENT);
-  return ofs.offset == sqFileSize(f);
+  return ofs.offset == sqFileSize(PLUGIN_IPARAM_COMMA f);
 }
 
-sqInt sqFileClose(SQFile *f) {
+sqInt sqFileClose(PLUGIN_IARG_COMMA SQFile *f) {
   /* Close the given file. */
-
-  if (!sqFileValid(f)) FAIL();
+  DECL_LOCAL_STATE();
+  if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) FAIL();
   if(!CloseHandle(FILE_HANDLE(f))) FAIL();
-  RemoveHandleFromTable(win32Files, FILE_HANDLE(f));
+  RemoveHandleFromTable(LOCAL_STATE(win32Files), FILE_HANDLE(f));
   f->file = NULL;
   f->sessionID = 0;
   f->writable = false;
   return 1;
 }
 
-sqInt sqFileDeleteNameSize(char* fileNameIndex, sqInt fileNameSize) {
+sqInt sqFileDeleteNameSize(PLUGIN_IARG_COMMA char* fileNameIndex, sqInt fileNameSize) {
   WCHAR win32Path[MAX_PATH+1];
   int sz;
   /* convert the file name into a null-terminated C string */
@@ -107,13 +113,25 @@ sqInt sqFileDeleteNameSize(char* fileNameIndex, sqInt fileNameSize) {
   return 1;
 }
 
-squeakFileOffsetType sqFileGetPosition(SQFile *f) {
+squeakFileOffsetType sqFileGetPosition(PLUGIN_IARG_COMMA SQFile *f) {
   win32FileOffset ofs;
   /* Return the current position of the file's read/write head. */
-  if (!sqFileValid(f)) FAIL();
+  if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) FAIL();
   ofs.offset = 0;
   ofs.dwLow = SetFilePointer(FILE_HANDLE(f), 0, &ofs.dwHigh, FILE_CURRENT);
   return ofs.offset;
+}
+
+static void sqInitFilePluginState(PLUGIN_IARG)
+{
+	DECL_LOCAL_STATE();
+	LOCAL_STATE(win32Files) = (HandleTable*) calloc(1,sizeof(HandleTable));
+}
+
+static void sqFinalizeFilePluginState(PLUGIN_IARG)
+{
+	DECL_LOCAL_STATE();
+	free(LOCAL_STATE(win32Files));
 }
 
 sqInt sqFileInit(void) {
@@ -122,26 +140,29 @@ sqInt sqFileInit(void) {
      Should be called once at startup time.
   */
 
-#if VM_PROXY_MINOR > 6
-  thisSession = interpreterProxy->getThisSessionID();
-#else
-  thisSession = GetTickCount();
+  thisSession = vmFunction(microMSecs)() + time(NULL);
   if (thisSession == 0) thisSession = 1;	/* don't use 0 */
-#endif
-  win32Files = (HandleTable*) calloc(1, sizeof(HandleTable));
+
+  localStateId = vmFunction(attachStateBufferinitializeFnfinalizeFn)(sizeof(struct LocalPluginState),
+		(AttachedStateFn)sqInitFilePluginState,(AttachedStateFn)sqFinalizeFilePluginState);
+  if (localStateId == 0) return 0;
   return 1;
 }
 
 sqInt sqFileShutdown(void) {
+  if (localStateId)
+    vmFunction(releaseAttachedState)(localStateId);
+  localStateId = 0;
   return 1;
 }
 
-sqInt sqFileOpen(SQFile *f, char* fileNameIndex, sqInt fileNameSize, sqInt writeFlag) {
+sqInt sqFileOpen(PLUGIN_IARG_COMMA SQFile *f, char* fileNameIndex, sqInt fileNameSize, sqInt writeFlag) {
   /* Opens the given file using the supplied sqFile structure
      to record its state. Fails with no side effects if f is
      already open. Files are always opened in binary mode;
      Squeak must take care of any line-end character mapping.
   */
+  DECL_LOCAL_STATE();
   HANDLE h;
   WCHAR win32Path[MAX_PATH+1];
   int sz;
@@ -170,7 +191,7 @@ sqInt sqFileOpen(SQFile *f, char* fileNameIndex, sqInt fileNameSize, sqInt write
     win32FileOffset ofs;
     f->sessionID = thisSession;
     FILE_HANDLE(f) = h;
-    AddHandleToTable(win32Files, h);
+    AddHandleToTable(LOCAL_STATE(win32Files), h);
     /* compute and cache file size */
     ofs.offset = 0;
     ofs.dwLow = SetFilePointer(h, 0, &ofs.dwHigh, FILE_END);
@@ -180,7 +201,7 @@ sqInt sqFileOpen(SQFile *f, char* fileNameIndex, sqInt fileNameSize, sqInt write
   return 1;
 }
 
-size_t sqFileReadIntoAt(SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex) {
+size_t sqFileReadIntoAt(PLUGIN_IARG_COMMA SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex) {
   /* Read count bytes from the given file into byteArray starting at
      startIndex. byteArray is the address of the first byte of a
      Squeak bytes object (e.g. String or ByteArray). startIndex
@@ -189,12 +210,12 @@ size_t sqFileReadIntoAt(SQFile *f, size_t count, char* byteArrayIndex, size_t st
   */
   DWORD dwReallyRead;
 
-  if (!sqFileValid(f)) FAIL();
+  if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) FAIL();
   ReadFile(FILE_HANDLE(f), (LPVOID) (byteArrayIndex+startIndex), count, &dwReallyRead, NULL);
   return (int)dwReallyRead;
 }
 
-sqInt sqFileRenameOldSizeNewSize(char* oldNameIndex, sqInt oldNameSize, char* newNameIndex, sqInt newNameSize)
+sqInt sqFileRenameOldSizeNewSize(PLUGIN_IARG_COMMA char* oldNameIndex, sqInt oldNameSize, char* newNameIndex, sqInt newNameSize)
 {
   WCHAR oldPath[MAX_PATH];
   WCHAR newPath[MAX_PATH];
@@ -217,62 +238,61 @@ sqInt sqFileRenameOldSizeNewSize(char* oldNameIndex, sqInt oldNameSize, char* ne
   return 1;
 }
 
-sqInt sqFileSetPosition(SQFile *f, squeakFileOffsetType position)
+sqInt sqFileSetPosition(PLUGIN_IARG_COMMA SQFile *f, squeakFileOffsetType position)
 {
   win32FileOffset ofs;
   ofs.offset = position;
   /* Set the file's read/write head to the given position. */
-  if (!sqFileValid(f)) FAIL();
+  if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) FAIL();
   SetFilePointer(FILE_HANDLE(f), ofs.dwLow, &ofs.dwHigh, FILE_BEGIN);
   return 1;
 }
 
-squeakFileOffsetType sqFileSize(SQFile *f) {
+squeakFileOffsetType sqFileSize(PLUGIN_IARG_COMMA SQFile *f) {
   /* Return the length of the given file. */
   win32FileOffset ofs;
-  if (!sqFileValid(f)) FAIL();
+  if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) FAIL();
   ofs.offset = 0;
   ofs.dwLow = GetFileSize(FILE_HANDLE(f), &ofs.dwHigh);
   return ofs.offset;
 }
 
-sqInt sqFileFlush(SQFile *f) {
-  if (!sqFileValid(f)) FAIL();
+sqInt sqFileFlush(PLUGIN_IARG_COMMA SQFile *f) {
+  if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) FAIL();
   /* note: ignores the return value in case of read-only access */
   FlushFileBuffers(FILE_HANDLE(f));
   return 1;
 }
 
-sqInt sqFileTruncate(SQFile *f, squeakFileOffsetType offset) {
+sqInt sqFileTruncate(PLUGIN_IARG_COMMA SQFile *f, squeakFileOffsetType offset) {
   win32FileOffset ofs;
   ofs.offset = offset;
-  if (!sqFileValid(f)) FAIL();
+  if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) FAIL();
   SetFilePointer(FILE_HANDLE(f), ofs.dwLow, &ofs.dwHigh, FILE_BEGIN);
   if(!SetEndOfFile(FILE_HANDLE(f))) return 0;
   return 1;
 }
 
-sqInt sqFileValid(SQFile *f) {
+sqInt sqFileValid(PLUGIN_IARG_COMMA SQFile *f) {
+  DECL_LOCAL_STATE();
   if(NULL == f) return false;
   if(f->sessionID != thisSession) return false;
-  if(!IsHandleInTable(win32Files, FILE_HANDLE(f))) {
+  if(!IsHandleInTable(LOCAL_STATE(win32Files), FILE_HANDLE(f))) {
     printf("WARNING: Manifactured file handle detected!\n");
     return false;
   }
   return true;
 }
 
-size_t sqFileWriteFromAt(SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex) {
+size_t sqFileWriteFromAt(PLUGIN_IARG_COMMA SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex) {
   /* Write count bytes to the given writable file starting at startIndex
      in the given byteArray. (See comment in sqFileReadIntoAt for interpretation
      of byteArray and startIndex).
   */
   DWORD dwReallyWritten;
   win32FileOffset ofs;
-  if (!(sqFileValid(f) && f->writable)) FAIL();
-
+  if (!(sqFileValid(PLUGIN_IPARAM_COMMA f) && f->writable)) FAIL();
   WriteFile(FILE_HANDLE(f), (LPVOID) (byteArrayIndex + startIndex), count, &dwReallyWritten, NULL);
-  
   if ((int)dwReallyWritten != count) FAIL();
   return (int) dwReallyWritten;
 }
@@ -303,7 +323,7 @@ sqImageFile sqImageFileOpen(char *fileName, char *mode)
     }
   /* convert the file name into a null-terminated C string */
   sz = MultiByteToWideChar(CP_UTF8, 0, fileName, -1, NULL,0);
-  if(sz > MAX_PATH) FAIL();
+  if(sz > MAX_PATH) return 0;
   MultiByteToWideChar(CP_UTF8, 0, fileName, -1, win32Path, sz);
   win32Path[sz] = 0;
 

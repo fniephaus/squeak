@@ -321,44 +321,37 @@ int ffiCallAddress(int fn)
 	}
 #endif
 #ifdef __GNUC__
-	asm("
-	  movl %%ebp, _oldBP
-	  movl %%esp, _oldSP
-		pushl %%ebx;
-		pushl %%ecx;
-		pushl %%edx;
-		pushl %%edi;
-		pushl %%esi;
-		pushl %%ebp;
-		/* mark the frame */
-		movl %%esp, %%ebp
-		/* alloca() ffiStackIndex size bytes */
-		movl _ffiArgIndex, %%ecx;
-		shll $2, %%ecx;
-		subl %%ecx, %%esp
-		/* copy stack */
-		movl %%esp, %%edi;
-		leal _ffiArgs, %%esi;
-		shrl $2, %%ecx;
-		cld;
-		rep movsl;
-		/* go calling */
-		call *%%ebx
-		/* restore frame */
-		movl %%ebp, %%esp
-		/* store the return values */
-		movl %%eax, _intReturnValue
-		movl %%edx, _intReturnValue2
-		fstpl _floatReturnValue
-		/* restore register values */
-		popl %%ebp
-		popl %%esi
-		popl %%edi
-		popl %%edx
-		popl %%ecx
-		popl %%ebx
-movl %%ebp, _newBP
-movl %%esp, _newSP
+	asm("\
+	  movl %%ebp, _oldBP; \
+	  movl %%esp, _oldSP; \
+		pushl %%ebx; \
+		pushl %%ecx; \
+		pushl %%edx; \
+		pushl %%edi; \
+		pushl %%esi; \
+		pushl %%ebp; \
+		movl %%esp, %%ebp; \
+		movl _ffiArgIndex, %%ecx; \
+		shll $2, %%ecx; \
+		subl %%ecx, %%esp; \
+		movl %%esp, %%edi; \
+		leal _ffiArgs, %%esi; \
+		shrl $2, %%ecx; \
+		cld; \
+		rep movsl; \
+		call *%%ebx; \
+		movl %%ebp, %%esp; \
+		movl %%eax, _intReturnValue; \
+		movl %%edx, _intReturnValue2; \
+		fstpl _floatReturnValue; \
+		popl %%ebp; \
+		popl %%esi; \
+		popl %%edi; \
+		popl %%edx; \
+		popl %%ecx; \
+		popl %%ebx; \
+		movl %%ebp, _newBP; \
+		movl %%esp, _newSP; \
 		": /* no outputs */ : "ebx" (fn) : "eax" /* clobbered registers */);
 		/* done */
 #endif

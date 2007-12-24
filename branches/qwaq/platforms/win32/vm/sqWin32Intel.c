@@ -104,13 +104,13 @@ LONG CALLBACK squeakExceptionHandler(LPEXCEPTION_POINTERS exp)
       result = TopLevelFilter(exp);
     }
   }
-#ifdef NDEBUG
+//#ifdef NDEBUG
   /* #4: If that didn't work either give up and print a crash debug information */
   if(result != EXCEPTION_CONTINUE_EXECUTION) {
     printCrashDebugInformation(exp);
     result = EXCEPTION_EXECUTE_HANDLER;
   }
-#endif
+//#endif
   return result;
 }
 
@@ -312,6 +312,8 @@ char *GetImageOption(int id)
     return NULL;
 }
 
+#if __GNUC__ < 3
+
 typedef struct _OSVERSIONINFOEX {
   DWORD dwOSVersionInfoSize;
   DWORD dwMajorVersion;
@@ -334,6 +336,8 @@ typedef struct _DISPLAY_DEVICE {
   TCHAR DeviceID[128];
   TCHAR DeviceKey[128];
 } DISPLAY_DEVICE, *PDISPLAY_DEVICE;
+
+#endif
 
 typedef BOOL (CALLBACK *pfnEnumDisplayDevices)(
   LPCTSTR lpDevice,                // device name
@@ -684,13 +688,20 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 { TCHAR crashInfo[1024];
   FILE *f;
   int byteCode;
+  int i;
 
+  // find interpreter instance which caused a crash
+  struct Interpreter * intr = interpreterOfCurrentThread();
+  
   UninstallExceptionHandler();
   /* Retrieve current byte code.
      If this fails the IP is probably wrong */
   TRY {
 #ifndef JITTER
-    byteCode = getCurrentBytecode(MAIN_VM);
+	  if (intr)
+		byteCode = getCurrentBytecode(intr);
+	  else
+		byteCode = -1;
 #else
     byteCode = -1;
 #endif
@@ -710,7 +721,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 					 exp->ExceptionRecord->ExceptionCode,
 					 exp->ExceptionRecord->ExceptionAddress,
                      byteCode,
-                     methodPrimitiveIndex(MAIN_VM),
+                     methodPrimitiveIndex(intr),
                      vmPath,
                      TEXT("crash.dmp"));
   if(!fHeadlessImage)
@@ -763,7 +774,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 	    "Current byte code: %d\n"
 	    "Primitive index: %d\n",
 	    byteCode,
-	    methodPrimitiveIndex(MAIN_VM));
+	    methodPrimitiveIndex(intr));
     fflush(f);
     /* print loaded plugins */
     fprintf(f,"\nLoaded plugins:\n");
@@ -785,7 +796,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 	  FILE tmpStdout;
 	  tmpStdout = *stdout;
 	  *stdout = *f;
-	  printCallStack(MAIN_VM);
+	  printCallStack(intr);
 	  *f = *stdout;
 	  *stdout = tmpStdout;
 	  fprintf(f,"\n");
@@ -928,6 +939,58 @@ int findEmbeddedImage(void) { return 0; }
 #endif
 
 
+
+/****************************************************************************/
+/*                        threadedInterpretFn                               */
+/****************************************************************************/
+
+DWORD WINAPI threadedInterpretFn(void * param)
+{
+	struct Interpreter * intr = (struct Interpreter *) param;
+	MSG msg;
+
+	/* this will force windows to create message queue for our thread */
+	PeekMessage( &msg, 0, WM_USER,WM_USER, PM_NOREMOVE);
+
+	printf("New interpreter instance %x is about to start!\n", param); fflush(0);
+
+	setInterpreterThread(intr, ioGetCurrentThread());
+
+	printf("Initializing attached states...\n"); fflush(0);
+	initializeAttachedStates(intr);
+	printf("...done\n"); fflush(0);
+
+	interpret(intr);
+
+	printf("Interpreter %x thread just exited!\n", param); fflush(0);
+}
+
+/* A given event will be posted to interpreter event queue after microSecondsDelay
+passed since call to scheduleEvent() */
+
+void * ioGetThreadedInterpretFunctionPointer()
+{
+	return (void*)threadedInterpretFn;
+}
+
+/* Win32 per-interpreter attached state initialization/finalization functions */
+int win32stateId = 0;
+
+static void sqInitWin32State(INTERPRETER_ARG)
+{
+	DECL_WIN32_STATE();
+	WIN32_STATE(wakeUpEvent) = CreateEvent(NULL, 1, 0, NULL);
+	WIN32_STATE(timer) = CreateWaitableTimer(NULL, FALSE, NULL);
+    SetEvent(WIN32_STATE(wakeUpEvent));
+}
+
+static void sqFinalizeWin32State(INTERPRETER_ARG)
+{
+	DECL_WIN32_STATE();
+	CloseHandle(WIN32_STATE(wakeUpEvent));
+	CloseHandle(WIN32_STATE(timer));
+}
+
 /****************************************************************************/
 /*                        sqMain                                            */
 /****************************************************************************/
@@ -1068,10 +1131,6 @@ int sqMain(char *lpCmdLine, int nCmdShow)
     if(imageSize == 0) printUsage(2);
   }
 
-  /* allocate the synchronization mutex before anything is going to happen */
-  vmSemaphoreMutex = CreateMutex(NULL, 0, NULL);
-  vmWakeUpEvent = CreateEvent(NULL, 1, 0, NULL);
-
 #ifdef NO_VIRTUAL_MEMORY
   if(!dwMemorySize) {
     dwMemorySize = 4;
@@ -1109,10 +1168,13 @@ int sqMain(char *lpCmdLine, int nCmdShow)
     if(fHeadlessImage && (!fRunService || fWindows95))
       SetSystemTrayIcon(1);
     
-#ifdef VM_OBJECTIFIED
+
 	initializeVM();
+	/* add attached state */
+	win32stateId = attachStateBufferinitializeFnfinalizeFn(sizeof(struct Win32AttachedState),
+		(AttachedStateFn)sqInitWin32State,(AttachedStateFn)sqFinalizeWin32State);
+
 	MAIN_VM = newInterpreterInstance();
-#endif
 
     /* read the image file */
     if(!imageFile) {
@@ -1129,7 +1191,7 @@ int sqMain(char *lpCmdLine, int nCmdShow)
 
     /* run Squeak */
     ioInitSecurity();
-    interpret(MAIN_VM);
+	threadedInterpretFn((void*)MAIN_VM);
 #ifdef _MSC_VER
   } __except(squeakExceptionHandler(GetExceptionInformation())) {
     /* Do nothing */
@@ -1140,6 +1202,7 @@ int sqMain(char *lpCmdLine, int nCmdShow)
 #endif
   return 1;
 }
+
 
 /****************************************************************************/
 /*                        WinMain                                           */

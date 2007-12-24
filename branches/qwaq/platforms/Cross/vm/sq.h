@@ -172,7 +172,7 @@ sqInt ioForceDisplayUpdate(void);
 sqInt ioFormPrint(sqInt bitsAddr, sqInt width, sqInt height, sqInt depth,
 		  double hScale, double vScale, sqInt landscapeFlag);
 sqInt ioSetFullScreen(sqInt fullScreen);
-sqInt ioRelinquishProcessorForMicroseconds(sqInt microSeconds);
+sqInt ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA sqInt microSeconds);
 sqInt ioScreenSize(void);
 sqInt ioScreenDepth(void);
 sqInt ioSeconds(void);
@@ -415,6 +415,15 @@ sqInt ioMutexUnlock(sqInt mutexHandle);
 sqInt ioDeleteMutex(sqInt mutexHandle);
 sqInt ioMutexWaitmilliseconds(sqInt mutexHandle, sqInt milliseconds);
 
+sqInt ioCreateThreadForparamsuspended(void * fn, void * param, sqInt suspended);
+sqInt ioGetCurrentThread();
+sqInt ioResumeThread(sqInt threadHandle);
+void * ioGetThreadedInterpretFunctionPointer();
+
+sqInt ioScheduleEventDelay(INTERPRETER_ARG_COMMA vmEvent * event, sqInt milliSecondsDelay);
+
+/* we need this to determine initial heap size */
+sqInt ioSqueakImageSize(char* filename);
 
 /* Atomic event queue functions. */
 void ioInitEventQueue(struct vmEventQueue * queue);

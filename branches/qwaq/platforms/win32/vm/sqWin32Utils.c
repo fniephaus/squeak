@@ -10,9 +10,9 @@
 *
 *   NOTES:
 *****************************************************************************/
+#define _WIN32_WINDOWS 0x500
 #include <windows.h>
 #include "sq.h"
-
 
 #ifdef DEBUG
 #define dprintf(what) printf what
@@ -204,20 +204,21 @@ void printLastError(TCHAR *prefix)
 sqInt ioCreateMutex(sqInt initialOwner)
 { sqInt result;
   result = (sqInt) CreateMutex(0,(BOOL)initialOwner, 0);
-  dprintf(("ioCreateMutex %s\n", result ? "ok" : "failed"));
+  dprintf(("ioCreateMutex ^ %x\n", result));
   return result;
 }
 
 sqInt ioMutexLock(sqInt mutexHandle)
 { DWORD result;
-  
+//  dprintf(("[%x] locking mutex %x ..\n", GetCurrentThreadId(), mutexHandle));
   result = WaitForSingleObject((HANDLE)mutexHandle, INFINITE);
-//  dprintf(("ioMutexLock %s\n", (result == WAIT_OBJECT_0) ? "ok" : "failed"));
+//  dprintf(("[%x] mutex %x lock: %s\n", GetCurrentThreadId(), mutexHandle, (result == WAIT_OBJECT_0) ? "ok" : "failed")); fflush(0);
   return result == WAIT_OBJECT_0;
 }
 
 sqInt ioMutexUnlock(sqInt mutexHandle)
 {
+//  dprintf(("[%x] mutex %x released \n", GetCurrentThreadId(), mutexHandle));
   return ReleaseMutex((HANDLE)mutexHandle);
 }
 
@@ -233,10 +234,41 @@ sqInt ioMutexWaitmilliseconds(sqInt mutexHandle, sqInt milliseconds)
   return result == WAIT_OBJECT_0;
 }
 
-/* Atomic event queue functions 
-	Note to non-windows porters: on x86 architecture, atomic CAS is 'lock cmpxchg'.
+sqInt ioCreateThreadForparamsuspended(void * fn, void * param, sqInt suspended)
+{
+  HANDLE thread;
 
+  thread =
+    CreateThread(NULL,                    /* No security descriptor */
+                 0,                       /* default stack size     */
+                 (ThreadFunction)fn,	  /* what to do */
+                 param,					  /* parameter for thread   */
+				 (suspended)? CREATE_SUSPENDED : 0,        /* creation parameter -- create suspended so we can check the return value */
+                 0);                    /* return value for thread id */
+
+  return (sqInt) thread;
+}
+
+sqInt ioGetCurrentThread()
+{
+	return (sqInt) GetCurrentThreadId();
+}
+
+sqInt ioResumeThread(sqInt threadHandle)
+{
+	DWORD result;
+	result = ResumeThread((HANDLE)threadHandle);
+	return (result != ((DWORD)-1));
+}
+
+
+/****************************************************************************/
+/*                      Atomic event queue functions                        */
+/****************************************************************************/
+/* 
+   Note to non-windows porters: on x86 architecture, atomic CAS is 'lock cmpxchg'.
 */
+
 #define AtomicCAS(value_ptr, new_value, comparand) InterlockedCompareExchange(value_ptr, new_value, comparand)
 
 void ioInitEventQueue(struct vmEventQueue * queue)

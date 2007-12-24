@@ -109,9 +109,6 @@ BOOL  fEnableAltF4Quit = 1; /* can we quit using Alt-F4? */
 BOOL  fEnableF2Menu = 1;    /* can we get prefs menu via F2? */
 BOOL  fEnablePrefsMenu = 1; /* can we get a prefs menu at all? */
 
-HANDLE vmSemaphoreMutex = 0; /* the mutex for synchronization */
-HANDLE vmWakeUpEvent = 0;      /* wake up interpret() from sleep */
-
 /* variables for cached display */
 RECT updateRect;		     /*	the rectangle to update */
 HRGN updateRgn;	     	     /*	the region to update (more accurate) */
@@ -163,15 +160,14 @@ void HideSplashScreen(void);
 
 int synchronizedSignalSemaphoreWithIndex(INTERPRETER_ARG_COMMA int semaIndex)
 { int result;
+  DECL_WIN32_STATE();
 
   /* wait until we have access */
-  WaitForSingleObject(vmSemaphoreMutex, INFINITE);
   /* do our job */
   result = signalSemaphoreWithIndex(INTERPRETER_PARAM_COMMA semaIndex);
   /* wake up interpret() if sleeping */
-  SetEvent(vmWakeUpEvent);
+  SetEvent(WIN32_STATE(wakeUpEvent));
   /* and release access */
-  ReleaseMutex(vmSemaphoreMutex);
   return result;
 }
 
@@ -1378,7 +1374,7 @@ int ioBeep(void)
 int ioMSecs()
 {
   /* Make sure the value fits into Squeak SmallIntegers */
-#ifndef _WIN32_WCE
+#ifdef _WIN32_WCE
   return timeGetTime() & 0x3FFFFFFF;
 #else
   return GetTickCount() &0x3FFFFFFF;
@@ -1393,12 +1389,18 @@ int ioMicroMSecs(void)
 }
 
 /* Note: ioRelinquishProcessorForMicroseconds has *micro*seconds  as argument*/
-int ioRelinquishProcessorForMicroseconds(int microSeconds)
+int ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA int microSeconds)
 {
   /* wake us up if something happens */
-  ResetEvent(vmWakeUpEvent);
-  MsgWaitForMultipleObjects(1, &vmWakeUpEvent, FALSE,
+  DECL_WIN32_STATE();
+  ResetEvent(WIN32_STATE(wakeUpEvent));
+  MsgWaitForMultipleObjects(1, &WIN32_STATE(wakeUpEvent), FALSE,
 			    microSeconds / 1000, QS_ALLINPUT);
+
+  if (INTERPRETER_PARAM != MAIN_VM)
+  {
+	  //printf("Done waiting..\n"); fflush(0);
+  }
   ioProcessEvents(); /* keep up with mouse moves etc. */
   return microSeconds;
 }
@@ -1407,6 +1409,7 @@ int ioProcessEvents(void)
 { static MSG msg;
   POINT mousePt;
 
+//  printf ("Ioprocessevents\n");
   if(fRunService && !fWindows95) return 1;
   /* WinCE doesn't retrieve WM_PAINTs from the queue with PeekMessage,
      so we won't get anything painted unless we use GetMessage() if there
@@ -2174,7 +2177,7 @@ int ioShowDisplay(int dispBits, int width, int height, int depth,
       reverse_image_bytes((unsigned int*) dispBits, (unsigned int*) dispBits,
 			  depth, width, &updateRect);
   PROFILE_END(ticksForReversal)
-#endif NO_BYTE_REVERSAL
+#endif /* NO_BYTE_REVERSAL */
 
   bmi->bmiHeader.biWidth = width;
   bmi->bmiHeader.biHeight = -height;
@@ -2704,6 +2707,11 @@ DWORD SqueakImageLengthFromHandle(HANDLE hFile) {
   /* see if it matches */
   if(readableFormat(magic) || readableFormat(byteSwapped(magic))) return dwSize;
   return 0;
+}
+
+sqInt ioSqueakImageSize(char* filename)
+{
+	return SqueakImageLength(toUnicode(filename));
 }
 
 DWORD SqueakImageLength(char *fileName) {

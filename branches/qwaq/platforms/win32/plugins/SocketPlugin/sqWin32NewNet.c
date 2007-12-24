@@ -202,7 +202,7 @@ typedef struct LocalPluginState {
 
 static sqInt localStateId = 0;
 #define DECL_LOCAL_STATE() struct LocalPluginState * pstate = vmFunction(getAttachedStateBuffer)(PLUGIN_IPARAM_COMMA localStateId)
-#define LOCAL_STATE(name) pstate->##name
+#define LOCAL_STATE(name) pstate->name
 
 
 /* Additional flags for sockState which will be received by async notification:
@@ -528,7 +528,7 @@ static DWORD WINAPI readWatcherThread(privateSocketStruct *pss)
 	case WatchData:
 	  /* Data may be available */
 	  pss->sockState |= SOCK_DATA_READABLE;
-	  vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->readSema); // SIGNAL(pss->readSema);
+	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->readSema); // SIGNAL(pss->readSema);
 	  doWait = 1; /* until data has been read */
 	  break;
 	case WatchClose:
@@ -536,7 +536,7 @@ static DWORD WINAPI readWatcherThread(privateSocketStruct *pss)
 	  pss->sockState = ThisEndClosed;
 	  pss->readWatcherOp = 0; /* since a close succeeded */
 	  pss->s = 0;
-	  vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
 	  doWait = 1;
 	  break;
 	case WatchAcceptSingle:
@@ -544,14 +544,14 @@ static DWORD WINAPI readWatcherThread(privateSocketStruct *pss)
 	  inplaceAcceptHandler(pss);
 	  pss->readWatcherOp = WatchData; /* check for incoming data */
 	  pss->writeWatcherOp = WatchData; /* and signal when writable */
-  	  vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema);
+  	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);
 //	  SIGNAL(pss->connSema);
 	  doWait = 0;
 	  break;
 	case WatchAccept:
 	  /* Connection can be accepted */
 	  acceptHandler(pss);
-  	  vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema);//	  SIGNAL(pss->connSema);
+  	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);//	  SIGNAL(pss->connSema);
 	  doWait = 0; /* only wait for more connections */
 	  break;
 	}
@@ -562,7 +562,7 @@ static DWORD WINAPI readWatcherThread(privateSocketStruct *pss)
 	  LOCKSOCKET(pss->mutex, INFINITE);
 	  pss->sockState = OtherEndClosed;
 	  pss->sockError = err;
-   	  vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema);//	  SIGNAL(pss->connSema);
+   	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);//	  SIGNAL(pss->connSema);
 	  UNLOCKSOCKET(pss->mutex);
 	} else {
 	  /* select() timed out */
@@ -614,13 +614,13 @@ static DWORD WINAPI writeWatcherThread(privateSocketStruct *pss)
 	  if(pss->writeWatcherOp == WatchConnect) {
 	    /* asynchronous connect failed */
 	    pss->sockState = Unconnected;
-	  	vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema);// SIGNAL(pss->connSema);
+	  	synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);// SIGNAL(pss->connSema);
 	  } else {
 	    /* get socket error */
 	    /* printf("ERROR: %d\n", WSAGetLastError()); */
 	    errSize = sizeof(pss->sockError);
 	    getsockopt(pss->s, SOL_SOCKET, SO_ERROR, (char*)&pss->sockError, &errSize);
-  	    vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->writeSema);//  SIGNAL(pss->writeSema);
+  	    synchronizedSignalSemaphoreWithIndex(pss->intr, pss->writeSema);//  SIGNAL(pss->writeSema);
 	  }
 	  pss->writeWatcherOp = 0; /* what else can we do */
 	  doWait = 1; /* until somebody wakes us up */
@@ -633,13 +633,13 @@ static DWORD WINAPI writeWatcherThread(privateSocketStruct *pss)
 	    /* Start read watcher for incoming data */
 	    pss->readWatcherOp = WatchData;
 	    SetEvent(pss->hReadWatcherEvent);
-		vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema);//    SIGNAL(pss->connSema);
+		synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);//    SIGNAL(pss->connSema);
 	    /* And fall through since data can be sent */
 	    pss->writeWatcherOp = WatchData;
 	  case WatchData:
 	    /* Data can be sent */
 	    pss->sockState |= SOCK_DATA_WRITABLE;
-	    vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->writeSema); // SIGNAL(pss->writeSema);
+	    synchronizedSignalSemaphoreWithIndex(pss->intr, pss->writeSema); // SIGNAL(pss->writeSema);
 	    doWait = 1; /* until data has been written */
 	    break;
 	  }
@@ -651,7 +651,7 @@ static DWORD WINAPI writeWatcherThread(privateSocketStruct *pss)
 	  LOCKSOCKET(pss->mutex, INFINITE);
 	  pss->sockState = OtherEndClosed;
 	  pss->sockError = err;
-      vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+      synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
 	  UNLOCKSOCKET(pss->mutex);
 	} else {
 	  /* select() timed out */
@@ -769,6 +769,9 @@ int sqNetworkInit(PLUGIN_IARG_COMMA int resolverSemaIndex)
   DECL_LOCAL_STATE();
   int err;
 
+  printf("sqNetworkInit: %x\n", pstate); 
+  fflush(0);
+
   if (LOCAL_STATE(thisNetSession) != 0) return 0;  /* noop if network is already initialized */
   LOCAL_STATE(resolverSemaphoreIndex) = resolverSemaIndex;
 
@@ -856,12 +859,12 @@ void sqSocketCloseConnection(PLUGIN_IARG_COMMA SocketPtr s)
     } else {
       pss->sockState = Unconnected;
       pss->sockError = err;
-	  vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
     }
   } else {
     pss->s = 0;
     pss->sockState = Unconnected;
-	vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+	synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
   }
   /* Cleanup any accepted sockets */
   while(pss->accepted) {
@@ -924,7 +927,7 @@ void sqSocketConnectToPort(PLUGIN_IARG_COMMA SocketPtr s, int addr, int port)
     if(err != WSAEWOULDBLOCK) {
       pss->sockState = Unconnected; /* reset */
       pss->sockError = err;
-	  vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema);// SIGNAL(pss->connSema);
+	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);// SIGNAL(pss->connSema);
     } else {
       /* Connection in progress => Start write watcher */
       LOCKSOCKET(pss->mutex, INFINITE);
@@ -939,8 +942,8 @@ void sqSocketConnectToPort(PLUGIN_IARG_COMMA SocketPtr s, int addr, int port)
     pss->sockState = Connected | SOCK_DATA_WRITABLE;
     pss->readWatcherOp = WatchData; /* waiting for data */
     SetEvent(pss->hReadWatcherEvent);
-	vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
-	vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->writeSema); // SIGNAL(pss->writeSema);
+	synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+	synchronizedSignalSemaphoreWithIndex(pss->intr, pss->writeSema); // SIGNAL(pss->writeSema);
     UNLOCKSOCKET(pss->mutex);
   }
 }
@@ -1153,7 +1156,7 @@ sqInt sqSocketReceiveDataBufCount(PLUGIN_IARG_COMMA SocketPtr s, char *buf, sqIn
 	  /* UDP doesn't know "other end closed" state */
 	  if(pss->sockType != UDPSocketType) {
 	    pss->sockState = OtherEndClosed;
-		vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+		synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
 	  }
 	  pss->sockError = err;
 	}
@@ -1235,7 +1238,7 @@ sqInt sqSocketSendDataBufCount(PLUGIN_IARG_COMMA SocketPtr s, char *buf, sqInt b
 	  /* UDP doesn't know "other end closed" state */
 	  if(pss->sockType != UDPSocketType) {
 	    pss->sockState = OtherEndClosed;
-		vmFunction(signalSemaphoreWithIndex)(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+		synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
 	  }
 	  pss->sockError = err;
 	}
@@ -1586,6 +1589,20 @@ typedef struct {
 # define SOL_TCP IPPROTO_TCP
 #endif
 
+
+/*
+ * Note that the next 5 IP defines are specific to WinSock 1.1 (wsock32.dll).
+ * They will cause errors or unexpected results if used with the
+ * (gs)etsockopts exported from the WinSock 2 lib, ws2_32.dll. Refer ws2tcpip.h.
+ */         
+#ifndef IP_MULTICAST_IF
+#define IP_MULTICAST_IF	2
+#define IP_MULTICAST_TTL	3
+#define IP_MULTICAST_LOOP	4
+#define IP_ADD_MEMBERSHIP	5
+#define IP_DROP_MEMBERSHIP  6
+#endif
+
 static socketOption socketOptions[]= {
   { "SO_DEBUG",			SOL_SOCKET,	SO_DEBUG,          1 },
   { "SO_REUSEADDR",		SOL_SOCKET,	SO_REUSEADDR,      1 },
@@ -1884,7 +1901,7 @@ void sqResolverStartNameLookup(PLUGIN_IARG_COMMA char *hostName, int nameSize)
      (strncmp(hostName, LOCAL_STATE(lastName), len) == 0)) {
 	  /* same as last, no point in looking it up */
 
-      vmFunction(signalSemaphoreWithIndex)(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex)); // SIGNAL(resolverSemaphoreIndex);
+      synchronizedSignalSemaphoreWithIndex(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex)); // SIGNAL(resolverSemaphoreIndex);
 	  return;
   }
   MoveMemory(LOCAL_STATE(lastName),hostName, len);
@@ -1948,7 +1965,7 @@ DWORD WINAPI sqGetHostByAddr(PLUGIN_IARG)
   else
     LOCAL_STATE(lastError) = WSAGetLastError();
   asyncLookupHandle = 0;
-  vmFunction(signalSemaphoreWithIndex)(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex)); // SIGNAL(resolverSemaphoreIndex);
+  synchronizedSignalSemaphoreWithIndex(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex)); // SIGNAL(resolverSemaphoreIndex);
   ExitThread(0);
   return 1;
 }
@@ -1970,14 +1987,14 @@ DWORD WINAPI sqGetHostByName(PLUGIN_IARG)
   else
     LOCAL_STATE(lastError) = WSAGetLastError();
   asyncLookupHandle = 0;
-  vmFunction(signalSemaphoreWithIndex)(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex));//  SIGNAL(resolverSemaphoreIndex);
+  synchronizedSignalSemaphoreWithIndex(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex));//  SIGNAL(resolverSemaphoreIndex);
   ExitThread(0);
   return 1;
 }
 
 
 /* Plugin state initializers/finalizers */
-void sqInitPluginState(PLUGIN_IARG)
+static void sqInitPluginState(PLUGIN_IARG)
 {
 	DECL_LOCAL_STATE();
 	LOCAL_STATE(lastName)[0] = 0;
@@ -1985,9 +2002,11 @@ void sqInitPluginState(PLUGIN_IARG)
 	LOCAL_STATE(lastError) = 0;
 	LOCAL_STATE(thisNetSession) = 0;
 	LOCAL_STATE(resolverSemaphoreIndex) = 0;
+
+	printf("sqInitPluginState state: %d\n", localStateId);
 }
 
-void sqFinalizePluginState(PLUGIN_IARG)
+static void sqFinalizePluginState(PLUGIN_IARG)
 {
   DECL_LOCAL_STATE();
   privateSocketStruct *pss;
@@ -2037,6 +2056,7 @@ int socketInit(void)
 	networkInitialized = 0;
 	localStateId = vmFunction(attachStateBufferinitializeFnfinalizeFn)(sizeof(struct LocalPluginState),
 		(AttachedStateFn)sqInitPluginState,(AttachedStateFn)sqFinalizePluginState);
+	printf("socketInit:  localStateId = %d\n", localStateId);
 	if (localStateId == 0) return 0;
 	return 1;
 }

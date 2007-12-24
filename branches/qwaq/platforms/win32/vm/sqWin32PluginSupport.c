@@ -1,7 +1,11 @@
 /* Plugin support primitives */
 #include <windows.h>
 #include "sq.h"
-#include "../plugins/FilePlugin/FilePlugin.h"
+
+/*we need to use plugin interpreter arg defs */
+#define PLUGIN_IARG INTERPRETER_ARG
+#define PLUGIN_IARG_COMMA INTERPRETER_ARG_COMMA
+#include "../../Cross/plugins/FilePlugin/FilePlugin.h"
 
 #ifdef DEBUG
 #define DPRINTF(x) printf x
@@ -236,7 +240,7 @@ EXPORT(int) primitivePluginRequestFileHandle(INTERPRETER_ARG)
 #endif
     fileHandle = instantiateClassindexableSize(INTERPRETER_PARAM_COMMA classByteArray(INTERPRETER_PARAM), fileRecordSize());
     fBrowserMode = false;
-    sqFileOpen(fileValueOf(fileHandle),req->localName, strlen(req->localName), 0);
+    sqFileOpen(INTERPRETER_PARAM_COMMA fileValueOf(fileHandle),req->localName, strlen(req->localName), 0);
     fBrowserMode = true;
     if(failed(INTERPRETER_PARAM)) return 0;
   }
@@ -452,7 +456,7 @@ void pluginInit(void)
 */
 void pluginHandleEvent(MSG *msg)
 {
-  DPRINTF(("Checking for plugin message (%x)\n",msg->message));
+/*  DPRINTF(("Checking for plugin message (%x)\n",msg->message));
   DPRINTF(("\tg_WM_QUIT_SESSION: %x\n",g_WM_QUIT_SESSION));
   DPRINTF(("\tg_WM_BWND_SIZE: %x\n",g_WM_BWND_SIZE));
   DPRINTF(("\tg_WM_REQUEST_DATA: %x\n",g_WM_REQUEST_DATA));
@@ -461,7 +465,7 @@ void pluginHandleEvent(MSG *msg)
   DPRINTF(("\tg_WM_INVALIDATE: %x\n",g_WM_INVALIDATE));
   DPRINTF(("\tg_WM_BROWSER_PIPE: %x\n",g_WM_BROWSER_PIPE));
   DPRINTF(("\tg_WM_CLIENT_PIPE: %x\n",g_WM_CLIENT_PIPE));
-
+*/
   /* Messages posted from a different process */
   if(msg->message == g_WM_QUIT_SESSION) exit(0);
   if(msg->message == g_WM_INVALIDATE) {

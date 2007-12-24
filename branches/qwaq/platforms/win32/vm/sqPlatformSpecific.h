@@ -63,6 +63,7 @@ int synchronizedSignalSemaphoreWithIndex(INTERPRETER_ARG_COMMA int semaIndex);
 extern int _lowResMSecs;
 #define ioLowResMSecs() _lowResMSecs
 
-#else error "Not Win32!"
+#else 
+#error "Not Win32!"
 #endif /* WIN32 */
 
