@@ -26,7 +26,6 @@ extern sqExport LargeIntegers_exports[];
 extern sqExport LocalePlugin_exports[];
 extern sqExport Matrix2x3Plugin_exports[];
 extern sqExport MiscPrimitivePlugin_exports[];
-extern sqExport Mpeg3Plugin_exports[];
 extern sqExport RePlugin_exports[];
 extern sqExport SecurityPlugin_exports[];
 extern sqExport SerialPlugin_exports[];
@@ -64,7 +63,6 @@ sqExport *pluginExports[] = {
 	LocalePlugin_exports,
 	Matrix2x3Plugin_exports,
 	MiscPrimitivePlugin_exports,
-	Mpeg3Plugin_exports,
 	RePlugin_exports,
 	SecurityPlugin_exports,
 	SerialPlugin_exports,
