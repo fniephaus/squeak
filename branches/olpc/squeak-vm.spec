@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.9
 %define minor   12
-%define release %{minor}olpc4
+%define release %{minor}olpc5
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -24,6 +24,7 @@ BuildRequires:	libtheora-devel
 BuildRequires:	speex-devel
 BuildRequires:	dbus-devel
 BuildRequires:	alsa-lib-devel
+BuildRequires:	pango-devel
 
 %description
 Squeak is a full-featured implementation of the Smalltalk programming
@@ -61,6 +62,14 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
+* Fri Jan 04 2008 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9-12olpc5; SVN r. 1811
+  - remove Mpeg3Plugin
+  - fix KedamaPlugin2 (exports where not listed) 
+  - fix show-source key
+  - fix SEGFAULT in OggPlugin
+  - add RomePlugin w/ Pango support
+  - fix drag-n-drop
 * Mon Dec 03 2007 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-12olpc4: SVN r. 1795
   - fix dbus plugin not zero-terminating some strings (bf)
