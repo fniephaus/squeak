@@ -22,6 +22,7 @@
 #include "sqWin32Args.h"
 
 extern TCHAR squeakIniName[];
+char startupImageName[MAX_PATH+1];
 
 /* Import from sqWin32Alloc.c */
 LONG CALLBACK sqExceptionFilter(LPEXCEPTION_POINTERS exp);
@@ -930,7 +931,7 @@ int sqImageFile findEmbeddedImage(void) {
 	}
 	/* Gotcha! */
 	sqImageFileSeek(f, sqImageFilePosition(f) - 4);
-	strcpy(imageName, name);
+	strcpy(startupImageName, name);
 	imageSize = endMarker - sqImageFilePosition(f);
 	return f;
 }
@@ -960,6 +961,8 @@ DWORD WINAPI threadedInterpretFn(void * param)
 	initializeAttachedStates(intr);
 	printf("...done\n"); fflush(0);
 
+	ioGetSecureUserDirectory();
+
 	interpret(intr);
 
 	printf("Interpreter %x thread just exited!\n", param); fflush(0);
@@ -982,6 +985,27 @@ static void sqInitWin32State(INTERPRETER_ARG)
 	WIN32_STATE(wakeUpEvent) = CreateEvent(NULL, 1, 0, NULL);
 	WIN32_STATE(timer) = CreateWaitableTimer(NULL, FALSE, NULL);
     SetEvent(WIN32_STATE(wakeUpEvent));
+
+	WIN32_STATE(keyBufGet) = 0;			/* index of next item of keyBuf to read */
+	WIN32_STATE(keyBufPut) = 0;			/* index of next item of keyBuf to write */
+	WIN32_STATE(keyBufOverflows) = 0;	/* number of characters dropped */
+	WIN32_STATE(inputSemaphoreIndex) = 0;
+	WIN32_STATE(eventBufferGet) = 0;
+	WIN32_STATE(eventBufferPut) = 0;
+
+	WIN32_STATE(eventBuffer) = (struct sqInputEvent*)malloc(MAX_EVENT_BUFFER * sizeof(struct sqInputEvent));
+
+	if (INTERPRETER_PARAM == MAIN_VM)
+	{
+		SetupWindows(INTERPRETER_PARAM);
+		SetupTimer();
+    /* if headless running is requested, try to to create an icon
+       in the Win95/NT system tray */
+	    if(fHeadlessImage && (!fRunService || fWindows95))
+		  SetSystemTrayIcon(1);
+	    SetWindowSize();
+	    ioSetFullScreen(INTERPRETER_PARAM_COMMA getFullScreenFlag(MAIN_VM));
+	}
 }
 
 static void sqFinalizeWin32State(INTERPRETER_ARG)
@@ -989,6 +1013,7 @@ static void sqFinalizeWin32State(INTERPRETER_ARG)
 	DECL_WIN32_STATE();
 	CloseHandle(WIN32_STATE(wakeUpEvent));
 	CloseHandle(WIN32_STATE(timer));
+	free(WIN32_STATE(eventBuffer));
 }
 
 /****************************************************************************/
@@ -1034,6 +1059,7 @@ int sqMain(char *lpCmdLine, int nCmdShow)
   /* set default fpu control word */
   _control87(FPU_DEFAULT, _MCW_EM | _MCW_RC | _MCW_PC | _MCW_IC);
 
+  startupImageName[0] = 0;
   LoadPreferences();
 
   /* parse command line args */
@@ -1052,7 +1078,7 @@ int sqMain(char *lpCmdLine, int nCmdShow)
   }
 
   /* a quick check if we have any argument at all */
-  if(!fRunService && (*imageName == 0)) {
+  if(!fRunService && (*startupImageName == 0)) {
     /* Check if the image is embedded */
     imageFile = findEmbeddedImage();
     if(!imageFile) {
@@ -1063,6 +1089,7 @@ int sqMain(char *lpCmdLine, int nCmdShow)
       }
     }
   }
+
 
 #ifdef NO_SERVICE
   fRunService = 0;
@@ -1114,11 +1141,10 @@ int sqMain(char *lpCmdLine, int nCmdShow)
 #endif
 
   /* initialisation */
+
   SetupKeymap();
-  SetupWindows();
   SetupPixmaps();
   SetupService95();
-  SetupTimer();
 
   /* check the interpreter's size assumptions for basic data types */
   if (sizeof(int) != 4) error("This C compiler's integers are not 32 bits.");
@@ -1127,7 +1153,7 @@ int sqMain(char *lpCmdLine, int nCmdShow)
 
 
   if(!imageFile) {
-    imageSize = SqueakImageLength(toUnicode(imageName));
+    imageSize = SqueakImageLength(toUnicode(startupImageName));
     if(imageSize == 0) printUsage(2);
   }
 
@@ -1150,9 +1176,9 @@ int sqMain(char *lpCmdLine, int nCmdShow)
   __try {
 #endif
     /* set the CWD to the image location */
-    if(*imageName) {
+    if(*startupImageName) {
       char path[MAX_PATH+1], *ptr;
-      strcpy(path,imageName);
+      strcpy(path,startupImageName);
       ptr = strrchr(path, '\\');
       if(ptr) {
 	*ptr = 0;
@@ -1163,22 +1189,19 @@ int sqMain(char *lpCmdLine, int nCmdShow)
     /* display the splash screen */
     ShowSplashScreen();
 
-    /* if headless running is requested, try to to create an icon
-       in the Win95/NT system tray */
-    if(fHeadlessImage && (!fRunService || fWindows95))
-      SetSystemTrayIcon(1);
-    
-
-	initializeVM();
+    initializeVM();
 	/* add attached state */
-	win32stateId = attachStateBufferinitializeFnfinalizeFn(sizeof(struct Win32AttachedState),
-		(AttachedStateFn)sqInitWin32State,(AttachedStateFn)sqFinalizeWin32State);
+    win32stateId = attachStateBufferinitializeFnfinalizeFn(sizeof(struct Win32AttachedState),
+	  (AttachedStateFn)sqInitWin32State,(AttachedStateFn)sqFinalizeWin32State);
 
-	MAIN_VM = newInterpreterInstance();
+    MAIN_VM = newInterpreterInstance();
+  
+	/* set paths to image */
+	ioSetImagePath(MAIN_VM, startupImageName);
 
     /* read the image file */
     if(!imageFile) {
-      imageFile = sqImageFileOpen(imageName,"rb");
+      imageFile = sqImageFileOpen(startupImageName,"rb");
       readImageFromFileHeapSizeStartingAt(MAIN_VM_COMMA imageFile, virtualMemory, 0);
     } else {
       readImageFromFileHeapSizeStartingAt(MAIN_VM_COMMA imageFile, virtualMemory, sqImageFilePosition(imageFile));
@@ -1186,11 +1209,9 @@ int sqMain(char *lpCmdLine, int nCmdShow)
     sqImageFileClose(imageFile);
 
     if(fHeadlessImage) HideSplashScreen(); /* need to do it manually */
-    SetWindowSize();
-    ioSetFullScreen(getFullScreenFlag(MAIN_VM));
 
     /* run Squeak */
-    ioInitSecurity();
+    ioInitSecurity(((struct Win32AttachedState * )getAttachedStateBuffer(MAIN_VM, win32stateId))->imagePath);
 	threadedInterpretFn((void*)MAIN_VM);
 #ifdef _MSC_VER
   } __except(squeakExceptionHandler(GetExceptionInformation())) {

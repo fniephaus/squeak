@@ -1455,6 +1455,11 @@ void sqSocketAcceptFromRecvBytesSendBytesSemaIDReadSemaIDWriteSemaID(PLUGIN_IARG
   acceptedSocketStruct *accepted;
   privateSocketStruct *pss;
 
+
+  /* sanity check before doing anything else */
+  if (!SocketValid(PLUGIN_IPARAM_COMMA serverSocket))
+	return;
+
   /* Lock the server socket and retrieve the last accepted connection */
   pss = PSP(serverSocket); /* temporarily */
 

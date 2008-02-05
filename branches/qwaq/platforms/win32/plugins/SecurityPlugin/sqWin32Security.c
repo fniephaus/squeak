@@ -171,11 +171,12 @@ char *ioGetUntrustedUserDirectory(void) {
 }
 
 /* note: following is called from VM directly, not from plugin */
-int ioInitSecurity(void) {
+int ioInitSecurity(TCHAR * imagePath) {
   DWORD dwType, dwSize, ok;
   TCHAR tmp[MAX_PATH+1];
   HKEY hk;
   int dirLen;
+
 
   /* establish the secure user directory */
   lstrcpy(secureUserDirectory, imagePath);

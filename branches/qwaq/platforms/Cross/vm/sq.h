@@ -158,6 +158,7 @@ sqInt sqGetFilenameFromString(char * aCharBuffer, char * aFilenameString, sqInt 
 #define browserPluginReturnIfNeeded()
 #define browserPluginInitialiseIfNeeded()
 
+
 /* Platform-specific header file may redefine earlier definitions and macros. */
 
 #include "sqPlatformSpecific.h"
@@ -171,17 +172,17 @@ sqInt ioExit(void);
 sqInt ioForceDisplayUpdate(void);
 sqInt ioFormPrint(sqInt bitsAddr, sqInt width, sqInt height, sqInt depth,
 		  double hScale, double vScale, sqInt landscapeFlag);
-sqInt ioSetFullScreen(sqInt fullScreen);
+sqInt ioSetFullScreen(INTERPRETER_ARG_COMMA sqInt fullScreen);
 sqInt ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA sqInt microSeconds);
 sqInt ioScreenSize(void);
 sqInt ioScreenDepth(void);
 sqInt ioSeconds(void);
-sqInt ioSetCursor(sqInt cursorBitsIndex, sqInt offsetX, sqInt offsetY);
-sqInt ioSetCursorWithMask(sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY);
+sqInt ioSetCursor(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, sqInt offsetX, sqInt offsetY);
+sqInt ioSetCursorWithMask(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY);
 sqInt ioShowDisplay(sqInt dispBitsIndex, sqInt width, sqInt height, sqInt depth,
 		    sqInt affectedL, sqInt affectedR, sqInt affectedT, sqInt affectedB);
 sqInt ioHasDisplayDepth(sqInt depth);
-sqInt ioSetDisplayMode(sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag);
+sqInt ioSetDisplayMode(INTERPRETER_ARG_COMMA sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag);
 
 /* Power management. */
 
@@ -195,14 +196,14 @@ sqInt ioDisablePowerManager(sqInt disableIfNonZero);
    without event support.
 */
 
-sqInt ioGetButtonState(void);
-sqInt ioGetKeystroke(void);
-sqInt ioMousePoint(void);
-sqInt ioPeekKeystroke(void);
+sqInt ioGetButtonState(INTERPRETER_ARG);
+sqInt ioGetKeystroke(INTERPRETER_ARG);
+sqInt ioMousePoint(INTERPRETER_ARG);
+sqInt ioPeekKeystroke(INTERPRETER_ARG);
 /* Note: In an event driven architecture, ioProcessEvents is obsolete.
    It can be implemented as a no-op since the image will check for
    events in regular intervals. */
-sqInt ioProcessEvents(void);
+sqInt ioProcessEvents(INTERPRETER_ARG);
 
 
 /* User input recording II:
@@ -329,19 +330,19 @@ typedef struct sqWindowEvent
 #define WindowEventStinks	6 /* this window stinks (just to see if people read this stuff) */
 
 /* Set an asynchronous input semaphore index for events. */
-sqInt ioSetInputSemaphore(sqInt semaIndex);
+sqInt ioSetInputSemaphore(INTERPRETER_ARG_COMMA sqInt semaIndex);
 
 /* Retrieve the next input event from the OS. */
-sqInt ioGetNextEvent(sqInputEvent *evt);
+sqInt ioGetNextEvent(INTERPRETER_ARG_COMMA sqInputEvent *evt);
 /* recycle used input event */
 sqInt ioRecycleEvent(sqInputEvent * evt);
 
 /* Image file and VM path names. */
-extern char imageName[];
-char *getImageName(void);
-sqInt imageNameGetLength(sqInt sqImageNameIndex, sqInt length);
-sqInt imageNamePutLength(sqInt sqImageNameIndex, sqInt length);
-sqInt imageNameSize(void);
+void ioSetImagePath(INTERPRETER_ARG_COMMA char * imgName);
+char *ioGetImageName(INTERPRETER_ARG);
+sqInt imageNameGetLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt length);
+sqInt imageNamePutLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt length);
+sqInt imageNameSize(INTERPRETER_ARG);
 sqInt vmPathSize(void);
 sqInt vmPathGetLength(sqInt sqVMPathIndex, sqInt length);
 
@@ -420,7 +421,8 @@ sqInt ioGetCurrentThread();
 sqInt ioResumeThread(sqInt threadHandle);
 void * ioGetThreadedInterpretFunctionPointer();
 
-sqInt ioScheduleEventDelay(INTERPRETER_ARG_COMMA vmEvent * event, sqInt milliSecondsDelay);
+/* force given interpreter to wake up */
+sqInt ioWakeUp(INTERPRETER_ARG);
 
 /* we need this to determine initial heap size */
 sqInt ioSqueakImageSize(char* filename);

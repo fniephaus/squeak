@@ -22,6 +22,7 @@ void HandlePrefsMenu(int) {}
 
 
 /* VM preference variables */
+extern char startupImageName[];
 extern TCHAR squeakIniName[]; /* full path and name to ini file */
 HMENU vmPrefsMenu;         /* preferences menu */
 extern int caseSensitiveFileMode;
@@ -162,21 +163,23 @@ void LoadPreferences()
 
   /* get image file name from ini file */
   size = GetPrivateProfileString(U_GLOBAL, TEXT("ImageFile"), 
-			 TEXT(""), imageName, MAX_PATH, squeakIniName);
+			 TEXT(""), startupImageName, MAX_PATH, squeakIniName);
   if(size > 0) {
-    if( !(imageName[0] == '\\' && imageName[1] == '\\') && !(imageName[1] == ':' && imageName[2] == '\\')) {
+    if( !(startupImageName[0] == '\\' && startupImageName[1] == '\\') && !(startupImageName[1] == ':' && startupImageName[2] == '\\')) {
       /* make the path relative to VM directory */
-      lstrcpy(imageName, vmName);
-      (lstrrchr(imageName,U_BACKSLASH[0]))[1] = 0;
-      size = lstrlen(imageName);
+      lstrcpy(startupImageName, vmName);
+      (lstrrchr(startupImageName,U_BACKSLASH[0]))[1] = 0;
+      size = lstrlen(startupImageName);
       size = GetPrivateProfileString(U_GLOBAL, TEXT("ImageFile"), 
-			 TEXT(""), imageName + size, MAX_PATH - size, squeakIniName);
+			 TEXT(""), startupImageName + size, MAX_PATH - size, squeakIniName);
 	}
   }
 
   /* get window title from ini file */
-  GetPrivateProfileString(U_GLOBAL, TEXT("WindowTitle"), 
+
+/*  GetPrivateProfileString(U_GLOBAL, TEXT("WindowTitle"), 
 			 TEXT(""), windowTitle, MAX_PATH, squeakIniName);
+*/
 
   fDeferredUpdate = 
     GetPrivateProfileInt(U_GLOBAL,TEXT("DeferUpdate"), 

@@ -57,12 +57,20 @@ void *ioLoadModule(char *pluginName)
 	if(handle) return handle;
 	handle = tryLoading(TEXT(""),name,TEXT("32.dll"));
 	if(handle) return handle;
-	handle = tryLoading(imagePath,name,TEXT(""));
-	if(handle) return handle;
-	handle = tryLoading(imagePath,name,TEXT(".dll"));
-	if(handle) return handle;
-	handle = tryLoading(imagePath,name,TEXT("32.dll"));
-	if(handle) return handle;
+
+/* looking for module at image path is not supported, because multiple images can be located at
+different paths 
+	if (searchPath)
+	{
+		handle = tryLoading(searchPath,name,TEXT(""));
+		if(handle) return handle;
+		handle = tryLoading(searchPath,name,TEXT(".dll"));
+		if(handle) return handle;
+		handle = tryLoading(searchPath,name,TEXT("32.dll"));
+		if(handle) return handle;
+	}
+*/
+
 //	dprintf("External module '%s' not found.\n", pluginName);
 	return 0;
 }

@@ -28,16 +28,19 @@
 #include "sq.h"
 #include "sqWin32Prefs.h"
 
+#ifdef DEBUG
+#define dprintf(x) printf x
+#else
+#define dprintf(x)
+#endif
+
 #ifndef NO_RCSID
 static TCHAR RCSID[]= TEXT("$Id$");
 #endif
 
+extern char startupImageName[];
 
 /*** Variables -- image and path names ***/
-#define IMAGE_NAME_SIZE MAX_PATH
-
-char imageName[MAX_PATH+1];		  /* full path and name to image */
-TCHAR imagePath[MAX_PATH+1];	  /* full path to image */
 TCHAR vmPath[MAX_PATH+1];		    /* full path to interpreter's directory */
 TCHAR vmName[MAX_PATH+1];		    /* name of the interpreter's executable */
 TCHAR windowTitle[MAX_PATH];        /* what should we display in the title? */
@@ -52,17 +55,10 @@ const TCHAR U_BACKSLASH[] = TEXT("\\");
 int		 savedWindowSize= 0;	/* initial size of window */
 
 /*** Variables -- Event Recording ***/
-int inputSemaphoreIndex = 0;/* if non-zero the event semaphore index */
 POINT mousePosition;		/* position at last PointerMotion event */
 int   mouseWord;			/* Input word for Squeak */
 int   buttonState = 0;		/* mouse button and modifier state when mouse
 							   button went down or 0 if not pressed */
-
-#define KEYBUF_SIZE 64
-int keyBuf[KEYBUF_SIZE];	/* circular buffer */
-int keyBufGet = 0;			/* index of next item of keyBuf to read */
-int keyBufPut = 0;			/* index of next item of keyBuf to write */
-int keyBufOverflows = 0;	/* number of characters dropped */
 
 /*** Win32-related Variables (declared in sqWin32.h) ***/
 HWND stWindow = NULL;      /*	the squeak window */
@@ -129,19 +125,19 @@ UINT g_WM_MOUSEWHEEL = 0;	/* RvL: 1999-04-19 The message we receive from wheel m
 #endif
 
 /* misc declarations */
-int recordMouseEvent(MSG *msg);
-int recordKeyboardEvent(MSG *msg);
+sqInputEvent *sqNextEventPut(Win32AttachedState * win32state);
+int recordMouseEvent(Win32AttachedState * win32state, MSG *msg);
+int recordKeyboardEvent(Win32AttachedState * win32state, MSG *msg);
 
 extern int byteSwapped(int);
 extern int convertToSqueakTime(SYSTEMTIME);
 int recordMouseDown(WPARAM, LPARAM);
 int recordModifierButtons();
-int recordKeystroke(UINT,WPARAM,LPARAM);
-int recordVirtualKey(UINT,WPARAM,LPARAM);
+int recordKeystroke(INTERPRETER_ARG_COMMA UINT,WPARAM,LPARAM);
+int recordVirtualKey(INTERPRETER_ARG_COMMA UINT,WPARAM,LPARAM);
 void recordMouse(void);
 void SetSystemTrayIcon(BOOL on);
 
-sqInputEvent *sqNextEventPut(void);
 
 void HideSplashScreen(void);
 
@@ -203,6 +199,7 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
                               WPARAM wParam,
                               LPARAM lParam)
 { PAINTSTRUCT ps;
+  struct Win32AttachedState * win32state = getAttachedStateBuffer(MAIN_VM, win32stateId);
 
   /* Intercept any messages if wanted */
   if(preMessageHook)
@@ -215,8 +212,8 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
   if( WM_MOUSEWHEEL == message || g_WM_MOUSEWHEEL == message ) {
     /* Record mouse wheel msgs as CTRL-Up/Down */
     short zDelta = (short) HIWORD(wParam);
-    if(inputSemaphoreIndex) {
-      sqKeyboardEvent *evt = (sqKeyboardEvent*) sqNextEventPut();
+    if(WIN32_STATE(inputSemaphoreIndex)) {
+      sqKeyboardEvent *evt = (sqKeyboardEvent*) sqNextEventPut(win32state);
       evt->type = EventTypeKeyboard;
       evt->timeStamp = lastMessage->time;
       evt->charCode = (zDelta > 0) ? 30 : 31;
@@ -227,9 +224,9 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
     } else {
       buttonState = 64;
       if (zDelta < 0) {
-	recordVirtualKey(message,VK_DOWN,lParam);
+	recordVirtualKey(MAIN_VM, message,VK_DOWN,lParam);
       } else {
-	recordVirtualKey(message,VK_UP,lParam);
+	recordVirtualKey(MAIN_VM, message,VK_UP,lParam);
       }
     }
     return 1;
@@ -272,8 +269,8 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
   }
   /*  mousing */
   case WM_MOUSEMOVE:
-    if(inputSemaphoreIndex) {
-      recordMouseEvent(lastMessage);
+    if(WIN32_STATE(inputSemaphoreIndex)) {
+      recordMouseEvent(win32state, lastMessage);
       break;
     }
     /* state based stuff */
@@ -285,8 +282,8 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
   case WM_MBUTTONDOWN:
     if(GetFocus() != stWindow) SetFocus(stWindow);
     SetCapture(stWindow); /* capture mouse input */
-    if(inputSemaphoreIndex) {
-      recordMouseEvent(lastMessage);
+    if(WIN32_STATE(inputSemaphoreIndex)) {
+      recordMouseEvent(win32state, lastMessage);
       break;
     }
     /* state based stuff */
@@ -303,8 +300,8 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
   case WM_MBUTTONUP:
     if(GetFocus() != stWindow) SetFocus(stWindow);
     ReleaseCapture(); /* release mouse capture */
-    if(inputSemaphoreIndex) {
-      recordMouseEvent(lastMessage);
+    if(WIN32_STATE(inputSemaphoreIndex)) {
+      recordMouseEvent(win32state, lastMessage);
       break;
     }
     /* state based stuff */
@@ -322,8 +319,8 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
   case WM_SYSKEYDOWN:
     if(GetFocus() == consoleWindow)
       return DefWindowProcW(hwnd, message, wParam, lParam);
-    if(inputSemaphoreIndex) {
-      recordKeyboardEvent(lastMessage);
+    if(WIN32_STATE(inputSemaphoreIndex)) {
+      recordKeyboardEvent(win32state, lastMessage);
       if(wParam == VK_F2 && fEnableF2Menu) {
 	TrackPrefsMenu();
       }
@@ -334,15 +331,15 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
     }
     /* state based stuff */
     recordModifierButtons();
-    if(!recordVirtualKey(message,wParam,lParam))
+    if(!recordVirtualKey(MAIN_VM, message,wParam,lParam))
       return DefWindowProcW(hwnd,message,wParam,lParam);
     break;
   case WM_KEYUP:
   case WM_SYSKEYUP:
     if(GetFocus() == consoleWindow)
       return DefWindowProcW(hwnd, message, wParam, lParam);
-    if(inputSemaphoreIndex) {
-      recordKeyboardEvent(lastMessage);
+    if(WIN32_STATE(inputSemaphoreIndex)) {
+      recordKeyboardEvent(win32state, lastMessage);
       break;
     }
     /* state based stuff */
@@ -353,13 +350,13 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
   case WM_SYSCHAR:
     if(GetFocus() == consoleWindow)
       return DefWindowProcW(hwnd, message, wParam, lParam);
-    if(inputSemaphoreIndex) {
-      recordKeyboardEvent(lastMessage);
+    if(WIN32_STATE(inputSemaphoreIndex)) {
+      recordKeyboardEvent(win32state, lastMessage);
       break;
     }
     /* state based stuff */
     recordModifierButtons();
-    recordKeystroke(message,wParam,lParam);
+    recordKeystroke(MAIN_VM, message,wParam,lParam);
     break;
   case WM_DEADCHAR:
   case WM_SYSDEADCHAR:
@@ -696,30 +693,33 @@ void SetupPixmaps(void)
 /****************************************************************************/
 
 /* SetWindowTitle(): Set the main window title */
-void SetWindowTitle() {
+void SetWindowTitle(INTERPRETER_ARG) {
+  DECL_WIN32_STATE();
   char titleString[MAX_PATH+20];
   WCHAR wideTitle[MAX_PATH+20];
 
   if(!IsWindow(stWindow)) return;
-  if(*windowTitle) sprintf(titleString, "%s", windowTitle);
-  else sprintf(titleString,"%s! (%s)", VM_NAME, imageName);
+  if(*WIN32_STATE(windowTitle)) sprintf(titleString, "%s", WIN32_STATE(windowTitle));
+  else sprintf(titleString,"%s! (%s)", VM_NAME, WIN32_STATE(imageName));
 
   MultiByteToWideChar(CP_UTF8, 0, titleString, -1, wideTitle, MAX_PATH+20);
   SetWindowTextW(stWindow, wideTitle);
 }
 
-char *ioGetWindowLabel(void) {
-  return windowTitle;
+char *ioGetWindowLabel(INTERPRETER_ARG) {
+  DECL_WIN32_STATE();
+  return WIN32_STATE(windowTitle);
 }
 
-sqInt ioSetWindowLabelOfSize(void* lblIndex, sqInt sz) {
+sqInt ioSetWindowLabelOfSize(INTERPRETER_ARG_COMMA void* lblIndex, sqInt sz) {
+  DECL_WIN32_STATE();
   if(sz > MAX_PATH) sz = MAX_PATH;
-  memcpy(windowTitle, (void*)lblIndex, sz);
-  windowTitle[sz] = 0;
-  SetWindowTitle();
+  memcpy(WIN32_STATE(windowTitle), (void*)lblIndex, sz);
+  WIN32_STATE(windowTitle)[sz] = 0;
+  SetWindowTitle(INTERPRETER_PARAM);
 }
 
-void SetupWindows()
+void SetupWindows(INTERPRETER_ARG)
 { WNDCLASS wc;
 
   /* create our update region */
@@ -769,6 +769,9 @@ void SetupWindows()
 			      hInstance,
 			      NULL);
   }
+  /* associate a window with interpreter instance */
+  SetWindowLongW(stWindow,GWL_USERDATA,(DWORD)INTERPRETER_PARAM);
+
   /* Force Unicode WM_CHAR */
   SetWindowLongW(stWindow,GWL_WNDPROC,(DWORD)MainWndProcW);
 
@@ -804,12 +807,12 @@ void SetupWindows()
 
   /* Modify the system menu for any VM options */
   CreatePrefsMenu();
-  SetWindowTitle();
+  SetWindowTitle(INTERPRETER_PARAM);
   SetForegroundWindow(stWindow);
 
 #ifndef NO_DROP
   /* drag and drop needs to be set up on per-window basis */
-  SetupDragAndDrop();
+//  SetupDragAndDrop();
 #endif
 
 #ifndef NO_DIRECTINPUT
@@ -957,25 +960,21 @@ int mapVirtualKey(int virtKey)
 /****************************************************************************/
 /*              Event based primitive set                                   */
 /****************************************************************************/
-#define MAX_EVENT_BUFFER 1024
-static sqInputEvent eventBuffer[MAX_EVENT_BUFFER];
-static int eventBufferGet = 0;
-static int eventBufferPut = 0;
 
-sqInputEvent *sqNextEventPut(void) {
+sqInputEvent *sqNextEventPut(Win32AttachedState * win32state) {
   sqInputEvent *evt;
-  evt = eventBuffer + eventBufferPut;
-  eventBufferPut = (eventBufferPut + 1) % MAX_EVENT_BUFFER;
-  if (eventBufferGet == eventBufferPut) {
+  evt = WIN32_STATE(eventBuffer) + WIN32_STATE(eventBufferPut);
+  WIN32_STATE(eventBufferPut) = (WIN32_STATE(eventBufferPut) + 1) % MAX_EVENT_BUFFER;
+  if (WIN32_STATE(eventBufferGet) == WIN32_STATE(eventBufferPut)) {
     /* buffer overflow; drop the last event */
     printf("WARNING: event buffer overflow\n");
-    eventBufferGet = (eventBufferGet + 1) % MAX_EVENT_BUFFER;
+    WIN32_STATE(eventBufferGet) = (WIN32_STATE(eventBufferGet) + 1) % MAX_EVENT_BUFFER;
   }
   return evt;
 }
 
 
-int recordMouseEvent(MSG *msg) {
+int recordMouseEvent(Win32AttachedState * win32state, MSG *msg) {
   static DWORD firstEventTime = 0;
   sqMouseEvent proto, *event;
   int alt, shift, ctrl, red, blue, yellow;
@@ -1026,22 +1025,26 @@ int recordMouseEvent(MSG *msg) {
 #ifndef NO_DIRECTINPUT
   /* get buffered input */
   if(msg->message == WM_MOUSEMOVE) {
-    GetBufferedMouseTrail(firstEventTime, msg->time, &proto);
+    GetBufferedMouseTrail(win32state, firstEventTime, msg->time, &proto);
   }
   firstEventTime = msg->time;
 #endif
   /* and lastly, fill in the event itself */
-  event = (sqMouseEvent*) sqNextEventPut();
+  event = (sqMouseEvent*) sqNextEventPut(win32state);
   *event = proto;
   return 1;
 }
 
 int recordDragDropEvent(HWND wnd, int dragType, int x, int y, int numFiles)
 {
+  /* Extract interpreter handle from window */
+  struct Interpreter* intr = (struct Interpreter *)GetWindowLongW(wnd, GWL_USERDATA);
+
+  DECL_WIN32_STATE();
   sqDragDropFilesEvent *evt;
   int alt, shift, ctrl, modifiers;
 
-  evt = (sqDragDropFilesEvent*) sqNextEventPut();
+  evt = (sqDragDropFilesEvent*) sqNextEventPut(win32state);
 
   alt = GetKeyState(VK_MENU) & 0x8000;
   shift = (GetKeyState(VK_SHIFT) & 0x8000);
@@ -1066,7 +1069,7 @@ int recordDragDropEvent(HWND wnd, int dragType, int x, int y, int numFiles)
   return 1;
 }
 
-int recordKeyboardEvent(MSG *msg) {
+int recordKeyboardEvent(Win32AttachedState * win32state, MSG *msg) {
   sqKeyboardEvent *evt;
   int alt, shift, ctrl;
   int keyCode, virtCode, pressCode;
@@ -1116,7 +1119,7 @@ int recordKeyboardEvent(MSG *msg) {
     alt = 0;
   }
   /* first the basics */
-  evt = (sqKeyboardEvent*) sqNextEventPut();
+  evt = (sqKeyboardEvent*) sqNextEventPut(win32state);
   evt->type = EventTypeKeyboard;
   evt->timeStamp = msg->time;
   evt->charCode = keymap[keyCode & 0xff];
@@ -1134,27 +1137,29 @@ int recordKeyboardEvent(MSG *msg) {
      generate extra character events here */
   if(pressCode == EventKeyDown && virtCode != 0) {
     /* generate extra character event */
-    sqKeyboardEvent *extra = (sqKeyboardEvent*)sqNextEventPut();
+    sqKeyboardEvent *extra = (sqKeyboardEvent*)sqNextEventPut(win32state);
     *extra = *evt;
     extra->pressCode = EventKeyChar;
   }
   return 1;
 }
 
-int ioSetInputSemaphore(int semaIndex) {
-  inputSemaphoreIndex = semaIndex;
+int ioSetInputSemaphore(INTERPRETER_ARG_COMMA int semaIndex) {
+  DECL_WIN32_STATE();
+  WIN32_STATE(inputSemaphoreIndex) = semaIndex;
   return 1;
 }
 
-int ioGetNextEvent(sqInputEvent *evt) {
-  if (eventBufferGet == eventBufferPut) {
-    ioProcessEvents();
+int ioGetNextEvent(INTERPRETER_ARG_COMMA sqInputEvent *evt) {
+  DECL_WIN32_STATE();
+  if (WIN32_STATE(eventBufferGet) == WIN32_STATE(eventBufferPut)) {
+    ioProcessEvents(INTERPRETER_PARAM);
   }
-  if (eventBufferGet == eventBufferPut)
+  if (WIN32_STATE(eventBufferGet) == WIN32_STATE(eventBufferPut))
     return 1;
 
-  *evt = eventBuffer[eventBufferGet];
-  eventBufferGet = (eventBufferGet+1) % MAX_EVENT_BUFFER;
+  *evt = WIN32_STATE(eventBuffer)[WIN32_STATE(eventBufferGet)];
+  WIN32_STATE(eventBufferGet) = (WIN32_STATE(eventBufferGet)+1) % MAX_EVENT_BUFFER;
   return 1;
 }
 
@@ -1162,42 +1167,46 @@ int ioGetNextEvent(sqInputEvent *evt) {
 /*              State based primitive set                                   */
 /****************************************************************************/
 
-int ioGetKeystroke(void)
+int ioGetKeystroke(INTERPRETER_ARG)
 {
+  DECL_WIN32_STATE();
   int keystate;
-  ioProcessEvents();  /* process all pending events */
-  if (keyBufGet == keyBufPut) return -1;  /* keystroke buffer is empty */
-  keystate= keyBuf[keyBufGet];
-  keyBufGet= (keyBufGet + 1) % KEYBUF_SIZE;
+  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
+  if (WIN32_STATE(keyBufGet) == WIN32_STATE(keyBufPut)) return -1;  /* keystroke buffer is empty */
+  keystate= WIN32_STATE(keyBuf)[WIN32_STATE(keyBufGet)];
+  WIN32_STATE(keyBufGet) = (WIN32_STATE(keyBufGet) + 1) % KEYBUF_SIZE;
   /* set modifer bits in buttonState to reflect the last keystroke fetched */
   buttonState= ((keystate >> 5) & 0xF8) | (buttonState & 0x7);
   return keystate;
 }
 
-int ioPeekKeystroke(void)
+int ioPeekKeystroke(INTERPRETER_ARG)
 {
+  DECL_WIN32_STATE();
+
   int keystate;
-  ioProcessEvents();  /* process all pending events */
-  if (keyBufGet == keyBufPut) return -1;  /* keystroke buffer is empty */
-  keystate= keyBuf[keyBufGet];
+  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
+  if (WIN32_STATE(keyBufGet) == WIN32_STATE(keyBufPut)) return -1;  /* keystroke buffer is empty */
+  keystate= WIN32_STATE(keyBuf)[WIN32_STATE(keyBufGet)];
   /* set modifer bits in buttonState to reflect the last keystroke peeked at */
   buttonState= ((keystate >> 5) & 0xF8) | (buttonState & 0x7);
   return keystate;
 }
 
 
-void recordKey(int keystate)
+void recordKey(INTERPRETER_ARG_COMMA int keystate)
 {
-  keyBuf[keyBufPut]= keystate;
-  keyBufPut= (keyBufPut + 1) % KEYBUF_SIZE;
-  if (keyBufGet == keyBufPut) {
+  DECL_WIN32_STATE();
+  WIN32_STATE(keyBuf)[WIN32_STATE(keyBufPut)]= keystate;
+  WIN32_STATE(keyBufPut) = (WIN32_STATE(keyBufPut) + 1) % KEYBUF_SIZE;
+  if (WIN32_STATE(keyBufGet) == WIN32_STATE(keyBufPut)) {
     /* buffer overflow; drop the last character */
-    keyBufGet= (keyBufGet + 1) % KEYBUF_SIZE;
-    keyBufOverflows++;
+    WIN32_STATE(keyBufGet) = (WIN32_STATE(keyBufGet) + 1) % KEYBUF_SIZE;
+    WIN32_STATE(keyBufOverflows)++;
   }
 }
 
-int recordVirtualKey(UINT message, WPARAM wParam, LPARAM lParam)
+int recordVirtualKey(INTERPRETER_ARG_COMMA UINT message, WPARAM wParam, LPARAM lParam)
 {
   int keystate = 0;
 
@@ -1213,11 +1222,11 @@ int recordVirtualKey(UINT message, WPARAM wParam, LPARAM lParam)
   keystate = mapVirtualKey(wParam);
   if(keystate == 0) return 0;
   keystate = keystate | ((buttonState >> 3) << 8);
-  recordKey(keystate);
+  recordKey(INTERPRETER_PARAM_COMMA keystate);
   return 1;
 }
 
-int recordKeystroke(UINT msg, WPARAM wParam, LPARAM lParam)
+int recordKeystroke(INTERPRETER_ARG_COMMA UINT msg, WPARAM wParam, LPARAM lParam)
 {
   int keystate=0;
 
@@ -1229,14 +1238,14 @@ int recordKeystroke(UINT msg, WPARAM wParam, LPARAM lParam)
   /* add the modifiers */
   keystate = keystate | ((buttonState >> 3) << 8);
   /* check for interrupt key */
-  if(keystate == getInterruptKeycode(MAIN_VM))
+  if(keystate == getInterruptKeycode(INTERPRETER_PARAM))
     {
       /* NOTE: Interrupt key is meta, not recorded as key stroke */
-      setInterruptPending(MAIN_VM_COMMA true);
-      setInterruptCheckCounter(MAIN_VM_COMMA 0);
+      setInterruptPending(INTERPRETER_PARAM_COMMA true);
+      setInterruptCheckCounter(INTERPRETER_PARAM_COMMA 0);
 	  return 1;
     }
-  recordKey(keystate);
+  recordKey(INTERPRETER_PARAM_COMMA keystate);
   return 1;
 }
 
@@ -1317,7 +1326,7 @@ int recordModifierButtons()
   return 1;
 }
 
-int ioGetButtonState(void)
+int ioGetButtonState(INTERPRETER_ARG)
 {
   if(fReduceCPUUsage || (fReduceCPUInBackground && !fHasFocus)) {
     MSG msg;
@@ -1330,11 +1339,11 @@ int ioGetButtonState(void)
        !PeekMessage(&msg, stWindow, WM_MOUSEFIRST, WM_MOUSELAST, PM_NOREMOVE))
       MsgWaitForMultipleObjects(0,NULL,0,5, QS_MOUSE);
   }
-  ioProcessEvents();  /* process all pending events */
+  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
   return buttonState;
 }
 
-int ioMousePoint(void)
+int ioMousePoint(INTERPRETER_ARG)
 {
   if(fReduceCPUUsage || (fReduceCPUInBackground && !fHasFocus)) {
     MSG msg;
@@ -1347,7 +1356,7 @@ int ioMousePoint(void)
        !PeekMessage(&msg, stWindow, WM_MOUSEFIRST, WM_MOUSELAST, PM_NOREMOVE))
       MsgWaitForMultipleObjects(0,NULL,0,5, QS_MOUSE);
   }
-  ioProcessEvents();  /* process all pending events */
+  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
   /* x is high 16 bits; y is low 16 bits */
   return (mousePosition.x << 16) | (mousePosition.y);
 }
@@ -1397,19 +1406,20 @@ int ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA int microSeconds)
   MsgWaitForMultipleObjects(1, &WIN32_STATE(wakeUpEvent), FALSE,
 			    microSeconds / 1000, QS_ALLINPUT);
 
-  if (INTERPRETER_PARAM != MAIN_VM)
-  {
-	  //printf("Done waiting..\n"); fflush(0);
-  }
-  ioProcessEvents(); /* keep up with mouse moves etc. */
+  ioProcessEvents(INTERPRETER_PARAM); /* keep up with mouse moves etc. */
   return microSeconds;
 }
 
-int ioProcessEvents(void)
+sqInt ioWakeUp(INTERPRETER_ARG)
+{
+  DECL_WIN32_STATE();
+  SetEvent(WIN32_STATE(wakeUpEvent));
+};
+
+int ioProcessEvents(INTERPRETER_ARG)
 { static MSG msg;
   POINT mousePt;
 
-//  printf ("Ioprocessevents\n");
   if(fRunService && !fWindows95) return 1;
   /* WinCE doesn't retrieve WM_PAINTs from the queue with PeekMessage,
      so we won't get anything painted unless we use GetMessage() if there
@@ -1493,7 +1503,7 @@ int ioSeconds(void)
   return convertToSqueakTime(sysTime);
 }
 
-int ioSetCursorWithMask(int cursorBitsIndex, int cursorMaskIndex, int offsetX, int offsetY)
+int ioSetCursorWithMask(INTERPRETER_ARG_COMMA int cursorBitsIndex, int cursorMaskIndex, int offsetX, int offsetY)
 {
 #if !defined(_WIN32_WCE)
 	/****************************************************/
@@ -1503,6 +1513,10 @@ int ioSetCursorWithMask(int cursorBitsIndex, int cursorMaskIndex, int offsetX, i
   static unsigned char *andMask=0,*xorMask=0;
   static int cx=0,cy=0,cursorSize=0;
   int i;
+
+  /* Suppress using cursor for non-main interpreter */
+  if (INTERPRETER_PARAM != MAIN_VM)
+	  return 1;
 
   if(!IsWindow(stWindow)) return 1;
   if(!andMask || !xorMask)
@@ -1532,20 +1546,20 @@ int ioSetCursorWithMask(int cursorBitsIndex, int cursorMaskIndex, int offsetX, i
       */
       for (i=0; i<16; i++)
         {
-          andMask[i*cx/8+0] = ~(checkedLongAt(MAIN_VM_COMMA cursorMaskIndex + (4 * i)) >> 24) & 0xFF;
-          andMask[i*cx/8+1] = ~(checkedLongAt(MAIN_VM_COMMA cursorMaskIndex + (4 * i)) >> 16) & 0xFF;
+          andMask[i*cx/8+0] = ~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorMaskIndex + (4 * i)) >> 24) & 0xFF;
+          andMask[i*cx/8+1] = ~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorMaskIndex + (4 * i)) >> 16) & 0xFF;
         }
       for (i=0; i<16; i++)
         {
-          xorMask[i*cx/8+0] = (~(checkedLongAt(MAIN_VM_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF) ^ (andMask[i*cx/8+0]);
-          xorMask[i*cx/8+1] = (~(checkedLongAt(MAIN_VM_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF) ^ (andMask[i*cx/8+1]);
+          xorMask[i*cx/8+0] = (~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF) ^ (andMask[i*cx/8+0]);
+          xorMask[i*cx/8+1] = (~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF) ^ (andMask[i*cx/8+1]);
         }
     }
   else /* Old Cursor: Just make all 1-bits black */
     for (i=0; i<16; i++)
       {
-        andMask[i*cx/8+0] = ~(checkedLongAt(MAIN_VM_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF;
-        andMask[i*cx/8+1] = ~(checkedLongAt(MAIN_VM_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF;
+        andMask[i*cx/8+0] = ~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF;
+        andMask[i*cx/8+1] = ~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF;
       }
 
   currentCursor = CreateCursor(hInstance,-offsetX,-offsetY,cx,cy,andMask,xorMask);
@@ -1562,13 +1576,13 @@ int ioSetCursorWithMask(int cursorBitsIndex, int cursorMaskIndex, int offsetX, i
   return 1;
 }
 
-int ioSetCursor(int cursorBitsIndex, int offsetX, int offsetY)
+int ioSetCursor(INTERPRETER_ARG_COMMA int cursorBitsIndex, int offsetX, int offsetY)
 {
-  return ioSetCursorWithMask(cursorBitsIndex, 0, offsetX, offsetY);
+  return ioSetCursorWithMask(INTERPRETER_PARAM_COMMA cursorBitsIndex, 0, offsetX, offsetY);
 }
 
 
-int ioSetFullScreen(int fullScreen)
+int ioSetFullScreen(INTERPRETER_ARG_COMMA int fullScreen)
 { static int wasFullScreen = 0;
 
   if(!IsWindow(stWindow)) return 1;
@@ -1584,7 +1598,7 @@ int ioSetFullScreen(int fullScreen)
 	HWND oldBrowserWindow = browserWindow;
 	browserWindow = NULL;
 	DestroyWindow(stWindow);
-	SetupWindows();
+	SetupWindows(INTERPRETER_PARAM);
 	/* I'm not exactly sure which one of the following three
 	   does the trick for IE - but using all three works,
 	   so hey, who cares ;-) */
@@ -1613,7 +1627,7 @@ int ioSetFullScreen(int fullScreen)
       if(browserWindow) {
 	/* Jump back into the browser */
 	DestroyWindow(stWindow);
-	SetupWindows();
+	SetupWindows(INTERPRETER_PARAM);
       }
 #endif /* !defined(_WIN32_WCE) */
       ShowWindow(stWindow,SW_SHOWNORMAL);
@@ -1791,7 +1805,7 @@ int ioHasDisplayDepth(int depth) {
 }
 
 
-int ioSetDisplayMode(int width, int height, int depth, int fullscreenFlag)
+int ioSetDisplayMode(INTERPRETER_ARG_COMMA int width, int height, int depth, int fullscreenFlag)
 {
 #ifdef _WIN32_WCE
   return 0; /* Not implemented on CE */
@@ -1810,11 +1824,11 @@ int ioSetDisplayMode(int width, int height, int depth, int fullscreenFlag)
        the main window you'll never get out of it. That's why we
        destroy and recreate the window here.
     */
-    ioSetFullScreen(0); /* Turn off fullscreen */
+    ioSetFullScreen(INTERPRETER_PARAM_COMMA 0); /* Turn off fullscreen */
     DirectXSetDisplayMode(stWindow, width, height, depth, 0);
     DestroyWindow(stWindow);
     browserWindow = oldBrowserWindow;
-    SetupWindows();
+    SetupWindows(INTERPRETER_PARAM);
     ShowWindow(stWindow, SW_SHOWNORMAL);
   }
   wasFullscreen = fullscreenFlag;
@@ -1823,7 +1837,7 @@ int ioSetDisplayMode(int width, int height, int depth, int fullscreenFlag)
     oldBrowserWindow = browserWindow;
     browserWindow = NULL;
     DestroyWindow(stWindow);
-    SetupWindows();
+    SetupWindows(INTERPRETER_PARAM);
     ShowWindow(stWindow, SW_SHOWNORMAL);
   }
   if(!DirectXSetDisplayMode(stWindow, width, height, depth, fullscreenFlag)) {
@@ -1831,13 +1845,13 @@ int ioSetDisplayMode(int width, int height, int depth, int fullscreenFlag)
     if(oldBrowserWindow) {
       DestroyWindow(stWindow);
       browserWindow = oldBrowserWindow;
-      SetupWindows();
+      SetupWindows(INTERPRETER_PARAM);
       ShowWindow(stWindow, SW_SHOWNORMAL);
     }
     return 0;
   }
   /* Note: Only go to full screen if DirectX is used */
-  ioSetFullScreen(fullscreenFlag);
+  ioSetFullScreen(INTERPRETER_PARAM_COMMA fullscreenFlag);
 #endif
 
   r.left = 0;
@@ -2438,32 +2452,42 @@ int vmPathGetLength(int sqVMPathIndex, int length)
   return count;
 }
 
-int imageNameSize(void)
+int imageNameSize(INTERPRETER_ARG)
 {
-  return strlen(imageName);
+  DECL_WIN32_STATE();
+  return strlen(WIN32_STATE(imageName));
 }
 
-int imageNameGetLength(int sqImageNameIndex, int length)
+char *ioGetImageName(INTERPRETER_ARG)
+{
+	DECL_WIN32_STATE();
+	return WIN32_STATE(imageName);
+};
+
+int imageNameGetLength(INTERPRETER_ARG_COMMA int sqImageNameIndex, int length)
 {
   char *sqImageName= (char *)sqImageNameIndex;
+  char * imgName;
   int count, i;
 
-  count= strlen(imageName);
+  count= imageNameSize(INTERPRETER_PARAM);
   count= (length < count) ? length : count;
 
   /* copy the file name into the Squeak string */
+  imgName = ioGetImageName(INTERPRETER_PARAM);
   for (i= 0; i < count; i++)
-    sqImageName[i]= imageName[i];
+    sqImageName[i]= imgName[i];
 
   return count;
 }
 
-int imageNamePutLength(int sqImageNameIndex, int length)
+int imageNamePutLength(INTERPRETER_ARG_COMMA int sqImageNameIndex, int length)
 {
   char *sqImageName= (char *)sqImageNameIndex;
   char tmpImageName[MAX_PATH+1];
   char *tmp;
   int count, i;
+  DECL_WIN32_STATE();
 
   count= (IMAGE_NAME_SIZE < length) ? IMAGE_NAME_SIZE : length;
 
@@ -2477,23 +2501,23 @@ int imageNamePutLength(int sqImageNameIndex, int length)
   tmp = strrchr(tmpImageName,'\\');
   if(tmp)
     { /* fully qualified */
-      strcpy(imageName,tmpImageName);
+      strcpy(WIN32_STATE(imageName),tmpImageName);
     }
   else
     { /* not qualified */
-      tmp = strrchr(imageName,'\\');
+      tmp = strrchr(WIN32_STATE(imageName),'\\');
       if(!tmp)
-        strcpy(imageName,tmpImageName);
+        strcpy(WIN32_STATE(imageName),tmpImageName);
       else
         {
           tmp++; *tmp = 0;
-          count = IMAGE_NAME_SIZE - (tmp-imageName);
+          count = IMAGE_NAME_SIZE - (tmp-WIN32_STATE(imageName));
           if(count < length)
             tmpImageName[count] = 0;
-          strcat(imageName,tmpImageName);
+          strcat(WIN32_STATE(imageName),tmpImageName);
         }
     }
-  SetWindowTitle();
+  SetWindowTitle(INTERPRETER_PARAM);
   return 1;
 }
 
@@ -2582,13 +2606,13 @@ int getAttributeIntoLength(int id, int byteArrayIndex, int length) {
 /****************************************************************************/
 
 /* Check if the path/file name is subdirectory of the image path */
-int isLocalFileName(TCHAR *fileName)
+/*int isLocalFileName(TCHAR *fileName)
 {
   int i;
   for(i=0; i<lstrlen(imagePath); i++)
     if(imagePath[i] != fileName[i]) return 0;
   return 1;
-}
+}*/
 
 #if defined(_WIN32_WCE)
 	/* WinCE does not support short file names, and has
@@ -2599,10 +2623,11 @@ int isLocalFileName(TCHAR *fileName)
 	   either requiring the image name to be fully pathed, or
 	   if not, popping up a file open dialog */
 
-void SetupFilesAndPath(){ 
+void SetupFilesAndPath(INTERPRETER_ARG){ 
+  DECL_WIN32_STATE();
   char *tmp;
-  lstrcpy(imagePath, imageName);
-  tmp = lstrrchr(imagePath,'\\');
+  lstrcpy(WIN32_STATE(imagePath), WIN32_STATE(imageName));
+  tmp = lstrrchr(WIN32_STATE(imagePath),'\\');
   if(tmp) tmp[1] = 0;
 }
 
@@ -2661,27 +2686,35 @@ recurseDown:
   SetCurrentDirectory(oldDir);
 }
 
-void SetupFilesAndPath() {
+void ioSetImagePath(INTERPRETER_ARG_COMMA char * imgName)
+{
+  DECL_WIN32_STATE();
   char *tmp;
   WCHAR tmpName[MAX_PATH];
   WCHAR imageNameW[MAX_PATH];
 
   /* get the full path for the image */
-  MultiByteToWideChar(CP_UTF8, 0, imageName, -1, tmpName, MAX_PATH);
+  MultiByteToWideChar(CP_UTF8, 0, imgName, -1, tmpName, MAX_PATH);
   GetFullPathNameW(tmpName, MAX_PATH, imageNameW, NULL);
 
   /* and copy back to a UTF-8 string */
-  WideCharToMultiByte(CP_UTF8, 0, imageNameW,-1,imageName,MAX_PATH,NULL,NULL);
+  WideCharToMultiByte(CP_UTF8, 0, imageNameW,-1,WIN32_STATE(imageName),MAX_PATH,NULL,NULL);
+
+  lstrcpy(WIN32_STATE(imagePath), WIN32_STATE(imageName));
+  tmp = lstrrchr(WIN32_STATE(imagePath),U_BACKSLASH[0]);
+  if(tmp) tmp[1] = 0;
+  dprintf(("IMAGE NAME: %s\n", WIN32_STATE(imageName)));
+  dprintf(("IMAGE PATH: %s\n", WIN32_STATE(imagePath)));
+}
+
+void SetupFilesAndPath() {
+  char *tmp;
 
   /* get the VM directory */
   lstrcpy(vmPath, vmName);
   tmp = lstrrchr(vmPath,U_BACKSLASH[0]);
   if(tmp) *tmp = 0;
   lstrcat(vmPath,U_BACKSLASH);
-
-  lstrcpy(imagePath, imageName);
-  tmp = lstrrchr(imagePath,U_BACKSLASH[0]);
-  if(tmp) tmp[1] = 0;
 }
 
 #endif /* !defined(_WIN32_WCE) */
@@ -2748,7 +2781,7 @@ int findImageFile(void) {
   FindClose(findHandle);
   if(nextFound) return 0; /* more than one entry */
   WideCharToMultiByte(CP_UTF8, 0, findData.cFileName, -1, 
-		      imageName, MAX_PATH, NULL, NULL);
+		      startupImageName, MAX_PATH, NULL, NULL);
   return 1;
 }
 
@@ -2771,7 +2804,7 @@ int openImageFile(void) {
   ofn.lpstrDefExt = L"image";
   if (!GetOpenFileNameW(&ofn)) return 0;
   WideCharToMultiByte(CP_UTF8, 0, path, -1, 
-		      imageName, MAX_PATH, NULL, NULL);
+		      startupImageName, MAX_PATH, NULL, NULL);
   return 1;
 }
 
@@ -2926,7 +2959,7 @@ int printUsage(int level)
         TEXT("There are several ways to open an image file. You can:\n")
         TEXT("  1. Double-click on the desired image file.\n")
         TEXT("  2. Drop the image file onto the application.\n")
-        TEXT("Aborting...\n"), toUnicode(imageName));
+        TEXT("Aborting...\n"), toUnicode(startupImageName));
   }
   return -1;
 }

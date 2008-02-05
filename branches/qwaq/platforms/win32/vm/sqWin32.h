@@ -174,7 +174,7 @@ typedef int (*messageHook)(void *, unsigned int, unsigned int, long);
 /********************************************************/
 void SetupFilesAndPath();
 void SetupKeymap();
-void SetupWindows();
+//void SetupWindows(INTERPRETER_ARG);
 void SetupPixmaps();
 void SetupPrinter();
 void SetupTimer();
@@ -256,11 +256,8 @@ int reverse_image_words(unsigned int *dst, unsigned int *src,int depth, int widt
 /********************************************************/
 /* Declarations we may need by other modules            */
 /********************************************************/
-extern char imageName[];		/* full path and name to image */
-extern TCHAR imagePath[];		/* full path to image */
 extern TCHAR vmPath[];		    /* full path to interpreter's directory */
 extern TCHAR vmName[];		    /* name of the interpreter's executable */
-extern TCHAR windowTitle[];             /* window title string */
 extern char vmBuildString[];            /* the vm build string */
 
 extern const TCHAR U_ON[];
@@ -367,17 +364,13 @@ void printLastError(TCHAR *prefix);
 /* Misc functions                                     */
 /******************************************************/
 DWORD SqueakImageLength(TCHAR *fileName);
-int isLocalFileName(TCHAR *fileName);
+/* not used -- int isLocalFileName(TCHAR *fileName); */
 
 #ifndef NO_PLUGIN_SUPPORT
 void pluginInit(void);
 void pluginExit(void);
 void pluginHandleEvent(MSG* msg);
 #endif /* NO_PLUGIN_SUPPORT */
-
-#ifndef NO_DROP
-int recordDragDropEvent(HWND wnd, int dragType, int x, int y, int numFiles);
-#endif
 
 /****************************************************************************/
 /* few addtional definitions for those having older include files           */
@@ -444,6 +437,8 @@ extern DWORD ticksForBlitting; /* time needed for actual blts */
 #endif
 
 
+struct sqInputEvent;  /* forward declaration */
+
 /* Per-Interpreter system state */
 extern int win32stateId;
 
@@ -451,11 +446,33 @@ typedef struct Win32AttachedState {
 	HANDLE wakeUpEvent;
 	HANDLE timer;
 
+	#define KEYBUF_SIZE 64
+	int keyBuf[KEYBUF_SIZE];	/* circular buffer */
+	int keyBufGet;				/* index of next item of keyBuf to read */
+	int keyBufPut;				/* index of next item of keyBuf to write */
+	int keyBufOverflows;		/* number of characters dropped */
+
+	int inputSemaphoreIndex;	/* if non-zero the event semaphore index */
+
+	#define MAX_EVENT_BUFFER 1024
+	struct sqInputEvent * eventBuffer;
+	int eventBufferGet;
+	int eventBufferPut;
+
+#define IMAGE_NAME_SIZE MAX_PATH
+
+	char imageName[MAX_PATH+1];		  /* full path and name to image */
+	TCHAR imagePath[MAX_PATH+1];	  /* full path to image */
+	TCHAR windowTitle[MAX_PATH];      /* window title string */
+
 } Win32AttachedState;
 
 #define DECL_WIN32_STATE() struct Win32AttachedState * win32state = getAttachedStateBuffer(intr, win32stateId)
 #define WIN32_STATE(name) win32state->name
 
+#ifndef NO_DROP
+int recordDragDropEvent(HWND wnd, int dragType, int x, int y, int numFiles);
+#endif
 
 #endif /* _WINDOWS_ */
 

@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: Impara GmbH, Magdeburg, Germany
 *   EMAIL:   Andreas.Raab@impara.de
-*   RCSID:   $Id: sqWin32DirectInput.c,v 1.3 2003/11/12 22:36:55 andreasraab Exp $
+*   RCSID:   $Id$
 *
 *   NOTES:
 *     The function enclosed here provide direct support to the
@@ -138,7 +138,7 @@ void DumpBufferedMouseTrail(void) {
 }
 
 /* get pending input from the device up to the baseEvt*/
-void GetBufferedMouseTrail(DWORD firstTick, DWORD lastTick, 
+void GetBufferedMouseTrail(Win32AttachedState * win32state, DWORD firstTick, DWORD lastTick, 
 			   sqMouseEvent *proto) 
 {
   DIDEVICEOBJECTDATA  data;
@@ -247,7 +247,7 @@ void GetBufferedMouseTrail(DWORD firstTick, DWORD lastTick,
     }
     /* create the trail events */
     for(i=0; i<numExtra;i++) {
-      evt = (sqMouseEvent*) sqNextEventPut();
+      evt = (sqMouseEvent*) sqNextEventPut(win32state);
       *evt = *proto;
       evt->x = xData[i];
       evt->y = yData[i];

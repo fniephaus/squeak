@@ -18,6 +18,8 @@
 #include "sq.h"
 #include "sqWin32Args.h"
 
+extern char startupImageName[];
+
 static int IsImage(char *name) { 
   int magic;
   int byteSwapped(int);
@@ -168,13 +170,13 @@ static char *parseGenericArgs(char *string)
   tmpImageName = string;
   string = parseStringArg(string, &tmpImageName);
   if(!string) return NULL; /* parse error */
-  if(*imageName == 0) {
+  if(*startupImageName == 0) {
 	/* only attempt to use image name if none is provided */
 	if(*tmpImageName && IsImage(tmpImageName))
-      strcpy(imageName, tmpImageName);
+      strcpy(startupImageName, tmpImageName);
   } else {
 	  /* provide image name as second argument if implicitly specified */
-	  imageOptions[numOptionsImage++] = imageName;
+	  imageOptions[numOptionsImage++] = startupImageName;
   }
   imageOptions[numOptionsImage++] = tmpImageName;
   while(string && *string)
