@@ -196,8 +196,6 @@ char *GetVMOption(int id);
 /********************************************************/
 /* Misc functions                                       */
 /********************************************************/
-void SetWindowSize();
-void ReleaseTimer();
 int printUsage(int level);
 
 /********************************************************/
@@ -439,36 +437,6 @@ extern DWORD ticksForBlitting; /* time needed for actual blts */
 
 struct sqInputEvent;  /* forward declaration */
 
-/* Per-Interpreter system state */
-extern int win32stateId;
-
-typedef struct Win32AttachedState {
-	HANDLE wakeUpEvent;
-	HANDLE timer;
-
-	#define KEYBUF_SIZE 64
-	int keyBuf[KEYBUF_SIZE];	/* circular buffer */
-	int keyBufGet;				/* index of next item of keyBuf to read */
-	int keyBufPut;				/* index of next item of keyBuf to write */
-	int keyBufOverflows;		/* number of characters dropped */
-
-	int inputSemaphoreIndex;	/* if non-zero the event semaphore index */
-
-	#define MAX_EVENT_BUFFER 1024
-	struct sqInputEvent * eventBuffer;
-	int eventBufferGet;
-	int eventBufferPut;
-
-#define IMAGE_NAME_SIZE MAX_PATH
-
-	char imageName[MAX_PATH+1];		  /* full path and name to image */
-	TCHAR imagePath[MAX_PATH+1];	  /* full path to image */
-	TCHAR windowTitle[MAX_PATH];      /* window title string */
-
-} Win32AttachedState;
-
-#define DECL_WIN32_STATE() struct Win32AttachedState * win32state = getAttachedStateBuffer(intr, win32stateId)
-#define WIN32_STATE(name) win32state->name
 
 #ifndef NO_DROP
 int recordDragDropEvent(HWND wnd, int dragType, int x, int y, int numFiles);

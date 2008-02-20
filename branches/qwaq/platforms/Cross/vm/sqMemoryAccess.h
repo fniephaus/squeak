@@ -168,5 +168,32 @@ static void inline flag(char *ignored)
   (void)ignored;
 }
 
+#ifdef VM_OBJECTIFIED
+
+/* VM events typedefs. We need to define them early, this is the only place where it can be defined */
+
+struct vmEvent;
+typedef sqInt (*eventFnPtr)(struct Interpreter*, struct vmEvent*);
+
+/* Minimum event payload just a function pointer which should be called by event handler
+** any other payload can be added by ''subclassing'' this struct
+*/
+typedef struct vmEvent {
+	struct vmEvent * volatile next;
+	eventFnPtr fn;
+} vmEvent;
+
+typedef struct vmEventQueue {
+	struct vmEvent * volatile tail;	
+	struct vmEvent head;
+} vmEventQueue;
+
+/* this one used quite often */
+typedef struct vmSignalSemaphoreEvent {
+	struct vmEvent header;
+	int semaphoreIndex;
+} vmSignalSemaphoreEvent;
+
+#endif
 
 #endif /* __sqMemoryAccess_h */

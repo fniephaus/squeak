@@ -52,8 +52,6 @@ const TCHAR U_GLOBAL[] = TEXT("Global");
 const TCHAR U_SLASH[] = TEXT("/");
 const TCHAR U_BACKSLASH[] = TEXT("\\");
 
-int		 savedWindowSize= 0;	/* initial size of window */
-
 /*** Variables -- Event Recording ***/
 POINT mousePosition;		/* position at last PointerMotion event */
 int   mouseWord;			/* Input word for Squeak */
@@ -448,54 +446,6 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
   return 1;
 }
 
-/****************************************************************************/
-/*                      Timer Setup                                         */
-/****************************************************************************/
-/****************************************************************************/
-/* Windows CE does not support waiting for semaphores, change notification  */
-/* objects, console input, and timers, as does the Win32 version.           */
-/* Also, it does not support waiting for process, thread, and mutex events. */
-/****************************************************************************/
-
-static DWORD dwTimerPeriod;
-static DWORD timerID;
-int _lowResMSecs = 0;
-
-void CALLBACK timerCallback(UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2) {
-  _lowResMSecs++;
-  setInterruptCheckCounter(MAIN_VM_COMMA 0);
-}
-
-#include <mmsystem.h>
-void SetupTimer()
-{
-#if defined(_WIN32_WCE)
-  dwTimerPeriod = 0;
-#else /* defined(_WIN32_WCE) */
-  TIMECAPS tCaps;
-
-  dwTimerPeriod = 0;
-  if(timeGetDevCaps(&tCaps,sizeof(tCaps)) != 0)
-    return;
-  dwTimerPeriod = tCaps.wPeriodMin;
-  if(timeBeginPeriod(dwTimerPeriod) != 0)
-    return;
-  timerID = timeSetEvent(dwTimerPeriod, 0,
-			 timerCallback, 0,
-			 TIME_PERIODIC |
-			 TIME_CALLBACK_FUNCTION);
-#endif /* defined(_WIN32_WCE) */
-}
-
-void ReleaseTimer()
-{
-#if !defined(_WIN32_WCE)
-  timeKillEvent(timerID);
-  timeEndPeriod(dwTimerPeriod);
-#endif /* !defined(_WIN32_WCE) */
-}
-
-
 sqLong ioHighResClock(void) {
   sqLong value = 0;
   __asm__ __volatile__ ("rdtsc" : "=A" (value));
@@ -819,13 +769,13 @@ void SetupWindows(INTERPRETER_ARG)
   /* direct input needs to be set up on per-window basis */
   SetupDirectInput();
 #endif
-  ioScreenSize(); /* compute new rect initially */
+  ioScreenSize(INTERPRETER_PARAM); /* compute new rect initially */
 }
 
 
 #if !defined(_WIN32_WCE)  /* Unused under WinCE */
 
-void SetWindowSize(void)
+void SetWindowSize(INTERPRETER_ARG)
 {
   RECT r;
   RECT workArea;
@@ -835,10 +785,10 @@ void SetWindowSize(void)
   if(!IsWindow(stWindow)) return; /* might happen if run as NT service */
   if(browserWindow) return; /* Ignored if in browser */
 
-  if (savedWindowSize != 0)
+  if (getSavedWindowSize(INTERPRETER_PARAM) != 0)
     {
-      width  = (unsigned) savedWindowSize >> 16;
-      height = savedWindowSize & 0xFFFF;
+      width  = (unsigned) getSavedWindowSize(INTERPRETER_PARAM) >> 16;
+      height = getSavedWindowSize(INTERPRETER_PARAM) & 0xFFFF;
     }
   else
     {
@@ -1215,8 +1165,7 @@ int recordVirtualKey(INTERPRETER_ARG_COMMA UINT message, WPARAM wParam, LPARAM l
     return 1;
   }
   if(wParam == VK_CANCEL) {
-    setInterruptPending(MAIN_VM_COMMA true);
-    setInterruptCheckCounter(MAIN_VM_COMMA 0);
+    signalInterruptSemaphore(INTERPRETER_PARAM);
     return 1;
   }
   keystate = mapVirtualKey(wParam);
@@ -1241,8 +1190,7 @@ int recordKeystroke(INTERPRETER_ARG_COMMA UINT msg, WPARAM wParam, LPARAM lParam
   if(keystate == getInterruptKeycode(INTERPRETER_PARAM))
     {
       /* NOTE: Interrupt key is meta, not recorded as key stroke */
-      setInterruptPending(INTERPRETER_PARAM_COMMA true);
-      setInterruptCheckCounter(INTERPRETER_PARAM_COMMA 0);
+	  signalInterruptSemaphore(INTERPRETER_PARAM);
 	  return 1;
     }
   recordKey(INTERPRETER_PARAM_COMMA keystate);
@@ -1397,28 +1345,18 @@ int ioMicroMSecs(void)
   return timeGetTime() &0x3FFFFFFF;
 }
 
-/* Note: ioRelinquishProcessorForMicroseconds has *micro*seconds  as argument*/
-int ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA int microSeconds)
-{
-  /* wake us up if something happens */
-  DECL_WIN32_STATE();
-  ResetEvent(WIN32_STATE(wakeUpEvent));
-  MsgWaitForMultipleObjects(1, &WIN32_STATE(wakeUpEvent), FALSE,
-			    microSeconds / 1000, QS_ALLINPUT);
-
-  ioProcessEvents(INTERPRETER_PARAM); /* keep up with mouse moves etc. */
-  return microSeconds;
-}
-
-sqInt ioWakeUp(INTERPRETER_ARG)
-{
-  DECL_WIN32_STATE();
-  SetEvent(WIN32_STATE(wakeUpEvent));
-};
-
 int ioProcessEvents(INTERPRETER_ARG)
-{ static MSG msg;
+{ 
+  MSG msg;
   POINT mousePt;
+//  static int xx = 0;
+//  printf ("ioProcessEvents %d\n", ++xx);
+//  if (INTERPETER_PARAM != MAIN_VM)  
+//  { 
+//	while(PeekMessage(&msg,NULL,0,0,PM_NOREMOVE)) 
+//      GetMessage(&msg,NULL,0,0);
+//	return 1; 
+//  }
 
   if(fRunService && !fWindows95) return 1;
   /* WinCE doesn't retrieve WM_PAINTs from the queue with PeekMessage,
@@ -1471,19 +1409,23 @@ int ioProcessEvents(INTERPRETER_ARG)
 }
 
 /* returns the size of the Squeak window */
-int ioScreenSize(void)
+int ioScreenSize(INTERPRETER_ARG)
 {
-  static RECT r;
+  RECT r;
+  int result;
 
-  if(!IsWindow(stWindow)) return savedWindowSize;
-  if(browserWindow && GetParent(stWindow) == browserWindow) {
-    GetClientRect(browserWindow,&r);
-  } else {
-    if(!IsIconic(stWindow))
-      GetClientRect(stWindow,&r);
+  result = getSavedWindowSize(INTERPRETER_PARAM);
+  if(IsWindow(stWindow) && !IsIconic(stWindow))
+  {
+	if(browserWindow && GetParent(stWindow) == browserWindow) 
+	    GetClientRect(browserWindow,&r);
+	else 
+		GetClientRect(stWindow,&r);
+	result = MAKELONG(r.bottom,r.right);
+	setSavedWindowSize(INTERPRETER_PARAM, result);
   }
   /* width is high 16 bits; height is low 16 bits */
-  return MAKELONG(r.bottom,r.right);
+  return result;
 }
 
 /* returns the depth of the OS display */

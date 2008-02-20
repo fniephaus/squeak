@@ -174,7 +174,7 @@ sqInt ioFormPrint(sqInt bitsAddr, sqInt width, sqInt height, sqInt depth,
 		  double hScale, double vScale, sqInt landscapeFlag);
 sqInt ioSetFullScreen(INTERPRETER_ARG_COMMA sqInt fullScreen);
 sqInt ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA sqInt microSeconds);
-sqInt ioScreenSize(void);
+sqInt ioScreenSize(INTERPRETER_ARG);
 sqInt ioScreenDepth(void);
 sqInt ioSeconds(void);
 sqInt ioSetCursor(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, sqInt offsetX, sqInt offsetY);

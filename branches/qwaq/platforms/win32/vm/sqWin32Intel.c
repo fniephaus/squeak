@@ -854,7 +854,6 @@ void __cdecl Cleanup(void)
 #ifndef NO_PLUGIN_SUPPORT
   pluginExit();
 #endif
-  ReleaseTimer();
   /* tricky ... we have no systray icon when running
      headfull or when running as service on NT */
   if(fHeadlessImage && (!fRunService || fWindows95))
@@ -941,13 +940,17 @@ int findEmbeddedImage(void) { return 0; }
 
 
 
+
+/* Win32 per-interpreter attached state initialization/finalization functions */
+int win32stateId = 0;
+
 /****************************************************************************/
 /*                        threadedInterpretFn                               */
 /****************************************************************************/
-
 DWORD WINAPI threadedInterpretFn(void * param)
 {
 	struct Interpreter * intr = (struct Interpreter *) param;
+	DECL_WIN32_STATE();
 	MSG msg;
 
 	/* this will force windows to create message queue for our thread */
@@ -963,27 +966,128 @@ DWORD WINAPI threadedInterpretFn(void * param)
 
 	ioGetSecureUserDirectory();
 
-	interpret(intr);
+	/* resume timerThread */
+	ResumeThread(WIN32_STATE(timerThread));
+
+	browserPluginInitialiseIfNeeded(); /* don't really think this belongs here */
+
+	lockInterpreter(intr); /* lock interpreter mutex before entering loop */
+	while (1)
+	{
+		interpret(intr);
+		handleEvents(intr);
+	}
 
 	printf("Interpreter %x thread just exited!\n", param); fflush(0);
 }
 
-/* A given event will be posted to interpreter event queue after microSecondsDelay
-passed since call to scheduleEvent() */
 
 void * ioGetThreadedInterpretFunctionPointer()
 {
 	return (void*)threadedInterpretFn;
 }
 
-/* Win32 per-interpreter attached state initialization/finalization functions */
-int win32stateId = 0;
+/* Note: ioRelinquishProcessorForMicroseconds has *micro*seconds  as argument*/
+int ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA int microSeconds)
+{
+  /* wake us up if something happens */
+  DECL_WIN32_STATE();
+  DWORD waitResult;
+  ResetEvent(WIN32_STATE(wakeUpEvent));
+
+  waitResult = MsgWaitForMultipleObjects(1, &WIN32_STATE(wakeUpEvent), FALSE,
+			    microSeconds / 1000, QS_ALLINPUT);
+
+  if (waitResult == WAIT_OBJECT_0 + 1) // return from wait caused by user input
+  {
+	ioProcessEvents(INTERPRETER_PARAM); /* keep up with mouse moves etc. */
+  }
+  return microSeconds;
+}
+
+sqInt ioWakeUp(INTERPRETER_ARG)
+{
+  DECL_WIN32_STATE();
+  SetEvent(WIN32_STATE(wakeUpEvent));
+};
+
+
+sqInt ioProcessEventsHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
+{
+	ioProcessEvents(INTERPRETER_PARAM);
+	event->fn = 0; /* event should == &ioProcessEventsEvt in win32 state */
+}
+
+sqInt ioSignalDelayEventHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
+{
+	signalTimerSemaphore(INTERPRETER_PARAM);
+	event->fn = 0; /* event should == &ioSignalDelayEvent in win32 state */
+}
+
+void ioScheduleTimerSemaphoreSignalAfter(INTERPRETER_ARG_COMMA int afterMilliseconds)
+{
+	DECL_WIN32_STATE();
+	LARGE_INTEGER timerDueTime;
+
+	// 1 means 100 nanoseconds, negative means relative time
+	timerDueTime.QuadPart = - (afterMilliseconds * (1000000 / 100));   
+
+	SetWaitableTimer(WIN32_STATE(delayTimer), &timerDueTime,
+		0, // signal only once
+		NULL, NULL,	FALSE);
+}
+
+DWORD WINAPI timerRoutine(INTERPRETER_ARG)
+{ 	
+/* This parameter is the milliseconds interval, by which interpreter should unconditionaly interrupt to check
+for user input */
+#define INPUT_CHECK_PERIOD 20
+
+	DWORD waitResult;
+	DECL_WIN32_STATE();
+//	static int xx = 0;
+	WIN32_STATE(ioProcessEventsEvt).fn = 0;
+	WIN32_STATE(ioSignalDelayEvent).fn = 0;
+
+	while (1)
+	{
+		waitResult = WaitForSingleObject(WIN32_STATE(delayTimer), INPUT_CHECK_PERIOD);
+		switch (waitResult)
+		{
+			case WAIT_OBJECT_0:
+				// post signal delay semaphore event
+				if (WIN32_STATE(ioSignalDelayEvent).fn == 0)
+				{
+					WIN32_STATE(ioSignalDelayEvent).fn = ioSignalDelayEventHandler;
+					enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioSignalDelayEvent));
+				}
+				ioWakeUp(INTERPRETER_PARAM); // be sure we not sleeping
+			case WAIT_TIMEOUT:
+				// post ioProcessEvents event
+				if (WIN32_STATE(ioProcessEventsEvt).fn == 0)
+				{
+					WIN32_STATE(ioProcessEventsEvt).fn = ioProcessEventsHandler;
+					enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioProcessEventsEvt));
+						// no reason to wake up interpreter here, because it will automatically wake up
+						// if there any input event posted by windows 
+				}
+				break;
+		}
+	}
+}
 
 static void sqInitWin32State(INTERPRETER_ARG)
 {
 	DECL_WIN32_STATE();
 	WIN32_STATE(wakeUpEvent) = CreateEvent(NULL, 1, 0, NULL);
-	WIN32_STATE(timer) = CreateWaitableTimer(NULL, FALSE, NULL);
+	WIN32_STATE(delayTimer) = CreateWaitableTimer(NULL, FALSE, NULL);
+	WIN32_STATE(timerThread) = CreateThread(NULL,  0, (LPTHREAD_START_ROUTINE) &timerRoutine,
+		(LPVOID) INTERPRETER_PARAM, CREATE_SUSPENDED, NULL);
+
+	/* NOTE!!! The timer thread should run at higher than normal priority,
+	to make it not depending too much on interpreter thread load */
+	SetThreadPriority( WIN32_STATE(timerThread) , THREAD_PRIORITY_HIGHEST); 
+
     SetEvent(WIN32_STATE(wakeUpEvent));
 
 	WIN32_STATE(keyBufGet) = 0;			/* index of next item of keyBuf to read */
@@ -998,12 +1102,11 @@ static void sqInitWin32State(INTERPRETER_ARG)
 	if (INTERPRETER_PARAM == MAIN_VM)
 	{
 		SetupWindows(INTERPRETER_PARAM);
-		SetupTimer();
     /* if headless running is requested, try to to create an icon
        in the Win95/NT system tray */
 	    if(fHeadlessImage && (!fRunService || fWindows95))
 		  SetSystemTrayIcon(1);
-	    SetWindowSize();
+	    SetWindowSize(MAIN_VM);
 	    ioSetFullScreen(INTERPRETER_PARAM_COMMA getFullScreenFlag(MAIN_VM));
 	}
 }
@@ -1012,7 +1115,10 @@ static void sqFinalizeWin32State(INTERPRETER_ARG)
 {
 	DECL_WIN32_STATE();
 	CloseHandle(WIN32_STATE(wakeUpEvent));
-	CloseHandle(WIN32_STATE(timer));
+	TerminateThread(WIN32_STATE(timerThread),0);
+	CloseHandle(WIN32_STATE(delayTimer));
+	CloseHandle(WIN32_STATE(timerThread));
+
 	free(WIN32_STATE(eventBuffer));
 }
 

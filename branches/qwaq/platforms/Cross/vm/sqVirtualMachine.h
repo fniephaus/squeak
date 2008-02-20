@@ -257,30 +257,6 @@ typedef struct ObjVirtualMachine {
 extern struct ObjVirtualMachine * _objInterpreterProxy;
 typedef void (*AttachedStateFn)(INTERPRETER_ARG);
 
-/* VM events typedefs */
-
-struct vmEvent;
-typedef sqInt (*eventFnPtr)(struct Interpreter*, struct vmEvent*);
-
-/* Minimum event payload just a function pointer which should be called by event handler
-** any other payload can be added by 'subclassing' this struct
-*/
-typedef struct vmEvent {
-	struct vmEvent * volatile next;
-	eventFnPtr fn;
-} vmEvent;
-
-typedef struct vmEventQueue {
-	struct vmEvent * volatile tail;	
-	struct vmEvent head;
-} vmEventQueue;
-
-/* this one used quite often */
-typedef struct vmSignalSemaphoreEvent {
-	struct vmEvent header;
-	int semaphoreIndex;
-} vmSignalSemaphoreEvent;
-
 #endif
 extern struct VirtualMachine * _interpreterProxy;
 
