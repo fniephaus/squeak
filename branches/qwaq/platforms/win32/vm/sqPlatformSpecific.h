@@ -73,8 +73,10 @@ extern int win32stateId;
 
 typedef struct Win32AttachedState {
 	HANDLE wakeUpEvent;
-	HANDLE delayTimer;
 	HANDLE timerThread;
+
+	HANDLE sleepEvent;
+	DWORD delayTick;
 
 	vmEvent ioProcessEventsEvt;
 	vmEvent ioSignalDelayEvent;

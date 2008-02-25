@@ -14,12 +14,6 @@
 #include <windows.h>
 #include "sq.h"
 
-#ifdef DEBUG
-#define dprintf(what) printf what
-#else
-#define dprintf(what)
-#endif
-
 /*****************************************************************************
   String conversions: Unicode / Ansi / Squeak
   NOTES: 

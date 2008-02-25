@@ -18,11 +18,7 @@
 
 extern HWND stWindow;
 
-#if 0
-#define DPRINTF(x) printf x
-#else
-#define DPRINTF(x)
-#endif
+#define DPRINTF(x) dprintf(x)
 
 int sqSecFileAccessCallback(void *function) {
 #ifndef _MSC_VER

@@ -23,13 +23,6 @@ typedef struct {
 
 #include "sqNamedPrims.h"
 
-#ifdef DEBUG
-
-#define dprintf(what) printf what
-#else
-#define dprintf(what)
-#endif
-
 typedef struct ModuleEntry {
 	struct ModuleEntry *next;
 	void *handle;
@@ -207,7 +200,7 @@ static int callInitializersIn(ModuleEntry *module)
 			okay = ((sqInt (*) (struct VirtualMachine*))init1)(sqGetInterpreterProxy());
 			if (!okay)
 			{
-				dprintf(("ERROR: setObjInterpreter() returned false\n"));
+				dprintf(("ERROR: setInterpreter() returned false\n"));
 				return 0;
 			}
 		}

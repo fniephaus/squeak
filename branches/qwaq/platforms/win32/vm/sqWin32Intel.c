@@ -21,8 +21,16 @@
 #include "sq.h"
 #include "sqWin32Args.h"
 
+#include <Mmsystem.h>
+
+#ifndef TIME_KILL_SYNCHRONOUS   
+	#define TIME_KILL_SYNCHRONOUS   0x0100  
+#endif
+
+static UINT timerRes;  // minimal timer resolution in milliseconds
 extern TCHAR squeakIniName[];
 char startupImageName[MAX_PATH+1];
+
 
 /* Import from sqWin32Alloc.c */
 LONG CALLBACK sqExceptionFilter(LPEXCEPTION_POINTERS exp);
@@ -854,6 +862,8 @@ void __cdecl Cleanup(void)
 #ifndef NO_PLUGIN_SUPPORT
   pluginExit();
 #endif
+  timeEndPeriod(timerRes); 
+
   /* tricky ... we have no systray icon when running
      headfull or when running as service on NT */
   if(fHeadlessImage && (!fRunService || fWindows95))
@@ -943,6 +953,8 @@ int findEmbeddedImage(void) { return 0; }
 
 /* Win32 per-interpreter attached state initialization/finalization functions */
 int win32stateId = 0;
+static int usePerfCounter = 0; // use performance counters
+LONGLONG counter_freq;
 
 /****************************************************************************/
 /*                        threadedInterpretFn                               */
@@ -952,17 +964,26 @@ DWORD WINAPI threadedInterpretFn(void * param)
 	struct Interpreter * intr = (struct Interpreter *) param;
 	DECL_WIN32_STATE();
 	MSG msg;
+//	int xx = 0;
 
 	/* this will force windows to create message queue for our thread */
 	PeekMessage( &msg, 0, WM_USER,WM_USER, PM_NOREMOVE);
 
-	printf("New interpreter instance %x is about to start!\n", param); fflush(0);
+	dprintf(("New interpreter instance %x is about to start!\n", param));
 
 	setInterpreterThread(intr, ioGetCurrentThread());
 
-	printf("Initializing attached states...\n"); fflush(0);
-	initializeAttachedStates(intr);
-	printf("...done\n"); fflush(0);
+	dprintf(("Initializing attached states...\n"));
+	/* if this is first interpreter instance we should call initializeAllNewAttachedStates() */
+	if (intr == MAIN_VM)
+	{
+		initializeAllNewAttachedStates();
+	}
+	else
+	{
+		initializeAttachedStates(intr);
+	}
+	dprintf(("...done\n"));
 
 	ioGetSecureUserDirectory();
 
@@ -975,10 +996,16 @@ DWORD WINAPI threadedInterpretFn(void * param)
 	while (1)
 	{
 		interpret(intr);
+//		dprintf(("Handling events %d\n",++xx));
+
+		// give a chance other threads to do something
+		unlockInterpreter(intr);
+//		SwitchToThread();
+		lockInterpreter(intr);
 		handleEvents(intr);
 	}
 
-	printf("Interpreter %x thread just exited!\n", param); fflush(0);
+	dprintf(("Interpreter %x thread just exited!\n", param));
 }
 
 
@@ -987,16 +1014,44 @@ void * ioGetThreadedInterpretFunctionPointer()
 	return (void*)threadedInterpretFn;
 }
 
+DWORD millisecondsInterval(LONGLONG counterInterval)
+{
+	return (DWORD) (counterInterval * 1000 / counter_freq);
+}
+
+int ioMSecs()
+{
+  LONGLONG res;
+  /* Make sure the value fits into Squeak SmallIntegers */
+#ifdef _WIN32_WCE
+  return timeGetTime() & 0x3FFFFFFF;
+#else
+  if (usePerfCounter)
+  {
+	QueryPerformanceCounter((LARGE_INTEGER*)&res);
+	return millisecondsInterval(res) & 0x3FFFFFFF;
+  }
+  else
+    return GetTickCount() &0x3FFFFFFF;
+#endif
+}
+
+
 /* Note: ioRelinquishProcessorForMicroseconds has *micro*seconds  as argument*/
 int ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA int microSeconds)
 {
   /* wake us up if something happens */
   DECL_WIN32_STATE();
   DWORD waitResult;
-  ResetEvent(WIN32_STATE(wakeUpEvent));
+  HANDLE event;
 
-  waitResult = MsgWaitForMultipleObjects(1, &WIN32_STATE(wakeUpEvent), FALSE,
+  event = WIN32_STATE(wakeUpEvent);
+  ResetEvent(event);
+
+  unlockInterpreter(INTERPRETER_PARAM);
+  waitResult = MsgWaitForMultipleObjects(1, &event, FALSE,
 			    microSeconds / 1000, QS_ALLINPUT);
+  lockInterpreter(INTERPRETER_PARAM);
 
   if (waitResult == WAIT_OBJECT_0 + 1) // return from wait caused by user input
   {
@@ -1011,82 +1066,169 @@ sqInt ioWakeUp(INTERPRETER_ARG)
   SetEvent(WIN32_STATE(wakeUpEvent));
 };
 
-
 sqInt ioProcessEventsHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
 {
-	ioProcessEvents(INTERPRETER_PARAM);
+#ifdef DEBUG
+	DECL_WIN32_STATE();
+	if (event != &WIN32_STATE(ioProcessEventsEvt))
+	{
+		error(INTERPRETER_PARAM_COMMA "This cannot happen.");
+	}
+#endif
 	event->fn = 0; /* event should == &ioProcessEventsEvt in win32 state */
+	ioProcessEvents(INTERPRETER_PARAM);
 }
+
 
 sqInt ioSignalDelayEventHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
 {
+#ifdef DEBUG
+	DECL_WIN32_STATE();
+	if (event != &WIN32_STATE(ioSignalDelayEvent))
+	{
+		error(INTERPRETER_PARAM_COMMA "This cannot happen.");
+	}
+#endif
+	event->fn = 0; /* event should == &ioSignalDelayEvent in win32 state */
 	signalTimerSemaphore(INTERPRETER_PARAM);
+}
+
+sqInt dummyHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
+{
 	event->fn = 0; /* event should == &ioSignalDelayEvent in win32 state */
 }
 
-void ioScheduleTimerSemaphoreSignalAfter(INTERPRETER_ARG_COMMA int afterMilliseconds)
+void ioScheduleTimerSemaphoreSignalAt(INTERPRETER_ARG_COMMA int atMilliseconds)
 {
 	DECL_WIN32_STATE();
-	LARGE_INTEGER timerDueTime;
 
-	// 1 means 100 nanoseconds, negative means relative time
-	timerDueTime.QuadPart = - (afterMilliseconds * (1000000 / 100));   
+	WIN32_STATE(delayTick) = atMilliseconds;
 
-	SetWaitableTimer(WIN32_STATE(delayTimer), &timerDueTime,
-		0, // signal only once
-		NULL, NULL,	FALSE);
+	if (WIN32_STATE(ioSignalDelayEvent).fn != 0) // check if delay signaling is already put in events
+	{
+		WIN32_STATE(ioSignalDelayEvent).fn = dummyHandler;
+	}
+	PulseEvent(WIN32_STATE(sleepEvent)); 
+	// give a chance timerRoutine to sync with delay
+	SwitchToThread();
 }
 
 DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 { 	
-/* This parameter is the milliseconds interval, by which interpreter should unconditionaly interrupt to check
-for user input */
+// This parameter is the milliseconds interval, by which interpreter should unconditionaly interrupt to check
+// for user input 
+
 #define INPUT_CHECK_PERIOD 20
 
-	DWORD waitResult;
+	DWORD currentTick, newTick;
+	DWORD sleepTime;
+	int timeLeft = -1;
+
 	DECL_WIN32_STATE();
 //	static int xx = 0;
 	WIN32_STATE(ioProcessEventsEvt).fn = 0;
 	WIN32_STATE(ioSignalDelayEvent).fn = 0;
 
+	currentTick = ioMSecs();
+	sleepTime = INPUT_CHECK_PERIOD;
 	while (1)
 	{
-		waitResult = WaitForSingleObject(WIN32_STATE(delayTimer), INPUT_CHECK_PERIOD);
-		switch (waitResult)
+		WaitForSingleObject(WIN32_STATE(sleepEvent), sleepTime);
+		if (WIN32_STATE(delayTick))
 		{
-			case WAIT_OBJECT_0:
-				// post signal delay semaphore event
+			timeLeft = WIN32_STATE(delayTick);
+			WIN32_STATE(delayTick) = 0;
+			// new delay is set, recalculate time left
+
+			// check for rare case:
+			// =*==*==*==================================*========
+			//        ^ counter value when setting delay 
+			//                                           ^ current counter value(wrapped)
+			//     ^ counter max value
+			//  ^ resuling delay value
+
+			newTick = ioMSecs();
+			if (newTick < currentTick && timeLeft > currentTick) // counter wrapped
+			{
+				timeLeft = timeLeft - 0x3FFFFFFF - newTick;
+			} else
+			{
+				timeLeft = timeLeft - newTick;
+			}
+			currentTick = newTick;
+
+			if (timeLeft <= 0)
+			{
+//				dprintf(("Signaling asap\n"));
+				// signal delay semaphore
 				if (WIN32_STATE(ioSignalDelayEvent).fn == 0)
 				{
 					WIN32_STATE(ioSignalDelayEvent).fn = ioSignalDelayEventHandler;
 					enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioSignalDelayEvent));
 				}
-				ioWakeUp(INTERPRETER_PARAM); // be sure we not sleeping
-			case WAIT_TIMEOUT:
-				// post ioProcessEvents event
-				if (WIN32_STATE(ioProcessEventsEvt).fn == 0)
+				else if (WIN32_STATE(ioSignalDelayEvent).fn == dummyHandler)
 				{
-					WIN32_STATE(ioProcessEventsEvt).fn = ioProcessEventsHandler;
-					enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioProcessEventsEvt));
-						// no reason to wake up interpreter here, because it will automatically wake up
-						// if there any input event posted by windows 
+					timeLeft = 1;
 				}
-				break;
+				ioWakeUp(INTERPRETER_PARAM); // make sure we not sleeping
+			}
 		}
+		else
+		if (timeLeft > 0)
+		{
+			newTick = ioMSecs();
+			if (newTick < currentTick) // counter is wrapped
+			{
+				timeLeft -= (0x3FFFFFFF - currentTick + newTick);
+			} else
+			{
+				timeLeft -= newTick - currentTick;
+			}
+
+			currentTick = newTick;
+			if (timeLeft <= 0)
+			{
+				// signal delay semaphore
+				if (WIN32_STATE(ioSignalDelayEvent).fn == 0)
+				{
+					WIN32_STATE(ioSignalDelayEvent).fn = ioSignalDelayEventHandler;
+					enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioSignalDelayEvent));
+				} 
+				else if (WIN32_STATE(ioSignalDelayEvent).fn == dummyHandler)
+				{
+					timeLeft = 1;
+				}
+				ioWakeUp(INTERPRETER_PARAM); // make sure we not sleeping
+			}
+		}
+
+		if (WIN32_STATE(ioProcessEventsEvt).fn == 0)
+		{
+			WIN32_STATE(ioProcessEventsEvt).fn = ioProcessEventsHandler;
+			enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioProcessEventsEvt));
+		}
+		if (timeLeft > 0)
+			sleepTime = min(INPUT_CHECK_PERIOD, timeLeft);
+		else
+			sleepTime = INPUT_CHECK_PERIOD;
 	}
 }
+
 
 static void sqInitWin32State(INTERPRETER_ARG)
 {
 	DECL_WIN32_STATE();
+
+	dprintf(("Initializing win32 attached state\n"));
 	WIN32_STATE(wakeUpEvent) = CreateEvent(NULL, 1, 0, NULL);
-	WIN32_STATE(delayTimer) = CreateWaitableTimer(NULL, FALSE, NULL);
+	WIN32_STATE(sleepEvent) = CreateEvent(NULL, 1, 0, NULL);
+	WIN32_STATE(delayTick) = 0;
 	WIN32_STATE(timerThread) = CreateThread(NULL,  0, (LPTHREAD_START_ROUTINE) &timerRoutine,
 		(LPVOID) INTERPRETER_PARAM, CREATE_SUSPENDED, NULL);
 
 	/* NOTE!!! The timer thread should run at higher than normal priority,
 	to make it not depending too much on interpreter thread load */
-	SetThreadPriority( WIN32_STATE(timerThread) , THREAD_PRIORITY_HIGHEST); 
+	SetThreadPriority( WIN32_STATE(timerThread) , THREAD_PRIORITY_TIME_CRITICAL); 
 
     SetEvent(WIN32_STATE(wakeUpEvent));
 
@@ -1109,14 +1251,26 @@ static void sqInitWin32State(INTERPRETER_ARG)
 	    SetWindowSize(MAIN_VM);
 	    ioSetFullScreen(INTERPRETER_PARAM_COMMA getFullScreenFlag(MAIN_VM));
 	}
+
+//	WIN32_STATE(delaySemaphoreTimerId) = 0;
+//	WIN32_STATE(processEventsTimerId) = timeSetEvent(0, max(timerRes, 20), processEventsCallback, 
+//		(DWORD)INTERPRETER_PARAM, TIME_PERIODIC | TIME_CALLBACK_FUNCTION | TIME_KILL_SYNCHRONOUS);
 }
+
 
 static void sqFinalizeWin32State(INTERPRETER_ARG)
 {
 	DECL_WIN32_STATE();
 	CloseHandle(WIN32_STATE(wakeUpEvent));
+//	timeKillEvent(WIN32_STATE(processEventsTimerId));
+
+//	if (WIN32_STATE(delaySemaphoreTimerId) != 0) // kill old one
+//	{
+//		timeKillEvent(WIN32_STATE(delaySemaphoreTimerId));
+//	}
+
 	TerminateThread(WIN32_STATE(timerThread),0);
-	CloseHandle(WIN32_STATE(delayTimer));
+	CloseHandle(WIN32_STATE(sleepEvent));
 	CloseHandle(WIN32_STATE(timerThread));
 
 	free(WIN32_STATE(eventBuffer));
@@ -1152,6 +1306,7 @@ static vmArg args[] = {
 int sqMain(char *lpCmdLine, int nCmdShow)
 { 
   int virtualMemory;
+  TIMECAPS tc;
 
 #ifdef NO_MULTIBLE_INSTANCES    
   HANDLE hMutex;
@@ -1182,6 +1337,9 @@ int sqMain(char *lpCmdLine, int nCmdShow)
     if(!parseArguments(cmdLineA, args))
       return printUsage(1);
   }
+
+  usePerfCounter = QueryPerformanceFrequency((LARGE_INTEGER*)&counter_freq); // use high precision counter or not
+  dprintf(("usePerfCounter = %d\n",usePerfCounter ));
 
   /* a quick check if we have any argument at all */
   if(!fRunService && (*startupImageName == 0)) {
@@ -1231,6 +1389,15 @@ int sqMain(char *lpCmdLine, int nCmdShow)
   }
 
   SetupFilesAndPath();
+
+  if (timeGetDevCaps(&tc, sizeof(TIMECAPS)) != TIMERR_NOERROR) 
+  {
+	// Error; application can't continue.
+	exit(-1);
+  }
+
+  timerRes = tc.wPeriodMin;
+  timeBeginPeriod(timerRes); 
 
   /* release resources on exit */
   atexit(Cleanup);
@@ -1346,6 +1513,7 @@ int main(int argc, char ** argv)
   int nCmdShow = SW_SHOW;
   hInst = (HINSTANCE) GetModuleHandle(0);
   lpCmdLine = "";
+
 
   /* a few things which need to be done first */
   gatherSystemInfo();

@@ -672,6 +672,7 @@ sqInt ioSetWindowLabelOfSize(INTERPRETER_ARG_COMMA void* lblIndex, sqInt sz) {
 void SetupWindows(INTERPRETER_ARG)
 { WNDCLASS wc;
 
+  dprintf (("SetupWindows enter\n"));
   /* create our update region */
   updateRgn = CreateRectRgn(0,0,1,1);
 
@@ -758,6 +759,7 @@ void SetupWindows(INTERPRETER_ARG)
   /* Modify the system menu for any VM options */
   CreatePrefsMenu();
   SetWindowTitle(INTERPRETER_PARAM);
+  ShowWindow(stWindow, SW_SHOWNORMAL);
   SetForegroundWindow(stWindow);
 
 #ifndef NO_DROP
@@ -770,6 +772,8 @@ void SetupWindows(INTERPRETER_ARG)
   SetupDirectInput();
 #endif
   ioScreenSize(INTERPRETER_PARAM); /* compute new rect initially */
+
+  dprintf (("SetupWindows return. stWindow = %x \n", stWindow));
 }
 
 
@@ -1328,16 +1332,6 @@ int ioBeep(void)
   return 1;
 }
 
-int ioMSecs()
-{
-  /* Make sure the value fits into Squeak SmallIntegers */
-#ifdef _WIN32_WCE
-  return timeGetTime() & 0x3FFFFFFF;
-#else
-  return GetTickCount() &0x3FFFFFFF;
-#endif
-}
-
 /* Note: ioMicroMSecs returns *milli*seconds */
 int ioMicroMSecs(void)
 {
@@ -1351,12 +1345,13 @@ int ioProcessEvents(INTERPRETER_ARG)
   POINT mousePt;
 //  static int xx = 0;
 //  printf ("ioProcessEvents %d\n", ++xx);
-//  if (INTERPETER_PARAM != MAIN_VM)  
-//  { 
-//	while(PeekMessage(&msg,NULL,0,0,PM_NOREMOVE)) 
-//      GetMessage(&msg,NULL,0,0);
-//	return 1; 
-//  }
+
+  if (INTERPRETER_PARAM != MAIN_VM)  // omit processing events for non-main interpreter
+  { 
+	while(PeekMessage(&msg,NULL,0,0,PM_NOREMOVE)) 
+      GetMessage(&msg,NULL,0,0);
+	return 1; 
+  }
 
   if(fRunService && !fWindows95) return 1;
   /* WinCE doesn't retrieve WM_PAINTs from the queue with PeekMessage,
@@ -1425,6 +1420,7 @@ int ioScreenSize(INTERPRETER_ARG)
 	setSavedWindowSize(INTERPRETER_PARAM, result);
   }
   /* width is high 16 bits; height is low 16 bits */
+//  dprintf(("ioScreenSize returns %d x %d, stWindow visible = %d \n", result >> 16, result & 0xFFFF, IsWindowVisible(stWindow)));
   return result;
 }
 
@@ -1527,11 +1523,13 @@ int ioSetCursor(INTERPRETER_ARG_COMMA int cursorBitsIndex, int offsetX, int offs
 int ioSetFullScreen(INTERPRETER_ARG_COMMA int fullScreen)
 { static int wasFullScreen = 0;
 
+dprintf(("ioSetFullScreen %d\n", fullScreen));
   if(!IsWindow(stWindow)) return 1;
   if(wasFullScreen == fullScreen) return 1;
   /* NOTE: No modifications if the window is not currently
            visible, else we'll have a number of strange effects ... */
   if(!IsWindowVisible(stWindow)) return 1;
+dprintf(("ioSetFullScreen , window visible & was not in fullscreen\n"));
   if(fullScreen)
     {
 #if !defined(_WIN32_WCE)
@@ -1556,7 +1554,7 @@ int ioSetFullScreen(INTERPRETER_ARG_COMMA int fullScreen)
 #else /* !defined(_WIN32_WCE) */
       ShowWindow(stWindow,SW_SHOWNORMAL);
 #endif /* !defined(_WIN32_WCE) */
-      setFullScreenFlag(MAIN_VM_COMMA 1);
+      setFullScreenFlag(INTERPRETER_PARAM, 1);
     }
   else
     {
@@ -1573,7 +1571,7 @@ int ioSetFullScreen(INTERPRETER_ARG_COMMA int fullScreen)
       }
 #endif /* !defined(_WIN32_WCE) */
       ShowWindow(stWindow,SW_SHOWNORMAL);
-      setFullScreenFlag(MAIN_VM_COMMA 0);
+      setFullScreenFlag(INTERPRETER_PARAM, 0);
     }
   /* get us back in the foreground */
   SetForegroundWindow(stWindow);
@@ -1761,6 +1759,8 @@ int ioSetDisplayMode(INTERPRETER_ARG_COMMA int width, int height, int depth, int
   if(!IsWindowVisible(stWindow)) return 0;
 
 #ifdef USE_DIRECT_X
+  dprintf(("USE_DIRECT_X\n"));
+
   if(wasFullscreen && !fullscreenFlag) {
     /* Some weird DirectX bug - if exclusive mode has been set for
        the main window you'll never get out of it. That's why we

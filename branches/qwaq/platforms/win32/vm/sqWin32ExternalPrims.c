@@ -17,12 +17,6 @@
 #include <assert.h>
 #include "sq.h"
 
-#ifdef DEBUG
-#define dprintf printf
-#else
-#define dprintf(what)
-#endif
-
 HANDLE tryLoading(TCHAR *prefix, TCHAR *baseName, TCHAR *postfix)
 {
   TCHAR libName[300];
