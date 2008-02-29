@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(3 December 2007 4:21:24 pm) */
+/* Automatically generated from Squeak on an Array(29 February 2008 9:44:42 am) */
 
 #include <math.h>
 #include <stdio.h>
@@ -143,9 +143,9 @@ static DBusMessage* message;
 static DBusMessageIter messageIter[DBUS_MAXIMUM_TYPE_RECURSION_DEPTH];
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DBusPlugin 3 December 2007 (i)"
+	"DBusPlugin 29 February 2008 (i)"
 #else
-	"DBusPlugin 3 December 2007 (e)"
+	"DBusPlugin 29 February 2008 (e)"
 #endif
 ;
 static DBusMessage* writeMessage;
@@ -538,7 +538,7 @@ static sqInt iterOpenContainercontains(sqInt t, char* s) {
 }
 
 static sqInt msg(char * s) {
-	fprintf(stderr, "\n%s: %s", moduleName, s);
+	fprintf(stderr, "%s: %s\n", moduleName, s);
 }
 
 
@@ -1205,11 +1205,15 @@ EXPORT(sqInt) primitiveDBusCreateMessageFrom(void) {
 		return null;
 	}
 	/* begin fetchString:ofObject: */
-	p = interpreterProxy->fetchPointerofObject(1, m);
-	path = stringOopToChar(p);
-	/* begin fetchString:ofObject: */
-	p1 = interpreterProxy->fetchPointerofObject(2, m);
-	interface = stringOopToChar(p1);
+	p1 = interpreterProxy->fetchPointerofObject(1, m);
+	path = stringOopToChar(p1);
+	if ((interpreterProxy->fetchPointerofObject(2, m)) == (interpreterProxy->nilObject())) {
+		interface = null;
+	} else {
+		/* begin fetchString:ofObject: */
+		p = interpreterProxy->fetchPointerofObject(2, m);
+		interface = stringOopToChar(p);
+	}
 	/* begin fetchString:ofObject: */
 	p2 = interpreterProxy->fetchPointerofObject(3, m);
 	method = stringOopToChar(p2);
