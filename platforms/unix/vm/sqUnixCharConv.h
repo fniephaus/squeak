@@ -50,5 +50,10 @@ extern int sq2uxPath(char *from, int fromLen, char *to, int toLen, int term);
 extern int ux2sqPath(char *from, int fromLen, char *to, int toLen, int term);
 extern int sq2uxUTF8(char *from, int fromLen, char *to, int toLen, int term);
 extern int ux2sqUTF8(char *from, int fromLen, char *to, int toLen, int term);
+extern void *localeEncoding;
+extern void freeEncoding(void *encoding);
+extern void setNEncoding(void **encoding, char *rawName, int n);
+extern void setLocaleEncoding(char *locale);
+extern int ux2sqXWin(char *from, int fromLen, char *to, int toLen, int term);
 
 #endif /* __sqUnixCharConv_h */
