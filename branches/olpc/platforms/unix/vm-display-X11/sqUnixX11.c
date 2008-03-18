@@ -74,6 +74,8 @@
 #define SQ_FORM_FILENAME	"squeak-form.ppm"
 #undef	FULL_UPDATE_ON_EXPOSE
 
+#undef	DEBUG_FOCUS
+#undef	DEBUG_XIM
 #undef	DEBUG_CONV
 #undef	DEBUG_EVENTS
 #undef	DEBUG_SELECTIONS
@@ -245,6 +247,54 @@ static int x2sqKeyPlain(XKeyEvent *xevt, KeySym *symbolic);
 static int x2sqKeyInput(XKeyEvent *xevt, KeySym *symbolic);
 
 static x2sqKey_t x2sqKey= x2sqKeyPlain;
+static int multi_key_pressed = 0;
+static KeySym multi_key_buffer = 0;
+
+// # define INIT_INPUT_WHEN_KEY_PRESSED
+// # define INIT_INPUT_WHEN_FOCUSED_IN
+// # define INIT_INPUT_WHEN_MAPPED
+
+// # define USE_XICFONT_OPTION
+// # define USE_XICFONT_RESOURCE
+// # define USE_XICFONT_DEFAULT
+
+# if defined(INIT_INPUT_WHEN_KEY_PRESSED)
+#  undef INIT_INPUT_WHEN_FOCUSED_IN
+#  undef INIT_INPUT_WHEN_MAPPED
+# elif defined(INIT_INPUT_WHEN_FOCUSED_IN)
+#  undef INIT_INPUT_WHEN_MAPPED
+# elif !defined(INIT_INPUT_WHEN_MAPPED)
+#  define INIT_INPUT_WHEN_MAPPED
+# endif
+
+# if defined(USE_XICFONT_RESOURCE)
+#  include <X11/Xresource.h>
+#  define xicFontResClass "XIC.FontSet"
+#  define xicFontResName  "xic.fontSet"
+# elif defined(USE_XICFONT_DEFAULT)
+#  define xicFontDefRes  "fontSet"
+# endif
+# define  xicDefaultFont  "-*-*-medium-r-normal--*"
+
+# if defined(USE_XICFONT_OPTION)
+static char    *inputFontStr= NULL;
+# endif
+static XFontSet inputFont= NULL;	
+static XIMStyle inputStyle;
+static XIC      inputContext= 0;
+static XPoint   inputSpot= {0, 0};
+
+static unsigned char  inputString[128];
+static unsigned char *inputBuf= inputString;
+static unsigned char *pendingKey= NULL;
+static int	      inputCount= 0;
+// static int	      inputSymbol= 0; 
+
+static void initInputI18n();
+# if !defined(INIT_INPUT_WHEN_KEY_PRESSED)
+static void initInputNone();
+static void (*initInput)()= initInputNone;
+# endif
 
 #define inBrowser()	(-1 != browserPipes[0])
 
@@ -281,11 +331,11 @@ int inModalLoop= 0, dpyPitch= 0, dpyPixels= 0;
 
 /* we are interested in these events...
  */
-#define	EVENTMASK	ButtonPressMask | ButtonReleaseMask | \
-			KeyPressMask | KeyReleaseMask | PointerMotionMask | \
-			ExposureMask | VisibilityChangeMask
-
-#define	WM_EVENTMASK	StructureNotifyMask
+#  define EVENTMASK   ButtonPressMask | ButtonReleaseMask | \
+                      KeyPressMask | KeyReleaseMask | PointerMotionMask | \
+                      ExposureMask | VisibilityChangeMask | FocusChangeMask
+                      // LeaveWindowMask | EnterWindowMask
+#  define WM_EVENTMASK  StructureNotifyMask | FocusChangeMask 
 
 /* largest X selection that we will attempt to handle (bytes) */
 #define MAX_SELECTION_SIZE	100*1024
@@ -670,19 +720,28 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
   else if (xaCompoundText == requestEv->target)
     {
       /* COMPOUND_TEXT is handled here for older clients that don't handle UTF-8 */
-      int	    len=    strlen(stPrimarySelection);
-      char	   *buf=    (char *)malloc(len * 3 + 1);
-      XTextProperty textProperty;
-      char	   *list[2];
+      XTextProperty  textProperty;
+      char          *list[]= {stPrimarySelection, NULL};
 
-      list[0]= buf;
-      list[1]= NULL;
+      if (localeEncoding == sqTextEncoding)
+	xError= XmbTextListToTextProperty(requestEv->display, list, 1,
+					  XCompoundTextStyle, &textProperty);
+#    if defined(X_HAVE_UTF8_STRING)
+      else if (uxUTF8Encoding == sqTextEncoding)
+	xError= Xutf8TextListToTextProperty(requestEv->display, list, 1,
+					    XCompoundTextStyle, &textProperty);
+#    endif
+      else
+	{
+	  int	len= strlen(stPrimarySelection);
+	  char *buf= (char *)malloc(len * 3 + 1);
 
-      /* convert our locale text to CTEXT */
-      sq2uxText(stPrimarySelection, len, buf, len * 3 + 1, 1);
-      xError= XmbTextListToTextProperty(requestEv->display, list, 1,
-                                        XCompoundTextStyle, &textProperty);
-      free(buf);
+	  list[0]= buf;
+	  sq2uxText(stPrimarySelection, len, buf, len * 3 + 1, 1);
+	  xError= XmbTextListToTextProperty(requestEv->display, list, 1,
+					    XCompoundTextStyle, &textProperty);
+	  free(buf);
+	}
 
       if (Success == xError)
         {
@@ -811,7 +870,7 @@ static char *getSelectionFrom(Atom source)
   size_t bytes= 0;
 
   /* request the selection */
-  Atom target= textEncodingUTF8 ? xaUTF8String : XA_STRING;
+  Atom target= textEncodingUTF8 ? xaUTF8String : (localeEncoding ? xaCompoundText : XA_STRING);
 
   data= getSelectionData(source, target, &bytes);
 
@@ -823,6 +882,66 @@ static char *getSelectionFrom(Atom source)
     {
       if (textEncodingUTF8)
 	bytes= ux2sqUTF8(data, bytes, stPrimarySelection, bytes + 1, 1);
+      else if (localeEncoding)
+	{
+	  char        **strList= NULL;
+	  int           i, n, s= 0;
+	  XTextProperty textProperty;
+
+	  textProperty.encoding= xaCompoundText;
+	  textProperty.format=   8;
+	  textProperty.value=    data;
+	  textProperty.nitems=   bytes;
+# if defined(X_HAVE_UTF8_STRING)
+	  if (uxUTF8Encoding == sqTextEncoding)
+	    Xutf8TextPropertyToTextList(stDisplay, &textProperty,
+					&strList, &n);
+	  else
+# endif
+	    XmbTextPropertyToTextList(stDisplay, &textProperty,
+				      &strList, &n);
+	  for (i= 0; i < n; i ++)
+	    s+= strlen(strList[i]);
+	  if (s > bytes)
+	    {
+	      bytes= min(s, MAX_SELECTION_SIZE - 1);
+	      if (! allocateSelectionBuffer(bytes))
+		{
+#                if defined(DEBUG_SELECTIONS)
+		  fprintf(stderr, "no bytes\n");
+#                endif    
+		  goto nobytes;
+		}
+	    }
+# if defined(X_HAVE_UTF8_STRING)
+	  if (localeEncoding == sqTextEncoding ||
+	      uxUTF8Encoding == sqTextEncoding)
+#  if 0
+	    ; /* for alignment */
+#  endif
+# else
+	  if (localeEncoding == sqTextEncoding)
+# endif
+	    {
+	      strcpy(stPrimarySelection, strList[0]);
+	      for (i= 1; i < n; i ++)
+		strcat(stPrimarySelection, strList[i]);
+	    }
+	  else
+	    {
+	      char *to= stPrimarySelection;
+	      for (i= 0; i < n - 1; i ++)
+		{
+		  s= strlen(strList[i]);
+		  s= ux2sqText(strList[i], s, to, bytes, 0);
+		  bytes-= s; to+= s;
+		}
+	      s= strlen(strList[n - 1]);
+	      s= ux2sqText(strList[n - 1], s, to, bytes + 1, 1);
+	    }
+	  if (strList)
+	    XFreeStringList(strList);
+	}
       else
 	bytes= ux2sqText(data, bytes, stPrimarySelection, bytes + 1, 1);
       /* wrong type check was omitted */
@@ -833,6 +952,7 @@ static char *getSelectionFrom(Atom source)
       fprintf(stderr, "no bytes\n");
 #     endif
     }
+ nobytes:
 #  if defined(DEBUG_SELECTIONS)
   fprintf(stderr, "selection=");
   dumpSelectionData(stPrimarySelection, bytes, 1);
@@ -1239,61 +1359,466 @@ int recode(int charCode)
   return charCode;
 }
 
+char *setLocale(char *localeName, size_t len)
+{
+  char  name[len + 1];
+  char *locale;
+  if (inputContext)
+    {
+      XIM im= XIMOfIC(inputContext);
+      XDestroyIC(inputContext);
+      if (im) XCloseIM(im);
+    }
+  strncpy(name, localeName, len);
+  name[len] = '\0';
+  if ((locale= setlocale(LC_CTYPE, name)))
+    {
+      setLocaleEncoding(locale);
+      initInputI18n();
+      return locale;
+    }
+  else
+    {
+      if (localeEncoding)
+	{
+	  freeEncoding(localeEncoding);
+	  localeEncoding= NULL;
+	}
+      inputContext= 0;
+      x2sqKey= x2sqKeyPlain;
+      if (len)
+	fprintf(stderr, "setlocale() failed for %s\n", name);
+      else
+ 	fprintf(stderr, "setlocale() failed (check values of LC_CTYPE, LANG and LC_ALL)\n");
+      return NULL;
+    }
+}
+
+int setCompositionFocus(int focus)
+{
+  if (!inputContext)
+    return 0;
+  if (focus)
+    XSetICFocus(inputContext);
+  else
+    XUnsetICFocus(inputContext);
+  return 1;
+}
+
+int setCompositionWindowPosition(int x, int y)
+{
+  int ret= 1;
+  inputSpot.x= x; inputSpot.y= y;
+  if (inputContext && (inputStyle & XIMPreeditPosition))
+    {
+      XVaNestedList vlist= XVaCreateNestedList(0,
+					       XNSpotLocation, &inputSpot,
+					       NULL);
+#    if defined(DEBUG_XIM)
+      fprintf(stderr, "Set Preedit Spot %d %d\n", x, y);
+#    endif
+      if (XSetICValues(inputContext, XNPreeditAttributes, vlist, NULL))
+	{
+	  fprintf(stderr, "Failed to Set Preedit Spot\n");
+	  ret= 0;
+	}
+      XFree(vlist);
+    }
+  return ret;
+}
+
+static void setInputContextArea()
+{
+    XWindowAttributes wa;
+    XVaNestedList     vlist;
+    XRectangle        pa, sa, *rect;
+    if (!inputContext || (inputStyle & XIMPreeditPosition))
+      return;
+    if (inputStyle & XIMPreeditArea)
+      {
+	XGetWindowAttributes(stDisplay, stWindow, &wa);
+#      if defined(DEBUG_XIM)
+	fprintf(stderr, "window geometry %d %d %d %d %d\n",
+		wa.x, wa.y, wa.width, wa.height, wa.border_width);
+#      endif
+	wa.width-= wa.border_width * 2;
+	wa.height-= wa.border_width * 2;
+	vlist= XVaCreateNestedList(0, XNAreaNeeded, &rect, NULL);
+	if (XGetICValues(inputContext, XNPreeditAttributes, vlist, NULL))
+	  {
+	    fprintf(stderr, "Failed to Get Needed PreeditArea\n");
+	    pa.x= pa.y= pa.width= pa.height= 0;
+	  }
+	else
+	  {
+	    pa= *rect;
+#          if defined(DEBUG_XIM)
+	    fprintf(stderr, "PreeditArea needs %d %d %u %u\n",
+		    pa.x, pa.y, pa.width, pa.height);
+#          endif
+	  }
+	XFree(vlist);
+	if (inputStyle & XIMStatusArea)
+	  {
+	    static int minWidth= 0, minHeight= 0;
+	    static XFontSetExtents *extents= NULL;
+	    if (!extents) 
+	      {
+		extents= XExtentsOfFontSet(inputFont);
+		minWidth= extents->max_logical_extent.width * 3;
+		minHeight= extents->max_logical_extent.height
+		  - extents->max_logical_extent.y;
+	      }
+	    vlist= XVaCreateNestedList(0, XNAreaNeeded, &rect, NULL);
+	    if (XGetICValues(inputContext, XNStatusAttributes, vlist, NULL))
+	      {
+		fprintf(stderr, "Failed to Get Needed StatusArea\n");
+		sa.x= sa.y= sa.width= sa.height= 0;
+	      }
+	    else
+	      {
+		sa= *rect;
+#              if defined(DEBUG_XIM)
+		fprintf(stderr, "StatusArea needs %d %d %u %u\n",
+			sa.x, sa.y, sa.width, sa.height);
+#              endif
+	      }
+	    XFree(vlist);
+	    if (minHeight > sa.height)
+	      pa.height= sa.height= minHeight;
+	    if (minWidth > sa.width)
+	      sa.width= minWidth;
+	    wa.width-= sa.width;
+	    if (wa.width > pa.width)
+	      pa.width= wa.width;
+	    sa.x= wa.border_width;
+	    pa.x= sa.x + sa.width;
+	    sa.y= pa.y= wa.height + wa.border_width - sa.height;
+	    vlist= XVaCreateNestedList(0, XNArea, &sa, NULL);
+	    if (XSetICValues(inputContext, XNStatusAttributes, vlist, NULL))
+	      {
+		fprintf(stderr, "Failed to Set StatusArea %d %d %u %u\n",
+			sa.x, sa.y, sa.width, sa.height);
+	      }
+#          if defined(DEBUG_XIM)
+	    else
+	      {
+		XFree(vlist);
+		vlist= XVaCreateNestedList(0, XNArea, &rect, NULL);
+		XGetICValues(inputContext, XNStatusAttributes, vlist, NULL);
+		fprintf(stderr, "Setted StatusArea %d %d %u %u\n",
+			rect->x, rect->y, rect->width, rect->height);
+	      }
+#          endif
+	    XFree(vlist);
+	  }
+	else
+	  {
+	    pa.x= wa.border_width;
+	    pa.y= wa.border_width;
+	    if (wa.width > pa.width)
+	      pa.width= wa.width;
+	    if (wa.height > pa.height)
+	      pa.height= wa.height;
+	  }
+	vlist= XVaCreateNestedList(0, XNArea, &pa, NULL);
+	if (XSetICValues(inputContext, XNPreeditAttributes, vlist, NULL))
+	  {
+	    fprintf(stderr, "Failed to Set PreeditArea %d %d %u %u\n",
+		    pa.x, pa.y, pa.width, pa.height);
+	  }
+	XFree(vlist);
+    }
+}
+
+# if !defined(INIT_INPUT_WHEN_KEY_PRESSED)
+static void initInputNone()
+{
+  /* do nothing */
+}
+# endif
+
+static void initInputI18n()
+{
+  XIM im;
+# if !defined(INIT_INPUT_WHEN_KEY_PRESSED)
+  initInput= initInputNone;
+# endif
+  x2sqKey= x2sqKeyPlain;
+  if (XSupportsLocale() != True)
+    fprintf(stderr, "XSupportsLocale() failed.\n");
+  else if (!XSetLocaleModifiers(""))
+    fprintf(stderr, "XSetLocaleModifiers() failed.\n");
+  else if (!(im= XOpenIM(stDisplay, 0, 0, 0)))
+    fprintf(stderr, "XOpenIM() failed\n");
+  else
+    {
+      static const XIMStyle pstyle[]=
+	{
+	  XIMPreeditPosition,
+	  XIMPreeditArea,
+	  XIMPreeditNothing,
+	  XIMPreeditNone
+	};
+      static const XIMStyle sstyle[]=
+	{
+	  XIMStatusArea,
+	  XIMStatusNothing,
+	  XIMStatusNone,
+	};
+      XIMStyles      *styles;
+      int             i, j, k;
+      XVaNestedList   vlist;
+# if defined(DEBUG_XIM)
+      static const char const *stylename[]=
+	{ "Position", "Area", "Nothing", "None" };
+      char *locale= XLocaleOfIM(im);
+      fprintf(stderr, "Locale of im is %s\n", locale); 
+# endif
+      XGetIMValues(im, XNQueryInputStyle, &styles, NULL);
+      for (i= 0; i < styles->count_styles; i ++)
+	for (j= 0; j < sizeof(pstyle)/sizeof(XIMStyle); j ++)
+	  for (k= 0; k < sizeof(pstyle)/sizeof(XIMStyle); k ++)
+	    {
+	      inputStyle= (pstyle[j] | sstyle[k]);
+	      if (styles->supported_styles[i] == inputStyle)
+		goto foundStyle;
+	    }
+      fprintf(stderr, "Preffered XIMStyles are not Supported.\n");
+      return;
+
+    foundStyle:
+# if defined(DEBUG_XIM)
+      fprintf(stderr, "XIMStyle is Preedit%s and Status%s\n",
+		  stylename[j], stylename[k + 1]);
+# endif
+      if (!inputFont)
+	{
+	  char      **misscharset, *tmpstr;
+# if defined(USE_XICFONT_RESOURCE)
+	  XrmDatabase db;
+# endif
+# if !defined(USE_XICFONT_OPTION)
+#  if defined(USE_XICFONT_RESOURCE) || defined(USE_XICFONT_DEFAULT)
+	  char       *inputFontStr;
+#  else
+	  static char const *inputFontStr= xicDefaultFont;
+#  endif
+# else
+	  if (!inputFontStr)
+# endif
+	    {
+# if defined(USE_XICFONT_RESOURCE)
+	      static int rmInitialized= 0;
+
+	      inputFontStr= xicDefaultFont;
+
+	      if (!rmInitialized)
+		{
+		  XrmInitialize();
+		  rmInitialized= 1;
+		}
+	      if ((tmpstr= XResourceManagerString(stDisplay)))
+		{
+		  XrmValue val;
+		  char    *type;
+		  db= XrmGetStringDatabase(tmpstr);
+		  if (XrmGetResource(db,
+				     xResName  "." xicFontResName,
+				     xResClass "." xicFontResClass,
+				     &type, &val))
+		    inputFontStr= (char*)val.addr;
+		}
+# elif defined(USE_XICFONT_DEFAULT)
+	      inputFontStr= XGetDefault(stDisplay, xResName, xicFontDefRes);
+	      if (!inputFontStr)
+		inputFontStr= xicDefaultFont;
+# endif
+	    }
+	  inputFont= XCreateFontSet(stDisplay, inputFontStr,
+				    &misscharset, &k, &tmpstr);
+# if defined(USE_XICFONT_RESOURCE)
+	  /* if db is NULL, XrmDestroyDatabase returns immediatelly */
+	  XrmDestroyDatabase(db);
+# endif
+	  if (!inputFont)
+	    {
+	      fprintf(stderr, "XCreateFontSet() failed for \"%s\".",
+		      inputFontStr);
+	      /* XNFontSet is mandatory */
+	      return;
+	    }
+	}
+      vlist= XVaCreateNestedList(0,
+				 XNFontSet,       inputFont,
+				 XNSpotLocation, &inputSpot,
+				 NULL);
+      inputContext= XCreateIC(im,
+			      XNInputStyle,        inputStyle,
+			      XNClientWindow,      stWindow,
+			      XNFocusWindow,       stWindow,
+			      XNPreeditAttributes, vlist,
+			      XNStatusAttributes,  vlist,
+			      NULL);
+      XFree(vlist);
+      if (inputContext)
+	{
+	  unsigned int mask;
+	  XWindowAttributes xwa;
+	  XGetWindowAttributes(stDisplay, stWindow, &xwa);
+	  XGetICValues(inputContext, XNFilterEvents, &mask, NULL);
+	  XSelectInput(stDisplay, stWindow, mask | xwa.your_event_mask);
+# if defined(INIT_INPUT_WHEN_KEY_PRESSED)
+	  setInputContextArea();
+# endif
+	  x2sqKey= x2sqKeyInput;
+	}
+      else
+	fprintf(stderr, "XCreateIC() failed\n");
+    }
+}
+
+/*
+  -- lookupKeys --
+  Try to read keys into the given buffer <string> using function <lookup>,
+  if buffer-overflowed, allocate another buffer.
+  The return value is the buffer, that the caller must free
+  if <return> != <string>.
+*/
+
+static unsigned char *lookupKeys(int (*lookup)(XIC, XKeyPressedEvent*,
+					       char*, int,
+					       KeySym*, Status*),
+				 XKeyEvent *xevt,
+				 unsigned char *string, int size,
+				 int *count, KeySym *symbolic, Status *status)
+{
+  *count= lookup(inputContext, (XKeyPressedEvent *)xevt, string, size,
+		 symbolic, status);
+  if (*status == XBufferOverflow)
+    {
+      unsigned char *buf= (unsigned char*)malloc((size_t)(*count * sizeof(unsigned char)));
+      if (buf)
+	*count= lookup(inputContext, (XKeyPressedEvent *)xevt, buf, *count,
+		       symbolic, status);
+      else
+	fprintf(stderr, "lookupKeys: out of memory\n");
+      return buf;
+    }
+# if defined(DEBUG_XIM)
+  fprintf(stderr, "lookupKeys: '%s'\n", string);
+# endif 
+  return string;
+}
+
+/*
+  -- recordPendingKeys --
+  The return value is 1 if some keys are still pending.
+*/
+static int recordPendingKeys()
+{
+  if (inputCount > 0)
+    {
+      int i= iebOut - iebIn;
+      for (i= (i > 0 ? i : IEB_SIZE + i) / 4; i > 0; -- i)
+	{
+# if defined(DEBUG_XIM)
+	  fprintf(stderr, "%3d pending key %2d=0x%02x\n",
+		  inputCount, i, *pendingKey);
+# endif
+	  recordKeyboardEvent(*pendingKey, EventKeyDown, modifierState, 0);
+	  recordKeyboardEvent(*pendingKey, EventKeyChar, modifierState, 0);
+	  recordKeystroke(*pendingKey);  /* DEPRECATED */
+	  ++ pendingKey;
+	  if (-- inputCount == 0) break;
+	}
+      return 1;
+    }
+  /*
+    The inputBuf is allocated by the above lookupKeys.
+  */
+  if (inputBuf != inputString)
+    {
+      free(inputBuf);
+      inputBuf= inputString;
+    }
+  return 0;
+}
+
+static int xkeysym2ucs4(KeySym keysym);
 
 static int x2sqKeyInput(XKeyEvent *xevt, KeySym *symbolic)
 {
-  static int initialised= 0;
-  static XIM im= 0;
-  static XIC ic= 0;
   static int lastKey= -1;
 
-  if (!initialised)
+# if defined(INIT_INPUT_WHEN_KEY_PRESSED)
+  if (!inputContext)
     {
-      initialised= 1;
-      if (!setlocale(LC_CTYPE, ""))
-	{
-	  fprintf(stderr, "setlocale() failed (check values of LC_CTYPE, LANG and LC_ALL)\n");
-	  goto revertInput;
-	}
-      if (!(im= XOpenIM(stDisplay, 0, 0, 0)))
-	{
-	  fprintf(stderr, "XOpenIM() failed\n");
-	  goto revertInput;
-	}
-      else
-	{
-	  if (!(ic= XCreateIC(im, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, XNClientWindow, stWindow, NULL)))
-	    {
-	      fprintf(stderr, "XCreateIC() failed\n");
-	      goto revertInput;
-	    }
-	  else
-	    {
-	      unsigned int mask;
-	      XWindowAttributes xwa;
-	      XGetWindowAttributes(stDisplay, stWindow, &xwa);
-	      XGetICValues(ic, XNFilterEvents, &mask, NULL);
-	      mask |= xwa.your_event_mask;
-	      XSelectInput(stDisplay, stWindow, mask);
-	    }
-	}
+      initInputI18n();
+      if (!inputContext)
+	return x2sqKeyPlain(xevt, symbolic);
     }
+# endif
 
   if (KeyPress != xevt->type)
     {
       int key= lastKey;
-      lastKey= -1;;
+      lastKey= -1;
       return key;
     }
 
 #if defined(DEBUG_CONV)
-  printf("keycode %u\n", xevt->keycode);
+  fprintf(stderr, "keycode %u\n", xevt->keycode);
 #endif
 
   {
-    char string[128];	/* way too much */
     Status status;
-    int count= XmbLookupString(ic, (XKeyPressedEvent *)xevt, string, sizeof(string), symbolic, &status);
+    int i;
+    if (localeEncoding == sqTextEncoding)
+      {
+	if (!(inputBuf= lookupKeys(XmbLookupString, xevt,
+				   inputString, sizeof(inputString),
+				   &inputCount, symbolic, &status)))
+	  {
+	    return lastKey= -1;
+	  }
+      }
+# if defined(X_HAVE_UTF8_STRING)
+    else if (uxUTF8Encoding == sqTextEncoding)
+      {
+	if (!(inputBuf= lookupKeys(Xutf8LookupString, xevt,
+				   inputString, sizeof(inputString),
+				   &inputCount, symbolic, &status))) {
+	  return lastKey= -1;
+	}
+      }
+# endif
+    else
+      {
+	unsigned char  aStr[128], *aBuf;
+	if (!(aBuf= lookupKeys(XmbLookupString, xevt, aStr, sizeof(aStr),
+			       &inputCount, symbolic, &status))) {
+	  fprintf(stderr, "status xmb2: %d\n", status);
+
+	  return lastKey= -1;
+	}
+	if (inputCount > sizeof(inputString))
+	  {
+	    inputBuf= (unsigned char *) malloc((size_t) (inputCount * sizeof(unsigned char)));
+	    if (!inputBuf)
+	      {
+		 fprintf(stderr, "x2sqKeyPlain: out of memory\n");
+		 if (aStr != aBuf)
+		   free(aBuf);
+		 return lastKey= -1;
+	      }
+	  }
+	else
+	  inputBuf= inputString;
+	inputCount= ux2sqXWin(aBuf, inputCount, inputBuf, inputCount, 0);
+	if (aStr != aBuf)
+	  free(aBuf);
+      }
     switch (status)
       {
       case XLookupNone:		/* still composing */
@@ -1304,26 +1829,61 @@ static int x2sqKeyInput(XKeyEvent *xevt, KeySym *symbolic)
 
       case XLookupChars:
 #	 if defined(DEBUG_CONV)
-	fprintf(stderr, "x2sqKey XLookupChars count %d\n", count);
+	fprintf(stderr, "x2sqKey XLookupChars count %d\n", inputCount);
 #	 endif
       case XLookupBoth:
 #	 if defined(DEBUG_CONV)
-	fprintf(stderr, "x2sqKey XLookupBoth count %d\n", count);
+	fprintf(stderr, "x2sqKey XLookupBoth count %d\n", inputCount);
 #	 endif
-	lastKey= (count ? recode(string[0]) : -1);
-#	 if defined(DEBUG_CONV)
-	fprintf(stderr, "x2sqKey == %d\n", lastKey);
-#	 endif
-	return lastKey;
+	if (inputCount == 0)
+	  return lastKey= -1;
+	else if (inputCount == 1)
+	  {
+	    inputCount= 0;
+	    return lastKey= recode(inputBuf[0]);
+	  }
+	else
+	  {
+#      if defined(DEBUG_XIM)
+	    int inputSymbol= xkeysym2ucs4(*symbolic);
+	    fprintf(stderr, "x2sqKey string '%s' count %d\n",
+		    inputBuf, inputCount);	
+	    fprintf(stderr, "x2sqKey symbol 0x%08x => 0x%08x\n",
+		    *symbolic, inputSymbol);
+#      endif
+	    /* record the key events here */
+	    pendingKey= inputBuf;
+	    recordPendingKeys();
+
+#      if 1
+	    /* I wonder which is more appropriate for lastKey */
+	    lastKey= (inputCount == 1 ? inputBuf[0] : -1);
+#      else
+	    lastKey= (inputCount ? inputBuf[0] : -1);
+	    /* or */
+	    lastKey= (inputCount > 0 ? inputBuf[inputCount - 1] : -1);
+#      endif
+	
+	    return -1; /* we've already recorded the key events */
+	  }
 
       case XLookupKeySym:
 #	 if defined(DEBUG_CONV)
 	fprintf(stderr, "x2sqKey XLookupKeySym\n");
 #	 endif
 	{
+	  if (*symbolic == XK_Multi_key) {
+	    multi_key_pressed= 1;
+	    multi_key_buffer = 0;
+#ifdef DEBUG_CONV
+	    fprintf(stderr, "multi_key was pressed\n");
+#endif
+	    return -1;
+	  }
+	  
 	  int charCode= translateCode(*symbolic);
 #	   if defined(DEBUG_CONV)
-	  printf("SYM %d -> %d\n", symbolic, charCode);
+	  printf("SYM %x -> %d\n", *symbolic, charCode);
 #	   endif
 	  if (charCode < 0)
 	    return -1;	/* unknown key */
@@ -1338,12 +1898,7 @@ static int x2sqKeyInput(XKeyEvent *xevt, KeySym *symbolic)
       }
     return lastKey= -1;
   }
-
- revertInput:
-  x2sqKey= x2sqKeyPlain;
-  return x2sqKey(xevt, symbolic);
 }
-
 
 static int x2sqKeyPlain(XKeyEvent *xevt, KeySym *symbolic)
 {
@@ -1830,6 +2385,47 @@ static void handleEvent(XEvent *evt)
     modifierState= x2sqModifier(evt.state);		\
   }
 
+#if defined(DEBUG_FOCUS)
+  if (evt->type != EnterNotify && evt->type != LeaveNotify
+      && evt->type != MotionNotify)
+    {
+      static char *eventName[]=
+	{
+	  "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
+	  "MotionNotify", "EnterNotify", "LeaveNotify", "FocusIn",
+	  "FocusOut", "KeymapNotify", "Expose", "GraphicsExpose",
+	  "NoExpose", "VisibilityNotify", "CreateNotify", "DestroyNotify",
+	  "UnmapNotify", "MapNotify", "MapRequest", "ReparentNotify",
+	  "ConfigureNotify", "ConfigureRequest", "GravityNotify",
+	  "ResizeRequest", "CirculateNotify", "CirculateRequest",
+	  "PropertyNotify", "SelectionClear", "SelectionRequest",
+	  "SelectionNotify", "ColormapNotify", "ClientMessage",
+	  "MappingNotify", "LASTEvent",
+	};
+      static char *modeName[]=
+	{
+	  "Normal", "Grab", "Ungrab", "WhileGrabbed",
+	};
+      static char *detailName[]=
+	{
+	  "Ancestor", "Virtual", "Inferior", "Nonlinear", "NonlinearVirtual",
+	  "Pointer", "PointerRoot", "DetailNone",
+	};
+      fprintf(stderr, eventName[evt->type-2]);
+      if (evt->xany.window == stParent)
+	fprintf(stderr, " window=stParent");
+      else if (evt->xany.window ==  stWindow)
+	fprintf(stderr, " window=stWindow");
+      else
+	fprintf(stderr, " window=%x", evt->xany.window);
+      if (evt->type == FocusIn || evt->type == FocusOut)
+	fprintf(stderr, " mode=Notify%s detail=Notify%s\n",
+		modeName[evt->xfocus.mode],
+		detailName[evt->xfocus.detail]);
+      else
+	fprintf(stderr, "\n");
+    }
+#endif
   if (True == XFilterEvent(evt, 0))
     return;
 
@@ -1840,6 +2436,51 @@ static void handleEvent(XEvent *evt)
       recordMouseEvent();
       break;
 
+    case FocusIn:
+      if (evt->xfocus.mode == NotifyNormal)
+	{
+	  switch (evt->xfocus.detail)
+	    {
+	    case NotifyNonlinear:
+	    case NotifyInferior:
+	      XSetInputFocus(stDisplay, stWindow, RevertToNone, CurrentTime);
+	      break;
+	    case NotifyAncestor:
+# if defined(INIT_INPUT_WHEN_FOCUSED_IN)
+	      initInput();
+# endif
+	      if (inputContext)
+		{
+		  setInputContextArea();
+		  XSetICFocus(inputContext);
+		}
+	      break;
+	    }
+	}
+      break;
+    case FocusOut:
+      if (inputContext
+	  && evt->xfocus.mode == NotifyNormal
+	  && evt->xfocus.detail == NotifyNonlinear)
+	XUnsetICFocus(inputContext);
+      break;
+# if 0
+    case EnterNotify:
+      if (inputContext
+	  && evt->xcrossing.focus
+	  && !(inputStyle & XIMPreeditPosition))
+	{
+	  setInputContextArea();
+	  XSetICFocus(inputContext);
+	}
+      break;
+    case LeaveNotify:
+      if (inputContext
+	  && evt->xcrossing.focus
+	  && !(inputStyle & XIMPreeditPosition))
+	XUnsetICFocus(inputContext);
+      break;
+# endif
     case ButtonPress:
       noteEventState(evt->xbutton);
       switch (evt->xbutton.button)
@@ -1885,12 +2526,78 @@ static void handleEvent(XEvent *evt)
 	KeySym symbolic;
 	int keyCode= x2sqKey(&evt->xkey, &symbolic);
 	int ucs4= xkeysym2ucs4(symbolic);
-	if (keyCode >= 0)
+#ifdef DEBUG_CONV
+	fprintf(stderr, "keyCode, ucs4: %d, %d\n", keyCode, ucs4);
+	fprintf(stderr, "pressed, buffer: %d, %x\n", multi_key_pressed, multi_key_buffer);
+#endif
+	if (multi_key_pressed && multi_key_buffer == 0) {
+#define key_case(sym, code) \
+	case sym: \
+	  multi_key_buffer= (code); keyCode= -1; ucs4= -1; break;
+
+	  switch (ucs4) {
+	    key_case(0x60, 0x0300); //grave
+	    key_case(0x27, 0x0301); //apostrophe
+	    key_case(0x5e, 0x0302); // circumflex
+	    key_case(0x7e, 0x0303); // tilde
+	    key_case(0x22, 0x0308); // double quote
+	    key_case(0x61, 0x030a); // a
+	  }
+#undef key_case
+	} else {
+#define dead_key_case(sym, code, orig) \
+	case sym: \
+	  if (multi_key_buffer == code) { \
+	    multi_key_buffer = 0; keyCode = orig; ucs4 = orig;} else {	\
+	    multi_key_buffer= (code); keyCode= -1; ucs4= -1;} break;
+
+	  switch (symbolic) {
+	    dead_key_case(XK_dead_grave, 0x0300, 0x60);
+	    dead_key_case(XK_dead_acute, 0x0301, 0x27);
+	    dead_key_case(XK_dead_circumflex, 0x0302, 0x5e);
+	    dead_key_case(XK_dead_tilde, 0x0303, 0x7e);
+	    dead_key_case(XK_dead_macron, 0x0304, 0x0304);
+	    dead_key_case(XK_dead_abovedot, 0x0307, 0x0307);
+	    dead_key_case(XK_dead_diaeresis, 0x0308, 0x0308);
+	    dead_key_case(XK_dead_abovering, 0x030A, 0x030A);
+	    dead_key_case(XK_dead_doubleacute, 0x030B, 0x030B);
+	    dead_key_case(XK_dead_caron, 0x030C, 0x030C);
+	    dead_key_case(XK_dead_cedilla, 0x0327, 0x0327);
+	    dead_key_case(XK_dead_ogonek, 0x0328, 0x0328);
+	    dead_key_case(XK_dead_iota, 0x0345, 0x0345);
+	    dead_key_case(XK_dead_voiced_sound, 0x3099, 0x3099);
+	    dead_key_case(XK_dead_semivoiced_sound, 0x309a, 0x309a);
+	    dead_key_case(XK_dead_belowdot, 0x0323, 0x0323);
+	    dead_key_case(XK_dead_hook, 0x0309, 0x0309);
+	    dead_key_case(XK_dead_horn, 0x031b, 0x031b);
+	  }
+
+	  if (symbolic != XK_Multi_key) {
+	    multi_key_pressed= 0; 
+#ifdef DEBUG_CONV
+	    fprintf(stderr, "multi_key reset\n");
+#endif
+	  }
+	}
+
+#ifdef DEBUG_CONV
+	fprintf(stderr, "keyCode, ucs4, multi_key_buffer: %d, %d, %x\n", keyCode, ucs4, multi_key_buffer);
+#endif
+	if (keyCode >= 0) {
 	  recordKeystroke(keyCode);			/* DEPRECATED */
+	  if (multi_key_buffer != 0) {
+	    recordKeystroke(multi_key_buffer);
+	  }
+	}
 	if ((keyCode >= 0) || (ucs4 > 0))
 	  {
 	    recordKeyboardEvent(keyCode, EventKeyDown, modifierState, ucs4);
 	    recordKeyboardEvent(keyCode, EventKeyChar, modifierState, ucs4);
+	    if (multi_key_buffer != 0) {
+	      recordKeyboardEvent(multi_key_buffer, EventKeyDown, modifierState, multi_key_buffer);
+	      recordKeyboardEvent(multi_key_buffer, EventKeyChar, modifierState, multi_key_buffer);
+	      multi_key_buffer = 0;
+	    }
 	  }
       }
       break;
@@ -1983,6 +2690,9 @@ static void handleEvent(XEvent *evt)
       getMousePosition();
       noteWindowChange();
       fullDisplayUpdate();
+#if defined(INIT_INPUT_WHEN_MAPPED)
+      initInput();
+#endif
       break;
 
     case UnmapNotify:
@@ -2031,6 +2741,8 @@ static void handleEvent(XEvent *evt)
 
 int handleEvents(void)
 {
+  if (recordPendingKeys())
+    return 0;
   if (!isConnectedToXServer || !XPending(stDisplay))
     return !iebEmptyP();
 
@@ -3164,6 +3876,7 @@ static sqInt display_ioSetFullScreen(sqInt fullScreen)
 #	 else
 	  XResizeWindow(stDisplay, stParent, winW, winH);
 #	 endif
+	  XSetInputFocus(stDisplay, stWindow, RevertToPointerRoot, CurrentTime);
 	  XSynchronize(stDisplay, False);
 	  windowState= WIN_CHANGED;
 	}
@@ -4582,6 +5295,8 @@ int forgetXDisplay(void)
   stXfd= -1;		/* X connection file descriptor         */
   stParent= null;
   stWindow= null;       /* Squeak window                        */
+  inputContext= 0;
+  inputFont= NULL;
   isConnectedToXServer= 0;
   return 0;
 }
@@ -4596,6 +5311,14 @@ int disconnectXDisplay(void)
       XDestroyWindow(stDisplay, stWindow);
       if (browserWindow == 0)
 	XDestroyWindow(stDisplay, stParent);
+      if (inputContext)
+        {
+	  XIM im= XIMOfIC(inputContext);
+	  XDestroyIC(inputContext);
+	  if (im) XCloseIM(im);
+	}
+      if (inputFont)
+	XFreeFontSet(stDisplay, inputFont);
       XCloseDisplay(stDisplay);
     }
   forgetXDisplay();
@@ -4931,6 +5654,9 @@ static void display_printUsage(void)
 #if (USE_X11_GLX)
   printf("  -glxdebug <n>         set GLX debug verbosity level to <n>\n");
 #endif
+#if defined(USE_XICFONT_OPTION)
+  printf("  -xicfont <fs>         use Font Set<fs> for the Input Context\n");
+#endif
 }
 
 static void display_printUsageNotes(void)
@@ -4944,12 +5670,26 @@ static void display_parseEnvironment(void)
 {
   char *ev= 0;
 
-  if (getenv("LC_CTYPE") || getenv("LC_ALL"))
+  if (localeEncoding)
+# if defined (INIT_INPUT_WHEN_KEY_PRESSED)
     x2sqKey= x2sqKeyInput;
+# else
+    initInput= initInputI18n;
+# endif
+  if (getenv("LC_CTYPE") || getenv("LC_ALL"))
+#if !defined (INIT_INPUT_WHEN_KEY_PRESSED)
+    initInput= initInputI18n;
+#else
+    x2sqKey= x2sqKeyInput;
+#endif
 
   if (getenv("SQUEAK_LAZY"))		sleepWhenUnmapped= 1;
   if (getenv("SQUEAK_SPY"))		withSpy= 1;
+#if !defined (INIT_INPUT_WHEN_KEY_PRESSED)
+  if (getenv("SQUEAK_NOINTL"))		initInput= initInputNone;
+#else
   if (getenv("SQUEAK_NOINTL"))		x2sqKey= x2sqKeyPlain;
+#endif
   if (getenv("SQUEAK_NOTITLE"))		noTitle= 1;
   if (getenv("SQUEAK_NOXDND"))		useXdnd= 0;
   if (getenv("SQUEAK_FULLSCREEN"))	fullScreen= 1;
@@ -4982,7 +5722,11 @@ static int display_parseArgument(int argc, char **argv)
   else if (!strcmp(arg, "-swapbtn"))	swapBtn= 1;
   else if (!strcmp(arg, "-fullscreen"))	fullScreen= 1;
   else if (!strcmp(arg, "-iconic"))	iconified= 1;
+#if !defined (INIT_INPUT_WHEN_KEY_PRESSED)
+  else if (!strcmp(arg, "-nointl"))	initInput= initInputNone;
+#else
   else if (!strcmp(arg, "-nointl"))	x2sqKey= x2sqKeyPlain;
+#endif
   else if (!strcmp(arg, "-noxdnd"))	useXdnd= 0;
   else if (argv[1])	/* option requires an argument */
     {
@@ -4993,6 +5737,9 @@ static int display_parseArgument(int argc, char **argv)
 #if defined(SUGAR)
       else if (!strcmp(arg, "-sugarBundleId")) sugarBundleId= argv[1];
       else if (!strcmp(arg, "-sugarActivityId")) sugarActivityId= argv[1];
+#endif
+#if defined(USE_XICFONT_OPTION)
+      else if (!strcmp(arg, "-xicfont")) inputFontStr= argv[1];  
 #endif
       else if (!strcmp(arg, "-browserWindow"))
 	{

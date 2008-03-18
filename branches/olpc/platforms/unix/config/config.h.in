@@ -45,6 +45,10 @@
 #undef	USE_QUARTZ_CGL
 #undef	USE_RFB
 
+#undef  USE_XICFONT_OPTION
+#undef  USE_XICFONT_RESOURCE
+#undef  USE_XICFONT_DEFAULT
+
 /* libraries */
 
 #undef	HAVE_LIBX11
