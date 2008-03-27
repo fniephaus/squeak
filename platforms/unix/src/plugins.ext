@@ -1,2 +1,2 @@
 # Automatically generated makefile include for external plugins
-EXTERNAL_PLUGINS = B3DAcceleratorPlugin ClipboardExtendedPlugin DBusPlugin FileCopyPlugin ImmX11Plugin MIDIPlugin OggPlugin PseudoTTYPlugin RomePlugin UnixOSProcessPlugin UUIDPlugin XDisplayControlPlugin
+EXTERNAL_PLUGINS = B3DAcceleratorPlugin ClipboardExtendedPlugin DBusPlugin FileCopyPlugin GStreamerPlugin ImmX11Plugin MIDIPlugin OggPlugin PseudoTTYPlugin RomePlugin UnixOSProcessPlugin UUIDPlugin VideoForLinuxPlugin XDisplayControlPlugin
