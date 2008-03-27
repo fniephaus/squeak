@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.9
-%define minor   12
-%define release %{minor}olpc5
+%define minor   13
+%define release %{minor}olpc1
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -12,19 +12,20 @@ Version:	%{version}
 Release:	%{release}
 URL:		http://squeakvm.org/unix
 License:	MIT
-BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 Source:		%{source}.src.tar.gz
 Group:		Development/Languages
 Prefix:		%{prefix}
 BuildRequires:	gawk
 BuildRequires:	libX11-devel
-BuildRequires:  libXt-devel
+BuildRequires:	libXt-devel
 BuildRequires:	libvorbis-devel
 BuildRequires:	libtheora-devel
 BuildRequires:	speex-devel
 BuildRequires:	dbus-devel
 BuildRequires:	alsa-lib-devel
 BuildRequires:	pango-devel
+BuildRequires:	gstreamer-devel
 
 %description
 Squeak is a full-featured implementation of the Smalltalk programming
@@ -62,6 +63,10 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
+* Wed Mar 26 2008 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.9.13 NOT RELEASED YET
+  - updated DBus plugin (incompatible w/ previous versions)
+  - add GStreamer plugin
 * Fri Jan 04 2008 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-12olpc5; SVN r. 1811
   - remove Mpeg3Plugin
