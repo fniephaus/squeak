@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(27 March 2008 11:28:40 am) */
+/* Automatically generated from Squeak on an Array(29 March 2008 2:12:35 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -156,9 +156,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"GStreamerPlugin 27 March 2008 (i)"
+	"GStreamerPlugin 29 March 2008 (i)"
 #else
-	"GStreamerPlugin 27 March 2008 (e)"
+	"GStreamerPlugin 29 March 2008 (e)"
 #endif
 ;
 
@@ -1288,7 +1288,7 @@ EXPORT(sqInt) primitivegobjectgetstringfrom(void) {
 	;
 	g_object_get(gstObject,aName,&value,NULL);
 	characterOop = stringFromCString(value);
-	g_free(&value);
+	g_free(value);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
