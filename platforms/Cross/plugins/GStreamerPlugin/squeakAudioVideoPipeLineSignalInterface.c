@@ -12,34 +12,12 @@
 #include <gst/gst.h>
 #include <gst/gstobject.h>
 #include <strings.h>
+#include "squeakAudioVideoPipeLineSignalInterface.h"
 #include "sqVirtualMachine.h"
 
 
-struct _SqueakAudioVideoSink { 
-   GstElement *owner;
-   void*	handler;
-   GstBuffer *copyToSendToSqueakAudio;
-   gboolean semaphoreWasSignaled;
-   gint semaphoreIndexForSink;
-   gint prerollCounter;
-   guchar *copyToSendToSqueakVideo;
-   guint allocbytes;
-   guint width;
-   guint height;
-   guint fps_n;
-   guint fps_d;
-   gint	format;
-   gboolean frame_ready;
-	struct VirtualMachine* interpreterProxy;
-};
-typedef struct _SqueakAudioVideoSink       SqueakAudioVideoSink;
-typedef struct _SqueakAudioVideoSink       *SqueakAudioVideoSinkPtr;
-
 void gst_SqueakVideoSink_set_caps (SqueakAudioVideoSinkPtr sink, GstCaps * caps);
 void gst_SqueakAudioSink_sink_write(GstElement* plugin, SqueakAudioVideoSinkPtr sink, gpointer data, guint length, GstClockTime  duration);
-
-#define GST_LOCK(obj)			(g_mutex_lock(GST_OBJECT_CAST(obj)->lock))
-#define GST_UNLOCK(obj)			(g_mutex_unlock(GST_OBJECT_CAST(obj)->lock))
 
 
 /* Element Signals:
@@ -73,7 +51,7 @@ void squeakVideoHandOff (GstElement* object,
 		
 	if (GST_BUFFER_DATA(buf)) {
 		squeaker->frame_ready = TRUE;
-		guint totalBytes = 4*squeaker->width*squeaker->height;
+		guint totalBytes = (squeaker->depth == 24 ? 4 : 2)*squeaker->width*squeaker->height;
 		if (totalBytes != squeaker->allocbytes) {
 			if (squeaker->copyToSendToSqueakVideo) 
 				g_free(squeaker->copyToSendToSqueakVideo);
@@ -90,48 +68,23 @@ void squeakVideoHandOff (GstElement* object,
 void
 	gst_SqueakVideoSink_set_caps (SqueakAudioVideoSinkPtr sink, GstCaps * caps) {
 	GstStructure *structure;	
-	int width, height;
+	int width, height, depth;
 	gboolean ret;
 	const GValue *fps;
 	structure = gst_caps_get_structure (caps, 0);
 	ret = gst_structure_get_int (structure, "width", &width);
 	ret = ret && gst_structure_get_int (structure, "height", &height);
+	ret = ret && gst_structure_get_int (structure, "depth", &depth);
 	fps = gst_structure_get_value (structure, "framerate");
 	ret = ret && (fps != NULL);
 	if (!ret) return;
 	sink->width = width;
 	sink->height = height;
+	sink->depth = depth;
 	sink->fps_n = gst_value_get_fraction_numerator(fps);
 	sink->fps_d = gst_value_get_fraction_denominator(fps);
 	sink->width = width;
 	sink->height = height;
-	
-	sink->format = 2;
-	if (0 == strcmp(gst_structure_get_name(structure), "video/x-raw-rgb")) {
-		int red_mask;
-		int green_mask;
-		int blue_mask;
-		int alpha_mask;
-		gst_structure_get_int(structure, "alpha_mask", &alpha_mask);
-		gst_structure_get_int(structure, "red_mask", &red_mask);
-		gst_structure_get_int(structure, "green_mask", &green_mask);
-		gst_structure_get_int(structure, "blue_mask", &blue_mask);
-		if ((unsigned int)alpha_mask  == 0xFF000000 &&
-			(unsigned int)red_mask   == 0x00FF0000 &&
-			(unsigned int)green_mask == 0x0000FF00 &&
-			(unsigned int)blue_mask  == 0x000000FF) {
-				sink->format = 0;
-		} else if (
-				(unsigned int)alpha_mask == 0x000000FF &&
-				(unsigned int)red_mask   == 0x0000FF00 &&
-				(unsigned int)green_mask == 0x00FF0000 &&
-				(unsigned int)blue_mask  == 0xFF000000) {
-					sink->format = 1;
-				}
-	}
-	
-	printf("\n width %i height %i fpsN %i fpsD %i format %i",(int) width, (int) height, (int) sink->fps_n, (int) sink->fps_d,sink->format);	
-	
 }
 
 
