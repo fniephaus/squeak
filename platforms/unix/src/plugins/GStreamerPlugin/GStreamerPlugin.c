@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(31 March 2008 11:06:07 am) */
+/* Automatically generated from Squeak on an Array(1 April 2008 12:45:11 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -174,6 +174,7 @@ EXPORT(sqInt) primitivegstpipelinesetclock(void);
 EXPORT(sqInt) primitivegstpipelinesetdelay(void);
 EXPORT(sqInt) primitivegstpipelinesetnewstreamtime(void);
 EXPORT(sqInt) primitivegstpipelineuseclock(void);
+EXPORT(sqInt) primitivegstregistryforksetenabled(void);
 EXPORT(sqInt) primitivegstsegtrapisenabled(void);
 EXPORT(sqInt) primitivegstsegtrapsetenabled(void);
 EXPORT(sqInt) primitivegstversionstring(void);
@@ -202,9 +203,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"GStreamerPlugin 31 March 2008 (i)"
+	"GStreamerPlugin 1 April 2008 (i)"
 #else
-	"GStreamerPlugin 31 March 2008 (e)"
+	"GStreamerPlugin 1 April 2008 (e)"
 #endif
 ;
 
@@ -3414,6 +3415,32 @@ EXPORT(sqInt) primitivegstpipelineuseclock(void) {
 }
 
 
+/*	Applications might want to disable/enable the usage of fork() when rebuilding the registry. See gst_registry_fork_is_enabled() for more information.
+On platforms without fork(), this function will have no effect on the return value of gst_registry_fork_is_enabled().
+
+enabled :
+whether rebuilding the registry may fork
+ */
+
+EXPORT(sqInt) primitivegstregistryforksetenabled(void) {
+	gboolean on;
+	sqInt aBoolean;
+
+	aBoolean = interpreterProxy->booleanValueOf(interpreterProxy->stackValue(0));
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	on = aBoolean;
+	;
+	gst_registry_fork_set_enabled(on);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(1);
+	return null;
+}
+
+
 /*	Some functions in the GStreamer core might install a custom SIGSEGV handler to better catch and report errors to the application. Currently this feature is enabled by default when loading plugins.
 Applications might want to disable this behaviour with the gst_segtrap_set_enabled() function. This is typically done if the application wants to install its own handler without GStreamer interfering. */
 
@@ -4006,6 +4033,7 @@ void* GStreamerPlugin_exports[][3] = {
 	{"GStreamerPlugin", "primitivegstpipelinegetlaststreamtime", (void*)primitivegstpipelinegetlaststreamtime},
 	{"GStreamerPlugin", "primitivegstbuspopfilter", (void*)primitivegstbuspopfilter},
 	{"GStreamerPlugin", "primitivegstelementgetstate", (void*)primitivegstelementgetstate},
+	{"GStreamerPlugin", "primitivegstregistryforksetenabled", (void*)primitivegstregistryforksetenabled},
 	{"GStreamerPlugin", "primitivegobjectclasslistpropertyfloatatIndex", (void*)primitivegobjectclasslistpropertyfloatatIndex},
 	{"GStreamerPlugin", "primitiveSqueakSinkGetFrameRateDenominator", (void*)primitiveSqueakSinkGetFrameRateDenominator},
 	{"GStreamerPlugin", "primitivegstelementadd", (void*)primitivegstelementadd},
