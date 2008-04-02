@@ -65,6 +65,27 @@ void squeakVideoHandOff (GstElement* object,
 	
 }
 
+void squeakSrcHandOff (GstElement* object,
+		GstBuffer* buf,
+		GstPad* pad,
+		gpointer user_data)  {
+
+	GST_LOCK(object);
+
+	SqueakAudioVideoSinkPtr  squeaker = (SqueakAudioVideoSinkPtr) user_data;
+	
+	if (squeaker->frame_ready) {
+		squeaker->frame_ready = FALSE;
+		if (squeaker->semaphoreIndexForSink && squeaker->interpreterProxy) {
+			squeaker->interpreterProxy->signalSemaphoreWithIndex(squeaker->semaphoreIndexForSink);
+		}
+		if (GST_BUFFER_SIZE (buf) >= squeaker->actualbytes)
+			memcpy(GST_BUFFER_DATA(buf),squeaker->copyToSendToSqueakVideo,squeaker->actualbytes);
+	}
+	GST_UNLOCK(object);
+
+}
+
 void
 	gst_SqueakVideoSink_set_caps (SqueakAudioVideoSinkPtr sink, GstCaps * caps) {
 	GstStructure *structure;	
