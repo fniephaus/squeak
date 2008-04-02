@@ -18,6 +18,7 @@ struct _SqueakAudioVideoSink {
    gint prerollCounter;
    guchar *copyToSendToSqueakVideo;
    guint allocbytes;
+   guint actualbytes;
    guint width;
    guint height;
    guint fps_n;
@@ -35,6 +36,11 @@ void squeakVideoHandOff (GstElement* object,
 		gpointer user_data);
 
 void squeakAudioHandOff (GstElement* object,
+		GstBuffer* buf,
+		GstPad* pad,
+		gpointer user_data);
+		
+void squeakSrcHandOff (GstElement* object,
 		GstBuffer* buf,
 		GstPad* pad,
 		gpointer user_data);
