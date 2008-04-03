@@ -81,6 +81,8 @@ void squeakSrcHandOff (GstElement* object,
 		}
 		if (GST_BUFFER_SIZE (buf) >= squeaker->actualbytes)
 			memcpy(GST_BUFFER_DATA(buf),squeaker->copyToSendToSqueakVideo,squeaker->actualbytes);
+		GST_BUFFER_TIMESTAMP(buf) = squeaker->startTime;
+		GST_BUFFER_DURATION(buf) = squeaker->duration;
 	}
 	GST_UNLOCK(object);
 

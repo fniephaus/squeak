@@ -24,6 +24,8 @@ struct _SqueakAudioVideoSink {
    guint fps_n;
    guint fps_d;
    guint depth;
+   GstClockTime startTime;
+   GstClockTime duration;
    gboolean frame_ready;
 	struct VirtualMachine* interpreterProxy;
 };
