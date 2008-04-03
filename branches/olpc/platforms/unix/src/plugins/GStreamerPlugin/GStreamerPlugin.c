@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(1 April 2008 12:45:11 pm) */
+/* Automatically generated from Squeak on an Array(3 April 2008 3:29:13 pm) */
 
 #include <math.h>
 #include <stdio.h>
@@ -27,39 +27,7 @@
 #endif
 #include <gst/gst.h>
 #include <gst/controller/gstcontroller.h>
-
-struct _SqueakAudioVideoSink { 
-   GstElement *owner;
-   void*	handler;
-   GstBuffer *copyToSendToSqueakAudio;
-   gboolean semaphoreWasSignaled;
-   gint semaphoreIndexForSink;
-   gint prerollCounter;
-   guchar *copyToSendToSqueakVideo;
-   guint allocbytes;
-   guint width;
-   guint height;
-   guint fps_n;
-   guint fps_d;
-   gint	format;
-   gboolean frame_ready;
-	struct VirtualMachine* interpreterProxy;
-};
-typedef struct _SqueakAudioVideoSink       SqueakAudioVideoSink;
-typedef struct _SqueakAudioVideoSink       *SqueakAudioVideoSinkPtr;
-void squeakVideoHandOff (GstElement* object,
-		GstBuffer* buf,
-		GstPad* pad,
-		gpointer user_data);
-
-void squeakAudioHandOff (GstElement* object,
-		GstBuffer* buf,
-		GstPad* pad,
-		gpointer user_data);
-
-#define GST_LOCK(obj)			(g_mutex_lock(GST_OBJECT_CAST(obj)->lock))
-#define GST_UNLOCK(obj)			(g_mutex_unlock(GST_OBJECT_CAST(obj)->lock))
-
+#include "squeakAudioVideoPipeLineSignalInterface.h"
 
 #include "sqMemoryAccess.h"
 
@@ -154,6 +122,7 @@ EXPORT(sqInt) primitivegstmessageparsesegmentdone(void);
 EXPORT(sqInt) primitivegstmessageparsesegmentstart(void);
 EXPORT(sqInt) primitivegstmessageparsestatechanged(void);
 EXPORT(sqInt) primitivegstmessageparsewarning(void);
+EXPORT(sqInt) primitivegstmessagesrc(void);
 EXPORT(sqInt) primitivegstmessagetypestring(void);
 EXPORT(sqInt) primitivegstmessageunref(void);
 EXPORT(sqInt) primitivegstobjectunref(void);
@@ -181,12 +150,14 @@ EXPORT(sqInt) primitivegstversionstring(void);
 EXPORT(sqInt) primitiveSqueakSinkAllocate(void);
 EXPORT(sqInt) primitiveSqueakSinkAudioGetData(void);
 EXPORT(sqInt) primitiveSqueakSinkFree(void);
-EXPORT(sqInt) primitiveSqueakSinkGetFormat(void);
 EXPORT(sqInt) primitiveSqueakSinkGetFrameRateDenominator(void);
 EXPORT(sqInt) primitiveSqueakSinkGetFrameRateNumerator(void);
 EXPORT(sqInt) primitiveSqueakSinkGetHeight(void);
 EXPORT(sqInt) primitiveSqueakSinkGetWidth(void);
 EXPORT(sqInt) primitiveSqueakSinkVideo(void);
+EXPORT(sqInt) primitiveSqueakSrc(void);
+EXPORT(sqInt) primitiveSqueakSrcAllocate(void);
+EXPORT(sqInt) primitiveSqueakSrcWithTime(void);
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 #pragma export off
 static sqInt shutdownModule(void);
@@ -203,9 +174,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"GStreamerPlugin 1 April 2008 (i)"
+	"GStreamerPlugin 3 April 2008 (i)"
 #else
-	"GStreamerPlugin 1 April 2008 (e)"
+	"GStreamerPlugin 3 April 2008 (e)"
 #endif
 ;
 
@@ -2908,6 +2879,29 @@ EXPORT(sqInt) primitivegstmessageparsewarning(void) {
 	return null;
 }
 
+EXPORT(sqInt) primitivegstmessagesrc(void) {
+	GstObject * gstSrcObject;
+	gpointer  gstObject;
+	sqInt aGstObject;
+	sqInt _return_value;
+
+	aGstObject = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	gstObject = ((gpointer) (interpreterProxy->positive32BitValueOf(aGstObject)));
+	gstSrcObject = null;
+	;
+	;
+	gstSrcObject = GST_MESSAGE_SRC(gstObject);
+	_return_value = interpreterProxy->positive32BitIntegerFor(gstSrcObject);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(2, _return_value);
+	return null;
+}
+
 EXPORT(sqInt) primitivegstmessagetypestring(void) {
 	 char *  msgString;
 	gpointer  gstObject;
@@ -3598,28 +3592,6 @@ EXPORT(sqInt) primitiveSqueakSinkFree(void) {
 	return null;
 }
 
-EXPORT(sqInt) primitiveSqueakSinkGetFormat(void) {
-	sqInt value;
-	SqueakAudioVideoSinkPtr  squeakSinkObject;
-	sqInt aSqueakSinkObject;
-	sqInt _return_value;
-
-	aSqueakSinkObject = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	squeakSinkObject = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
-	;
-	value = 0;
-	value = squeakSinkObject->format;
-	_return_value = interpreterProxy->positive32BitIntegerFor(value);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(2, _return_value);
-	return null;
-}
-
 EXPORT(sqInt) primitiveSqueakSinkGetFrameRateDenominator(void) {
 	sqInt value;
 	SqueakAudioVideoSinkPtr  squeakSinkObject;
@@ -3741,6 +3713,134 @@ EXPORT(sqInt) primitiveSqueakSinkVideo(void) {
 		return null;
 	}
 	interpreterProxy->popthenPush(3, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSrc(void) {
+	sqInt doesFrameExist;
+	SqueakAudioVideoSinkPtr  sink;
+	sqInt aSqueakSinkObject;
+	sqInt data;
+	sqInt _return_value;
+
+	aSqueakSinkObject = interpreterProxy->stackValue(1);
+	data = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	sink = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
+	;
+	doesFrameExist = 0;
+	doesFrameExist = sink->frame_ready;
+	if (doesFrameExist) {
+		_return_value = (0) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	
+	GST_LOCK(sink->owner);
+	sink->actualbytes = interpreterProxy->byteSizeOf(data);
+	if (sink->allocbytes && (sink->allocbytes >= sink->actualbytes)) {
+		memcpy(sink->copyToSendToSqueakVideo,interpreterProxy->arrayValueOf(data),sink->actualbytes);
+		sink->frame_ready = TRUE;
+	}
+
+	GST_UNLOCK(sink->owner);
+	_return_value = (1) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(3, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSrcAllocate(void) {
+	SqueakAudioVideoSinkPtr squeaker;
+	GstElement*  gstElement;
+	sqInt numberOfBytes;
+	sqInt semaphoreIndex;
+	sqInt gstElementOoop;
+	sqInt _return_value;
+
+	numberOfBytes = interpreterProxy->stackIntegerValue(2);
+	semaphoreIndex = interpreterProxy->stackIntegerValue(1);
+	gstElementOoop = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	gstElement = ((GstElement*) (interpreterProxy->positive32BitValueOf(gstElementOoop)));
+	squeaker = 0;
+	
+		squeaker = g_malloc0(sizeof(SqueakAudioVideoSink));
+		squeaker->handler = squeakSrcHandOff;
+		squeaker->owner = gstElement;
+		squeaker->semaphoreIndexForSink = semaphoreIndex;
+		squeaker->copyToSendToSqueakVideo = g_malloc(numberOfBytes);
+		squeaker->allocbytes = numberOfBytes;
+		squeaker->interpreterProxy = interpreterProxy;
+	;
+	;
+	_return_value = interpreterProxy->positive32BitIntegerFor(squeaker);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(4, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSrcWithTime(void) {
+	GstClockTime  durationValue;
+	SqueakAudioVideoSinkPtr  sink;
+	sqInt doesFrameExist;
+	GstClockTime  startTimeValue;
+	sqInt aSqueakSinkObject;
+	sqInt data;
+	sqInt startTime;
+	sqInt duration;
+	sqInt _return_value;
+
+	aSqueakSinkObject = interpreterProxy->stackValue(3);
+	data = interpreterProxy->stackValue(2);
+	startTime = interpreterProxy->stackValue(1);
+	duration = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	sink = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
+	startTimeValue = ((GstClockTime) (interpreterProxy->positive64BitValueOf(startTime)));
+	durationValue = ((GstClockTime) (interpreterProxy->positive64BitValueOf(duration)));
+	;
+	;
+	;
+	doesFrameExist = 0;
+	doesFrameExist = sink->frame_ready;
+	if (doesFrameExist) {
+		_return_value = (0) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(5, _return_value);
+		return null;
+	}
+	
+	GST_LOCK(sink->owner);
+	sink->actualbytes = interpreterProxy->byteSizeOf(data);
+	if (sink->allocbytes && (sink->allocbytes >= sink->actualbytes)) {
+		memcpy(sink->copyToSendToSqueakVideo,interpreterProxy->arrayValueOf(data),sink->actualbytes);
+		sink->frame_ready = TRUE;
+		sink->startTime = startTimeValue;
+		sink->duration = durationValue;
+	}
+
+	GST_UNLOCK(sink->owner);
+	_return_value = (1) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(5, _return_value);
 	return null;
 }
 
@@ -3973,6 +4073,7 @@ void* GStreamerPlugin_exports[][3] = {
 	{"GStreamerPlugin", "primitivegstelementfactorymake", (void*)primitivegstelementfactorymake},
 	{"GStreamerPlugin", "primitiveSqueakSinkGetHeight", (void*)primitiveSqueakSinkGetHeight},
 	{"GStreamerPlugin", "primitivegobjectclasslistpropertyulongatIndex", (void*)primitivegobjectclasslistpropertyulongatIndex},
+	{"GStreamerPlugin", "primitivegstmessagesrc", (void*)primitivegstmessagesrc},
 	{"GStreamerPlugin", "primitivegstobjectunref", (void*)primitivegstobjectunref},
 	{"GStreamerPlugin", "primitivegetoop", (void*)primitivegetoop},
 	{"GStreamerPlugin", "primitivegstmessageparsestatechanged", (void*)primitivegstmessageparsestatechanged},
@@ -3984,11 +4085,12 @@ void* GStreamerPlugin_exports[][3] = {
 	{"GStreamerPlugin", "primitivegstelementqueryconvert", (void*)primitivegstelementqueryconvert},
 	{"GStreamerPlugin", "primitivegobjectgetsmalltalkobject", (void*)primitivegobjectgetsmalltalkobject},
 	{"GStreamerPlugin", "primitivegstelementgetrequestpad", (void*)primitivegstelementgetrequestpad},
+	{"GStreamerPlugin", "primitiveSqueakSrc", (void*)primitiveSqueakSrc},
 	{"GStreamerPlugin", "primitivegobjectclasslistpropertylongatIndex", (void*)primitivegobjectclasslistpropertylongatIndex},
 	{"GStreamerPlugin", "primitivegstelementqueryposition", (void*)primitivegstelementqueryposition},
-	{"GStreamerPlugin", "primitiveSqueakSinkGetFormat", (void*)primitiveSqueakSinkGetFormat},
 	{"GStreamerPlugin", "primitivegstpipelinesetautoflushbus", (void*)primitivegstpipelinesetautoflushbus},
 	{"GStreamerPlugin", "getModuleName", (void*)getModuleName},
+	{"GStreamerPlugin", "primitiveSqueakSrcAllocate", (void*)primitiveSqueakSrcAllocate},
 	{"GStreamerPlugin", "primitivegobjectgetlonglongfrom", (void*)primitivegobjectgetlonglongfrom},
 	{"GStreamerPlugin", "primitivegobjectgetdoublefrom", (void*)primitivegobjectgetdoublefrom},
 	{"GStreamerPlugin", "primitivegobjectsetstringon", (void*)primitivegobjectsetstringon},
@@ -4042,6 +4144,7 @@ void* GStreamerPlugin_exports[][3] = {
 	{"GStreamerPlugin", "primitivegstmessagetypestring", (void*)primitivegstmessagetypestring},
 	{"GStreamerPlugin", "primitivegstelementfactoryfind", (void*)primitivegstelementfactoryfind},
 	{"GStreamerPlugin", "primitivegobjectsetboolon", (void*)primitivegobjectsetboolon},
+	{"GStreamerPlugin", "primitiveSqueakSrcWithTime", (void*)primitiveSqueakSrcWithTime},
 	{"GStreamerPlugin", "primitivegobjectclasslistpropertyintatIndex", (void*)primitivegobjectclasslistpropertyintatIndex},
 	{"GStreamerPlugin", "primitivegobjectsetdoubleon", (void*)primitivegobjectsetdoubleon},
 	{"GStreamerPlugin", "primitivegstelementfactorygetauthor", (void*)primitivegstelementfactorygetauthor},
