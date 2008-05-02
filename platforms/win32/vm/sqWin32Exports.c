@@ -1,16 +1,19 @@
 #include <stdio.h>
+#include "sq.h"
 
-int win32JoystickDebugInfo(void);
-int win32JoystickDebugPrintRawValues(void);
-int win32JoystickDebugPrintAlternativeValues(void);
-int win32DebugPrintSocketState(void);
-int primitivePluginBrowserReady(void);
-int primitivePluginRequestURLStream(void);
-int primitivePluginRequestURL(void);
-int primitivePluginPostURL(void);
-int primitivePluginRequestFileHandle(void);
-int primitivePluginDestroyRequest(void);
-int primitivePluginRequestState(void);
+/* Note: Primitives should be in correct format */
+
+int win32JoystickDebugInfo(INTERPRETER_ARG);
+int win32JoystickDebugPrintRawValues(INTERPRETER_ARG);
+int win32JoystickDebugPrintAlternativeValues(INTERPRETER_ARG);
+int win32DebugPrintSocketState(INTERPRETER_ARG);
+int primitivePluginBrowserReady(INTERPRETER_ARG);
+int primitivePluginRequestURLStream(INTERPRETER_ARG);
+int primitivePluginRequestURL(INTERPRETER_ARG);
+int primitivePluginPostURL(INTERPRETER_ARG);
+int primitivePluginRequestFileHandle(INTERPRETER_ARG);
+int primitivePluginDestroyRequest(INTERPRETER_ARG);
+int primitivePluginRequestState(INTERPRETER_ARG);
 
 extern void* stWindow;
 extern void* firstMessageHook;

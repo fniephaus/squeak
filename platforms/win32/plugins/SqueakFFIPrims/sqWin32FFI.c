@@ -6,16 +6,16 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: Walt Disney Imagineering, Glendale, CA
 *   EMAIL:   andreasr@wdi.disney.com
-*   RCSID:   $Id: sqWin32FFI.c,v 1.2 2002/06/01 11:44:39 andreasraab Exp $
+*   RCSID:   $Id$
 *
 *   NOTES:
 *
 *****************************************************************************/
-#include "sq.h"
+
+#include "SqueakFFIPrims_imports.h"
 #include "sqFFI.h"
 
-extern struct VirtualMachine *interpreterProxy;
-#define primitiveFail() interpreterProxy->primitiveFail();
+#define primitiveFail() vmFunction(primitiveFail)(PLUGIN_IPARAM);
 
 #ifdef _MSC_VER
 #define LONGLONG __int64
@@ -79,69 +79,69 @@ int ffiFree(int ptr)
 /*****************************************************************************/
 /*****************************************************************************/
 
-int ffiPushSignedChar(int value) 
+int ffiPushSignedChar(PLUGIN_IARG_COMMA int value) 
 { 
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushUnsignedChar(int value) 
+int ffiPushUnsignedChar(PLUGIN_IARG_COMMA int value) 
 { 
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushSignedByte(int value) 
+int ffiPushSignedByte(PLUGIN_IARG_COMMA int value) 
 { 
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushUnsignedByte(int value) 
+int ffiPushUnsignedByte(PLUGIN_IARG_COMMA int value) 
 { 
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushSignedShort(int value) 
+int ffiPushSignedShort(PLUGIN_IARG_COMMA int value) 
 { 
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushUnsignedShort(int value) 
+int ffiPushUnsignedShort(PLUGIN_IARG_COMMA int value) 
 { 
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushSignedInt(int value) 
+int ffiPushSignedInt(PLUGIN_IARG_COMMA int value) 
 { 
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushUnsignedInt(int value) 
+int ffiPushUnsignedInt(PLUGIN_IARG_COMMA int value) 
 { 
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushSignedLongLong(int lowWord, int highWord) 
+int ffiPushSignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord) 
 { 
 	ARG_PUSH(lowWord); 
 	ARG_PUSH(highWord); 
 	return 1; 
 }
 
-int ffiPushUnsignedLongLong(int lowWord, int highWord) 
+int ffiPushUnsignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord) 
 { 
 	ARG_PUSH(lowWord); 
 	ARG_PUSH(highWord); 
 	return 1; 
 }
 
-int ffiPushSingleFloat(double value)
+int ffiPushSingleFloat(PLUGIN_IARG_COMMA double value)
 {
 	float floatValue;
 	floatValue = (float) value;
@@ -149,14 +149,14 @@ int ffiPushSingleFloat(double value)
 	return 1;
 }
 
-int ffiPushDoubleFloat(double value)
+int ffiPushDoubleFloat(PLUGIN_IARG_COMMA double value)
 {
 	ARG_PUSH(((int*)(&value))[0]);
 	ARG_PUSH(((int*)(&value))[1]);
 	return 1;
 }
 
-int ffiPushStructureOfLength(int pointer, int* structSpec, int structSize)
+int ffiPushStructureOfLength(PLUGIN_IARG_COMMA int pointer, int* structSpec, int structSize)
 {
 	int nItems, i;
 	nItems = ((*structSpec & FFIStructSizeMask) + 3) / 4;
@@ -167,13 +167,13 @@ int ffiPushStructureOfLength(int pointer, int* structSpec, int structSize)
 	return 1;
 }
 
-int ffiPushPointer(int pointer)
+int ffiPushPointer(PLUGIN_IARG_COMMA int pointer)
 {
 	ARG_PUSH(pointer);
 	return 1;
 }
 
-int ffiPushStringOfLength(int srcIndex, int length)
+int ffiPushStringOfLength(PLUGIN_IARG_COMMA int srcIndex, int length)
 {
 	char *ptr;
 	ARG_CHECK(); /* fail before allocating */
@@ -191,7 +191,7 @@ int ffiPushStringOfLength(int srcIndex, int length)
 
 /*  ffiCanReturn:
 	Return true if the support code can return the given type. */
-int ffiCanReturn(int *structSpec, int specSize)
+int ffiCanReturn(PLUGIN_IARG_COMMA int *structSpec, int specSize)
 {
 	int header = *structSpec;
 	if(header & FFIFlagPointer) return 1;
@@ -321,44 +321,37 @@ int ffiCallAddress(int fn)
 	}
 #endif
 #ifdef __GNUC__
-	asm("
-	  movl %%ebp, _oldBP
-	  movl %%esp, _oldSP
-		pushl %%ebx;
-		pushl %%ecx;
-		pushl %%edx;
-		pushl %%edi;
-		pushl %%esi;
-		pushl %%ebp;
-		/* mark the frame */
-		movl %%esp, %%ebp
-		/* alloca() ffiStackIndex size bytes */
-		movl _ffiArgIndex, %%ecx;
-		shll $2, %%ecx;
-		subl %%ecx, %%esp
-		/* copy stack */
-		movl %%esp, %%edi;
-		leal _ffiArgs, %%esi;
-		shrl $2, %%ecx;
-		cld;
-		rep movsl;
-		/* go calling */
-		call *%%ebx
-		/* restore frame */
-		movl %%ebp, %%esp
-		/* store the return values */
-		movl %%eax, _intReturnValue
-		movl %%edx, _intReturnValue2
-		fstpl _floatReturnValue
-		/* restore register values */
-		popl %%ebp
-		popl %%esi
-		popl %%edi
-		popl %%edx
-		popl %%ecx
-		popl %%ebx
-movl %%ebp, _newBP
-movl %%esp, _newSP
+	asm("\
+	  movl %%ebp, _oldBP; \
+	  movl %%esp, _oldSP; \
+		pushl %%ebx; \
+		pushl %%ecx; \
+		pushl %%edx; \
+		pushl %%edi; \
+		pushl %%esi; \
+		pushl %%ebp; \
+		movl %%esp, %%ebp; \
+		movl _ffiArgIndex, %%ecx; \
+		shll $2, %%ecx; \
+		subl %%ecx, %%esp; \
+		movl %%esp, %%edi; \
+		leal _ffiArgs, %%esi; \
+		shrl $2, %%ecx; \
+		cld; \
+		rep movsl; \
+		call *%%ebx; \
+		movl %%ebp, %%esp; \
+		movl %%eax, _intReturnValue; \
+		movl %%edx, _intReturnValue2; \
+		fstpl _floatReturnValue; \
+		popl %%ebp; \
+		popl %%esi; \
+		popl %%edi; \
+		popl %%edx; \
+		popl %%ecx; \
+		popl %%ebx; \
+		movl %%ebp, _newBP; \
+		movl %%esp, _newSP; \
 		": /* no outputs */ : "ebx" (fn) : "eax" /* clobbered registers */);
 		/* done */
 #endif

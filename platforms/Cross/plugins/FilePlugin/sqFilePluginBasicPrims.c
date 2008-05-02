@@ -26,10 +26,9 @@
 * handling code. Note that the win32 platform #defines NO_STD_FILE_SUPPORT
 * and thus bypasses this file
 */
-                                                      
-#include "sq.h"
+
+#include "FilePlugin_imports.h"
 #ifndef NO_STD_FILE_SUPPORT
-#include "FilePlugin.h"
 
 /***
 	The state of a file is kept in the following structure,
@@ -73,8 +72,9 @@
 #endif
 
 /*** Variables ***/
+
+/* we don't localize session id here */
 int thisSession = 0;
-extern struct VirtualMachine * interpreterProxy;
 
 static void setFile(SQFile *f, FILE *file)
 {
@@ -109,17 +109,17 @@ static squeakFileOffsetType getSize(SQFile *f)
 }
 
 
-sqInt sqFileAtEnd(SQFile *f) {
+sqInt sqFileAtEnd(PLUGIN_IARG_COMMA SQFile *f) {
 	/* Return true if the file's read/write head is at the end of the file. */
 
-	if (!sqFileValid(f)) return interpreterProxy->success(false);
+	if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	return ftell(getFile(f)) == getSize(f);
 }
 
-sqInt sqFileClose(SQFile *f) {
+sqInt sqFileClose(PLUGIN_IARG_COMMA SQFile *f) {
 	/* Close the given file. */
 
-	if (!sqFileValid(f)) return interpreterProxy->success(false);
+	if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	fclose(getFile(f));
 	setFile(f, 0);
 	f->sessionID = 0;
@@ -128,53 +128,49 @@ sqInt sqFileClose(SQFile *f) {
 	f->lastOp = UNCOMMITTED;
 }
 
-sqInt sqFileDeleteNameSize(char* sqFileName, sqInt sqFileNameSize) {
+sqInt sqFileDeleteNameSize(PLUGIN_IARG_COMMA char* sqFileName, sqInt sqFileNameSize) {
 	char cFileName[1000];
 	int err;
 
 	if (sqFileNameSize >= 1000) {
-		return interpreterProxy->success(false);
+		return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	}
 
 	/* copy the file name into a null-terminated C string */
-	interpreterProxy->ioFilenamefromStringofLengthresolveAliases(cFileName, sqFileName, sqFileNameSize, false);
+	vmFunction(ioFilenamefromStringofLengthresolveAliases)(PLUGIN_IPARAM_COMMA cFileName, sqFileName, sqFileNameSize, false);
 
 	err = remove(cFileName);
 	if (err) {
-		return interpreterProxy->success(false);
+		return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	}
 }
 
-squeakFileOffsetType sqFileGetPosition(SQFile *f) {
+squeakFileOffsetType sqFileGetPosition(PLUGIN_IARG_COMMA SQFile *f) {
 	/* Return the current position of the file's read/write head. */
 
 	squeakFileOffsetType position;
 
-	if (!sqFileValid(f)) return interpreterProxy->success(false);
+	if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	position = ftell(getFile(f));
-	if (position == -1) return interpreterProxy->success(false);
+	if (position == -1) return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	return position;
 }
 
-sqInt sqFileInit(void) {
+sqInt sqFileInit(PLUGIN_IARG) {
 	/* Create a session ID that is unlikely to be repeated.
 	   Zero is never used for a valid session number.
 	   Should be called once at startup time.
 	*/
-#if VM_PROXY_MINOR > 6
-	thisSession = interpreterProxy->getThisSessionID();
-#else
-	thisSession = ioLowResMSecs() + time(NULL);
+	thisSession = vmFunction(microMSecs)() + time(NULL);
 	if (thisSession == 0) thisSession = 1;	/* don't use 0 */
-#endif
 	return 1;
 }
 
-sqInt sqFileShutdown(void) {
+sqInt sqFileShutdown(PLUGIN_IARG) {
 	return 1;
 }
 
-sqInt sqFileOpen(SQFile *f, char* sqFileName, sqInt sqFileNameSize, sqInt writeFlag) {
+sqInt sqFileOpen(PLUGIN_IARG_COMMA SQFile *f, char* sqFileName, sqInt sqFileNameSize, sqInt writeFlag) {
 	/* Opens the given file using the supplied sqFile structure
 	   to record its state. Fails with no side effects if f is
 	   already open. Files are always opened in binary mode;
@@ -184,13 +180,13 @@ sqInt sqFileOpen(SQFile *f, char* sqFileName, sqInt sqFileNameSize, sqInt writeF
 	char cFileName[1001];
 
 	/* don't open an already open file */
-	if (sqFileValid(f)) return interpreterProxy->success(false);
+	if (sqFileValid(PLUGIN_IPARAM_COMMA f)) return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 
 	/* copy the file name into a null-terminated C string */
 	if (sqFileNameSize > 1000) {
-		return interpreterProxy->success(false);
+		return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	}
-	interpreterProxy->ioFilenamefromStringofLengthresolveAliases(cFileName, sqFileName, sqFileNameSize, true);
+	vmFunction(ioFilenamefromStringofLengthresolveAliases)(PLUGIN_IPARAM_COMMA cFileName, sqFileName, sqFileNameSize, true);
 
 	if (writeFlag) {
 		/* First try to open an existing file read/write: */
@@ -216,7 +212,7 @@ sqInt sqFileOpen(SQFile *f, char* sqFileName, sqInt sqFileNameSize, sqInt writeF
 	if (getFile(f) == NULL) {
 		f->sessionID = 0;
 		setSize(f, 0);
-		return interpreterProxy->success(false);
+		return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	} else {
 		FILE *file= getFile(f);
 		f->sessionID = thisSession;
@@ -228,7 +224,7 @@ sqInt sqFileOpen(SQFile *f, char* sqFileName, sqInt sqFileNameSize, sqInt writeF
 	f->lastOp = UNCOMMITTED;
 }
 
-size_t sqFileReadIntoAt(SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex) {
+size_t sqFileReadIntoAt(PLUGIN_IARG_COMMA SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex) {
 	/* Read count bytes from the given file into byteArray starting at
 	   startIndex. byteArray is the address of the first byte of a
 	   Squeak bytes object (e.g. String or ByteArray). startIndex
@@ -240,7 +236,7 @@ size_t sqFileReadIntoAt(SQFile *f, size_t count, char* byteArrayIndex, size_t st
 	size_t bytesRead;
 	FILE *file;
 
-	if (!sqFileValid(f)) return interpreterProxy->success(false);
+	if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	file= getFile(f);
 	if (f->writable && (f->lastOp == WRITE_OP)) fseek(file, 0, SEEK_CUR);  /* seek between writing and reading */
 	dst = byteArrayIndex + startIndex;
@@ -249,68 +245,68 @@ size_t sqFileReadIntoAt(SQFile *f, size_t count, char* byteArrayIndex, size_t st
 	return bytesRead;
 }
 
-sqInt sqFileRenameOldSizeNewSize(char* oldNameIndex, sqInt oldNameSize, char* newNameIndex, sqInt newNameSize) {
+sqInt sqFileRenameOldSizeNewSize(PLUGIN_IARG_COMMA char* oldNameIndex, sqInt oldNameSize, char* newNameIndex, sqInt newNameSize) {
 	char cOldName[1000], cNewName[1000];
 	int err;
 
 	if ((oldNameSize >= 1000) || (newNameSize >= 1000)) {
-		return interpreterProxy->success(false);
+		return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	}
 
 	/* copy the file names into null-terminated C strings */
-	interpreterProxy->ioFilenamefromStringofLengthresolveAliases(cOldName, oldNameIndex, oldNameSize, false);
+	vmFunction(ioFilenamefromStringofLengthresolveAliases)(PLUGIN_IPARAM_COMMA cOldName, oldNameIndex, oldNameSize, false);
 
-	interpreterProxy->ioFilenamefromStringofLengthresolveAliases(cNewName, newNameIndex, newNameSize, false);
+	vmFunction(ioFilenamefromStringofLengthresolveAliases)(PLUGIN_IPARAM_COMMA cNewName, newNameIndex, newNameSize, false);
 
 	err = rename(cOldName, cNewName);
 	if (err) {
-		return interpreterProxy->success(false);
+		return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	}
 }
 
-sqInt sqFileSetPosition(SQFile *f, squeakFileOffsetType position) {
+sqInt sqFileSetPosition(PLUGIN_IARG_COMMA SQFile *f, squeakFileOffsetType position) {
 	/* Set the file's read/write head to the given position. */
 
-	if (!sqFileValid(f)) return interpreterProxy->success(false);
+	if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	fseek(getFile(f), position, SEEK_SET);
 	f->lastOp = UNCOMMITTED;
 }
 
-squeakFileOffsetType sqFileSize(SQFile *f) {
+squeakFileOffsetType sqFileSize(PLUGIN_IARG_COMMA SQFile *f) {
 	/* Return the length of the given file. */
 
-	if (!sqFileValid(f)) return interpreterProxy->success(false);
+	if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	return getSize(f);
 }
 
-sqInt sqFileFlush(SQFile *f) {
+sqInt sqFileFlush(PLUGIN_IARG_COMMA SQFile *f) {
 	/* Return the length of the given file. */
 
-	if (!sqFileValid(f)) return interpreterProxy->success(false);
+	if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	fflush(getFile(f));
 	return 1;
 }
 
-sqInt sqFileTruncate(SQFile *f,squeakFileOffsetType offset) {
+sqInt sqFileTruncate(PLUGIN_IARG_COMMA SQFile *f,squeakFileOffsetType offset) {
 	/* Truncate the file*/
 
-	if (!sqFileValid(f)) return interpreterProxy->success(false);
+	if (!sqFileValid(PLUGIN_IPARAM_COMMA f)) return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
  	if (sqFTruncate(getFile(f), offset)) {
-            return interpreterProxy->success(false);
+            return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
         } 
 	setSize(f, ftell(getFile(f)));
 	return 1;
 }
 
 
-sqInt sqFileValid(SQFile *f) {
+sqInt sqFileValid(PLUGIN_IARG_COMMA SQFile *f) {
 	return (
 		(f != NULL) &&
 		(getFile(f) != NULL) &&
 		(f->sessionID == thisSession));
 }
 
-size_t sqFileWriteFromAt(SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex) {
+size_t sqFileWriteFromAt(PLUGIN_IARG_COMMA SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex) {
 	/* Write count bytes to the given writable file starting at startIndex
 	   in the given byteArray. (See comment in sqFileReadIntoAt for interpretation
 	   of byteArray and startIndex).
@@ -321,7 +317,7 @@ size_t sqFileWriteFromAt(SQFile *f, size_t count, char* byteArrayIndex, size_t s
 	squeakFileOffsetType position;
 	FILE *file;
 
-	if (!(sqFileValid(f) && f->writable)) return interpreterProxy->success(false);
+	if (!(sqFileValid(PLUGIN_IPARAM_COMMA f) && f->writable)) return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	file= getFile(f);
 	if (f->lastOp == READ_OP) fseek(file, 0, SEEK_CUR);  /* seek between reading and writing */
 	src = byteArrayIndex + startIndex;
@@ -333,7 +329,7 @@ size_t sqFileWriteFromAt(SQFile *f, size_t count, char* byteArrayIndex, size_t s
 	}
 
 	if (bytesWritten != count) {
-		interpreterProxy->success(false);
+		vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	}
 	f->lastOp = WRITE_OP;
 	return bytesWritten;

@@ -10,6 +10,7 @@
 *
 *   NOTES:
 *****************************************************************************/
+#define _WIN32_WINDOWS 0x500
 #include <windows.h>
 #include "sq.h"
 
@@ -187,3 +188,127 @@ void printLastError(TCHAR *prefix)
   LocalFree( lpMsgBuf );
 }
 #endif
+
+/****************************************************************************/
+/*                      Multithreading support                              */
+/****************************************************************************/
+
+/* Functions should return 0 if operation failed */
+
+sqInt ioCreateMutex(sqInt initialOwner)
+{ sqInt result;
+  result = (sqInt) CreateMutex(0,(BOOL)initialOwner, 0);
+  dprintf(("ioCreateMutex ^ %x\n", result));
+  return result;
+}
+
+sqInt ioMutexLock(sqInt mutexHandle)
+{ DWORD result;
+//  dprintf(("[%x] locking mutex %x ..\n", GetCurrentThreadId(), mutexHandle));
+  result = WaitForSingleObject((HANDLE)mutexHandle, INFINITE);
+//  dprintf(("[%x] mutex %x lock: %s\n", GetCurrentThreadId(), mutexHandle, (result == WAIT_OBJECT_0) ? "ok" : "failed")); fflush(0);
+  return result == WAIT_OBJECT_0;
+}
+
+sqInt ioMutexUnlock(sqInt mutexHandle)
+{
+//  dprintf(("[%x] mutex %x released \n", GetCurrentThreadId(), mutexHandle));
+  return ReleaseMutex((HANDLE)mutexHandle);
+}
+
+sqInt ioDeleteMutex(sqInt mutexHandle)
+{
+  return CloseHandle((HANDLE)mutexHandle);
+}
+
+sqInt ioMutexWaitmilliseconds(sqInt mutexHandle, sqInt milliseconds)
+{ DWORD result;
+  
+  result = WaitForSingleObject((HANDLE)mutexHandle, (DWORD) milliseconds);
+  return result == WAIT_OBJECT_0;
+}
+
+sqInt ioCreateThreadForparamsuspended(void * fn, void * param, sqInt suspended)
+{
+  HANDLE thread;
+
+  thread =
+    CreateThread(NULL,                    /* No security descriptor */
+                 0,                       /* default stack size     */
+                 (ThreadFunction)fn,	  /* what to do */
+                 param,					  /* parameter for thread   */
+				 (suspended)? CREATE_SUSPENDED : 0,        /* creation parameter -- create suspended so we can check the return value */
+                 0);                    /* return value for thread id */
+
+  return (sqInt) thread;
+}
+
+sqInt ioGetCurrentThread()
+{
+	return (sqInt) GetCurrentThreadId();
+}
+
+sqInt ioResumeThread(sqInt threadHandle)
+{
+	DWORD result;
+	result = ResumeThread((HANDLE)threadHandle);
+	return (result != ((DWORD)-1));
+}
+
+
+/****************************************************************************/
+/*                      Atomic event queue functions                        */
+/****************************************************************************/
+/* 
+   Note to non-windows porters: on x86 architecture, atomic CAS is 'lock cmpxchg'.
+*/
+
+#define AtomicCAS(value_ptr, new_value, comparand) InterlockedCompareExchange(value_ptr, new_value, comparand)
+
+void ioInitEventQueue(struct vmEventQueue * queue)
+{
+	queue->head.next = 0;
+	queue->tail = &queue->head;
+}
+
+void ioEnqueueEventInto(struct vmEvent * event , struct vmEventQueue * queue)
+{
+	struct vmEvent * tail;
+	struct vmEvent * old_next;
+	
+	/* add event to tail */
+	event->next = 0;
+	do {
+		tail = queue->tail;
+		old_next = (struct vmEvent *)AtomicCAS(&tail->next, event, 0);
+		if (old_next != 0)
+		{
+			AtomicCAS(&queue->tail, old_next, tail);
+		}
+	} while (old_next != 0);
+	AtomicCAS(&queue->tail, event, tail);
+}
+
+struct vmEvent * ioDequeueEventFrom(struct vmEventQueue * queue)
+{
+	struct vmEvent * event;
+	struct vmEvent * oldhead;
+	do {
+		event = queue->head.next;
+		if (!event)
+			return 0;
+		oldhead = (struct vmEvent *)AtomicCAS(&queue->head.next, event->next, event);
+	} while (oldhead != event);
+
+	/* To prevent queue damage, when queue tail points to just dequeued event, 
+		we should replace tail with head */
+	if (event->next == 0)
+	{
+		/* queue->head.next should be 0, put it as tail */
+		if ( 0 == AtomicCAS(&event->next, &queue->head, 0))
+		{
+			AtomicCAS(&queue->tail, &queue->head, event);
+		}
+	}
+	return event;
+}

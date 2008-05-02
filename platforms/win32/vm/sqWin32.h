@@ -5,7 +5,7 @@
    since if we don't have CURRENT_VERSION around anymore
    and we may want to check for the image version we need it */
 
-int readableFormat(int imageVersion);
+/* int readableFormat(int imageVersion); */
 
 /*************************************************************/
 /* NOTE: For a list of possible definitions see file README. */
@@ -37,7 +37,6 @@ int readableFormat(int imageVersion);
 #endif
 
 #define NO_TABLET
-
 
 #ifdef _WIN32_WCE
 /*************************************************************/
@@ -175,7 +174,7 @@ typedef int (*messageHook)(void *, unsigned int, unsigned int, long);
 /********************************************************/
 void SetupFilesAndPath();
 void SetupKeymap();
-void SetupWindows();
+//void SetupWindows(INTERPRETER_ARG);
 void SetupPixmaps();
 void SetupPrinter();
 void SetupTimer();
@@ -189,11 +188,6 @@ int findImageFile();
 int openImageFile();
 
 /********************************************************/
-/* external SYNCHRONIZED signaling of semaphores        */
-/********************************************************/
-int synchronizedSignalSemaphoreWithIndex(int semaIndex);
-
-/********************************************************/
 /* Image options / VM options                           */
 /********************************************************/
 char *GetImageOption(int id);
@@ -202,8 +196,6 @@ char *GetVMOption(int id);
 /********************************************************/
 /* Misc functions                                       */
 /********************************************************/
-void SetWindowSize();
-void ReleaseTimer();
 int printUsage(int level);
 
 /********************************************************/
@@ -247,7 +239,12 @@ int sqMain(char *lpCmdLine, int nCmdShow);
 */
 #define VM_VERSION TEXT(VM_NAME) TEXT(" ") TEXT(VM_VERSIONINFO) TEXT(" from ") TEXT(__DATE__) \
 	TEXT("\n") TEXT("Compiler: ") TEXT(COMPILER) TEXT(VERSION)
-	
+
+/********************************************************/
+/* Threads support										*/
+/********************************************************/
+typedef LPTHREAD_START_ROUTINE ThreadFunction;
+
 /********************************************************/
 /* image reversal functions                             */
 /********************************************************/
@@ -257,11 +254,8 @@ int reverse_image_words(unsigned int *dst, unsigned int *src,int depth, int widt
 /********************************************************/
 /* Declarations we may need by other modules            */
 /********************************************************/
-extern char imageName[];		/* full path and name to image */
-extern TCHAR imagePath[];		/* full path to image */
 extern TCHAR vmPath[];		    /* full path to interpreter's directory */
 extern TCHAR vmName[];		    /* name of the interpreter's executable */
-extern TCHAR windowTitle[];             /* window title string */
 extern char vmBuildString[];            /* the vm build string */
 
 extern const TCHAR U_ON[];
@@ -269,6 +263,7 @@ extern const TCHAR U_OFF[];
 extern const TCHAR U_GLOBAL[];
 extern const TCHAR U_SLASH[];
 extern const TCHAR U_BACKSLASH[];
+
 
 #ifndef NO_PREFERENCES
 extern HMENU vmPrefsMenu;         /* preferences menu */
@@ -305,9 +300,6 @@ extern BOOL  fShowAllocations; /* Show memory allocations */
 extern BOOL  fPriorityBoost; /* thread priority boost */
 extern BOOL  fEnableAltF4Quit; /* can we quit using Alt-F4? */
 extern BOOL  fEnableF2Menu;    /* can we get prefs menu via F2? */
-
-extern HANDLE vmSemaphoreMutex;   /* the mutex for synchronization */
-extern HANDLE vmWakeUpEvent;      /* wakeup event for interpret() */
 
 /* variables for cached display */
 extern RECT updateRect;		     /*	the rectangle to update */
@@ -370,17 +362,13 @@ void printLastError(TCHAR *prefix);
 /* Misc functions                                     */
 /******************************************************/
 DWORD SqueakImageLength(TCHAR *fileName);
-int isLocalFileName(TCHAR *fileName);
+/* not used -- int isLocalFileName(TCHAR *fileName); */
 
 #ifndef NO_PLUGIN_SUPPORT
 void pluginInit(void);
 void pluginExit(void);
 void pluginHandleEvent(MSG* msg);
 #endif /* NO_PLUGIN_SUPPORT */
-
-#ifndef NO_DROP
-int recordDragDropEvent(HWND wnd, int dragType, int x, int y, int numFiles);
-#endif
 
 /****************************************************************************/
 /* few addtional definitions for those having older include files           */
@@ -444,6 +432,14 @@ typedef struct _NOTIFYICONDATAA {
 #if defined(PROFILE) && 0
 extern DWORD ticksForReversal; /* time needed for byte/word reversal */
 extern DWORD ticksForBlitting; /* time needed for actual blts */
+#endif
+
+
+struct sqInputEvent;  /* forward declaration */
+
+
+#ifndef NO_DROP
+int recordDragDropEvent(HWND wnd, int dragType, int x, int y, int numFiles);
 #endif
 
 #endif /* _WINDOWS_ */

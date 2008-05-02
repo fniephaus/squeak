@@ -6,13 +6,13 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: 
 *   EMAIL:   Andreas.Raab@gmx.de
-*   RCSID:   $Id: sqWin32UUID.c,v 1.1 2002/05/04 23:20:28 andreasraab Exp $
+*   RCSID:   $Id$
 *
 *   NOTES:
 *****************************************************************************/
 #include <windows.h>
 #include <ole2.h>
-#include "sq.h"
+#include "UUIDPlugin_imports.h"
 
 int sqUUIDInit(void) {
   return 1;
@@ -22,9 +22,9 @@ int sqUUIDShutdown(void) {
   return 1;
 }
 
-int MakeUUID(char *location) {
+int MakeUUID(PLUGIN_IARG_COMMA char *location) {
   if(CoCreateGuid((GUID*)location) == S_OK) return 1;
-  primitiveFail();
+  vmFunction(primitiveFail)(PLUGIN_IPARAM);
   return 0;
 }
 

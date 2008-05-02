@@ -26,9 +26,6 @@ struct SqSound
   void   (*snd_Volume)(double *left, double *right);
   void   (*snd_SetVolume)(double left, double right);
   sqInt  (*snd_SetRecordLevel)(sqInt level);
-  int    (*snd_GetSwitch)(int id, int captureFlag, int channel);
-  int    (*snd_SetSwitch)(int id, int captureFlag, int parameter);
-  int    (*snd_SetDevice)(int id, char *name);
 };
 
 
@@ -47,10 +44,7 @@ static struct SqSound sound_##NAME##_itf= {	\
   sound_RecordSamplesIntoAtLength,		\
   sound_Volume,					\
   sound_SetVolume,				\
-  sound_SetRecordLevel,				\
-  sound_GetSwitch,				\
-  sound_SetSwitch,				\
-  sound_SetDevice				\
+  sound_SetRecordLevel				\
 }
 
 

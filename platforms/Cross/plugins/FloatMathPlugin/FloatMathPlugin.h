@@ -5,6 +5,9 @@
 
 #ifndef NO_ISNAN
 /* by default we use fdlibm's isnan() */
+#ifdef isnan
+#undef isnan
+#endif
 extern int isnan(double);
 #endif
 extern double __ieee754_sqrt(double);

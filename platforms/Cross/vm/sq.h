@@ -17,11 +17,26 @@
 
 #include "sqConfig.h"
 #include "sqMemoryAccess.h"
-#include "sqVirtualMachine.h"
 
 #define true	1
 #define false	0
 #define null	0  /* using "null" because nil is predefined in Think C */
+
+#ifdef VM_OBJECTIFIED
+
+extern struct Interpreter * mainVM;
+
+/* Main VM */
+# define MAIN_VM mainVM
+# define MAIN_VM_COMMA mainVM,
+
+#else
+
+# define MAIN_VM
+# define MAIN_VM_COMMA 
+
+#endif
+
 
 /* Pluggable primitives macros. */
 
@@ -143,23 +158,12 @@ sqInt sqGetFilenameFromString(char * aCharBuffer, char * aFilenameString, sqInt 
 #define browserPluginReturnIfNeeded()
 #define browserPluginInitialiseIfNeeded()
 
+
 /* Platform-specific header file may redefine earlier definitions and macros. */
 
 #include "sqPlatformSpecific.h"
-
-/* Interpreter entry points. */
-
-void error(char *s);
-sqInt checkedByteAt(sqInt byteAddress);
-sqInt checkedByteAtput(sqInt byteAddress, sqInt byte);
-sqInt checkedLongAt(sqInt byteAddress);
-sqInt checkedLongAtput(sqInt byteAddress, sqInt a32BitInteger);
-sqInt fullDisplayUpdate(void);
-sqInt initializeInterpreter(sqInt bytesToShift);
-sqInt interpret(void);
-sqInt primitiveFail(void);
-sqInt signalSemaphoreWithIndex(sqInt semaIndex);
-sqInt success(sqInt);
+#include "sqVirtualMachine.h"
+#include "interp_prototypes.h"
 
 /* Display, mouse, keyboard, time. */
 
@@ -168,17 +172,17 @@ sqInt ioExit(void);
 sqInt ioForceDisplayUpdate(void);
 sqInt ioFormPrint(sqInt bitsAddr, sqInt width, sqInt height, sqInt depth,
 		  double hScale, double vScale, sqInt landscapeFlag);
-sqInt ioSetFullScreen(sqInt fullScreen);
-sqInt ioRelinquishProcessorForMicroseconds(sqInt microSeconds);
-sqInt ioScreenSize(void);
+sqInt ioSetFullScreen(INTERPRETER_ARG_COMMA sqInt fullScreen);
+sqInt ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA sqInt microSeconds);
+sqInt ioScreenSize(INTERPRETER_ARG);
 sqInt ioScreenDepth(void);
 sqInt ioSeconds(void);
-sqInt ioSetCursor(sqInt cursorBitsIndex, sqInt offsetX, sqInt offsetY);
-sqInt ioSetCursorWithMask(sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY);
+sqInt ioSetCursor(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, sqInt offsetX, sqInt offsetY);
+sqInt ioSetCursorWithMask(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY);
 sqInt ioShowDisplay(sqInt dispBitsIndex, sqInt width, sqInt height, sqInt depth,
 		    sqInt affectedL, sqInt affectedR, sqInt affectedT, sqInt affectedB);
 sqInt ioHasDisplayDepth(sqInt depth);
-sqInt ioSetDisplayMode(sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag);
+sqInt ioSetDisplayMode(INTERPRETER_ARG_COMMA sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag);
 
 /* Power management. */
 
@@ -192,14 +196,14 @@ sqInt ioDisablePowerManager(sqInt disableIfNonZero);
    without event support.
 */
 
-sqInt ioGetButtonState(void);
-sqInt ioGetKeystroke(void);
-sqInt ioMousePoint(void);
-sqInt ioPeekKeystroke(void);
+sqInt ioGetButtonState(INTERPRETER_ARG);
+sqInt ioGetKeystroke(INTERPRETER_ARG);
+sqInt ioMousePoint(INTERPRETER_ARG);
+sqInt ioPeekKeystroke(INTERPRETER_ARG);
 /* Note: In an event driven architecture, ioProcessEvents is obsolete.
    It can be implemented as a no-op since the image will check for
    events in regular intervals. */
-sqInt ioProcessEvents(void);
+sqInt ioProcessEvents(INTERPRETER_ARG);
 
 
 /* User input recording II:
@@ -234,6 +238,7 @@ sqInt ioProcessEvents(void);
 /* generic input event */
 typedef struct sqInputEvent
 {
+//  struct sqInputEvent * next;
   int type;			/* type of event; either one of EventTypeXXX */
   unsigned int timeStamp;	/* time stamp */
   /* the interpretation of the following fields depend on the type of the event */
@@ -284,11 +289,10 @@ typedef struct sqDragDropFilesEvent
   int windowIndex;		/* host window structure */
 } sqDragDropFilesEvent;
 
-#define DragEnter	1 /* drag operation from OS entered Squeak window */
+#define DragEnter	1 /* drag operation from OS entered Squeak window	 */
 #define DragMove	2 /* drag operation from OS moved within Squeak window */
-#define DragLeave	3 /* drag operation from OS left Squeak window */
-#define DragDrop	4 /* drag operation dropped contents onto Squeak. */
-#define DragRequest	5 /* data request from other app. */
+#define DragLeave	3 /* drag operation from OS left Squeak window	 */
+#define DragDrop	4 /* drag operation dropped contents onto Squeak.      */
 
 /* menu event */
 typedef struct sqMenuEvent
@@ -326,16 +330,19 @@ typedef struct sqWindowEvent
 #define WindowEventStinks	6 /* this window stinks (just to see if people read this stuff) */
 
 /* Set an asynchronous input semaphore index for events. */
-sqInt ioSetInputSemaphore(sqInt semaIndex);
+sqInt ioSetInputSemaphore(INTERPRETER_ARG_COMMA sqInt semaIndex);
+
 /* Retrieve the next input event from the OS. */
-sqInt ioGetNextEvent(sqInputEvent *evt);
+sqInt ioGetNextEvent(INTERPRETER_ARG_COMMA sqInputEvent *evt);
+/* recycle used input event */
+sqInt ioRecycleEvent(sqInputEvent * evt);
 
 /* Image file and VM path names. */
-extern char imageName[];
-char *getImageName(void);
-sqInt imageNameGetLength(sqInt sqImageNameIndex, sqInt length);
-sqInt imageNamePutLength(sqInt sqImageNameIndex, sqInt length);
-sqInt imageNameSize(void);
+void ioSetImagePath(INTERPRETER_ARG_COMMA char * imgName);
+char *ioGetImageName(INTERPRETER_ARG);
+sqInt imageNameGetLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt length);
+sqInt imageNamePutLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt length);
+sqInt imageNameSize(INTERPRETER_ARG);
 sqInt vmPathSize(void);
 sqInt vmPathGetLength(sqInt sqVMPathIndex, sqInt length);
 
@@ -344,35 +351,16 @@ sqInt ioCanRenameImage(void);
 sqInt ioCanWriteImage(void);
 sqInt ioDisableImageWrite(void);
 
-/* Save/restore. */
-/* Read the image from the given file starting at the given image offset */
-sqInt readImageFromFileHeapSizeStartingAt(sqImageFile f, sqInt desiredHeapSize, squeakFileOffsetType imageOffset);
-/* NOTE: The following is obsolete - it is only provided for compatibility */
-#define readImageFromFileHeapSize(f, s) readImageFromFileHeapSizeStartingAt(f,s,0)
-
 /* Clipboard (cut/copy/paste). */
 sqInt clipboardSize(void);
 sqInt clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex);
 sqInt clipboardWriteFromAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex);
 
-
-/* Interpreter entry points needed by compiled primitives. */
-void *arrayValueOf(sqInt arrayOop);
-sqInt checkedIntegerValueOf(sqInt intOop);
-void *fetchArrayofObject(sqInt fieldIndex, sqInt objectPointer);
-double fetchFloatofObject(sqInt fieldIndex, sqInt objectPointer);
-sqInt fetchIntegerofObject(sqInt fieldIndex, sqInt objectPointer);
-double floatValueOf(sqInt floatOop);
-sqInt pop(sqInt nItems);
-sqInt pushInteger(sqInt integerValue);
-sqInt sizeOfSTArrayFromCPrimitive(void *cPtr);
-sqInt storeIntegerofObjectwithValue(sqInt fieldIndex, sqInt objectPointer, sqInt integerValue);
-
 /* Profiling. */
-sqInt clearProfile(void);
-sqInt dumpProfile(void);
-sqInt startProfiling(void);
-sqInt stopProfiling(void);
+sqInt clearProfile(INTERPRETER_ARG);
+sqInt dumpProfile(INTERPRETER_ARG);
+sqInt startProfiling(INTERPRETER_ARG);
+sqInt stopProfiling(INTERPRETER_ARG);
 
 /* System attributes. */
 sqInt attributeSize(sqInt id);
@@ -417,3 +405,31 @@ sqInt ioFreeModule(void *moduleHandle);
 
 /* The Squeak version from which this interpreter was generated. */
 extern const char *interpreterVersion;
+
+
+/* Multithreading support (see implementation in sqWin32utils.c) */
+
+/* Functions should return 0 if operation failed */
+sqInt ioCreateMutex(sqInt initialOwner);
+sqInt ioMutexLock(sqInt mutexHandle);
+sqInt ioMutexUnlock(sqInt mutexHandle);
+sqInt ioDeleteMutex(sqInt mutexHandle);
+sqInt ioMutexWaitmilliseconds(sqInt mutexHandle, sqInt milliseconds);
+
+sqInt ioCreateThreadForparamsuspended(void * fn, void * param, sqInt suspended);
+sqInt ioGetCurrentThread();
+sqInt ioResumeThread(sqInt threadHandle);
+void * ioGetThreadedInterpretFunctionPointer();
+
+/* force given interpreter to wake up */
+sqInt ioWakeUp(INTERPRETER_ARG);
+
+/* we need this to determine initial heap size */
+sqInt ioSqueakImageSize(char* filename);
+
+/* Atomic event queue functions. */
+void ioInitEventQueue(struct vmEventQueue * queue);
+void ioEnqueueEventInto(struct vmEvent * event , struct vmEventQueue * queue);
+struct vmEvent * ioDequeueEventFrom(struct vmEventQueue * queue);
+
+

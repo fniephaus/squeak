@@ -3,18 +3,35 @@
 
 /* Increment the following number if you change the order of
    functions listed or if you remove functions */
-#define VM_PROXY_MAJOR 1
 
+#define VM_PROXY_MAJOR 1
 /* Note: You can define a different VM_PROXY_MINOR if the plugin
    should work with older VMs. */
 #ifndef VM_PROXY_MINOR
 /* Increment the following number if you add functions at the end */
 #define VM_PROXY_MINOR 7
+
 #endif
 
 #include "sqMemoryAccess.h"
 
+
+#ifdef VM_OBJECTIFIED
+#  define OBJVM_PROXY_MAJOR 2
+#  ifndef OBJVM_PROXY_MINOR
+/* Increment the following number if you add functions at the end */
+#    define OBJVM_PROXY_MINOR 1
+#  endif
+#else
+#  define OBJVM_PROXY_MAJOR VM_PROXY_MAJOR
+#  define OBJVM_PROXY_MINOR VM_PROXY_MINOR
+#endif
+
+
+
 typedef sqInt (*CompilerHook)();
+
+/******************** VirtualMachine for legacy plugins **********************************/
 
 struct VirtualMachine* sqGetInterpreterProxy(void);
 
@@ -166,15 +183,15 @@ typedef struct VirtualMachine {
 	sqInt (*classExternalFunction)(void);
 	sqInt (*classExternalLibrary)(void);
 	sqInt (*classExternalStructure)(void);
-	sqInt (*ioLoadModuleOfLength)(sqInt modIndex, sqInt modLength);
-	sqInt (*ioLoadSymbolOfLengthFromModule)(sqInt fnIndex, sqInt fnLength, sqInt handle);
+	void* (*ioLoadModuleOfLength)(sqInt modIndex, sqInt modLength);
+	void* (*ioLoadSymbolOfLengthFromModule)(sqInt fnIndex, sqInt fnLength, void* handle);
 	sqInt (*isInMemory)(sqInt address);
 
 #endif
 
 #if VM_PROXY_MINOR > 3
 
-	void *(*ioLoadFunctionFrom)(char *fnName, char *modName);
+	void* (*ioLoadFunctionFrom)(char *fnName, char *modName);
 	sqInt (*ioMicroMSecs)(void);
 
 #endif
@@ -210,5 +227,39 @@ typedef struct VirtualMachine {
 
 
 } VirtualMachine;
+
+
+
+/******************** ObjVirtualMachine for objectified plugins **********************************/
+
+#ifdef VM_OBJECTIFIED
+
+struct ObjVirtualMachine * sqGetObjInterpreterProxy(void);
+
+typedef struct ObjVirtualMachine {
+	sqInt (*minorVersion)(void);
+	sqInt (*majorVersion)(void);
+
+/* IMPORTANT!!!
+*	The rest of functions can be obtained by plugin by calling a getVMFunctionPointerBySelector function.
+*	The need in defining additional functions in this struct is gone forever
+*/
+	void * (*getVMFunctionPointerBySelector)(char * selector);
+
+} ObjVirtualMachine;
+
+
+/* For plugins, we include forward declaration of interpreterProxy
+   if plugin is objectified then it should point to ObjVirtualMachine,
+   if not, then to VirtualMachine
+*/
+
+extern struct ObjVirtualMachine * _objInterpreterProxy;
+typedef void (*AttachedStateFn)(INTERPRETER_ARG);
+
+#endif
+extern struct VirtualMachine * _interpreterProxy;
+
+
 
 #endif /* _SqueakVM_H */

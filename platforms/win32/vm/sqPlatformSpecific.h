@@ -15,6 +15,9 @@
 #undef putchar
 #include "sqWin32Alloc.h"
 
+#include <stddef.h>  /* Need this for use size_t */
+#include <windows.h>
+
 #ifdef _MSC_VER
 #define squeakFileOffsetType __int64
 #else
@@ -41,6 +44,12 @@ size_t sqImageFileWrite(void *ptr, size_t sz, size_t count, sqImageFile h);
 
 #endif /* WIN32_FILE_SUPPORT */
 
+/********************************************************/
+/* external SYNCHRONIZED signaling of semaphores        */
+/********************************************************/
+int synchronizedSignalSemaphoreWithIndex(INTERPRETER_ARG_COMMA int semaIndex);
+
+
 /* pluggable primitive support */
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #  undef EXPORT
@@ -52,9 +61,52 @@ size_t sqImageFileWrite(void *ptr, size_t sz, size_t count, sqImageFile h);
 #undef ioLowResMSecs
 #undef ioMicroMSecs
 
+/* sig: ioLowResMSecs no longer supported nor used 
+
 extern int _lowResMSecs;
 #define ioLowResMSecs() _lowResMSecs
+*/
 
-#else error "Not Win32!"
+
+/* Per-Interpreter win32 vm state */
+extern int win32stateId;
+
+typedef struct Win32AttachedState {
+	HANDLE wakeUpEvent;
+	HANDLE timerThread;
+
+	HANDLE sleepEvent;
+	DWORD delayTick;
+
+	vmEvent ioProcessEventsEvt;
+	vmEvent ioSignalDelayEvent;
+
+	#define KEYBUF_SIZE 64
+	int keyBuf[KEYBUF_SIZE];	/* circular buffer */
+	int keyBufGet;				/* index of next item of keyBuf to read */
+	int keyBufPut;				/* index of next item of keyBuf to write */
+	int keyBufOverflows;		/* number of characters dropped */
+
+	int inputSemaphoreIndex;	/* if non-zero the event semaphore index */
+
+	#define MAX_EVENT_BUFFER 1024
+	struct sqInputEvent * eventBuffer;
+	int eventBufferGet;
+	int eventBufferPut;
+
+#define IMAGE_NAME_SIZE MAX_PATH
+
+	char imageName[MAX_PATH+1];		  /* full path and name to image */
+	TCHAR imagePath[MAX_PATH+1];	  /* full path to image */
+	TCHAR windowTitle[MAX_PATH];      /* window title string */
+
+} Win32AttachedState;
+
+#define DECL_WIN32_STATE() struct Win32AttachedState * win32state = getAttachedStateBuffer(intr, win32stateId)
+#define WIN32_STATE(name) win32state->name
+
+
+#else 
+#error "Not Win32!"
 #endif /* WIN32 */
 

@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: Walt Disney Imagineering, Glendale, CA
 *   EMAIL:   Andreas.Raab@disney.com
-*   RCSID:   $Id: sqWin32OpenGL.c,v 1.7 2002/09/05 19:30:45 andreasraab Exp $
+*   RCSID:   $Id$
 *
 *   NOTES:
 *
@@ -15,10 +15,7 @@
 #include <stdio.h>
 #include <GL/gl.h>
 
-#include "sqVirtualMachine.h"
-#include "sqConfig.h"
-#include "sqPlatformSpecific.h"
-#include "B3DAcceleratorPlugin.h"
+#include "B3DAcceleratorPlugin_imports.h"
 
 #if defined (B3DX_GL)
 
@@ -38,8 +35,6 @@
 	FILE *fp = fopen("Squeak3D.log", "at");\
 	if(fp) { fprintf args; if(forceFlush) fflush(fp); fclose(fp); }}
 
-/* Plugin refs */
-extern struct VirtualMachine *interpreterProxy;
 
 static HWND *theSTWindow = NULL; /* a reference to Squeak's main window */
 
@@ -683,7 +678,7 @@ int glSetVerboseLevel(int level) {
 int glInitialize(void)
 {
   int i;
-  theSTWindow = (HWND*) interpreterProxy->ioLoadFunctionFrom("stWindow","");
+  theSTWindow = (HWND*) vmFunction(loadFunctionfrom)("stWindow","");
   if(!theSTWindow) {
     DPRINTF(1,(fp,"ERROR: Failed to look up stWindow\n"));
     return 0;
@@ -707,12 +702,12 @@ int glShutdown(void)
 #ifdef ENABLE_FORCED_PFD
 int win32SetForcedPFD(void) {
   int pfdIndex;
-  if(interpreterProxy->methodArgumentCount() != 1)
-    return interpreterProxy->primitiveFail();
-  pfdIndex = interpreterProxy->stackIntegerValue(0);
-  if(interpreterProxy->failed()) return 0;
+  if(vmFunction(methodArgumentCount)() != 1)
+    return vmFunction(primitiveFail)();
+  pfdIndex = vmFunction(stackIntegerValue)(0);
+  if(vmFunction(failed)()) return 0;
   forcedPFD = pfdIndex;
-  interpreterProxy->pop(1);
+  vmFunction(pop)(1);
 }
 #endif
 

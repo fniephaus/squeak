@@ -21,13 +21,16 @@
 #include "sq.h"
 #include "sqWin32Args.h"
 
-/*** Crash debug -- Imported from Virtual Machine ***/
-int getFullScreenFlag(void);
-int methodPrimitiveIndex(void);
-int getCurrentBytecode(void);
-int printCallStack(void);
+#include <Mmsystem.h>
 
+#ifndef TIME_KILL_SYNCHRONOUS   
+	#define TIME_KILL_SYNCHRONOUS   0x0100  
+#endif
+
+static UINT timerRes;  // minimal timer resolution in milliseconds
 extern TCHAR squeakIniName[];
+char startupImageName[MAX_PATH+1];
+
 
 /* Import from sqWin32Alloc.c */
 LONG CALLBACK sqExceptionFilter(LPEXCEPTION_POINTERS exp);
@@ -110,13 +113,13 @@ LONG CALLBACK squeakExceptionHandler(LPEXCEPTION_POINTERS exp)
       result = TopLevelFilter(exp);
     }
   }
-#ifdef NDEBUG
+//#ifdef NDEBUG
   /* #4: If that didn't work either give up and print a crash debug information */
   if(result != EXCEPTION_CONTINUE_EXECUTION) {
     printCrashDebugInformation(exp);
     result = EXCEPTION_EXECUTE_HANDLER;
   }
-#endif
+//#endif
   return result;
 }
 
@@ -173,6 +176,8 @@ int OutputConsoleString(char *string)
   return 1;
 }
 
+#ifndef USE_STDIO_PRINTF
+
 int __cdecl printf(const char *fmt, ...)
 { va_list al;
 
@@ -207,6 +212,8 @@ int __cdecl putchar(int c)
 {
   return printf("%c",c);
 }
+
+#endif
 
 /****************************************************************************/
 /*                   Message Processing                                     */
@@ -314,6 +321,8 @@ char *GetImageOption(int id)
     return NULL;
 }
 
+#if __GNUC__ < 3
+
 typedef struct _OSVERSIONINFOEX {
   DWORD dwOSVersionInfoSize;
   DWORD dwMajorVersion;
@@ -336,6 +345,8 @@ typedef struct _DISPLAY_DEVICE {
   TCHAR DeviceID[128];
   TCHAR DeviceKey[128];
 } DISPLAY_DEVICE, *PDISPLAY_DEVICE;
+
+#endif
 
 typedef BOOL (CALLBACK *pfnEnumDisplayDevices)(
   LPCTSTR lpDevice,                // device name
@@ -686,13 +697,20 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 { TCHAR crashInfo[1024];
   FILE *f;
   int byteCode;
+  int i;
 
+  // find interpreter instance which caused a crash
+  struct Interpreter * intr = interpreterOfCurrentThread();
+  
   UninstallExceptionHandler();
   /* Retrieve current byte code.
      If this fails the IP is probably wrong */
   TRY {
 #ifndef JITTER
-    byteCode = getCurrentBytecode();
+	  if (intr)
+		byteCode = getCurrentBytecode(intr);
+	  else
+		byteCode = -1;
 #else
     byteCode = -1;
 #endif
@@ -712,7 +730,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 					 exp->ExceptionRecord->ExceptionCode,
 					 exp->ExceptionRecord->ExceptionAddress,
                      byteCode,
-                     methodPrimitiveIndex(),
+                     methodPrimitiveIndex(intr),
                      vmPath,
                      TEXT("crash.dmp"));
   if(!fHeadlessImage)
@@ -765,7 +783,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 	    "Current byte code: %d\n"
 	    "Primitive index: %d\n",
 	    byteCode,
-	    methodPrimitiveIndex());
+	    methodPrimitiveIndex(intr));
     fflush(f);
     /* print loaded plugins */
     fprintf(f,"\nLoaded plugins:\n");
@@ -787,7 +805,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 	  FILE tmpStdout;
 	  tmpStdout = *stdout;
 	  *stdout = *f;
-	  printCallStack();
+	  printCallStack(intr);
 	  *f = *stdout;
 	  *stdout = tmpStdout;
 	  fprintf(f,"\n");
@@ -838,13 +856,14 @@ void __cdecl Cleanup(void)
 { /* not all of these are essential, but they're polite... */
 
   if(!inCleanExit) {
-    printCallStack();
+    printCallStack(MAIN_VM);
   }
   ioShutdownAllModules();
 #ifndef NO_PLUGIN_SUPPORT
   pluginExit();
 #endif
-  ReleaseTimer();
+  timeEndPeriod(timerRes); 
+
   /* tricky ... we have no systray icon when running
      headfull or when running as service on NT */
   if(fHeadlessImage && (!fRunService || fWindows95))
@@ -921,7 +940,7 @@ int sqImageFile findEmbeddedImage(void) {
 	}
 	/* Gotcha! */
 	sqImageFileSeek(f, sqImageFilePosition(f) - 4);
-	strcpy(imageName, name);
+	strcpy(startupImageName, name);
 	imageSize = endMarker - sqImageFilePosition(f);
 	return f;
 }
@@ -929,6 +948,333 @@ int sqImageFile findEmbeddedImage(void) {
 int findEmbeddedImage(void) { return 0; }
 #endif
 
+
+
+
+/* Win32 per-interpreter attached state initialization/finalization functions */
+int win32stateId = 0;
+static int usePerfCounter = 0; // use performance counters
+LONGLONG counter_freq;
+
+/****************************************************************************/
+/*                        threadedInterpretFn                               */
+/****************************************************************************/
+DWORD WINAPI threadedInterpretFn(void * param)
+{
+	struct Interpreter * intr = (struct Interpreter *) param;
+	DECL_WIN32_STATE();
+	MSG msg;
+//	int xx = 0;
+
+	/* this will force windows to create message queue for our thread */
+	PeekMessage( &msg, 0, WM_USER,WM_USER, PM_NOREMOVE);
+
+	dprintf(("New interpreter instance %x is about to start!\n", param));
+
+	setInterpreterThread(intr, ioGetCurrentThread());
+
+	dprintf(("Initializing attached states...\n"));
+	/* if this is first interpreter instance we should call initializeAllNewAttachedStates() */
+	if (intr == MAIN_VM)
+	{
+		initializeAllNewAttachedStates();
+	}
+	else
+	{
+		initializeAttachedStates(intr);
+	}
+	dprintf(("...done\n"));
+
+	ioGetSecureUserDirectory();
+
+	/* resume timerThread */
+	ResumeThread(WIN32_STATE(timerThread));
+
+	browserPluginInitialiseIfNeeded(); /* don't really think this belongs here */
+
+	lockInterpreter(intr); /* lock interpreter mutex before entering loop */
+	while (1)
+	{
+		interpret(intr);
+//		dprintf(("Handling events %d\n",++xx));
+
+		// give a chance other threads to do something
+		unlockInterpreter(intr);
+//		SwitchToThread();
+		lockInterpreter(intr);
+		handleEvents(intr);
+	}
+
+	dprintf(("Interpreter %x thread just exited!\n", param));
+}
+
+
+void * ioGetThreadedInterpretFunctionPointer()
+{
+	return (void*)threadedInterpretFn;
+}
+
+DWORD millisecondsInterval(LONGLONG counterInterval)
+{
+	return (DWORD) (counterInterval * 1000 / counter_freq);
+}
+
+int ioMSecs()
+{
+  LONGLONG res;
+  /* Make sure the value fits into Squeak SmallIntegers */
+#ifdef _WIN32_WCE
+  return timeGetTime() & 0x3FFFFFFF;
+#else
+  if (usePerfCounter)
+  {
+	QueryPerformanceCounter((LARGE_INTEGER*)&res);
+	return millisecondsInterval(res) & 0x3FFFFFFF;
+  }
+  else
+    return GetTickCount() &0x3FFFFFFF;
+#endif
+}
+
+
+/* Note: ioRelinquishProcessorForMicroseconds has *micro*seconds  as argument*/
+int ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA int microSeconds)
+{
+  /* wake us up if something happens */
+  DECL_WIN32_STATE();
+  DWORD waitResult;
+  HANDLE event;
+
+  event = WIN32_STATE(wakeUpEvent);
+  ResetEvent(event);
+
+  unlockInterpreter(INTERPRETER_PARAM);
+  waitResult = MsgWaitForMultipleObjects(1, &event, FALSE,
+			    microSeconds / 1000, QS_ALLINPUT);
+  lockInterpreter(INTERPRETER_PARAM);
+
+  if (waitResult == WAIT_OBJECT_0 + 1) // return from wait caused by user input
+  {
+	ioProcessEvents(INTERPRETER_PARAM); /* keep up with mouse moves etc. */
+  }
+  return microSeconds;
+}
+
+sqInt ioWakeUp(INTERPRETER_ARG)
+{
+  DECL_WIN32_STATE();
+  SetEvent(WIN32_STATE(wakeUpEvent));
+};
+
+sqInt ioProcessEventsHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
+{
+#ifdef DEBUG
+	DECL_WIN32_STATE();
+	if (event != &WIN32_STATE(ioProcessEventsEvt))
+	{
+		error(INTERPRETER_PARAM_COMMA "This cannot happen.");
+	}
+#endif
+	event->fn = 0; /* event should == &ioProcessEventsEvt in win32 state */
+	ioProcessEvents(INTERPRETER_PARAM);
+}
+
+
+sqInt ioSignalDelayEventHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
+{
+#ifdef DEBUG
+	DECL_WIN32_STATE();
+	if (event != &WIN32_STATE(ioSignalDelayEvent))
+	{
+		error(INTERPRETER_PARAM_COMMA "This cannot happen.");
+	}
+#endif
+	event->fn = 0; /* event should == &ioSignalDelayEvent in win32 state */
+	signalTimerSemaphore(INTERPRETER_PARAM);
+}
+
+sqInt dummyHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
+{
+	event->fn = 0; /* event should == &ioSignalDelayEvent in win32 state */
+}
+
+void ioScheduleTimerSemaphoreSignalAt(INTERPRETER_ARG_COMMA int atMilliseconds)
+{
+	DECL_WIN32_STATE();
+
+	WIN32_STATE(delayTick) = atMilliseconds;
+
+	if (WIN32_STATE(ioSignalDelayEvent).fn != 0) // check if delay signaling is already put in events
+	{
+		WIN32_STATE(ioSignalDelayEvent).fn = dummyHandler;
+	}
+	PulseEvent(WIN32_STATE(sleepEvent)); 
+	// give a chance timerRoutine to sync with delay
+	SwitchToThread();
+}
+
+DWORD WINAPI timerRoutine(INTERPRETER_ARG)
+{ 	
+// This parameter is the milliseconds interval, by which interpreter should unconditionaly interrupt to check
+// for user input 
+
+#define INPUT_CHECK_PERIOD 20
+
+	DWORD currentTick, newTick;
+	DWORD sleepTime;
+	int timeLeft = -1;
+
+	DECL_WIN32_STATE();
+//	static int xx = 0;
+	WIN32_STATE(ioProcessEventsEvt).fn = 0;
+	WIN32_STATE(ioSignalDelayEvent).fn = 0;
+
+	currentTick = ioMSecs();
+	sleepTime = INPUT_CHECK_PERIOD;
+	while (1)
+	{
+		WaitForSingleObject(WIN32_STATE(sleepEvent), sleepTime);
+		if (WIN32_STATE(delayTick))
+		{
+			timeLeft = WIN32_STATE(delayTick);
+			WIN32_STATE(delayTick) = 0;
+			// new delay is set, recalculate time left
+
+			// check for rare case:
+			// =*==*==*==================================*========
+			//        ^ counter value when setting delay 
+			//                                           ^ current counter value(wrapped)
+			//     ^ counter max value
+			//  ^ resuling delay value
+
+			newTick = ioMSecs();
+			if (newTick < currentTick && timeLeft > currentTick) // counter wrapped
+			{
+				timeLeft = timeLeft - 0x3FFFFFFF - newTick;
+			} else
+			{
+				timeLeft = timeLeft - newTick;
+			}
+			currentTick = newTick;
+
+			if (timeLeft <= 0)
+			{
+//				dprintf(("Signaling asap\n"));
+				// signal delay semaphore
+				if (WIN32_STATE(ioSignalDelayEvent).fn == 0)
+				{
+					WIN32_STATE(ioSignalDelayEvent).fn = ioSignalDelayEventHandler;
+					enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioSignalDelayEvent));
+				}
+				else if (WIN32_STATE(ioSignalDelayEvent).fn == dummyHandler)
+				{
+					timeLeft = 1;
+				}
+				ioWakeUp(INTERPRETER_PARAM); // make sure we not sleeping
+			}
+		}
+		else
+		if (timeLeft > 0)
+		{
+			newTick = ioMSecs();
+			if (newTick < currentTick) // counter is wrapped
+			{
+				timeLeft -= (0x3FFFFFFF - currentTick + newTick);
+			} else
+			{
+				timeLeft -= newTick - currentTick;
+			}
+
+			currentTick = newTick;
+			if (timeLeft <= 0)
+			{
+				// signal delay semaphore
+				if (WIN32_STATE(ioSignalDelayEvent).fn == 0)
+				{
+					WIN32_STATE(ioSignalDelayEvent).fn = ioSignalDelayEventHandler;
+					enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioSignalDelayEvent));
+				} 
+				else if (WIN32_STATE(ioSignalDelayEvent).fn == dummyHandler)
+				{
+					timeLeft = 1;
+				}
+				ioWakeUp(INTERPRETER_PARAM); // make sure we not sleeping
+			}
+		}
+
+		if (WIN32_STATE(ioProcessEventsEvt).fn == 0)
+		{
+			WIN32_STATE(ioProcessEventsEvt).fn = ioProcessEventsHandler;
+			enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioProcessEventsEvt));
+		}
+		if (timeLeft > 0)
+			sleepTime = min(INPUT_CHECK_PERIOD, timeLeft);
+		else
+			sleepTime = INPUT_CHECK_PERIOD;
+	}
+}
+
+
+static void sqInitWin32State(INTERPRETER_ARG)
+{
+	DECL_WIN32_STATE();
+
+	dprintf(("Initializing win32 attached state\n"));
+	WIN32_STATE(wakeUpEvent) = CreateEvent(NULL, 1, 0, NULL);
+	WIN32_STATE(sleepEvent) = CreateEvent(NULL, 1, 0, NULL);
+	WIN32_STATE(delayTick) = 0;
+	WIN32_STATE(timerThread) = CreateThread(NULL,  0, (LPTHREAD_START_ROUTINE) &timerRoutine,
+		(LPVOID) INTERPRETER_PARAM, CREATE_SUSPENDED, NULL);
+
+	/* NOTE!!! The timer thread should run at higher than normal priority,
+	to make it not depending too much on interpreter thread load */
+	SetThreadPriority( WIN32_STATE(timerThread) , THREAD_PRIORITY_TIME_CRITICAL); 
+
+    SetEvent(WIN32_STATE(wakeUpEvent));
+
+	WIN32_STATE(keyBufGet) = 0;			/* index of next item of keyBuf to read */
+	WIN32_STATE(keyBufPut) = 0;			/* index of next item of keyBuf to write */
+	WIN32_STATE(keyBufOverflows) = 0;	/* number of characters dropped */
+	WIN32_STATE(inputSemaphoreIndex) = 0;
+	WIN32_STATE(eventBufferGet) = 0;
+	WIN32_STATE(eventBufferPut) = 0;
+
+	WIN32_STATE(eventBuffer) = (struct sqInputEvent*)malloc(MAX_EVENT_BUFFER * sizeof(struct sqInputEvent));
+
+	if (INTERPRETER_PARAM == MAIN_VM)
+	{
+		SetupWindows(INTERPRETER_PARAM);
+    /* if headless running is requested, try to to create an icon
+       in the Win95/NT system tray */
+	    if(fHeadlessImage && (!fRunService || fWindows95))
+		  SetSystemTrayIcon(1);
+	    SetWindowSize(MAIN_VM);
+	    ioSetFullScreen(INTERPRETER_PARAM_COMMA getFullScreenFlag(MAIN_VM));
+	}
+
+//	WIN32_STATE(delaySemaphoreTimerId) = 0;
+//	WIN32_STATE(processEventsTimerId) = timeSetEvent(0, max(timerRes, 20), processEventsCallback, 
+//		(DWORD)INTERPRETER_PARAM, TIME_PERIODIC | TIME_CALLBACK_FUNCTION | TIME_KILL_SYNCHRONOUS);
+}
+
+
+static void sqFinalizeWin32State(INTERPRETER_ARG)
+{
+	DECL_WIN32_STATE();
+	CloseHandle(WIN32_STATE(wakeUpEvent));
+//	timeKillEvent(WIN32_STATE(processEventsTimerId));
+
+//	if (WIN32_STATE(delaySemaphoreTimerId) != 0) // kill old one
+//	{
+//		timeKillEvent(WIN32_STATE(delaySemaphoreTimerId));
+//	}
+
+	TerminateThread(WIN32_STATE(timerThread),0);
+	CloseHandle(WIN32_STATE(sleepEvent));
+	CloseHandle(WIN32_STATE(timerThread));
+
+	free(WIN32_STATE(eventBuffer));
+}
 
 /****************************************************************************/
 /*                        sqMain                                            */
@@ -960,7 +1306,8 @@ static vmArg args[] = {
 int sqMain(char *lpCmdLine, int nCmdShow)
 { 
   int virtualMemory;
-  
+  TIMECAPS tc;
+
 #ifdef NO_MULTIBLE_INSTANCES    
   HANDLE hMutex;
   hMutex = CreateMutex(NULL, TRUE, VM_NAME); /*more unique value needed here ?!*/
@@ -973,6 +1320,7 @@ int sqMain(char *lpCmdLine, int nCmdShow)
   /* set default fpu control word */
   _control87(FPU_DEFAULT, _MCW_EM | _MCW_RC | _MCW_PC | _MCW_IC);
 
+  startupImageName[0] = 0;
   LoadPreferences();
 
   /* parse command line args */
@@ -990,8 +1338,11 @@ int sqMain(char *lpCmdLine, int nCmdShow)
       return printUsage(1);
   }
 
+  usePerfCounter = QueryPerformanceFrequency((LARGE_INTEGER*)&counter_freq); // use high precision counter or not
+  dprintf(("usePerfCounter = %d\n",usePerfCounter ));
+
   /* a quick check if we have any argument at all */
-  if(!fRunService && (*imageName == 0)) {
+  if(!fRunService && (*startupImageName == 0)) {
     /* Check if the image is embedded */
     imageFile = findEmbeddedImage();
     if(!imageFile) {
@@ -1002,6 +1353,7 @@ int sqMain(char *lpCmdLine, int nCmdShow)
       }
     }
   }
+
 
 #ifdef NO_SERVICE
   fRunService = 0;
@@ -1038,6 +1390,15 @@ int sqMain(char *lpCmdLine, int nCmdShow)
 
   SetupFilesAndPath();
 
+  if (timeGetDevCaps(&tc, sizeof(TIMECAPS)) != TIMERR_NOERROR) 
+  {
+	// Error; application can't continue.
+	exit(-1);
+  }
+
+  timerRes = tc.wPeriodMin;
+  timeBeginPeriod(timerRes); 
+
   /* release resources on exit */
   atexit(Cleanup);
 
@@ -1053,11 +1414,10 @@ int sqMain(char *lpCmdLine, int nCmdShow)
 #endif
 
   /* initialisation */
+
   SetupKeymap();
-  SetupWindows();
   SetupPixmaps();
   SetupService95();
-  SetupTimer();
 
   /* check the interpreter's size assumptions for basic data types */
   if (sizeof(int) != 4) error("This C compiler's integers are not 32 bits.");
@@ -1066,13 +1426,9 @@ int sqMain(char *lpCmdLine, int nCmdShow)
 
 
   if(!imageFile) {
-    imageSize = SqueakImageLength(toUnicode(imageName));
+    imageSize = SqueakImageLength(toUnicode(startupImageName));
     if(imageSize == 0) printUsage(2);
   }
-
-  /* allocate the synchronization mutex before anything is going to happen */
-  vmSemaphoreMutex = CreateMutex(NULL, 0, NULL);
-  vmWakeUpEvent = CreateEvent(NULL, 1, 0, NULL);
 
 #ifdef NO_VIRTUAL_MEMORY
   if(!dwMemorySize) {
@@ -1093,9 +1449,9 @@ int sqMain(char *lpCmdLine, int nCmdShow)
   __try {
 #endif
     /* set the CWD to the image location */
-    if(*imageName) {
+    if(*startupImageName) {
       char path[MAX_PATH+1], *ptr;
-      strcpy(path,imageName);
+      strcpy(path,startupImageName);
       ptr = strrchr(path, '\\');
       if(ptr) {
 	*ptr = 0;
@@ -1106,27 +1462,30 @@ int sqMain(char *lpCmdLine, int nCmdShow)
     /* display the splash screen */
     ShowSplashScreen();
 
-    /* if headless running is requested, try to to create an icon
-       in the Win95/NT system tray */
-    if(fHeadlessImage && (!fRunService || fWindows95))
-      SetSystemTrayIcon(1);
-    
+    initializeVM();
+	/* add attached state */
+    win32stateId = attachStateBufferinitializeFnfinalizeFn(sizeof(struct Win32AttachedState),
+	  (AttachedStateFn)sqInitWin32State,(AttachedStateFn)sqFinalizeWin32State);
+
+    MAIN_VM = newInterpreterInstance();
+  
+	/* set paths to image */
+	ioSetImagePath(MAIN_VM, startupImageName);
+
     /* read the image file */
     if(!imageFile) {
-      imageFile = sqImageFileOpen(imageName,"rb");
-      readImageFromFileHeapSizeStartingAt(imageFile, virtualMemory, 0);
+      imageFile = sqImageFileOpen(startupImageName,"rb");
+      readImageFromFileHeapSizeStartingAt(MAIN_VM_COMMA imageFile, virtualMemory, 0);
     } else {
-      readImageFromFileHeapSizeStartingAt(imageFile, virtualMemory, sqImageFilePosition(imageFile));
+      readImageFromFileHeapSizeStartingAt(MAIN_VM_COMMA imageFile, virtualMemory, sqImageFilePosition(imageFile));
     }
     sqImageFileClose(imageFile);
 
     if(fHeadlessImage) HideSplashScreen(); /* need to do it manually */
-    SetWindowSize();
-    ioSetFullScreen(getFullScreenFlag());
 
     /* run Squeak */
-    ioInitSecurity();
-    interpret();
+    ioInitSecurity(((struct Win32AttachedState * )getAttachedStateBuffer(MAIN_VM, win32stateId))->imagePath);
+	threadedInterpretFn((void*)MAIN_VM);
 #ifdef _MSC_VER
   } __except(squeakExceptionHandler(GetExceptionInformation())) {
     /* Do nothing */
@@ -1138,14 +1497,24 @@ int sqMain(char *lpCmdLine, int nCmdShow)
   return 1;
 }
 
+
 /****************************************************************************/
 /*                        WinMain                                           */
 /****************************************************************************/
-int WINAPI WinMain (HINSTANCE hInst,
+/* int WINAPI WinMain (HINSTANCE hInst,
                     HINSTANCE hPrevInstance,
                     LPSTR  lpCmdLine,
-                    int    nCmdShow)
+                    int    nCmdShow) 
+ {*/
+int main(int argc, char ** argv)
 {
+  HINSTANCE hInst;
+  LPSTR  lpCmdLine;
+  int nCmdShow = SW_SHOW;
+  hInst = (HINSTANCE) GetModuleHandle(0);
+  lpCmdLine = "";
+
+
   /* a few things which need to be done first */
   gatherSystemInfo();
 

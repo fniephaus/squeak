@@ -28,6 +28,12 @@
 # endif
 #endif
 
+#ifdef DEBUG
+#define dprintf(what) printf what
+#else
+#define dprintf(what)
+#endif
+
 #if !defined(SQ_CONFIG_DONE)
 # error test for, and describe, your architecture here.
 #endif

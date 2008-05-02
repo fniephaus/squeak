@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id: sqWin32Service.c,v 1.2 2002/05/04 23:20:28 andreasraab Exp $
+*   RCSID:   $Id$
 *
 *
 *   NOTES:   On Win95 the two "magic" entries in the registry are
@@ -21,7 +21,7 @@
 #ifndef NO_SERVICE
 
 #ifndef NO_RCSID
-  static char RCSID[] = "$Id: sqWin32Service.c,v 1.2 2002/05/04 23:20:28 andreasraab Exp $";
+  static char RCSID[] = "$Id$";
 #endif
 
 /****************************************************************/
@@ -84,7 +84,7 @@ TCHAR *printCommandLine(int printFor95)
     }
   /* add image name */
   lstrcat(buffer, TEXT("\""));
-  lstrcat(buffer, toUnicode(imageName));
+  lstrcat(buffer, toUnicode(startupImageName));
   lstrcat(buffer, TEXT("\"\0"));
 
   return buffer;
@@ -400,8 +400,8 @@ void sqServiceInstall(void)
       TEXT("Image"),            /* value name            */
       0,                        /* must be zero          */
       REG_EXPAND_SZ,            /* value type            */
-      (LPBYTE) imageName,       /* address of value data */
-      strlen(imageName) + 1);   /* length of value data  */
+      (LPBYTE) startupImageName,       /* address of value data */
+      strlen(startupImageName) + 1);   /* length of value data  */
   if(ok != ERROR_SUCCESS)
     {
       printLastError(TEXT("RegSetValueEX failed"));
@@ -500,13 +500,13 @@ DWORD WINAPI sqThreadMain(DWORD ignored)
     }
   /* Read the image name from the subkey. */
   dwSize = MAX_PATH;
-  ok = RegQueryValueEx(hk,TEXT("Image"),NULL, &dwType, (LPBYTE) imageName, &dwSize);
+  ok = RegQueryValueEx(hk,TEXT("Image"),NULL, &dwType, (LPBYTE) startupImageName, &dwSize);
   if(ok != ERROR_SUCCESS || dwType != REG_EXPAND_SZ)
     {
       sqStopService(TEXT("Failed to read the image name from registry"));
       TerminateThread(GetCurrentThread(), 0);
     }
-  imageName[dwSize] = 0;
+  startupImageName[dwSize] = 0;
   /* Read the log file name from the subkey. */
   dwSize = MAX_PATH;
   ok = RegQueryValueEx(hk,TEXT("Log"),NULL, &dwType, (LPBYTE) &tmpString, &dwSize);

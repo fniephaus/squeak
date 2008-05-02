@@ -12,16 +12,13 @@
 *****************************************************************************/
 #include <windows.h>
 #include <ole2.h>
-#include "sq.h"
 
-extern struct VirtualMachine *interpreterProxy;
+#include "DropPlugin_imports.h"
+#include "DropPlugin.h"
+
 extern HWND stWindow;
 
-#if 0
-#define DPRINTF(x) printf x
-#else
-#define DPRINTF(x)
-#endif
+#define DPRINTF(x) dprintf(x)
 
 int sqSecFileAccessCallback(void *function) {
 #ifndef _MSC_VER
@@ -741,8 +738,8 @@ int dropRequestFileHandle(int dropIndex) {
   int fileHandle, wasBrowserMode;
   char *dropName = dropRequestFileName(dropIndex);
   if(!dropName)
-    return interpreterProxy->nilObject();
-  fileHandle = instantiateClassindexableSize(classByteArray(), fileRecordSize());
+    return vmFunction(nilObject)();
+  fileHandle = vmFunction(instantiateClassindexableSize)(vmFunction(classByteArray)(), fileRecordSize());
   wasBrowserMode = fBrowserMode;
   fBrowserMode = false;
   sqFileOpen(fileValueOf(fileHandle),(int)dropName, strlen(dropName), 0);

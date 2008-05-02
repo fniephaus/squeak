@@ -39,7 +39,6 @@
  *   directory `platforms/unix/doc' before proceeding with any such use.
  */
 
-#import <architecture/i386/asm_help.h>
 	.text
 	.globl	_ffiCallAddressOf
 
@@ -63,11 +62,9 @@ _ffiCallAddressOf:	/* 8=addr, 12=stack, 16=stackSize */
 3:
 	cld
 	call	*8(%ebp)
-	REG_TO_EXTERN (%eax, _intReturnValue) 
-	REG_TO_EXTERN (%edx, _intReturnValue2) 
-	PICIFY(_floatReturnValue)
-	fstpl	(%edx)
-	NON_LAZY_STUB(_floatReturnValue)
+	movl	%eax, _intReturnValue 
+	movl	%edx, _intReturnValue2 
+	fstpl	_floatReturnValue 
 	movl	%ebp, %esp
 	popl	%ebp
 	ret

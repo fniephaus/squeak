@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: Walt Disney Imagineering, Glendale, CA
 *   EMAIL:   Andreas.Raab@disney.com
-*   RCSID:   $Id: sqWin32D3D.c,v 1.8 2002/09/05 19:30:45 andreasraab Exp $
+*   RCSID:   $Id$
 *
 *   NOTES:
 *
@@ -24,11 +24,8 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "sqVirtualMachine.h"
-#include "sqConfig.h"
-#include "sqPlatformSpecific.h"
+#include "B3DAcceleratorPlugin_imports.h"
 #include "../SurfacePlugin/SurfacePlugin.h"
-#include "B3DAcceleratorPlugin.h"
 
 #if defined(B3DX_D3D)
 
@@ -39,9 +36,6 @@
 # define DPRINTF(vLevel, args) if(vLevel <= verboseLevel) {\
 	FILE *fp = fopen("Squeak3D.log", "at");\
 	if(fp) { fprintf args; if(forceFlush) fflush(fp); fclose(fp); }}
-
-/* Plugin refs */
-extern struct VirtualMachine *interpreterProxy;
 
 /* Verbose level for debugging purposes:
 	0 - print NO information ever
@@ -2164,31 +2158,31 @@ int d3dInitialize(void)
     return 0;
   }
   /* lookup the necessary things from interpreter */
-  theSTWindow = (HWND*) interpreterProxy->ioLoadFunctionFrom("stWindow","");
+  theSTWindow = (HWND*) vmFunction(loadFunctionfrom)("stWindow","");
   if(!theSTWindow) {
     DPRINTF(1,(fp,"ERROR: Failed to look up stWindow\n"));
     return 0;
   }
   registerSurface = (fn_ioRegisterSurface) 
-    interpreterProxy->ioLoadFunctionFrom("ioRegisterSurface","SurfacePlugin");
+    vmFunction(loadFunctionfrom)("ioRegisterSurface","SurfacePlugin");
   if(!registerSurface) {
     DPRINTF(1,(fp,"ERROR: Failed to look up ioRegisterSurface()\n"));
     return 0;
   }
   unregisterSurface = (fn_ioUnregisterSurface)
-    interpreterProxy->ioLoadFunctionFrom("ioUnregisterSurface","SurfacePlugin");
+    vmFunction(loadFunctionfrom)("ioUnregisterSurface","SurfacePlugin");
   if(!unregisterSurface) {
     DPRINTF(1,(fp,"ERROR: Failed to look up ioUnregisterSurface()\n"));
     return 0;
   }
   findSurface = (fn_ioFindSurface)
-    interpreterProxy->ioLoadFunctionFrom("ioFindSurface","SurfacePlugin");
+    vmFunction(loadFunctionfrom)("ioFindSurface","SurfacePlugin");
   if(!findSurface) {
     DPRINTF(1,(fp,"ERROR: Failed to look up ioFindSurface()\n"));
     return 0;
   }
   preMessageHook = (messageHook*)
-    interpreterProxy->ioLoadFunctionFrom("preMessageHook","");
+    vmFunction(loadFunctionfrom)("preMessageHook","");
   if(!preMessageHook) {
     DPRINTF(1,(fp,"ERROR: Failed to look up preMessageHook()\n"));
     return 0;

@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id: sqWin32Joystick.c,v 1.2 2002/05/04 23:20:28 andreasraab Exp $
+*   RCSID:   $Id$
 *
 *   NOTES:
 *     1) Only buttons 1-4 are supported
@@ -19,7 +19,7 @@
 #ifndef NO_JOYSTICK
 
 #ifndef NO_RCSID
-  static char RCSID[]="$Id: sqWin32Joystick.c,v 1.2 2002/05/04 23:20:28 andreasraab Exp $";
+  static char RCSID[]="$Id$";
 #endif
 
 int numJoySticks=0;
@@ -75,16 +75,12 @@ int joystickShutdown(void)
 /* win32JoystickDebugInfo:
 	Print debugging information for all joysticks.
 */
-EXPORT(int) win32JoystickDebugInfo(void)
+EXPORT(int) win32JoystickDebugInfo(INTERPRETER_ARG)
 {
 	int i;
 	JOYCAPS *caps;
 
-	int methodArgumentCount(void);
-	int stackIntegerValue(int);
-	int failed(void);
-
-	if(methodArgumentCount() != 0) return primitiveFail();
+	if(methodArgumentCount(INTERPRETER_PARAM) != 0) return primitiveFail(INTERPRETER_PARAM);
 	warnPrintf(TEXT("<--- Joystick debug information --->\n"));
 	for(i=0; i<numJoySticks; i++) {
 		caps = joySticks + i;
@@ -120,15 +116,15 @@ EXPORT(int) win32JoystickDebugInfo(void)
 /* win32JoystickDebugPrintRawValues:
 	Print the raw values of a readout of the specified joystick.
 */
-EXPORT(int) win32JoystickDebugPrintRawValues(void)
+EXPORT(int) win32JoystickDebugPrintRawValues(INTERPRETER_ARG)
 {
 	int index, err;
 	JOYINFO info;
 
-	if(methodArgumentCount() != 1) return primitiveFail();
-	index = stackIntegerValue(0);
-	if(failed()) return 0;
-	if(index < 1 || index > 2) return primitiveFail();
+	if(methodArgumentCount(INTERPRETER_PARAM) != 1) return primitiveFail(INTERPRETER_PARAM);
+	index = stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+	if(failed(INTERPRETER_PARAM)) return 0;
+	if(index < 1 || index > 2) return primitiveFail(INTERPRETER_PARAM);
 
 	warnPrintf(TEXT("Raw joystick values (%d):\n"), index);
 	err = joyGetPos(index-1, &info);
@@ -149,22 +145,22 @@ EXPORT(int) win32JoystickDebugPrintRawValues(void)
 		warnPrintf(TEXT("\tZ: %d\n"), info.wZpos);
 		warnPrintf(TEXT("\tButtons: %x\n"), info.wButtons);
 	}
-	pop(1); /* Leave rcvr on stack */
+	pop(INTERPRETER_PARAM_COMMA 1); /* Leave rcvr on stack */
 	return 1;
 }
 
 /* win32JoystickDebugPrintAlternativeValues:
 	Print the raw values of an alternative readout of the specified joystick.
 */
-EXPORT(int) win32JoystickDebugPrintAlternativeValues(void)
+EXPORT(int) win32JoystickDebugPrintAlternativeValues(INTERPRETER_ARG)
 {
 	int index, err;
 	JOYINFOEX info;
 
-	if(methodArgumentCount() != 1) return primitiveFail();
-	index = stackIntegerValue(0);
-	if(failed()) return 0;
-	if(index < 1 || index > 2) return primitiveFail();
+	if(methodArgumentCount(INTERPRETER_PARAM) != 1) return primitiveFail(INTERPRETER_PARAM);
+	index = stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+	if(failed(INTERPRETER_PARAM)) return 0;
+	if(index < 1 || index > 2) return primitiveFail(INTERPRETER_PARAM);
 
 	warnPrintf(TEXT("Alternative joystick values (%d):\n"), index);
 	info.dwSize = sizeof(info);
@@ -191,7 +187,7 @@ EXPORT(int) win32JoystickDebugPrintAlternativeValues(void)
 		warnPrintf(TEXT("\tButtons: %x\n"), info.dwButtons);
 		warnPrintf(TEXT("\tPOV: %d\n"), info.dwPOV);
 	}
-	pop(1); /* Leave rcvr on stack */
+	pop(INTERPRETER_PARAM_COMMA 1); /* Leave rcvr on stack */
 	return 1;
 }
 
