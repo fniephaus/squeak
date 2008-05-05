@@ -8,7 +8,6 @@
   extern sqInt getFullScreenFlag(void);
   extern void  setFullScreenFlag(sqInt i);
   extern sqInt getInterruptCheckCounter(void);
-  extern void  setInterruptCheckCounter(sqInt i);
   extern sqInt getInterruptKeycode(void);
   extern void  setInterruptKeycode(sqInt i);
   extern sqInt getInterruptPending(void);
@@ -27,7 +26,6 @@
 # define getFullScreenFlag()		(fullScreenFlag)
 # define setFullScreenFlag(I)		(fullScreenFlag= (I))
 # define getInterruptCheckCounter()	(interruptCheckCounter)
-# define setInterruptCheckCounter(I)	(interruptCheckCounter= (I))
 # define getInterruptKeycode()		(interruptKeycode)
 # define setInterruptKeycode(I)		(interruptKeycode= (I))
 # define getInterruptPending()		(interruptPending)

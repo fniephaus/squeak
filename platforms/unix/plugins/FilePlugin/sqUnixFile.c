@@ -30,8 +30,9 @@
  * Last edited: 2006-10-18 10:09:43 by piumarta on emilia.local
  */
 
-#include "sq.h"
-#include "FilePlugin.h"
+// #include "sq.h"
+#include <stdio.h>
+#include "FilePlugin_imports.h"
 #include "sqUnixCharConv.h"
 
 #ifdef HAVE_DIRENT_H

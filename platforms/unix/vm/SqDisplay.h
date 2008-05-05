@@ -27,17 +27,18 @@ struct SqDisplay
   /* display primitives */
   sqInt  (*ioFormPrint)(sqInt bitsAddr, sqInt width, sqInt height, sqInt depth, double hScale, double vScale, sqInt landscapeFlag);
   sqInt  (*ioBeep)(void);
-  sqInt  (*ioRelinquishProcessorForMicroseconds)(sqInt microSeconds);
-  sqInt  (*ioProcessEvents)(void);
+  sqInt  (*ioRelinquishProcessorForMicroseconds)(INTERPRETER_ARG_COMMA sqInt microSeconds);
+  sqInt  (*ioWakeUp)(INTERPRETER_ARG);
+  sqInt  (*ioProcessEvents)(INTERPRETER_ARG);
   sqInt  (*ioScreenDepth)(void);
-  sqInt  (*ioScreenSize)(void);
-  sqInt  (*ioSetCursorWithMask)(sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY);
+  sqInt  (*ioScreenSize)(INTERPRETER_ARG);
+  sqInt  (*ioSetCursorWithMask)(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY);
   sqInt  (*ioSetCursorARGB)(sqInt cursorBitsIndex, sqInt extentX, sqInt extentY, sqInt offsetX, sqInt offsetY);
-  sqInt  (*ioSetFullScreen)(sqInt fullScreen);
+  sqInt  (*ioSetFullScreen)(INTERPRETER_ARG_COMMA sqInt fullScreen);
   sqInt  (*ioForceDisplayUpdate)(void);
   sqInt  (*ioShowDisplay)(sqInt dispBitsIndex, sqInt width, sqInt height, sqInt depth, sqInt l, sqInt r, sqInt t, sqInt b);
   sqInt  (*ioHasDisplayDepth)(sqInt i);
-  sqInt  (*ioSetDisplayMode)(sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag);
+  sqInt  (*ioSetDisplayMode)(INTERPRETER_ARG_COMMA sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag);
   sqInt  (*clipboardSize)(void);
   sqInt  (*clipboardWriteFromAt)(sqInt count, sqInt byteArrayIndex, sqInt startIndex);
   sqInt  (*clipboardReadIntoAt)(sqInt count, sqInt byteArrayIndex, sqInt startIndex);
@@ -45,11 +46,11 @@ struct SqDisplay
   sqInt  (*clipboardSizeWithType)(char *typeName, int ntypeName);
   void   (*clipboardWriteWithType)(char *data, size_t nData, char *typeName, size_t nTypeName, int isDnd, int isClaiming);
   sqInt  (*dndOutStart)(char *data, int dataLength, char *aFormat, int formatLength);
-  sqInt  (*ioGetButtonState)(void);
-  sqInt  (*ioPeekKeystroke)(void);
-  sqInt  (*ioGetKeystroke)(void);
-  sqInt  (*ioGetNextEvent)(sqInputEvent *evt);
-  sqInt  (*ioMousePoint)(void);
+  sqInt  (*ioGetButtonState)(INTERPRETER_ARG);
+  sqInt  (*ioPeekKeystroke)(INTERPRETER_ARG);
+  sqInt  (*ioGetKeystroke)(INTERPRETER_ARG);
+  sqInt  (*ioGetNextEvent)(INTERPRETER_ARG_COMMA sqInputEvent *evt);
+  sqInt  (*ioMousePoint)(INTERPRETER_ARG);
   /* OpenGL */
   void  *(*ioGetDisplay)(void);
   void  *(*ioGetWindow)(void);
@@ -83,6 +84,7 @@ static struct SqDisplay display_##NAME##_itf= {	\
   display_ioFormPrint,				\
   display_ioBeep,				\
   display_ioRelinquishProcessorForMicroseconds,	\
+  display_ioWakeUp,				\
   display_ioProcessEvents,			\
   display_ioScreenDepth,			\
   display_ioScreenSize,				\

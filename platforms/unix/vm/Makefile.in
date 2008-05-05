@@ -33,7 +33,8 @@
 
 TARGET		= vm$a
 OBJS		= $(INTERP)$o sqNamedPrims$o sqVirtualMachine$o aio$o debug$o osExports$o \
-		  sqUnixExternalPrims$o sqUnixMemory$o sqUnixCharConv$o sqUnixMain$o
+		  sqUnixExternalPrims$o sqUnixMemory$o sqUnixCharConv$o sqUnixMain$o sqUnixThreads$o
+		  #sqUnixExternalPrims$o sqUnixMemory$o sqUnixCharConv$o sqUnixMain$o hydramacintoshextra$o
 
 XINCLUDES	= [includes] \
 		  -I$(topdir)/platforms/Cross/plugins/FilePlugin \

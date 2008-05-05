@@ -51,6 +51,25 @@ extern sqInt sqMemoryExtraBytesLeft(sqInt includingSwap);
 
 typedef off_t squeakFileOffsetType;
 
+#ifndef sqImageFile
+/*XXXXXXXXX EVIL HACK: copy sqImageFile and friends from sq.h XXXXXXX*/
+
+/* Note: The image file save and restore code uses these macros; they
+   can be redefined in sqPlatformSpecific.h if desired. These default
+   versions are defined in terms of the ANSI Standard C libraries.
+*/
+#define sqImageFile					   FILE *
+/*
+#define sqImageFileClose(f)                  		   fclose(f)
+#define sqImageFileOpen(fileName, mode)      		   fopen(fileName, mode)
+#define sqImageFilePosition(f)               		   ftell(f)
+#define sqImageFileRead(ptr, sz, count, f)   		   fread(ptr, sz, count, f)
+#define sqImageFileSeek(f, pos)              		   fseek(f, pos, SEEK_SET)
+#define sqImageFileWrite(ptr, sz, count, f)  		   fwrite(ptr, sz, count, f)
+#define sqImageFileStartLocation(fileRef, fileName, size)  0
+*/
+#endif /* sqImageFile */
+
 #undef	sqFilenameFromString
 #undef	sqFilenameFromStringOpen
 #define sqFilenameFromStringOpen sqFilenameFromString

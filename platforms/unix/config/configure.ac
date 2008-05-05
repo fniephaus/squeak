@@ -199,6 +199,8 @@ AC_CHECK_LIB(nsl, yp_bind)
 AC_CHECK_LIB(socket, socket)
 AC_CHECK_LIB(m,	sin)
 
+AC_CHECK_LIB(pthread, pthread_create)
+
 #AC_CHECK_FUNC(dlopen, [
 #  AC_DEFINE(HAVE_LIBDL,[1])
 #],[
