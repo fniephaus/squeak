@@ -53,14 +53,15 @@ BEGIN {
 }
 
 
-(stage == 0) && /^int interpret\(void\) \{/ {
+(stage == 0) && /^int interpret\(struct Interpreter \*intr\) \{/ {
 # print "interpret: adding static register assignments" > "/dev/stderr";
   stage= 1;
   print;
   next;
 }
 
-(stage == 0) && /^sqInt interpret\(void\) \{/ {
+;
+(stage == 0) && /^sqInt interpret\(struct Interpreter \*intr\) \{/ {
 # print "interpret: adding static register assignments" > "/dev/stderr";
   stage= 1;
   print;

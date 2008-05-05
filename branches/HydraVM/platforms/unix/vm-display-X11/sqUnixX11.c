@@ -2892,6 +2892,18 @@ static sqInt display_ioRelinquishProcessorForMicroseconds(sqInt microSeconds)
   return 0;
 }
 
+static sqInt display_ioWakeUp(void)
+{
+  /* Send a no-op X event to wake up the sleeping thread. The NoExpose
+   * event is not handled in handleEvents above
+   */
+  XNoExposeEvent notifyEv;
+  notifyEv.type= NoExpose;
+  notifyEv.display= stDisplay;
+  notifyEv.send_event= True;
+  XSendEvent(stDisplay, stWindow, False, 0, (XEvent *)&notifyEv);
+  XFlush(stDisplay);
+}
 
 static sqInt display_ioProcessEvents(void)
 {

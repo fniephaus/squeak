@@ -27,6 +27,9 @@
 * and thus bypasses this file
 */
 
+#include <stdio.h>
+#include <string.h>
+
 #include "FilePlugin_imports.h"
 #ifndef NO_STD_FILE_SUPPORT
 
@@ -137,7 +140,7 @@ sqInt sqFileDeleteNameSize(PLUGIN_IARG_COMMA char* sqFileName, sqInt sqFileNameS
 	}
 
 	/* copy the file name into a null-terminated C string */
-	vmFunction(ioFilenamefromStringofLengthresolveAliases)(PLUGIN_IPARAM_COMMA cFileName, sqFileName, sqFileNameSize, false);
+	vmFunction(ioFilenamefromStringofLengthresolveAliases)(cFileName, sqFileName, sqFileNameSize, false);
 
 	err = remove(cFileName);
 	if (err) {
@@ -156,7 +159,7 @@ squeakFileOffsetType sqFileGetPosition(PLUGIN_IARG_COMMA SQFile *f) {
 	return position;
 }
 
-sqInt sqFileInit(PLUGIN_IARG) {
+sqInt sqFileInit() {
 	/* Create a session ID that is unlikely to be repeated.
 	   Zero is never used for a valid session number.
 	   Should be called once at startup time.
@@ -166,7 +169,7 @@ sqInt sqFileInit(PLUGIN_IARG) {
 	return 1;
 }
 
-sqInt sqFileShutdown(PLUGIN_IARG) {
+sqInt sqFileShutdown() {
 	return 1;
 }
 
@@ -186,7 +189,7 @@ sqInt sqFileOpen(PLUGIN_IARG_COMMA SQFile *f, char* sqFileName, sqInt sqFileName
 	if (sqFileNameSize > 1000) {
 		return vmFunction(success)(PLUGIN_IPARAM_COMMA false);
 	}
-	vmFunction(ioFilenamefromStringofLengthresolveAliases)(PLUGIN_IPARAM_COMMA cFileName, sqFileName, sqFileNameSize, true);
+	vmFunction(ioFilenamefromStringofLengthresolveAliases)(cFileName, sqFileName, sqFileNameSize, true);
 
 	if (writeFlag) {
 		/* First try to open an existing file read/write: */
@@ -254,9 +257,9 @@ sqInt sqFileRenameOldSizeNewSize(PLUGIN_IARG_COMMA char* oldNameIndex, sqInt old
 	}
 
 	/* copy the file names into null-terminated C strings */
-	vmFunction(ioFilenamefromStringofLengthresolveAliases)(PLUGIN_IPARAM_COMMA cOldName, oldNameIndex, oldNameSize, false);
+	vmFunction(ioFilenamefromStringofLengthresolveAliases)(cOldName, oldNameIndex, oldNameSize, false);
 
-	vmFunction(ioFilenamefromStringofLengthresolveAliases)(PLUGIN_IPARAM_COMMA cNewName, newNameIndex, newNameSize, false);
+	vmFunction(ioFilenamefromStringofLengthresolveAliases)(cNewName, newNameIndex, newNameSize, false);
 
 	err = rename(cOldName, cNewName);
 	if (err) {

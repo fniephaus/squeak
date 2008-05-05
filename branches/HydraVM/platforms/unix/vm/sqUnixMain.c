@@ -266,7 +266,7 @@ static void recordFullPathForVmName(const char *localVmName)
   }
 }
 
-static void recordFullPathForImageName(const char *localImageName)
+static void recordFullPathForImageName(INTERPRETER_ARG_COMMA const char *localImageName)
 {
   struct stat s;
   /* get canonical path to image */
@@ -274,16 +274,23 @@ static void recordFullPathForImageName(const char *localImageName)
     pathCopyAbs(imageName, localImageName, sizeof(imageName));
 }
 
+
+void ioSetImagePath(INTERPRETER_ARG_COMMA char * imgName)
+{
+  recordFullPathForImageName(INTERPRETER_PARAM_COMMA imgName);
+}
+
+
 /* vm access */
 
-sqInt imageNameSize(void)
+sqInt imageNameSize(INTERPRETER_ARG)
 {
   return strlen(imageName);
 }
 
-sqInt imageNameGetLength(sqInt sqImageNameIndex, sqInt length)
+sqInt imageNameGetLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt length)
 {
-  char *sqImageName= pointerForOop(sqImageNameIndex);
+  char *sqImageName= pointerForOop(INTERPRETER_PARAM_COMMA sqImageNameIndex);
   int count, i;
 
   count= strlen(imageName);
@@ -297,9 +304,9 @@ sqInt imageNameGetLength(sqInt sqImageNameIndex, sqInt length)
 }
 
 
-sqInt imageNamePutLength(sqInt sqImageNameIndex, sqInt length)
+sqInt imageNamePutLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt length)
 {
-  char *sqImageName= pointerForOop(sqImageNameIndex);
+  char *sqImageName= pointerForOop(INTERPRETER_PARAM_COMMA sqImageNameIndex);
   int count, i;
 
   count= (IMAGE_NAME_SIZE < length) ? IMAGE_NAME_SIZE : length;
@@ -348,10 +355,10 @@ sqInt vmPathGetLength(sqInt sqVMPathIndex, sqInt length)
 /*** Profiling ***/
 
 
-sqInt clearProfile(void) { return 0; }
-sqInt dumpProfile(void) { return 0; }
-sqInt startProfiling(void) { return 0; }
-sqInt stopProfiling(void) { return 0; }
+sqInt clearProfile(INTERPRETER_ARG) { return 0; }
+sqInt dumpProfile(INTERPRETER_ARG) { return 0; }
+sqInt startProfiling(INTERPRETER_ARG) { return 0; }
+sqInt stopProfiling(INTERPRETER_ARG) { return 0; }
 
 
 /*** power management ***/
@@ -412,7 +419,7 @@ static char *getAttribute(sqInt id)
 	if ((id - 2) < squeakArgCnt)
 	  return squeakArgVec[id - 2];
       }
-  success(false);
+  success(MAIN_VM_COMMA false);
   return "";
 }
 
@@ -437,10 +444,10 @@ sqInt inputEventSemaIndex= 0;
 
 /* set asynchronous input event semaphore  */
 
-sqInt ioSetInputSemaphore(sqInt semaIndex)
+sqInt ioSetInputSemaphore(INTERPRETER_ARG_COMMA sqInt semaIndex)
 {
   if ((semaIndex == 0) || (noEvents == 1))
-    success(false);
+    success(MAIN_VM_COMMA false);
   else
     inputEventSemaIndex= semaIndex;
   return true;
@@ -456,17 +463,21 @@ sqInt ioFormPrint(sqInt bitsAddr, sqInt width, sqInt height, sqInt depth, double
 
 static int lastInterruptCheck= 0;
 
-sqInt ioRelinquishProcessorForMicroseconds(sqInt us)
+sqInt ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA sqInt us)
 {
   int now;
-  dpy->ioRelinquishProcessorForMicroseconds(us);
+  dpy->ioRelinquishProcessorForMicroseconds(INTERPRETER_PARAM_COMMA us);
   now= ioLowResMSecs();
   if (now - lastInterruptCheck > (1000/25))	/* avoid thrashing intr checks from 1ms loop in idle proc  */
     {
-      setInterruptCheckCounter(-1000);	/* ensure timely poll for semaphore activity */
       lastInterruptCheck= now;
     }
   return 0;
+}
+
+sqInt ioWakeUp(INTERPRETER_ARG)
+{
+  return dpy->ioWakeUp(INTERPRETER_PARAM);
 }
 
 sqInt ioBeep(void)				 { return dpy->ioBeep(); }
@@ -510,7 +521,7 @@ static void emergencyDump(int quit)
 
 #endif
 
-sqInt ioProcessEvents(void)
+sqInt ioProcessEvents(INTERPRETER_ARG)
 {
 #if defined(IMAGE_DUMP)
   if (dumpImageFile)
@@ -519,15 +530,15 @@ sqInt ioProcessEvents(void)
       dumpImageFile= 0;
     }
 #endif
-  return dpy->ioProcessEvents();
+  return dpy->ioProcessEvents(INTERPRETER_PARAM);
 }
 
 sqInt ioScreenDepth(void)		 { return dpy->ioScreenDepth(); }
-sqInt ioScreenSize(void)		 { return dpy->ioScreenSize(); }
+sqInt ioScreenSize(INTERPRETER_ARG)	 { return dpy->ioScreenSize(INTERPRETER_PARAM); }
 
-sqInt ioSetCursorWithMask(sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY)
+sqInt ioSetCursorWithMask(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY)
 {
-  return dpy->ioSetCursorWithMask(cursorBitsIndex, cursorMaskIndex, offsetX, offsetY);
+  return dpy->ioSetCursorWithMask(INTERPRETER_PARAM_COMMA cursorBitsIndex, cursorMaskIndex, offsetX, offsetY);
 }
 
 sqInt ioSetCursorARGB(sqInt cursorBitsIndex, sqInt extentX, sqInt extentY, sqInt offsetX, sqInt offsetY)
@@ -535,12 +546,12 @@ sqInt ioSetCursorARGB(sqInt cursorBitsIndex, sqInt extentX, sqInt extentY, sqInt
   return dpy->ioSetCursorARGB(cursorBitsIndex, extentX, extentY, offsetX, offsetY);
 }
 
-sqInt ioSetCursor(sqInt cursorBitsIndex, sqInt offsetX, sqInt offsetY)
+sqInt ioSetCursor(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, sqInt offsetX, sqInt offsetY)
 {
-  return ioSetCursorWithMask(cursorBitsIndex, 0, offsetX, offsetY);
+  return ioSetCursorWithMask(INTERPRETER_PARAM_COMMA cursorBitsIndex, 0, offsetX, offsetY);
 }
 
-sqInt ioSetFullScreen(sqInt fullScreen)	{ return dpy->ioSetFullScreen(fullScreen); }
+sqInt ioSetFullScreen(INTERPRETER_ARG_COMMA sqInt fullScreen)	{ return dpy->ioSetFullScreen(INTERPRETER_PARAM_COMMA fullScreen); }
 sqInt ioForceDisplayUpdate(void)	{ return dpy->ioForceDisplayUpdate(); }
 
 sqInt ioShowDisplay(sqInt dispBitsIndex, sqInt width, sqInt height, sqInt depth, sqInt l, sqInt r, sqInt t, sqInt b)
@@ -550,9 +561,9 @@ sqInt ioShowDisplay(sqInt dispBitsIndex, sqInt width, sqInt height, sqInt depth,
 
 sqInt ioHasDisplayDepth(sqInt i) { return dpy->ioHasDisplayDepth(i); }
 
-sqInt ioSetDisplayMode(sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag)
+sqInt ioSetDisplayMode(INTERPRETER_ARG_COMMA sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag)
 {
-  return dpy->ioSetDisplayMode(width, height, depth, fullscreenFlag);
+  return dpy->ioSetDisplayMode(INTERPRETER_PARAM_COMMA width, height, depth, fullscreenFlag);
 }
 
 sqInt clipboardSize(void)
@@ -585,11 +596,30 @@ void clipboardWriteWithType(char *data, size_t nData, char *typeName, size_t nTy
   dpy->clipboardWriteWithType(data, nData, typeName, nTypeNames, isDnd, isClaiming);
 }
 
-sqInt ioGetButtonState(void)		{ return dpy->ioGetButtonState(); }
-sqInt ioPeekKeystroke(void)		{ return dpy->ioPeekKeystroke(); }
-sqInt ioGetKeystroke(void)		{ return dpy->ioGetKeystroke(); }
-sqInt ioGetNextEvent(sqInputEvent *evt)	{ return dpy->ioGetNextEvent(evt); }
-sqInt ioMousePoint(void)		{ return dpy->ioMousePoint(); }
+sqInt ioGetButtonState(INTERPRETER_ARG)
+{
+  return dpy->ioGetButtonState(INTERPRETER_PARAM); 
+}
+
+sqInt ioPeekKeystroke(INTERPRETER_ARG)
+{
+  return dpy->ioPeekKeystroke(INTERPRETER_PARAM); 
+}
+
+sqInt ioGetKeystroke(INTERPRETER_ARG)
+{
+  return dpy->ioGetKeystroke(INTERPRETER_PARAM); 
+}
+
+sqInt ioGetNextEvent(INTERPRETER_ARG_COMMA sqInputEvent *evt)
+{
+  return dpy->ioGetNextEvent(INTERPRETER_PARAM_COMMA evt); 
+}
+
+sqInt ioMousePoint(INTERPRETER_ARG)
+{
+  return dpy->ioMousePoint(INTERPRETER_PARAM); 
+}
 
 /*** Drag and Drop ***/
 
@@ -651,7 +681,7 @@ static void sigsegv(int ignore)
   if (!printingStack)
     {
       printingStack= 1;
-      printCallStack();
+      printCallStack(MAIN_VM);
     }
   abort();
 }
@@ -1230,6 +1260,18 @@ static void imageNotFound(char *imageName)
   exit(1);
 }
 
+sqInt ioSqueakImageSize(char *filename)
+{
+  struct stat sb;
+  char imageName[MAXPATHLEN];
+  int heapsize = 0;
+  sq2uxPath(filename, strlen(filename), imageName, 1000, 1);
+  if (-1 == stat(imageName, &sb)) return 0;
+
+  heapsize = extraMemory || DefaultHeapSize * 1024 *1024;
+  heapsize += (int)sb.st_size;
+  return heapsize;
+}
 
 void imgInit(void)
 {
@@ -1257,7 +1299,7 @@ void imgInit(void)
 #      endif
       }
 #    endif
-      recordFullPathForImageName(shortImageName); /* full image path */
+      recordFullPathForImageName(MAIN_VM_COMMA shortImageName); /* full image path */
       if (extraMemory)
 	useMmap= 0;
       else
@@ -1266,7 +1308,7 @@ void imgInit(void)
       printf("image size %d + heap size %d (useMmap = %d)\n", (int)sb.st_size, extraMemory, useMmap);
 #    endif
       extraMemory += (int)sb.st_size;
-      readImageFromFileHeapSize(f, extraMemory);
+      readImageFromFileHeapSizeStartingAt(MAIN_VM_COMMA f, extraMemory, 0);
       sqImageFileClose(f);
       break;
     }
@@ -1365,6 +1407,11 @@ int main(int argc, char **argv, char **envp)
   printf("viName: %s\n", shortImageName);
   printf("documentName: %s\n", documentName);
 #endif
+    
+#ifdef VM_OBJECTIFIED
+	initializeVM();
+	MAIN_VM = newInterpreterInstance();
+#endif
 
   initTimers();
   aioInit();
@@ -1404,7 +1451,7 @@ int main(int argc, char **argv, char **envp)
 
   /* run Squeak */
   if (runInterpreter)
-    interpret();
+    interpret(MAIN_VM);
 
   /* we need these, even if not referenced from main executable */
   (void)sq2uxPath;
@@ -1423,6 +1470,12 @@ sqInt ioExit(void)
 #if defined(DARWIN)
 # include "mac-alias.c"
 #endif
+
+
+char *ioGetImageName(INTERPRETER_ARG)
+{
+  return imageName;
+};
 
 
 /* Copy aFilenameString to aCharBuffer and optionally resolveAlias (or

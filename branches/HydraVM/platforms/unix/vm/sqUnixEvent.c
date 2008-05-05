@@ -280,7 +280,6 @@ static void recordKeystroke(int keyCode)			/* DEPRECATED */
       if (keystate == getInterruptKeycode())
 	{
 	  setInterruptPending(true);
-	  setInterruptCheckCounter(0);
 	}
       else
 	{

@@ -7,7 +7,7 @@
 o		= .lo
 a		= .la
 COMPILE		= $(LIBTOOL) --mode=compile \
-		  $(CC) $(CFLAGS) $(XCFLAGS) $(DEFS) $(XDEFS) \
+		  $(CC) $(CFLAGS) $(XCFLAGS) $(DEFS) $(XDEFS) -DSQUEAK_PLUGIN \
 		  $(INCLUDES) $(XINCLUDES) $(CPPFLAGS) $(XCPPFLAGS) -c -o
 LINK		= $(LIBTOOL) --mode=link \
 		  $(CC) $(CFLAGS) $(XCFLAGS) \
