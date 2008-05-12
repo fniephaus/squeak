@@ -5,7 +5,7 @@
 #define macintoshSqueak
 
 # if defined(SQ_CONFIG_DONE)
-#   error configuration conflict
+//#   error configuration conflict
 # endif
 # define SQ_CONFIG_DONE
 

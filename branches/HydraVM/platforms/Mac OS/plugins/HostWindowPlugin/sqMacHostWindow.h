@@ -39,5 +39,5 @@ wHandleType windowHandleFromIndex(wIndexType windowIndex);
 windowDescriptorBlock *AddWindowBlock(void);
 windowDescriptorBlock *windowBlockFromIndex(int windowIndex);
 int getCurrentIndexInUse(void);
-void SetUpCarbonEventForWindowIndex(int index);
+void SetUpCarbonEventForWindowIndex(INTERPRETER_ARG_COMMA int index);
 void setWindowTrackingRgn(int windowIndex);

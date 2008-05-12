@@ -71,8 +71,8 @@ usqInt sqAllocateMemoryMac(sqInt minHeapSize, sqInt *desiredHeapSize) {
 }
 
 sqInt sqGrowMemoryBy(sqInt memoryLimit, sqInt delta) {
-    if ((usqInt) memoryLimit + (usqInt) delta - (usqInt) memory > gMaxHeapSize)
-        return memoryLimit;
+   //HYDRA if ((usqInt) memoryLimit + (usqInt) delta - (usqInt) memory > gMaxHeapSize)
+  // HYDRA      return memoryLimit;
    
     gHeapSize += delta;
     return memoryLimit + delta;
@@ -90,7 +90,7 @@ sqInt sqMemoryExtraBytesLeft(Boolean flag) {
 }
 
 void sqMacMemoryFree() {
-	if (memory == nil) 
+	/* HYDRA if (memory == nil) 
 		return;
-	memory = nil;
+	memory = nil; */
 }

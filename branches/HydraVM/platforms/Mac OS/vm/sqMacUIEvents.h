@@ -19,22 +19,17 @@
 
 typedef int (*eventMessageHook)(EventRecord* event);
 
-void recordKeystroke(EventRecord *theEvent);
-void recordModifierButtons(EventRecord *theEvent);
-void recordMouseDown(EventRecord *theEvent);
-int recordDragDropEvent(EventRecord *theEvent, int numberOfItems, int dragType);
-int recordKeyboardEvent(EventRecord *theEvent, int keyType);
-void recordWindowEvent(int windowType,int left, int top, int right, int bottom);
+int recordDragDropEvent(INTERPRETER_ARG_COMMA EventRecord *theEvent, int numberOfItems, int dragType);
+int recordKeyboardEvent(INTERPRETER_ARG_COMMA EventRecord *theEvent, int keyType);
+void recordWindowEvent(INTERPRETER_ARG_COMMA int windowType,int left, int top, int right, int bottom);
 void recordMenu(int menuID,UInt32 menuItem);
 int MouseModifierState(EventRecord *theEvent);
 WindowPtr getSTWindow(void);
 void setMessageHook(eventMessageHook theHook);
 void setPostMessageHook(eventMessageHook theHook);
-int checkForModifierKeys();
-void ignoreLastEvent();
+void ignoreLastEvent(INTERPRETER_ARG);
 void DoZoomWindow (EventRecord* theEvent, WindowPtr theWindow, short zoomDir, short hMax, short vMax);
-void SetupKeyboard(void);    
 int getUIToLock(sqInt *);
 void SetUpCarbonEvent();
-void SetUpCarbonEventForWindowIndex(int index);
+void SetUpCarbonEventForWindowIndex(INTERPRETER_ARG_COMMA int index);
 void RunApplicationEventLoopWithSqueak(void);

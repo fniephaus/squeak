@@ -24,7 +24,6 @@ MenuHandle	editMenu = nil;
 MenuHandle	fileMenu = nil;
 
 static RgnHandle	menuBarRegion = nil;  /* if non-nil, then menu bar has been hidden */
-extern struct VirtualMachine* interpreterProxy;
 
  
     #define EnableMenuItemCarbon(m1,v1)  EnableMenuItem(m1,v1);

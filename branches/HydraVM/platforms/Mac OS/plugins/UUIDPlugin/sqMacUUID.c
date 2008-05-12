@@ -12,16 +12,13 @@
 *
 */
 
-#include "UUIDPlugin.h"
-#include "sq.h"
-
-extern struct VirtualMachine *interpreterProxy;
+#include "UUIDPlugin_imports.h"
 
 #include <CFUUID.h>
 int sqUUIDInit(void);
 int sqUUIDShutdown(void);
 
-int MakeUUID(sqUUID location) {
+int MakeUUID(PLUGIN_IARG_COMMA sqUUID location) {
     CFUUIDRef theUUID;
     CFUUIDBytes theBytes;
 

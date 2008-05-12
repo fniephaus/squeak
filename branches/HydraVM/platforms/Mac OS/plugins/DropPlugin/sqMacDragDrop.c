@@ -308,7 +308,7 @@ pascal OSErr MyDragTrackingHandler(DragTrackingMessage message, WindowPtr theWin
 						theEvent.where = mouse;
                     	fn = interpreterProxy->ioLoadFunctionFrom("recordDragDropEvent", "");
                     	if (fn != 0) {
-                    	    ((int (*) (EventRecord *theEvent, int numberOfItems, int dragType)) fn)(&theEvent, gNumDropFiles,DragEnter);
+                    	    ((int (*) (INTERPRETER_ARG_COMMA EventRecord *theEvent, int numberOfItems, int dragType)) fn)(MAIN_VM,&theEvent, gNumDropFiles,DragEnter);
                     	}
 					} 
 				}
@@ -325,7 +325,7 @@ pascal OSErr MyDragTrackingHandler(DragTrackingMessage message, WindowPtr theWin
 				theEvent.where = mouse;
              	fn = interpreterProxy->ioLoadFunctionFrom("recordDragDropEvent", "");
             	if (fn != 0) {
-            	    ((int (*) (EventRecord *theEvent,  int numberOfItems, int dragType)) fn)(&theEvent,gNumDropFiles,DragMove);
+            	    ((int (*) (INTERPRETER_ARG_COMMA EventRecord *theEvent,  int numberOfItems, int dragType)) fn)(MAIN_VM,&theEvent,gNumDropFiles,DragMove);
             	    
             	}
 			}
@@ -342,7 +342,7 @@ pascal OSErr MyDragTrackingHandler(DragTrackingMessage message, WindowPtr theWin
 				theEvent.where = mouse;
             	fn = interpreterProxy->ioLoadFunctionFrom("recordDragDropEvent", "");
             	if (fn != 0) {
-            	    ((int (*) (EventRecord *theEvent, int numberOfItems, int dragType)) fn)(&theEvent, gNumDropFiles,DragLeave);
+            	    ((int (*) (INTERPRETER_ARG_COMMA EventRecord *theEvent, int numberOfItems, int dragType)) fn)(MAIN_VM,&theEvent, gNumDropFiles,DragLeave);
             	    
             	}
 			}
@@ -515,7 +515,7 @@ pascal OSErr MyDragReceiveHandler(WindowPtr theWindow, void *refcon, DragReferen
 
 	fn = interpreterProxy->ioLoadFunctionFrom("recordDragDropEvent", "");
 	if (fn != 0) {
-	    ((int (*) (EventRecord *theEvent, int numberOfItems, int dragType)) fn)(&theEvent, gNumDropFiles,DragDrop);
+	    ((int (*) (INTERPRETER_ARG_COMMA EventRecord *theEvent, int numberOfItems, int dragType)) fn)(MAIN_VM, &theEvent, gNumDropFiles,DragDrop);
 	}
 	return noErr;
 }

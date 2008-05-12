@@ -66,7 +66,7 @@ pascal OSErr HandleOpenAppEvent(const AEDescList *aevt,  AEDescList *reply, long
 #pragma unused(reply)
 
 	/* use default image name in same directory as the VM */
-	SetShortImageNameViaString(&gSqueakImageName,gCurrentVMEncoding);
+	SetShortImageNameViaString(MAIN_VM,&gSqueakImageName,gCurrentVMEncoding);
 	return noErr;
 }
 
@@ -97,7 +97,7 @@ pascal OSErr HandleOpenDocEvent(const AEDescList *aevt, AEDescList *reply, long 
 	if (err) 
 	    goto done;
 	
-	if (!ShortImageNameIsEmpty()) {
+	if (!ShortImageNameIsEmpty(MAIN_VM)) {
         /* Do the rest of the documents */
         processDocumentsButExcludeOne(&fileList,-1);
 		goto done;
@@ -106,7 +106,7 @@ pascal OSErr HandleOpenDocEvent(const AEDescList *aevt, AEDescList *reply, long 
     imageFileIsNumber = getFirstImageNameIfPossible(&fileList);
     
     if (imageFileIsNumber == 0) { 
-		SetShortImageNameViaString(&gSqueakImageName,gCurrentVMEncoding);
+		SetShortImageNameViaString(MAIN_VM,&gSqueakImageName,gCurrentVMEncoding);
 		if (numFiles)
 			goto processPendingDocs;
 		else
@@ -119,8 +119,8 @@ pascal OSErr HandleOpenDocEvent(const AEDescList *aevt, AEDescList *reply, long 
     	        		
 		PathToFileViaFSRef(pathName, IMAGE_NAME_SIZE, &theFSRef,gCurrentVMEncoding);
 		getLastPathComponentInCurrentEncoding(pathName,shortImageName,gCurrentVMEncoding);
-		SetShortImageNameViaString(shortImageName,gCurrentVMEncoding);
-        SetImageNameViaString(pathName,gCurrentVMEncoding);
+		SetShortImageNameViaString(MAIN_VM,shortImageName,gCurrentVMEncoding);
+        SetImageNameViaString(MAIN_VM,pathName,gCurrentVMEncoding);
    }
     
     /* Do the rest of the documents */
@@ -215,7 +215,7 @@ void processDocumentsButExcludeOne(AEDesc	*fileList,long whichToExclude) {
     sqSetNumberOfDropFiles(actualFilteredNumber);
     actualFilteredIndexNumber=1;
     
-    recordDragDropEvent(&theEvent, actualFilteredNumber, DragEnter);
+    recordDragDropEvent(MAIN_VM,&theEvent, actualFilteredNumber, DragEnter);
     for(i=1;i<=numFiles;i++) {
 	    err = AEGetNthPtr(fileList, i, typeFSRef,  &keyword, &type, (Ptr) &theFSRef, sizeof(FSRef), &size);
 	    if (err) 
@@ -240,9 +240,9 @@ void processDocumentsButExcludeOne(AEDesc	*fileList,long whichToExclude) {
         actualFilteredIndexNumber++;
     }
 	theEvent.where = where;
-    recordDragDropEvent(&theEvent, actualFilteredNumber, DragDrop);
+    recordDragDropEvent(MAIN_VM,&theEvent, actualFilteredNumber, DragDrop);
 	theEvent.where = where;
-    recordDragDropEvent(&theEvent, actualFilteredNumber, DragLeave);
+    recordDragDropEvent(MAIN_VM,&theEvent, actualFilteredNumber, DragLeave);
    
    done: 
    return;
@@ -280,7 +280,7 @@ int getFirstImageNameIfPossible(AEDesc	*fileList) {
 			PathToFileViaFSRef(pathName, DOCUMENT_NAME_SIZE, &theFSRef,gCurrentVMEncoding);
 			getLastPathComponentInCurrentEncoding(pathName,shortImageName,gCurrentVMEncoding);
 		}
-		SetShortImageNameViaString(shortImageName,gCurrentVMEncoding);
+		SetShortImageNameViaString(MAIN_VM,shortImageName,gCurrentVMEncoding);
 
         if (IsImageName(shortImageName)  || finderInformation.fdType == 'STim')
             return i;

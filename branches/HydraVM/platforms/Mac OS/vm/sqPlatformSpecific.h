@@ -30,6 +30,7 @@
 
 #ifdef macintoshSqueak
 #include <Types.h>
+#include "sqMacUIConstants.h"
 //#define SQUEAK_BUILTIN_PLUGIN
 #define ENABLE_URL_FETCH
 /* replace the image file manipulation macros with functions */
@@ -118,11 +119,53 @@ sqInt sqMemoryExtraBytesLeft(Boolean flag);
     #define insufficientMemorySpecifiedError() plugInNotifyUser("The amount of memory specified by the 'memory' EMBED tag is not enough for the installed Squeak image file.")
     #define insufficientMemoryAvailableError() plugInNotifyUser("There is not enough memory to give Squeak the amount specified by the 'memory' EMBED tag.")
     #define unableToReadImageError() plugInNotifyUser("Read failed or premature end of image file")
-    #define browserPluginReturnIfNeeded() if (plugInTimeToReturn()) {ReturnFromInterpret();}
+    #define browserPluginReturnIfNeeded() if (pokeAtTimer(INTERPRETER_PARAM) && plugInTimeToReturn()) {intr->instructionPointer = oopForPointer(localIP); \
+								intr->stackPointer = oopForPointer(localSP); \
+								intr->theHomeContext = localHomeContext; \
+								return;}
+								
     #define browserPluginInitialiseIfNeeded()
 
 //exupery
 #define addressOf(x) &x
+
+/* Per-Interpreter mac vm state */
+
+typedef struct MacAttachedState {
+	#define KEYBUF_SIZE 64
+	sqInt wakeUpTick;
+	sqInt lastTick;
+	sqInt lowResMSecs;
+	int keyBuf[KEYBUF_SIZE];	/* circular buffer */
+	int keyBufGet;				/* index of next item of keyBuf to read */
+	int keyBufPut;				/* index of next item of keyBuf to write */
+	int keyBufOverflows;		/* number of characters dropped */
+
+	int inputSemaphoreIndex;	/* if non-zero the event semaphore index */
+
+	#define MAX_EVENT_BUFFER 1024
+	struct sqInputEvent * eventBuffer;
+	int eventBufferGet;
+	int eventBufferPut;
+	sqInt eventQueueLock;
+
+	CFStringRef imageName;		  /* full path and name to image */
+	CFStringRef shortImageName;		  /* short name */
+	char workArea[IMAGE_NAME_SIZE+1]; /*work area for moving character string data around */
+
+} MacAttachedState;
+
+extern sqInt macstateId;
+
+#define DECL_MAC_STATE() struct MacAttachedState * macstate= getAttachedStateBuffer(intr, (sqInt) macstateId)
+#define MAC_STATE(name) macstate->name
+
+#ifdef DEBUG
+
+#define dprintf(what) printf what
+#else
+#define dprintf(what)
+#endif
 
 #endif /* macintoshSqueak */
 

@@ -56,9 +56,9 @@ extern int gSqueakDebug;
 
 /*** Variables -- Imported from Virtual Machine ***/
 extern int getFullScreenFlag();    /* set from header when image file is loaded */
-extern int setFullScreenFlag(int value);    /* set from header when image file is loaded */
+extern int setFullScreenFlag(struct Interpreter *intr, int value);    /* set from header when image file is loaded */
 extern int getSavedWindowSize();   /* set from header when image file is loaded */
-extern int setSavedWindowSize(int value);   /* set from header when image file is loaded */
+extern int setSavedWindowSize(struct Interpreter *intr, int value);   /* set from header when image file is loaded */
 extern struct VirtualMachine *interpreterProxy;
 extern Boolean gSqueakHeadless;
 static void sqShowWindowActual(int windowIndex);
@@ -78,21 +78,22 @@ WindowPtr getSTWindow(void) {
     return  windowHandleFromIndex(1);
 }
 
-int makeMainWindow(void);
-static int ioSetFullScreenActual(int fullScreen);
+int makeMainWindow(INTERPRETER_ARG);
+static int ioSetFullScreenActual(INTERPRETER_ARG_COMMA int fullScreen);
 
-int ioSetFullScreen(int fullScreen) {
+int ioSetFullScreen(INTERPRETER_ARG_COMMA int fullScreen) {
         void *  giLocker;
 		int return_value=0;
 		if (gSqueakHeadless && !browserActiveAndDrawingContextOk()) return 0;	
         giLocker = interpreterProxy->ioLoadFunctionFrom("getUIToLock", "");
         if (giLocker != 0) {
             sqInt *foo;
-            foo = malloc(sizeof(sqInt)*4);
-            foo[0] = 1;
+            foo = malloc(sizeof(sqInt)*5);
+            foo[0] = 2;
             foo[1] = (sqInt) ioSetFullScreenActual;
-            foo[2] = fullScreen;
-            foo[3] = 0;
+            foo[2] = (sqInt) intr;
+            foo[3] = fullScreen;
+            foo[4] = 0;
             ((sqInt (*) (void *)) giLocker)(foo);
             return_value = interpreterProxy->positive32BitIntegerFor(foo[3]);
             free(foo);
@@ -100,7 +101,8 @@ int ioSetFullScreen(int fullScreen) {
         return return_value;
 }
 
-static int ioSetFullScreenActual(int fullScreen) {
+static int ioSetFullScreenActual(INTERPRETER_ARG_COMMA int fullScreen) {
+#pragma unused(intr)
     Rect                screen;
     int                 width, height, maxWidth, maxHeight;
     int                 oldWidth, oldHeight;
@@ -123,12 +125,12 @@ static int ioSetFullScreenActual(int fullScreen) {
 		targetWindowBlock->context = NULL;
 	}
 
-	if ((targetWindowBlock == NULL) || (fullScreen && getFullScreenFlag() && !targetWindowBlock->isInvisible))
+	if ((targetWindowBlock == NULL) || (fullScreen && getFullScreenFlag(MAIN_VM) && !targetWindowBlock->isInvisible))
 		return 0;
 
 	dominantGDevice = getThatDominateGDevice(targetWindowBlock->handle);
     if (dominantGDevice == null) {
-        success(false);
+        success(MAIN_VM,false);
         return 0;
     }
     screen = (**dominantGDevice).gdRect;
@@ -157,7 +159,7 @@ static int ioSetFullScreenActual(int fullScreen) {
 		height = (screen.bottom - screen.top);
 		MoveWindow(targetWindowBlock->handle, screen.left, screen.top, true);
 		SizeWindow(targetWindowBlock->handle, width, height, true);
-		setFullScreenFlag(true);
+		setFullScreenFlag(MAIN_VM,true);
 	} else {
 		MenuBarRestore();
 	
@@ -178,8 +180,8 @@ static int ioSetFullScreenActual(int fullScreen) {
 
 		if (EmptyRect(&rememberOldLocation)) {
 			/* get old window size */
-			width  = (unsigned) getSavedWindowSize() >> 16;
-			height = getSavedWindowSize() & 0xFFFF;
+			width  = (unsigned) getSavedWindowSize(MAIN_VM) >> 16;
+			height = getSavedWindowSize(MAIN_VM) & 0xFFFF;
 
 			/* minimum size is 1 x 1 */
 			width  = (width  > 0) ?  width : 64;
@@ -197,115 +199,10 @@ static int ioSetFullScreenActual(int fullScreen) {
 			SizeWindow(targetWindowBlock->handle, rememberOldLocation.right - rememberOldLocation.left, rememberOldLocation.bottom - rememberOldLocation.top, true);
 		}
 		
-		setFullScreenFlag(false);
+		setFullScreenFlag(MAIN_VM,false);
 	}
 	return 0;
 }
-/*
-int ioSetFullScreenActual(int fullScreen) {
-    GDHandle            dominantGDevice;
-	windowDescriptorBlock *	targetWindowBlock  = windowBlockFromIndex(1);
-	static Ptr gRestorableStateForScreen = nil;
-	static WindowPtr gAFullscreenWindow = nil,oldStWindow = nil;
-	static int oldWidth, oldHeight;
-	extern int windowActive;
-
-	if (fullScreen && getFullScreenFlag() && !targetWindowBlock->isInvisible)
-		return 0;
-
-    if (fullScreen) {
-		
-		dominantGDevice = getThatDominateGDevice(getSTWindow());
-		if (dominantGDevice == null) {
-			success(false);
-			return 0;
-		}
-		oldStWindow = targetWindowBlock->handle;
-		oldWidth = targetWindowBlock->width;
-		oldHeight = targetWindowBlock->height;
-		if (targetWindowBlock->context)
-			QDEndCGContext(GetWindowPort(oldStWindow),&targetWindowBlock->context);
-		targetWindowBlock->context = nil;
-		HideWindow(oldStWindow);
-		BeginFullScreen	(&gRestorableStateForScreen,
-								dominantGDevice,
-								 NULL,
-								 NULL,
-								 &gAFullscreenWindow,
-								 nil,
-								 fullScreenAllowEvents);
-		targetWindowBlock->handle = gAFullscreenWindow;
-		setFullScreenFlag(true);
-		SetUpCarbonEventForWindowIndex(1);
-		windowActive = 1;
-	} else {
-		if (gRestorableStateForScreen == NULL) 
-			return 0;
-		if (targetWindowBlock->context)
-			QDEndCGContext(GetWindowPort(targetWindowBlock->handle),&targetWindowBlock->context);
-		targetWindowBlock->handle = oldStWindow;
-		QDBeginCGContext(GetWindowPort(oldStWindow),&targetWindowBlock->context); 
-		setFullScreenFlag(false);
-		targetWindowBlock->isInvisible = true;
-		targetWindowBlock->width = oldWidth;
-		targetWindowBlock->height = oldWidth;
-		EndFullScreen(gRestorableStateForScreen,nil);
-		windowActive = 1;
-		gRestorableStateForScreen = NULL;
-	}
-	return 0;
-}
-
-int ioSetFullScreenActual(int fullScreen) {
-    GDHandle            dominantGDevice;
-	CGDirectDisplayID	mainDominateWindow;
-	CGDisplayErr err;
-	CGContextRef context;
-	static CGContextRef savedContext = NULL;
-	windowDescriptorBlock *	targetWindowBlock;
-	
-	if (fullScreen && getFullScreenFlag() && !targetWindowBlock->isInvisible)
-		return 0;
-
-    if (fullScreen) {
-		dominantGDevice = getThatDominateGDevice(getSTWindow());
-		if (dominantGDevice == null) {
-			success(false);
-			return 0;
-		}
-		mainDominateWindow = QDGetCGDirectDisplayID(dominantGDevice);
-		if (mainDominateWindow == NULL) {
-			success(false);
-			return 0;
-		} 
-		err =  CGDisplayCapture (mainDominateWindow);
-		if ( err != CGDisplayNoErr ) {
-			success(false);
-			return 0;
-		} 
-		context = CGDisplayGetDrawingContext(mainDominateWindow);
-		if ( context == NULL ) {
-			success(false);
-			return 0;
-		} 
-		MenuBarHide();
-		targetWindowBlock = windowBlockFromIndex(1);
-		savedContext = 	targetWindowBlock->context;
-		targetWindowBlock->context = context;
-		setFullScreenFlag(true);
-	} else {
-		if (savedContext == NULL) 
-			return 0;
-		MenuBarRestore();
-		targetWindowBlock = windowBlockFromIndex(1);
-		targetWindowBlock->context = savedContext;
-		savedContext = NULL;
-		setFullScreenFlag(false);
-	}
-	return 0;
-} */
-
-
 void sqShowWindow(int windowIndex);
 
 void sqShowWindow(int windowIndex) {
@@ -337,7 +234,7 @@ int ioShowDisplay(
 	int affectedL, int affectedR, int affectedT, int affectedB) {
 	
 	if (gSqueakHeadless && !browserActiveAndDrawingContextOk()) return 1;
-	ioShowDisplayOnWindow( (unsigned int*)  dispBitsIndex,  width,  height,  depth, affectedL,  affectedR,  affectedT,  affectedB, 1);
+	ioShowDisplayOnWindow((unsigned int*)  dispBitsIndex,  width,  height,  depth, affectedL,  affectedR,  affectedT,  affectedB, 1);
 	return 1;
 }
 
@@ -390,7 +287,7 @@ int ioShowDisplayOnWindow(
 		extern Boolean gSqueakExplicitWindowOpenNeeded;
 		if (gSqueakExplicitWindowOpenNeeded || (windowIndex != 1))
 			return 0;
-		makeMainWindow();
+		makeMainWindow(MAIN_VM);
 		targetWindowBlock = windowBlockFromIndex(windowIndex);
 	}
 
@@ -680,7 +577,7 @@ void FreePixmap(void) {
 }
 
 
-int makeMainWindow(void) {
+int makeMainWindow(INTERPRETER_ARG) {
 	WindowPtr window;
 	char	shortImageName[256];
 	int width,height;
@@ -689,8 +586,8 @@ int makeMainWindow(void) {
 	extern Boolean gSqueakWindowHasTitle;
 		
 	/* get old window size */
-	width  = (unsigned) getSavedWindowSize() >> 16;
-	height = getSavedWindowSize() & 0xFFFF;
+	width  = (unsigned) getSavedWindowSize(MAIN_VM) >> 16;
+	height = getSavedWindowSize(MAIN_VM) & 0xFFFF;
 	
 	
 	window = SetUpWindow(44, 8, 44+height, 8+width,gSqueakWindowType,gSqueakWindowAttributes);
@@ -701,12 +598,12 @@ int makeMainWindow(void) {
 	 ioLoadFunctionFrom(NULL, "DropPlugin");
     
 	if (gSqueakWindowHasTitle) {
-		getShortImageNameWithEncoding(shortImageName,gCurrentVMEncoding);
+		getShortImageNameWithEncoding(MAIN_VM,shortImageName,gCurrentVMEncoding);
 		SetWindowTitle(1,shortImageName);
 	}
 
-	ioSetFullScreenActual(getFullScreenFlag());
-	SetUpCarbonEventForWindowIndex(1);
+	ioSetFullScreenActual(INTERPRETER_PARAM_COMMA  getFullScreenFlag(MAIN_VM));
+	SetUpCarbonEventForWindowIndex(INTERPRETER_PARAM_COMMA 1);
 	//CreateCGContextForPort(GetWindowPort(windowBlock->handle),&windowBlock->context);  
 	QDBeginCGContext(GetWindowPort(windowBlock->handle),&windowBlock->context);    
 
@@ -716,7 +613,7 @@ int makeMainWindow(void) {
 	GetPortBounds(GetWindowPort(windowBlock->handle),&portRect);
 	w =  portRect.right -  portRect.left;
 	h =  portRect.bottom - portRect.top;
-	setSavedWindowSize((w << 16) |(h & 0xFFFF));
+	setSavedWindowSize(MAIN_VM, (w << 16) |(h & 0xFFFF));
 	windowBlock->width = w;
 	windowBlock->height = h; 
 
@@ -775,7 +672,7 @@ int ioScreenDepth(void) {
     return (*(*mainDevice)->gdPMap)->pixelSize;
 }
 
-int ioScreenSize(void) {
+int ioScreenSize(INTERPRETER_ARG) {
 	int w, h;
     Rect portRect;
     extern Boolean gSqueakExplicitWindowOpenNeeded;
@@ -784,11 +681,11 @@ int ioScreenSize(void) {
 	if (browserActiveAndDrawingContextOkAndNOTInFullScreenMode())
 		return browserGetWindowSize();
 	
-	w  = (unsigned) getSavedWindowSize() >> 16;
-	h= getSavedWindowSize() & 0xFFFF;
+	w  = (unsigned) getSavedWindowSize(intr) >> 16;
+	h= getSavedWindowSize(intr) & 0xFFFF;
 
 	if (getSTWindow() == NULL && !gSqueakExplicitWindowOpenNeeded) {
-		makeMainWindow();
+		makeMainWindow(INTERPRETER_PARAM);
 	}
 
 	if (getSTWindow() != nil) {
@@ -800,15 +697,16 @@ int ioScreenSize(void) {
 	return (w << 16) | (h & 0xFFFF);  /* w is high 16 bits; h is low 16 bits */
 }
 
-int ioSetCursor(sqInt cursorBitsIndex, int offsetX, int offsetY) {
+int ioSetCursor(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, int offsetX, int offsetY) {
 	/* Old version; forward to new version. */
-	ioSetCursorWithMask(cursorBitsIndex, nil, offsetX, offsetY);
+	ioSetCursorWithMask(INTERPRETER_PARAM_COMMA cursorBitsIndex, nil, offsetX, offsetY);
 	return 0;
 }
 
 Cursor macCursor;
+sqInt checkedLongAt(INTERPRETER_ARG_COMMA sqInt byteAddress);
 
-int ioSetCursorWithMask(sqInt cursorBitsIndex, sqInt cursorMaskIndex, int offsetX, int offsetY) {
+int ioSetCursorWithMask(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, sqInt cursorMaskIndex, int offsetX, int offsetY) {
 	/* Set the 16x16 cursor bitmap. If cursorMaskIndex is nil, then make the mask the same as
 	   the cursor bitmap. If not, then mask and cursor bits combined determine how cursor is
 	   displayed:
@@ -826,13 +724,13 @@ int ioSetCursorWithMask(sqInt cursorBitsIndex, sqInt cursorMaskIndex, int offset
 	
 	if (cursorMaskIndex == nil) {
 		for (i = 0; i < 16; i++) {
-			macCursor.data[i] = CFSwapInt16BigToHost((short)(checkedLongAt(cursorBitsIndex + (4 * i)) >> 16)) & 0xFFFF;
-			macCursor.mask[i] = CFSwapInt16BigToHost((short)(checkedLongAt(cursorBitsIndex + (4 * i)) >> 16)) & 0xFFFF;
+			macCursor.data[i] = CFSwapInt16BigToHost((short)(checkedLongAt(INTERPRETER_PARAM_COMMA cursorBitsIndex + (4 * i)) >> 16)) & 0xFFFF;
+			macCursor.mask[i] = CFSwapInt16BigToHost((short)(checkedLongAt(INTERPRETER_PARAM_COMMA cursorBitsIndex + (4 * i)) >> 16)) & 0xFFFF;
 		}
 	} else {
 		for (i = 0; i < 16; i++) {
-			macCursor.data[i] = CFSwapInt16BigToHost((short)(checkedLongAt(cursorBitsIndex + (4 * i)) >> 16)) & 0xFFFF;
-			macCursor.mask[i] = CFSwapInt16BigToHost((short)(checkedLongAt(cursorMaskIndex + (4 * i)) >> 16)) & 0xFFFF;
+			macCursor.data[i] = CFSwapInt16BigToHost((short)(checkedLongAt(INTERPRETER_PARAM_COMMA cursorBitsIndex + (4 * i)) >> 16)) & 0xFFFF;
+			macCursor.mask[i] = CFSwapInt16BigToHost((short)(checkedLongAt(INTERPRETER_PARAM_COMMA cursorMaskIndex + (4 * i)) >> 16)) & 0xFFFF;
 		}
 	}
 
@@ -929,13 +827,13 @@ int ioSetDisplayModeOLD(int width, int height, int depth, int fullscreenFlag) {
 	Gestalt(gestaltDisplayMgrAttr,&value);
 	displayMgrPresent=value&(1<<gestaltDisplayMgrPresent);
     if (!displayMgrPresent) {
-    	success(false);
+    	success(MAIN_VM, false);
     	return 0;
     }
 
 	dominantGDevice = getThatDominateGDevice(getSTWindow());
         if (dominantGDevice == null) {
-            success(false);
+            success(MAIN_VM, false);
             return 0;
         }
 	request.screenDevice  = dominantGDevice;
@@ -960,13 +858,13 @@ int ioSetDisplayModeOLD(int width, int height, int depth, int fullscreenFlag) {
 	if (myModeIteratorProc)
 		DisposeDMDisplayModeListIteratorUPP(myModeIteratorProc);
 	if (request.displayMode == 0)  {
-    	success(false);
+    	success(MAIN_VM, false);
     	return 0;
     }
 	DMBeginConfigureDisplays(&displayState);
 	DMSetDisplayMode(dominantGDevice,request.displayMode,&depthMode,null,displayState);
 	DMEndConfigureDisplays(displayState);
-	ioSetFullScreen(fullscreenFlag);
+	ioSetFullScreen(MAIN_VM,fullscreenFlag);
 	
     return 1;
 }
@@ -1191,7 +1089,7 @@ Boolean FindBestMatch (VideoRequestRecPtr requestRecPtr, short bitDepth, unsigne
 	return (false);
 }
   
-int ioSetDisplayMode(int width, int height, int depth, int fullscreenFlag) {
+int ioSetDisplayMode(INTERPRETER_ARG_COMMA int width, int height, int depth, int fullscreenFlag) {
 	/* Set the window to the given width, height, and color depth. Put the window
 	   into the full screen mode specified by fullscreenFlag. */
 
@@ -1204,11 +1102,11 @@ int ioSetDisplayMode(int width, int height, int depth, int fullscreenFlag) {
 	if (gSqueakHeadless && !browserActiveAndDrawingContextOk()) return 0;
 
 	if (QDGetCGDirectDisplayID == NULL)
-		return ioSetDisplayMode( width,  height,  depth,  fullscreenFlag);
+		return ioSetDisplayMode(INTERPRETER_PARAM_COMMA width,  height,  depth,  fullscreenFlag);
 		
 	dominantGDevice = getThatDominateGDevice(getSTWindow());
        if (dominantGDevice == null) {
-            success(false);
+            success(INTERPRETER_PARAM_COMMA false);
             return 0;
         }
 		
@@ -1221,7 +1119,7 @@ int ioSetDisplayMode(int width, int height, int depth, int fullscreenFlag) {
 		return 0;
 	}
 
-	ioSetFullScreen(fullscreenFlag);
+	ioSetFullScreen(INTERPRETER_PARAM_COMMA fullscreenFlag);
 	
     return 1;
 }
