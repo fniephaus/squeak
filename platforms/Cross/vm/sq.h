@@ -417,9 +417,9 @@ sqInt ioDeleteMutex(sqInt mutexHandle);
 sqInt ioMutexWaitmilliseconds(sqInt mutexHandle, sqInt milliseconds);
 
 sqInt ioCreateThreadForparamsuspended(void * fn, void * param, sqInt suspended);
-sqInt ioGetCurrentThread();
+sqInt ioGetCurrentThread(void);
 sqInt ioResumeThread(sqInt threadHandle);
-void * ioGetThreadedInterpretFunctionPointer();
+void * ioGetThreadedInterpretFunctionPointer(void);
 
 /* force given interpreter to wake up */
 sqInt ioWakeUp(INTERPRETER_ARG);
