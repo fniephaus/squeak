@@ -159,7 +159,7 @@ squeakFileOffsetType sqFileGetPosition(PLUGIN_IARG_COMMA SQFile *f) {
 	return position;
 }
 
-sqInt sqFileInit() {
+sqInt sqFileInit(void) {
 	/* Create a session ID that is unlikely to be repeated.
 	   Zero is never used for a valid session number.
 	   Should be called once at startup time.
@@ -169,7 +169,7 @@ sqInt sqFileInit() {
 	return 1;
 }
 
-sqInt sqFileShutdown() {
+sqInt sqFileShutdown(void) {
 	return 1;
 }
 
