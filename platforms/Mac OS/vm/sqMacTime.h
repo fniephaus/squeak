@@ -1,6 +1,6 @@
 /****************************************************************************
 *   PROJECT: Squeak Headers
-*   FILE:    sqMacTime.c
+*   FILE:    sqMacTime.h
 *   CONTENT: 
 *
 *   AUTHOR:  John Maloney, John McIntosh, and others.
@@ -18,3 +18,4 @@ void SetUpTimers(void);
 time_t convertToSqueakTime(time_t unixTime);
 int ioLowResMSecs(void);
 time_t convertToSqueakTime(time_t unixTime);
+int pokeAtTimer(INTERPRETER_ARG);

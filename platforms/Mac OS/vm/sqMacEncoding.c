@@ -18,12 +18,10 @@
 
 
 /*** Variables -- image and path names ***/
-char imageName[IMAGE_NAME_SIZE+1];
+//HYRDRA char imageName[IMAGE_NAME_SIZE+1];
 
 static CFStringRef vmPathString=NULL;
-static CFStringRef imageNameString=NULL;
 static CFStringRef documentNameString=NULL;
-static CFStringRef shortImageNameString=NULL;
 
 void getVMPathWithEncoding(char *target,UInt32 encoding) {
     CFStringGetCString (vmPathString, target, VMPATH_SIZE, encoding);
@@ -36,52 +34,49 @@ void SetVMPathFromCFString(CFMutableStringRef strRef) {
 	CFRetain(vmPathString);
 }
 
-Boolean VMPathIsEmpty() {
-    char path[VMPATH_SIZE + 1];
-     if (vmPathString == NULL) 
-        return true;
-    getVMPathWithEncoding(path,gCurrentVMEncoding);
-    return (*path == 0x00);
+void getImageNameWithEncoding(INTERPRETER_ARG_COMMA char *target,UInt32 encoding) {
+	DECL_MAC_STATE();
+    CFStringGetCString (MAC_STATE(imageName), target, IMAGE_NAME_SIZE, encoding);
 }
 
-void getImageNameWithEncoding(char *target,UInt32 encoding) {
-    CFStringGetCString (imageNameString, target, IMAGE_NAME_SIZE, encoding);
-}
-
-char *getImageName(void) {
-    getImageNameWithEncoding(imageName,gCurrentVMEncoding);
-    return imageName;
+char *getImageName(INTERPRETER_ARG) {
+	DECL_MAC_STATE();
+    getImageNameWithEncoding(INTERPRETER_PARAM_COMMA MAC_STATE(workArea),gCurrentVMEncoding);
+    return MAC_STATE(workArea);
 }
     
-void SetImageNameViaCFString(CFStringRef string) {
+void SetImageNameViaCFString(INTERPRETER_ARG_COMMA CFStringRef string) {
     char *ignore;
+	DECL_MAC_STATE();
 	// normalization because we get here from looking for file name in resource folder directly at startup time. 
 	// HFS+ imposes Unicode2.1 decomposed UTF-8 encoding on all path elements
 	CFMutableStringRef mutableStr= CFStringCreateMutableCopy(NULL, 0, string);
 	if (gCurrentVMEncoding == kCFStringEncodingUTF8) 
 		CFStringNormalize(mutableStr, kCFStringNormalizationFormKC); // pre-combined
     CFRetain(mutableStr);
-	if (imageNameString != NULL)
-        CFRelease(imageNameString);
-    imageNameString = mutableStr;
-    ignore = getImageName();
+	if (MAC_STATE(imageName) != NULL)
+        CFRelease(MAC_STATE(imageName));
+    MAC_STATE(imageName) = mutableStr;
+    ignore = getImageName(INTERPRETER_PARAM);
 }
 
-void SetImageNameViaString(char *string,UInt32 encoding) {
+void SetImageNameViaString(INTERPRETER_ARG_COMMA char *string,UInt32 encoding) {
 	CFStringRef path;
+	DECL_MAC_STATE();
 	
-	if (imageNameString != NULL)
-        CFRelease(imageNameString);
+	if (MAC_STATE(imageName) != NULL)
+        CFRelease(MAC_STATE(imageName));
 	path = CFStringCreateWithCString(NULL, string, encoding);
-    SetImageNameViaCFString(path);
+    SetImageNameViaCFString(INTERPRETER_PARAM_COMMA path);
 	CFRelease(path);
 }
 
 
-Boolean ImageNameIsEmpty() {
-    if (imageNameString == NULL) 
+Boolean ImageNameIsEmpty(INTERPRETER_ARG) {
+	DECL_MAC_STATE();
+    if (MAC_STATE(imageName) == NULL) 
         return true;
-    return getImageName() == 0x00;
+    return getImageName(INTERPRETER_PARAM) == NULL;
 }
 
 void getDocumentNameWithEncoding(char *target,UInt32 encoding) {
@@ -98,22 +93,25 @@ void SetDocumentNameViaString(char *string,UInt32 encoding) {
     documentNameString = CFStringCreateWithCString(NULL, string, encoding);
 }
 
-void getShortImageNameWithEncoding(char *target,UInt32 encoding) {
-    if (shortImageNameString == NULL) {
+void getShortImageNameWithEncoding(INTERPRETER_ARG_COMMA char *target,UInt32 encoding) {
+	DECL_MAC_STATE();
+    if (MAC_STATE(shortImageName) == NULL) {
         *target = 0x00;
         return;
     }
-    CFStringGetCString (shortImageNameString, target, SHORTIMAGE_NAME_SIZE, encoding);
+    CFStringGetCString (MAC_STATE(shortImageName), target, SHORTIMAGE_NAME_SIZE, encoding);
 }
 
-void SetShortImageNameViaString(char *string,UInt32 encoding) {
-    if (shortImageNameString != NULL)
-        CFRelease(shortImageNameString);
-    shortImageNameString = CFStringCreateWithCString(NULL, string, encoding);
+void SetShortImageNameViaString(INTERPRETER_ARG_COMMA char *string,UInt32 encoding) {
+	DECL_MAC_STATE();
+    if (MAC_STATE(shortImageName) != NULL)
+        CFRelease(MAC_STATE(shortImageName));
+    MAC_STATE(shortImageName) = CFStringCreateWithCString(NULL, string, encoding);
 }
 
-Boolean ShortImageNameIsEmpty() {
-    return shortImageNameString == NULL;
+Boolean ShortImageNameIsEmpty(INTERPRETER_ARG) {
+	DECL_MAC_STATE();
+    return MAC_STATE(shortImageName) == NULL;
 }
 
 void setEncodingType (char * string) {

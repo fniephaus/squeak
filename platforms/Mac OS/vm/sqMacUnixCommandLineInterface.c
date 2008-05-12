@@ -68,7 +68,7 @@ static void parseEnvironment(void);
 static int strtobkm(const char *str);
 static void printUsage(void);
 static void printUsageNotes(void);
-void resolveWhatTheImageNameIs(char *guess);
+void resolveWhatTheImageNameIs(INTERPRETER_ARG_COMMA char *guess);
 
 char *unixArgcInterfaceGetParm(int n) {
 	int actual;
@@ -126,7 +126,7 @@ static void parseArguments(int argc, char **argv)
   if (!strcmp(*argv, "--"))
     skipArg();
   else					/* image name default to normal mac expectations */
-	resolveWhatTheImageNameIs(saveArg());
+	resolveWhatTheImageNameIs(MAIN_VM,saveArg());
   /* save remaining arguments as Squeak arguments */
   while (argc > 0)
     squeakArgVec[squeakArgCnt++]= *skipArg();
@@ -135,7 +135,7 @@ static void parseArguments(int argc, char **argv)
 # undef skipArg
 }
 
-void resolveWhatTheImageNameIs(char *guess)  
+void resolveWhatTheImageNameIs(INTERPRETER_ARG_COMMA char *guess)  
 {
 	char possibleImageName[DOCUMENT_NAME_SIZE+1],  fullPath [DOCUMENT_NAME_SIZE+1],  lastPath [SHORTIMAGE_NAME_SIZE+1];
 	FSRef		theFSRef;
@@ -144,14 +144,14 @@ void resolveWhatTheImageNameIs(char *guess)
 	strncpy(possibleImageName, guess,DOCUMENT_NAME_SIZE);
 	err = getFSRef(possibleImageName,&theFSRef,kCFStringEncodingUTF8);
 	if (err) {
-		SetImageNameViaString("",gCurrentVMEncoding);
-		SetShortImageNameViaString("",gCurrentVMEncoding);
+		SetImageNameViaString(MAIN_VM,"",gCurrentVMEncoding);
+		SetShortImageNameViaString(MAIN_VM,"",gCurrentVMEncoding);
 		return;
 	}
 	PathToFileViaFSRef(fullPath,DOCUMENT_NAME_SIZE, &theFSRef,gCurrentVMEncoding);
 	getLastPathComponentInCurrentEncoding(fullPath,lastPath,gCurrentVMEncoding);
-	SetImageNameViaString(fullPath,gCurrentVMEncoding);
-	SetShortImageNameViaString(lastPath,gCurrentVMEncoding);
+	SetImageNameViaString(MAIN_VM,fullPath,gCurrentVMEncoding);
+	SetShortImageNameViaString(MAIN_VM,lastPath,gCurrentVMEncoding);
 }
 
 
@@ -244,7 +244,7 @@ static void parseEnvironment(void)
   char *ev= 0;
 
   if ((ev= getenv("SQUEAK_IMAGE")))		
-	resolveWhatTheImageNameIs(ev);
+	resolveWhatTheImageNameIs(MAIN_VM,ev);
   if ((ev= getenv("SQUEAK_MEMORY")))	gMaxHeapSize= strtobkm(ev);
   if ((ev= getenv("SQUEAK_PATHENC")))	setEncodingType(ev);
 }

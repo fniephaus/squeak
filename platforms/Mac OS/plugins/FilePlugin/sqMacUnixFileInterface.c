@@ -60,8 +60,7 @@
 
  */
 
-#include "sq.h"
-#include "FilePlugin.h"
+#include "FilePlugin_imports.h"
 #include "sqUnixCharConv.h"
 #include "sqMacEncoding.h"
 #include "sqMacTime.h"

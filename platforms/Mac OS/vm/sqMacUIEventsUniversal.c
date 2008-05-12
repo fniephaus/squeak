@@ -67,17 +67,15 @@ typedef struct
   int keyRepeated;
 } KeyMapping;
 
-extern int gSqueakDebug;
-pthread_mutex_t gEventQueueLock;
 
 # define dprintf(ARGS) if (gSqueakDebug) fprintf ARGS
 
 #define EventTypeFullScreenUpdate 98
 #define EventTypePostEventProcessing 99
-static void doPostMessageHook(EventRef event);
-static void postFullScreenUpdate(void);
-void signalAnyInterestedParties(void);
-static sqKeyboardEvent *enterKeystroke (long type, long cc, long pc, UniChar utf32Char, long m);
+static void doPostMessageHook(INTERPRETER_ARG_COMMA EventRef event);
+static void postFullScreenUpdate(INTERPRETER_ARG);
+void unlockAndSignalAnyInterestedParties(INTERPRETER_ARG);
+static sqKeyboardEvent *enterKeystroke (INTERPRETER_ARG_COMMA long type, long cc, long pc, UniChar utf32Char, long m);
 
 static int addToKeyMap(int keyCode, int keyChar);
 static int findInKeyMap(int keyCode);
@@ -87,14 +85,12 @@ static int findRepeatInKeyMap(int keyCode);
 static void setRepeatInKeyMap(int keyCode);
 
 static void doPendingFlush(void);
-void ignoreLastEvent(void);
+sqInputEvent *sqNextEventPut(INTERPRETER_ARG);
 
 /*** Variables -- Event Recording ***/
-#define MAX_EVENT_BUFFER 1024
 
 extern int getInterruptKeycode();
-extern int setInterruptPending(int value);
-extern int setInterruptCheckCounter(int value);
+extern int gSqueakDebug;
 extern int getFullScreenFlag();
 extern struct VirtualMachine* interpreterProxy;
 extern Boolean gSqueakHeadless;
@@ -109,26 +105,16 @@ Boolean NeedToSetCursorBackOnApplicationActivate = false;
 extern MenuHandle editMenu;
 extern MenuHandle appleMenu;
 
-static sqInputEvent eventBuffer[MAX_EVENT_BUFFER];
-static int eventBufferGet = 0;
-static int eventBufferPut = 0;
 static Boolean NeedToSetCursorBack=false;
 
 
 /* event capture */
-sqInputEvent *nextEventPut(void);
 
 #define MAKETHESESTATIC static
  
-#define KEYBUF_SIZE 64
 /* declaration of the event message hook */
 MAKETHESESTATIC eventMessageHook messageHook = NULL;
 MAKETHESESTATIC eventMessageHook postMessageHook = NULL;
-MAKETHESESTATIC int inputSemaphoreIndex = 0;/* if non-zero the event semaphore index */
- int keyBuf[KEYBUF_SIZE];	/* circular buffer */
- int keyBufGet = 0;			/* index of next item of keyBuf to read */
- int keyBufPut = 0;			/* index of next item of keyBuf to write */
- int keyBufOverflows = 0;	/* number of characters dropped */
 
  int buttonState = 0;		/* mouse button and modifier state when mouse
 							   button went down or 0 if not pressed */
@@ -171,12 +157,10 @@ static Point carbonMousePosition;	/* mouse position when carbon is running for s
 
 Boolean IsKeyDown(void);    
 
-int recordDragDropEvent(EventRecord *theEvent, int numberOfItems, int dragType) {
+int recordDragDropEvent(INTERPRETER_ARG_COMMA EventRecord *theEvent, int numberOfItems, int dragType) {
 	sqDragDropFilesEvent *evt;
 	int theButtonState;
-	
-        pthread_mutex_lock(&gEventQueueLock);
-        evt = (sqDragDropFilesEvent*) nextEventPut();
+	evt = (sqDragDropFilesEvent*) sqNextEventPut(INTERPRETER_PARAM);
 
 	/* first the basics */
 	theButtonState = MouseModifierState(theEvent);
@@ -191,9 +175,7 @@ int recordDragDropEvent(EventRecord *theEvent, int numberOfItems, int dragType) 
 	/* then the modifiers */
 	evt->modifiers = theButtonState >> 3;
 	evt->windowIndex = windowActive;
-        pthread_mutex_unlock(&gEventQueueLock);
-        signalAnyInterestedParties();
-//	signalSemaphoreWithIndex(inputSemaphoreIndex);
+	unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
 	return 1;
 }
 
@@ -216,55 +198,78 @@ int MouseModifierState(EventRecord *theEvent) {
 		(stButtons & 0x7));
 }
 
+sqInputEvent *sqNextEventPut(INTERPRETER_ARG) {
+  sqInputEvent *evt;
+  DECL_MAC_STATE();
 
-sqInputEvent *nextEventPut(void) {
-	sqInputEvent *evt;
-	evt = eventBuffer + eventBufferPut;
-	eventBufferPut = (eventBufferPut + 1) % MAX_EVENT_BUFFER;
-	if (eventBufferGet == eventBufferPut) {
+  ioMutexLock(MAC_STATE(eventQueueLock));  // LOCK to prevent disaster
+
+  evt = MAC_STATE(eventBuffer) + MAC_STATE(eventBufferPut);
+  MAC_STATE(eventBufferPut) = (MAC_STATE(eventBufferPut) + 1) % MAX_EVENT_BUFFER;
+  if (MAC_STATE(eventBufferGet) == MAC_STATE(eventBufferPut)) {
 		/* buffer overflow; drop the last event */
-		eventBufferGet = (eventBufferGet + 1) % MAX_EVENT_BUFFER;
+    printf("WARNING: event buffer overflow\n");
+    MAC_STATE(eventBufferGet) = (MAC_STATE(eventBufferGet) + 1) % MAX_EVENT_BUFFER;
+  }
+  return evt;
+}
+
+void  enterKeyState(INTERPRETER_ARG_COMMA int  keystate);
+
+void  enterKeyState(INTERPRETER_ARG_COMMA int  keystate) {
+	DECL_MAC_STATE();
+	MAC_STATE(keyBuf[MAC_STATE(keyBufPut)]) = keystate;
+	MAC_STATE(keyBufPut) = (MAC_STATE(keyBufPut) + 1) % KEYBUF_SIZE;
+	if (MAC_STATE(keyBufGet) == MAC_STATE(keyBufPut)) {
+		/* buffer overflow; drop the last character */
+		MAC_STATE(keyBufGet) = (MAC_STATE(keyBufGet) + 1) % KEYBUF_SIZE;
+		MAC_STATE(keyBufOverflows++);
 	}
-	return evt;
 }
 
-void ignoreLastEvent() {
-    eventBufferPut -= 1;
-    if (eventBufferPut < 0) 
-        eventBufferPut = MAX_EVENT_BUFFER -1;
+void ignoreLastEvent(INTERPRETER_ARG) {
+	DECL_MAC_STATE();
+    MAC_STATE(eventBufferPut) -= 1;
+    if (MAC_STATE(eventBufferPut) < 0) 
+        MAC_STATE(eventBufferPut) = MAX_EVENT_BUFFER -1;
 }
 
-int ioSetInputSemaphore(int semaIndex) {
-	inputSemaphoreIndex = semaIndex;
+int ioSetInputSemaphore(INTERPRETER_ARG_COMMA int semaIndex) {
+	DECL_MAC_STATE();
+	MAC_STATE(inputSemaphoreIndex) = semaIndex;
 	return 1;
 }
 
-int ioGetNextEvent(sqInputEvent *evt) {
-		ioProcessEvents();
-		pthread_mutex_lock(&gEventQueueLock);
-	if (eventBufferGet == eventBufferPut) {
-            pthread_mutex_unlock(&gEventQueueLock);
+int ioGetNextEvent(INTERPRETER_ARG_COMMA sqInputEvent *evt) {
+	DECL_MAC_STATE();
+
+	ioProcessEvents(INTERPRETER_PARAM);
+	ioMutexLock(MAC_STATE(eventQueueLock));  // LOCK to prevent disaster
+	if (MAC_STATE(eventBufferGet) == MAC_STATE(eventBufferPut)) {
+			ioMutexUnlock(MAC_STATE(eventQueueLock));
             return false;
         }
-	*evt = eventBuffer[eventBufferGet];
-	eventBufferGet = (eventBufferGet+1) % MAX_EVENT_BUFFER;
-        pthread_mutex_unlock(&gEventQueueLock);
+	*evt = MAC_STATE(eventBuffer)[MAC_STATE(eventBufferGet)];
+	MAC_STATE(eventBufferGet) = (MAC_STATE(eventBufferGet)+1) % MAX_EVENT_BUFFER;
         if (evt->type == EventTypeFullScreenUpdate) {
-            fullDisplayUpdate();	//Note I think it's ok to unlock by now
-            return ioGetNextEvent(evt);
+			ioMutexUnlock(MAC_STATE(eventQueueLock));
+            fullDisplayUpdate(INTERPRETER_PARAM);	//Note I think it's ok to unlock by now
+            return ioGetNextEvent(INTERPRETER_PARAM_COMMA evt);
         }
         
         if (evt->type == EventTypePostEventProcessing) {
             if (postMessageHook) 
                 postMessageHook((EventRecord *) evt->unused1);
             free((void *) evt->unused1);
-            return ioGetNextEvent(evt);
+			ioMutexUnlock(MAC_STATE(eventQueueLock));
+            return ioGetNextEvent(INTERPRETER_PARAM_COMMA evt);
         }
+	ioMutexUnlock(MAC_STATE(eventQueueLock));
 	return true;
 }
 
-int ioGetButtonState(void) {
-	    ioProcessEvents();
+int ioGetButtonState(INTERPRETER_ARG) {
+	    ioProcessEvents(INTERPRETER_PARAM);
 	if ((cachedButtonState & 0x7) != 0) {
 		int result = cachedButtonState;
 		cachedButtonState = 0;  /* clear cached button state */
@@ -274,24 +279,25 @@ int ioGetButtonState(void) {
 	return buttonState;
 }
 
-int ioGetKeystroke(void) {
+int ioGetKeystroke(INTERPRETER_ARG) {
 	int keystate;
 
-	    ioProcessEvents();
-	if (keyBufGet == keyBufPut) {
+	DECL_MAC_STATE();
+	ioProcessEvents(INTERPRETER_PARAM);
+	if (MAC_STATE(keyBufGet) == MAC_STATE(keyBufPut)) {
 		return -1;  /* keystroke buffer is empty */
 	} else {
-		keystate = keyBuf[keyBufGet];
-		keyBufGet = (keyBufGet + 1) % KEYBUF_SIZE;
+		keystate = MAC_STATE(keyBuf[MAC_STATE(keyBufGet)]);
+		MAC_STATE(keyBufGet) = (MAC_STATE(keyBufGet) + 1) % KEYBUF_SIZE;
 		/* set modifer bits in buttonState to reflect the last keystroke fetched */
 		buttonState = ((keystate >> 5) & 0xF8) | (buttonState & 0x7);
 	}
 	return keystate;
 }
-int ioMousePoint(void) {
+int ioMousePoint(INTERPRETER_ARG) {
 	Point p;
 
-	    ioProcessEvents();
+	    ioProcessEvents(INTERPRETER_PARAM);
 	if (windowActive) {
 		p = carbonMousePosition;
 	} else {
@@ -301,13 +307,14 @@ int ioMousePoint(void) {
 	return (p.h << 16) | (p.v & 0xFFFF);  /* x is high 16 bits; y is low 16 bits */
 }
 
-int ioPeekKeystroke(void) {
+int ioPeekKeystroke(INTERPRETER_ARG) {
 	int keystate;
-	    ioProcessEvents();
-	if (keyBufGet == keyBufPut) {
+	DECL_MAC_STATE();
+	    ioProcessEvents(INTERPRETER_PARAM);
+	if (MAC_STATE(keyBufGet) == MAC_STATE(keyBufPut)) {
 		return -1;  /* keystroke buffer is empty */
 	} else {
-		keystate = keyBuf[keyBufGet];
+		keystate = MAC_STATE(keyBuf[MAC_STATE(keyBufGet)]);
 		/* set modifer bits in buttonState to reflect the last keystroke peeked at */
 		buttonState = ((keystate >> 5) & 0xF8) | (buttonState & 0x7);
 	}
@@ -365,30 +372,30 @@ static EventTypeSpec appleEventEventList[] = {{ kEventClassAppleEvent, kEventApp
 static EventTypeSpec textInputEventList[] = {{ kEventClassTextInput, kEventTextInputUnicodeForKeyEvent}};
 
 static pascal OSStatus MyAppEventHandler (EventHandlerCallRef myHandlerChain,
-                EventRef event, void* userData);
+                EventRef event, INTERPRETER_ARG);
 static pascal OSStatus MyAppEventCmdHandler (EventHandlerCallRef myHandlerChain,
-                EventRef event, void* userData);
+                EventRef event, INTERPRETER_ARG);
 static pascal OSStatus MyWindowEventHandler(EventHandlerCallRef myHandler,
-            EventRef event, void* userData);
+            EventRef event, INTERPRETER_ARG);
 static pascal OSStatus MyWindowEventMouseHandler(EventHandlerCallRef myHandler,
-            EventRef event, void* userData);
+            EventRef event, INTERPRETER_ARG);
 static pascal OSStatus MyWindowEventKBHandler(EventHandlerCallRef myHandler,
-            EventRef event, void* userData);
+            EventRef event, INTERPRETER_ARG);
 static pascal OSStatus MyAppleEventEventHandler(EventHandlerCallRef myHandler,
-            EventRef event, void* userData);
+            EventRef event, INTERPRETER_ARG);
 static pascal OSStatus MyTextInputEventHandler(EventHandlerCallRef myHandler,
-            EventRef event, void* userData);
+            EventRef event, INTERPRETER_ARG);
 static pascal OSStatus customHandleForUILocks(EventHandlerCallRef myHandler,
-            EventRef event, void* userData);
+            EventRef event, void* data);
             
 static int MouseModifierStateCarbon(EventRef theEvent,UInt32 whatHappened);   
 static int ModifierStateCarbon(EventRef theEvent);   
-void recordMouseEventCarbon(EventRef event,UInt32 whatHappened,Boolean noPointConversion);
-static void recordKeyboardEventCarbon(EventRef event);
-static void recordMenuEventCarbon(MenuRef menu, UInt32 menuItem);
-static void recordWindowEventCarbon(int windowType,int left, int top, int right, int bottom,int windowIndex);
+void recordMouseEventCarbon(INTERPRETER_ARG_COMMA EventRef event,UInt32 whatHappened,Boolean noPointConversion);
+static void recordKeyboardEventCarbon(INTERPRETER_ARG_COMMA EventRef event);
+static void recordMenuEventCarbon(INTERPRETER_ARG_COMMA MenuRef menu, UInt32 menuItem);
+static void recordWindowEventCarbon(INTERPRETER_ARG_COMMA int windowType,int left, int top, int right, int bottom,int windowIndex);
 static int doPreMessageHook(EventRef event); 
-static void fakeMouseWheelKeyboardEvents(EventMouseWheelAxis wheelMouseDirection,long wheelMouseDelta);
+static void fakeMouseWheelKeyboardEvents(INTERPRETER_ARG_COMMA EventMouseWheelAxis wheelMouseDirection,long wheelMouseDelta);
 void SetUpCarbonEvent(void);
             
 void SetUpCarbonEvent() {
@@ -401,14 +408,14 @@ void SetUpCarbonEvent() {
     
 }
 
-void SetUpCarbonEventForWindowIndex(int index) {
+void SetUpCarbonEventForWindowIndex(INTERPRETER_ARG_COMMA int index) {
 	extern 	void setWindowTrackingRgn(int index);
 /* Installing the window event handler */
-    InstallWindowEventHandler(windowHandleFromIndex(index), NewEventHandlerUPP(MyWindowEventHandler), GetEventTypeCount(windEventList), windEventList, 0, NULL);
-    InstallWindowEventHandler(windowHandleFromIndex(index), NewEventHandlerUPP(MyWindowEventMouseHandler), GetEventTypeCount(windEventMouseList), windEventMouseList, 0, NULL);
-    InstallWindowEventHandler(windowHandleFromIndex(index), NewEventHandlerUPP(MyWindowEventKBHandler), GetEventTypeCount(windEventKBList), windEventKBList, 0, NULL);
-    InstallWindowEventHandler(windowHandleFromIndex(index), NewEventHandlerUPP(MyAppleEventEventHandler), GetEventTypeCount(appleEventEventList), appleEventEventList, 0, NULL);
-    InstallWindowEventHandler(windowHandleFromIndex(index), NewEventHandlerUPP(MyTextInputEventHandler), GetEventTypeCount(textInputEventList), textInputEventList, 0, NULL);
+    InstallWindowEventHandler(windowHandleFromIndex(index), NewEventHandlerUPP(MyWindowEventHandler), GetEventTypeCount(windEventList), windEventList, INTERPRETER_PARAM, NULL);
+    InstallWindowEventHandler(windowHandleFromIndex(index), NewEventHandlerUPP(MyWindowEventMouseHandler), GetEventTypeCount(windEventMouseList), windEventMouseList, INTERPRETER_PARAM, NULL);
+    InstallWindowEventHandler(windowHandleFromIndex(index), NewEventHandlerUPP(MyWindowEventKBHandler), GetEventTypeCount(windEventKBList), windEventKBList, INTERPRETER_PARAM, NULL);
+    InstallWindowEventHandler(windowHandleFromIndex(index), NewEventHandlerUPP(MyAppleEventEventHandler), GetEventTypeCount(appleEventEventList), appleEventEventList, INTERPRETER_PARAM, NULL);
+    InstallWindowEventHandler(windowHandleFromIndex(index), NewEventHandlerUPP(MyTextInputEventHandler), GetEventTypeCount(textInputEventList), textInputEventList,  INTERPRETER_PARAM, NULL);
 	setWindowTrackingRgn(index);
 }
 
@@ -425,7 +432,7 @@ static int   doPreMessageHook(EventRef event) {
     return eventNotHandledErr;
 }
 
-static void   doPostMessageHook(EventRef event) {
+static void   doPostMessageHook(INTERPRETER_ARG_COMMA EventRef event) {
     if (postMessageHook) {
         EventRecord *theOldEventType;
         sqInputEvent *evt;
@@ -435,29 +442,25 @@ static void   doPostMessageHook(EventRef event) {
             free(theOldEventType);
             return;
         }
-        pthread_mutex_lock(&gEventQueueLock);
-	evt = nextEventPut();
+	evt = sqNextEventPut(INTERPRETER_PARAM);
 	evt->type = EventTypePostEventProcessing;
 	evt->windowIndex = windowActive;
 	evt->unused1 = (long) theOldEventType;
-        pthread_mutex_unlock(&gEventQueueLock);
-
-        // not quite this postMessageHook(&theOldEventType);
+	unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
     }
 }
 
-static void   postFullScreenUpdate() {
+static void   postFullScreenUpdate(INTERPRETER_ARG) {
     sqInputEvent *evt;
     
-    pthread_mutex_lock(&gEventQueueLock);
-    evt = nextEventPut();
+    evt = sqNextEventPut(INTERPRETER_PARAM);
     evt->type = EventTypeFullScreenUpdate;
 	evt->windowIndex = windowActive;
-    pthread_mutex_unlock(&gEventQueueLock);
+	unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
 }
 
 static pascal OSStatus MyAppEventHandler (EventHandlerCallRef myHandlerChain,
-    EventRef event, void* userData)
+    EventRef event, INTERPRETER_ARG)
 {
 #pragma unused(myHandlerChain,userData)
     UInt32 whatHappened;
@@ -495,12 +498,12 @@ static pascal OSStatus MyAppEventHandler (EventHandlerCallRef myHandlerChain,
             break;
     }
     if (postMessageHook) 
-        doPostMessageHook(event);
+        doPostMessageHook(INTERPRETER_PARAM_COMMA event);
     return result;
 }
 
 static pascal OSStatus MyAppEventCmdHandler (EventHandlerCallRef myHandlerChain,
-EventRef event, void* userData)
+EventRef event, INTERPRETER_ARG)
 {
 #pragma unused(myHandlerChain,userData)
     UInt32 whatHappened;
@@ -524,14 +527,14 @@ EventRef event, void* userData)
 				if (strcmp(cString, "Quit do not save") == 0)
 					gQuitNowRightNow = true;
 				else
-					recordMenuEventCarbon(commandStruct.menu.menuRef,commandStruct.menu.menuItemIndex);
+					recordMenuEventCarbon(INTERPRETER_PARAM_COMMA commandStruct.menu.menuRef,commandStruct.menu.menuItemIndex);
 				
 				result = noErr;
 			} else if (commandStruct.commandID == kHICommandHide) {
 			} else if (commandStruct.commandID == kHICommandHideOthers) {
 			} else if (commandStruct.commandID == kHICommandShowAll) {
 			} else if (windowActive) {
-				recordMenuEventCarbon(commandStruct.menu.menuRef,commandStruct.menu.menuItemIndex);
+				recordMenuEventCarbon(INTERPRETER_PARAM_COMMA commandStruct.menu.menuRef,commandStruct.menu.menuItemIndex);
 				result = noErr;
 			}
             break;
@@ -539,12 +542,12 @@ EventRef event, void* userData)
             break;
     }
     if (postMessageHook) 
-        doPostMessageHook(event);
+        doPostMessageHook(INTERPRETER_PARAM_COMMA event);
     return result;
 }
 
 static pascal OSStatus MyWindowEventHandler(EventHandlerCallRef myHandler,
-            EventRef event, void* userData)
+            EventRef event,INTERPRETER_ARG)
 {
 #pragma unused(myHandler,userData)
     UInt32 whatHappened;
@@ -564,8 +567,9 @@ static pascal OSStatus MyWindowEventHandler(EventHandlerCallRef myHandler,
     {
          case kEventWindowActivated:
           windowActive = windowIndexFromHandle((wHandleType)window);
-            postFullScreenUpdate();
-			recordWindowEventCarbon(WindowEventActivated,0, 0, 0, 0,windowActive);
+			postFullScreenUpdate(INTERPRETER_PARAM);
+			recordWindowEventCarbon(INTERPRETER_PARAM_COMMA WindowEventActivated,0, 0, 0, 0,windowActive);
+            result = noErr;
              break;
         case kEventWindowDeactivated:
             if (gSqueakWindowIsFloating) break; 
@@ -576,6 +580,7 @@ static pascal OSStatus MyWindowEventHandler(EventHandlerCallRef myHandler,
 				QDGlobalToLocalPoint(GetWindowPort((wHandleType)window),&savedMousePosition);
 			}
             windowActive = 0;
+            result = noErr;
              break;
        case kEventWindowDrawContent:
             result = noErr;
@@ -593,15 +598,15 @@ static pascal OSStatus MyWindowEventHandler(EventHandlerCallRef myHandler,
 			extern void setWindowTrackingRgn(int index);
 			setWindowTrackingRgn(windowIndexFromHandle((wHandleType)window));
 			GetWindowBounds(window,kWindowContentRgn,&globalBounds);
-			recordWindowEventCarbon(WindowEventMetricChange,globalBounds.left, globalBounds.top, 
+			recordWindowEventCarbon(INTERPRETER_PARAM_COMMA WindowEventMetricChange,globalBounds.left, globalBounds.top, 
 					globalBounds.right, globalBounds.bottom,windowIndexFromHandle((wHandleType)window));
 			}
 			break;
 		case kEventWindowCollapsed:
-			recordWindowEventCarbon(WindowEventIconise,0, 0, 0, 0,windowIndexFromHandle((wHandleType)window));
+			recordWindowEventCarbon(INTERPRETER_PARAM_COMMA WindowEventIconise,0, 0, 0, 0,windowIndexFromHandle((wHandleType)window));
 			break;
 		case kEventWindowClose:
-			recordWindowEventCarbon(WindowEventClose,0, 0, 0, 0,windowIndexFromHandle((wHandleType)window));
+			recordWindowEventCarbon(INTERPRETER_PARAM_COMMA WindowEventClose,0, 0, 0, 0,windowIndexFromHandle((wHandleType)window));
 			result = noErr;
 			break;
         case kEventWindowHidden:
@@ -616,7 +621,7 @@ static pascal OSStatus MyWindowEventHandler(EventHandlerCallRef myHandler,
         break;
     }
     if (postMessageHook) 
-        doPostMessageHook(event);
+        doPostMessageHook(INTERPRETER_PARAM_COMMA event);
     return result;
 }
 
@@ -636,7 +641,7 @@ int amIOSX102X() {
 }
 
 static pascal OSStatus MyWindowEventMouseHandler(EventHandlerCallRef myHandler,
-            EventRef event, void* userData)
+            EventRef event, INTERPRETER_ARG)
 {
 #pragma unused(myHandler,userData)
     UInt32 whatHappened;
@@ -649,9 +654,8 @@ static pascal OSStatus MyWindowEventMouseHandler(EventHandlerCallRef myHandler,
 	static RgnHandle	ioWinRgn=null;
     whatHappened	= GetEventKind(event);
 	
-
-//	if (whatHappened != 5) 
-//		fprintf(stderr,"\nMouseEvent %i-%i ",whatHappened,windowActive);
+	//if (whatHappened != 5) 		
+	//fprintf(stderr,"\nMouseEvent %i-%i ",whatHappened,windowActive);
 
 	if (!windowActive) {
 		if (whatHappened == kEventMouseDown)
@@ -719,7 +723,7 @@ static pascal OSStatus MyWindowEventMouseHandler(EventHandlerCallRef myHandler,
         case kEventMouseWheelMoved:
 			if (mouseDownActivate) 
 				return result;
-            recordMouseEventCarbon(event,whatHappened,false);
+            recordMouseEventCarbon(INTERPRETER_PARAM_COMMA event,whatHappened,false);
             result = noErr;
             return result; //Return early not an event we deal with for post event logic
         case kEventMouseDown:
@@ -738,7 +742,7 @@ static pascal OSStatus MyWindowEventMouseHandler(EventHandlerCallRef myHandler,
                 SetUserFocusWindow(windowHandleFromIndex(windowActive));
             }
             gButtonIsDown = true;
-            recordMouseEventCarbon(event,whatHappened,false);
+            recordMouseEventCarbon(INTERPRETER_PARAM_COMMA event,whatHappened,false);
             result = noErr;
             break;
         case kEventMouseUp:
@@ -747,7 +751,7 @@ static pascal OSStatus MyWindowEventMouseHandler(EventHandlerCallRef myHandler,
 				return result;
 			}
             gButtonIsDown = false;
-            recordMouseEventCarbon(event,whatHappened,false);
+            recordMouseEventCarbon(INTERPRETER_PARAM_COMMA event,whatHappened,false);
             result = noErr;
             break;
         default:
@@ -756,18 +760,19 @@ static pascal OSStatus MyWindowEventMouseHandler(EventHandlerCallRef myHandler,
         break;
     }
     if (postMessageHook) 
-        doPostMessageHook(event);
+        doPostMessageHook(INTERPRETER_PARAM_COMMA event);
 	//fprintf(stderr,"handled %i",result);
     return result;
 }
 
 static pascal OSStatus MyWindowEventKBHandler(EventHandlerCallRef myHandler,
-            EventRef event, void* userData)
+            EventRef event, INTERPRETER_ARG)
 {
 #pragma unused(myHandler,userData)
     UInt32 whatHappened,keyCode;
 	SInt32 key;
     OSStatus result = eventNotHandledErr; /* report failure by default */
+	DECL_MAC_STATE();
 	 
     if (!windowActive)
         return result;
@@ -793,15 +798,15 @@ static pascal OSStatus MyWindowEventKBHandler(EventHandlerCallRef myHandler,
 			//fprintf(stdout,"\nrawkey up %i",ioMSecs());
 			key = findInKeyMap(keyCode);
 			if (key != -1) {
-				enterKeystroke ( EventTypeKeyboard,keyCode, EventKeyUp, 0, ModifierStateCarbon(event));
+				enterKeystroke (INTERPRETER_PARAM_COMMA EventTypeKeyboard,keyCode, EventKeyUp, 0, ModifierStateCarbon(event));
 			}
 			removeFromKeyMap(keyCode);
             result = eventNotHandledErr;
             break;
         case kEventRawKeyModifiersChanged: 
             /* ok in this case we fake a mouse event to deal with the modifiers changing */
-            if(inputSemaphoreIndex)
-                recordMouseEventCarbon(event,kEventMouseMoved,false);
+            if(MAC_STATE(inputSemaphoreIndex))
+                recordMouseEventCarbon(INTERPRETER_PARAM_COMMA event,kEventMouseMoved,false);
             result = noErr;
             break;
         default: 
@@ -810,18 +815,18 @@ static pascal OSStatus MyWindowEventKBHandler(EventHandlerCallRef myHandler,
         break;
     }
     if (postMessageHook) 
-        doPostMessageHook(event);
+        doPostMessageHook(INTERPRETER_PARAM_COMMA event);
     return result;
 }
 static pascal OSStatus MyAppleEventEventHandler(EventHandlerCallRef myHandler,
-            EventRef event, void* userData)
+            EventRef event, INTERPRETER_ARG)
 {
-#pragma unused(myHandler,userData,event)
+#pragma unused(myHandler,userData,event,intr)
     return eventNotHandledErr;
 }
 
 static pascal OSStatus MyTextInputEventHandler(EventHandlerCallRef myHandler,
-            EventRef event, void* userData)
+            EventRef event,INTERPRETER_ARG)
 {
 #pragma unused(myHandler,userData)
     UInt32 whatHappened;
@@ -837,7 +842,7 @@ static pascal OSStatus MyTextInputEventHandler(EventHandlerCallRef myHandler,
     switch (whatHappened)
     {
         case kEventTextInputUnicodeForKeyEvent:
-            recordKeyboardEventCarbon(event);
+            recordKeyboardEventCarbon(INTERPRETER_PARAM_COMMA event);
             result = noErr;
         default: 
         /* If nobody handled the event, it gets propagated to the */
@@ -845,14 +850,13 @@ static pascal OSStatus MyTextInputEventHandler(EventHandlerCallRef myHandler,
         break;
     }
     if (postMessageHook) 
-        doPostMessageHook(event);
+        doPostMessageHook(INTERPRETER_PARAM_COMMA event);
     return result;
 }
 
-static void recordMenuEventCarbon(MenuRef menu,UInt32 menuItem) {
+static void recordMenuEventCarbon(INTERPRETER_ARG_COMMA MenuRef menu,UInt32 menuItem) {
 	sqMenuEvent *evt;
-	pthread_mutex_lock(&gEventQueueLock);
-	evt = (sqMenuEvent*) nextEventPut();
+	evt = (sqMenuEvent*) sqNextEventPut(INTERPRETER_PARAM);
 
 	evt->type = EventTypeMenu;
 	evt->timeStamp = ioMSecs() & MillisecondClockMask; 
@@ -862,15 +866,13 @@ static void recordMenuEventCarbon(MenuRef menu,UInt32 menuItem) {
 	evt->reserved2 = 0;
 	evt->reserved3 = 0;
 	evt->windowIndex = windowActive;
-	pthread_mutex_unlock(&gEventQueueLock);
-	signalAnyInterestedParties();
+	unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
 	return;
 }
 
-static void recordWindowEventCarbon(int windowType,int left, int top, int right, int bottom, int windowIndex) {
+static void recordWindowEventCarbon(INTERPRETER_ARG_COMMA int windowType,int left, int top, int right, int bottom, int windowIndex) {
 	sqWindowEvent *evt;
-	pthread_mutex_lock(&gEventQueueLock);
-	evt = (sqWindowEvent*) nextEventPut();
+	evt = (sqWindowEvent*) sqNextEventPut(INTERPRETER_PARAM);
 
 	evt->type = EventTypeWindow;
 	evt->timeStamp = ioMSecs() & MillisecondClockMask; 
@@ -880,12 +882,11 @@ static void recordWindowEventCarbon(int windowType,int left, int top, int right,
 	evt->value3 = right;
 	evt->value4 = bottom;
 	evt->windowIndex = windowIndex;
-	pthread_mutex_unlock(&gEventQueueLock);
-	signalAnyInterestedParties();
+	unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
 	return;
 }
 
-void recordMouseEventCarbon(EventRef event,UInt32 whatHappened,Boolean noPointConversion) {
+void recordMouseEventCarbon(INTERPRETER_ARG_COMMA EventRef event,UInt32 whatHappened,Boolean noPointConversion) {
 	sqMouseEvent *evt;
 	static sqMouseEvent oldEvent;
 	static Point  where;
@@ -922,8 +923,7 @@ void recordMouseEventCarbon(EventRef event,UInt32 whatHappened,Boolean noPointCo
                                 &wheelMouseDelta); 
        }
 
-        pthread_mutex_lock(&gEventQueueLock);
-	evt = (sqMouseEvent*) nextEventPut();
+ 	evt = (sqMouseEvent*) sqNextEventPut(INTERPRETER_PARAM);
 
 	/* first the basics */
 	evt->type = EventTypeMouse;
@@ -943,22 +943,21 @@ void recordMouseEventCarbon(EventRef event,UInt32 whatHappened,Boolean noPointCo
 	    oldEvent.y == evt->y &&
 	    oldEvent.modifiers == evt->modifiers &&
             whatHappened != kEventMouseWheelMoved) 
-	    ignoreLastEvent();
+							ignoreLastEvent(INTERPRETER_PARAM);
 	    
         oldEvent = *evt;
-     	pthread_mutex_unlock(&gEventQueueLock);
-        signalAnyInterestedParties();
+	
+	unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
                 
         if (whatHappened == kEventMouseWheelMoved) 
-            fakeMouseWheelKeyboardEvents(wheelMouseDirection,wheelMouseDelta);
+            fakeMouseWheelKeyboardEvents(INTERPRETER_PARAM_COMMA wheelMouseDirection,wheelMouseDelta);
 }
 
-static void fakeMouseWheelKeyboardEvents(EventMouseWheelAxis wheelMouseDirection,long wheelMouseDelta) {
+static void fakeMouseWheelKeyboardEvents(INTERPRETER_ARG_COMMA EventMouseWheelAxis wheelMouseDirection,long wheelMouseDelta) {
     long 	i,asciiChar;
     sqKeyboardEvent *evt,*extra;
     UInt32	macKeyCode=0;
     
-    pthread_mutex_lock(&gEventQueueLock);
     for(i=0;i<abs(wheelMouseDelta);i++) {
         if (wheelMouseDirection == kEventMouseWheelAxisX) 
             if (wheelMouseDelta > 0) {//up/down
@@ -977,7 +976,7 @@ static void fakeMouseWheelKeyboardEvents(EventMouseWheelAxis wheelMouseDirection
                 asciiChar = kLeftArrowCharCode;
             }
             
-	evt = (sqKeyboardEvent*) nextEventPut();
+	evt = (sqKeyboardEvent*) sqNextEventPut(INTERPRETER_PARAM);
 	/* first the basics */
 	evt->type = EventTypeKeyboard;
 	evt->timeStamp = ioMSecs() & MillisecondClockMask;
@@ -985,39 +984,35 @@ static void fakeMouseWheelKeyboardEvents(EventMouseWheelAxis wheelMouseDirection
 	/* press code must differentiate */
 	evt->charCode = macKeyCode;
 	evt->pressCode = EventKeyDown;
+	evt->utf32Code = 0;
 	evt->modifiers = modifierMap[(controlKey >> 8)];
 	evt->windowIndex = windowActive;
 	/* generate extra character event */
-        extra = (sqKeyboardEvent*)nextEventPut();
+	unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
+	extra = (sqKeyboardEvent*)sqNextEventPut(INTERPRETER_PARAM);
         *extra = *evt;
         extra->charCode = asciiChar;
         extra->utf32Code = asciiChar;
         extra->pressCode = EventKeyChar;
         
-       if(!inputSemaphoreIndex) {
+	DECL_MAC_STATE();
+	if(!MAC_STATE(inputSemaphoreIndex)) {
             int  keystate;
     
             /* keystate: low byte is the ascii character; next 8 bits are modifier bits */
     
             keystate = (evt->modifiers << 8) | asciiChar;
-            if (keystate == getInterruptKeycode()) {
+            if (keystate == getInterruptKeycode(INTERPRETER_PARAM)) {
                     /* Note: interrupt key is "meta"; it not reported as a keystroke */
-                    setInterruptPending(true);
-                    setInterruptCheckCounter(0);
             } else {
-                    keyBuf[keyBufPut] = keystate;
-                    keyBufPut = (keyBufPut + 1) % KEYBUF_SIZE;
-                    if (keyBufGet == keyBufPut) {
-                            /* buffer overflow; drop the last character */
-                            keyBufGet = (keyBufGet + 1) % KEYBUF_SIZE;
-                            keyBufOverflows++;
-                    }
+					enterKeyState(INTERPRETER_PARAM_COMMA keystate);
             }
 
         }
     }
     if (wheelMouseDelta != 0) {
-    	evt = (sqKeyboardEvent*) nextEventPut();
+		unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
+    	evt = (sqKeyboardEvent*) sqNextEventPut(INTERPRETER_PARAM);
 	/* first the basics */
 	evt->type = EventTypeKeyboard;
 	evt->timeStamp = ioMSecs() & MillisecondClockMask;
@@ -1025,14 +1020,14 @@ static void fakeMouseWheelKeyboardEvents(EventMouseWheelAxis wheelMouseDirection
 	/* press code must differentiate */
 	evt->charCode = macKeyCode;
 	evt->pressCode = EventKeyUp;
-	evt->modifiers = modifierMap[(controlKey >> 8)];
-	evt->windowIndex = windowActive;
+		evt->utf32Code = 0;
+		evt->modifiers = modifierMap[(controlKey >> 8)];
+		evt->windowIndex = windowActive;
     }
-    pthread_mutex_unlock(&gEventQueueLock);
-    signalAnyInterestedParties();                
-}
+	unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
+ }
 
-static void recordKeyboardEventCarbon(EventRef event) {
+static void recordKeyboardEventCarbon(INTERPRETER_ARG_COMMA EventRef event) {
     int				modifierBits, keyIndex,ISawRawKeyRepeat;
     UniCharCount	uniCharCount,i;
     UniChar			modifiedUniChar, *uniCharBufPtr, *uniCharBuf;
@@ -1096,7 +1091,6 @@ static void recordKeyboardEventCarbon(EventRef event) {
     }
 
 	modifierBits = modifierBits >> 3;
-    pthread_mutex_lock(&gEventQueueLock);
     
     /* Put sqKeyboardEvent in actualSize times */
     uniCharCount = actualSize / sizeof(UniChar);
@@ -1116,22 +1110,20 @@ static void recordKeyboardEventCarbon(EventRef event) {
         CFRelease(theString);
         
        /* Put the sqKeyboardEvent for KeyDown */
-		enterKeystroke ( EventTypeKeyboard, macKeyCode, EventKeyDown, 0, modifierBits);
+		enterKeystroke (INTERPRETER_PARAM_COMMA EventTypeKeyboard, macKeyCode, EventKeyDown, 0, modifierBits);
 		
         /* generate extra character event */
-		enterKeystroke ( EventTypeKeyboard, macRomanCode, EventKeyChar, modifiedUniChar, modifierBits);
+		enterKeystroke (INTERPRETER_PARAM_COMMA EventTypeKeyboard, macRomanCode, EventKeyChar, modifiedUniChar, modifierBits);
         
     /* Put the sqKeyboardEvent for KeyUp */
 		if (!ISawRawKeyRepeat && (uniCharCount> 1 || (keyIndex < 0)))
-			enterKeystroke ( EventTypeKeyboard, macKeyCode, EventKeyUp, 0,  modifierBits);
+			enterKeystroke ( INTERPRETER_PARAM_COMMA EventTypeKeyboard, macKeyCode, EventKeyUp, 0,  modifierBits);
         
         uniCharBufPtr++;
         modifiedUniChar = *uniCharBufPtr;
     }
 
     free(uniCharBuf);
-    pthread_mutex_unlock(&gEventQueueLock);		        
-    signalAnyInterestedParties();
 }
 
 
@@ -1262,7 +1254,7 @@ static void doPendingFlush(void) {
 	}
 
 	if (ioLowResMSecs() != nextPollTick) {
-		EventRef event;
+		EventRef event=0;
 		static EventTargetRef target = NULL;
 		
 		if (target == NULL)
@@ -1270,8 +1262,11 @@ static void doPendingFlush(void) {
 	  
 		if (ReceiveNextEvent(0, NULL, kEventDurationNoWait, true, &event) == noErr) {
 			SendEventToEventTarget (event, target);
+		} 
+		
+		if (event)
 			ReleaseEvent(event);
-		}
+				
 		if (browserActiveAndDrawingContextOk())
 			checkBrowserForHeartBeat();
 		
@@ -1285,9 +1280,10 @@ static void doPendingFlush(void) {
 
 }
 
-int ioProcessEvents(void) {
+int ioProcessEvents(INTERPRETER_ARG) {
 
 	aioPoll(0);		
+	if (INTERPRETER_PARAM == MAIN_VM)
 	doPendingFlush();
     if (gQuitNowRightNow) {
         ioExit();  //This might not return, might call exittoshell
@@ -1332,9 +1328,18 @@ static pascal OSStatus customHandleForUILocks(EventHandlerCallRef myHandler,
     return noErr;
 }
 
-void signalAnyInterestedParties() {
-    if (inputSemaphoreIndex != 0)
-        signalSemaphoreWithIndex(inputSemaphoreIndex);
+void signalAnyInterestedParties(INTERPRETER_ARG);
+
+void unlockAndSignalAnyInterestedParties(INTERPRETER_ARG) {
+	DECL_MAC_STATE();
+	ioMutexUnlock(MAC_STATE(eventQueueLock));
+    signalAnyInterestedParties(INTERPRETER_PARAM);
+}
+
+void signalAnyInterestedParties(INTERPRETER_ARG) {
+	DECL_MAC_STATE();
+    if (MAC_STATE(inputSemaphoreIndex) != 0)
+		signalSemaphoreWithIndex(INTERPRETER_PARAM_COMMA MAC_STATE(inputSemaphoreIndex));
 }
 
 static EventHandlerUPP gEventLoopEventHandlerUPP;   // -> EventLoopEventHandler
@@ -1347,7 +1352,7 @@ static pascal OSStatus EventLoopEventHandler(EventHandlerCallRef inHandlerCallRe
         // Run our event loop until quitNow is set.
 #pragma unused(inHandlerCallRef,inEvent,inUserData)
 	SetUpCarbonEvent();
-	interpret(); //Note the application under carbon event mgr starts running here
+	threadedInterpretFn((void*)MAIN_VM); //Note the application under carbon event mgr starts running here
 	return 0;
  }
 
@@ -1420,9 +1425,9 @@ void RunApplicationEventLoopWithSqueak(void)
     }
 }
 
-static sqKeyboardEvent *enterKeystroke (long type, long cc, long pc, UniChar utf32Code, long m) {
+static sqKeyboardEvent *enterKeystroke (INTERPRETER_ARG_COMMA long type, long cc, long pc, UniChar utf32Code, long m) {
 	sqKeyboardEvent 	*evt;
-	evt = (sqKeyboardEvent*) nextEventPut();
+	evt = (sqKeyboardEvent*) sqNextEventPut(INTERPRETER_PARAM);
 
 	/* first the basics */
 	//fprintf(stdout,"\nKeyStroke time %i Type %i Value %i",ioMSecs(),pc,cc);
@@ -1437,26 +1442,19 @@ static sqKeyboardEvent *enterKeystroke (long type, long cc, long pc, UniChar utf
 	evt->utf32Code = 0;
 	if(pc == EventKeyChar) {
 		evt->utf32Code = utf32Code;
-		if (!inputSemaphoreIndex) {
+	DECL_MAC_STATE();
+		if ((!MAC_STATE(inputSemaphoreIndex))) {
 			int  keystate;
-
 			/* keystate: low byte is the ascii character; next 8 bits are modifier bits */
 				keystate = (evt->modifiers << 8) | (unsigned char)  ((char) cc);
-			if (keystate == getInterruptKeycode()) {
+			if (keystate == getInterruptKeycode(INTERPRETER_PARAM)) {
 					/* Note: interrupt key is "meta"; it not reported as a keystroke */
-					setInterruptPending(true);
-					setInterruptCheckCounter(0);
 			} else {
-					keyBuf[keyBufPut] = keystate;
-					keyBufPut = (keyBufPut + 1) % KEYBUF_SIZE;
-					if (keyBufGet == keyBufPut) {
-							/* buffer overflow; drop the last character */
-							keyBufGet = (keyBufGet + 1) % KEYBUF_SIZE;
-							keyBufOverflows++;
-					}
+					enterKeyState(INTERPRETER_PARAM_COMMA keystate);
 			}
 		}
 	}
+	unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
 	return evt;
 }
 

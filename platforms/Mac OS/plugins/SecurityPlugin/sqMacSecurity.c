@@ -5,14 +5,12 @@
 //JMM 9/5/01  make it as a plugin
 // 3.7.0bx Nov 24th, 2003 JMM gCurrentVMEncoding
 
-#include "sq.h"
+#include "FilePlugin_imports.h"
 #include "sqMacFileLogic.h"	
 #include "SecurityPlugin.h"
 #include "sqMacUIConstants.h"
-#include "FilePlugin.h"
 
 #include <Files.h> 
-extern struct VirtualMachine * interpreterProxy;
 
 #define fromSqueak(string,length) string
 void fixPath(char *path);

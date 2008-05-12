@@ -21,6 +21,7 @@
 #include "sq.h"
 #include "sqMacTime.h"
 #include "sqMacUIEvents.h"
+#include "interp.h"
 #define MillisecondClockMask 536870911
 
 #include <pthread.h>
@@ -29,16 +30,15 @@
 #include <unistd.h>
 #include "sqaio.h"
 
-static TMTask    gTMTask;
+void ioScheduleTimerSemaphoreSignalAt(INTERPRETER_ARG_COMMA sqInt tick);
+sqInt getNextWakeupTick(INTERPRETER_ARG);
 static struct timeval	 startUpTime;
 static unsigned int	lowResMSecs= 0;
-
+static TMTask    gTMTask;
 
 #define LOW_RES_TICK_MSECS 16
 #define HIGH_RES_TICK_MSECS 2
 #define COUNTER_LIMIT LOW_RES_TICK_MSECS/HIGH_RES_TICK_MSECS
-
-
 
 static pascal void MyTimerProc(QElemPtr time)
 {
@@ -88,45 +88,26 @@ int ioSeconds(void) {
     return unixTime + ((52*365UL + 17*366UL) * 24*60*60UL);
 }
 
-pthread_mutex_t gSleepLock;
-pthread_cond_t  gSleepLockCondition;
-
-int ioRelinquishProcessorForMicroseconds(int microSeconds) {
+int ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA int microSeconds) {
 	/* This operation is platform dependent. 	 */
 	#pragma unused(microSeconds)
 
-    static Boolean doInitialization=true;
-    int	   realTimeToWait,now;
-	extern int getNextWakeupTick();
-	extern int setInterruptCheckCounter(int value);
-    
-    if (doInitialization) {
-        doInitialization = false;
-        pthread_mutex_init(&gSleepLock, NULL);
-        pthread_cond_init(&gSleepLockCondition,NULL);
-    }
-    
-    setInterruptCheckCounter(0);
+    int	   realTimeToWait,now,wake;
+	extern int getNextWakeupTick(INTERPRETER_ARG);
+        
     now = (ioMSecs() & MillisecondClockMask);
-    if (getNextWakeupTick() <= now)
-        if (getNextWakeupTick() == 0)
+	wake = getNextWakeupTick(INTERPRETER_PARAM);
+    if (wake <= now)
+        if (wake == 0) {
             realTimeToWait = 16;
+			}
         else {
             return 0;
     }
     else
-        realTimeToWait = getNextWakeupTick() - now; 
+        realTimeToWait = getNextWakeupTick(INTERPRETER_PARAM) - now; 
             
 	aioSleep(realTimeToWait*1000);
-	    
-		
- /* tspec.tv_sec=  realTimeToWait / 1000;
-    tspec.tv_nsec= (realTimeToWait % 1000)*1000000;
-    
-    err = pthread_mutex_lock(&gSleepLock);
-    err = pthread_cond_timedwait_relative_np(&gSleepLockCondition,&gSleepLock,&tspec);	
-    err = pthread_mutex_unlock(&gSleepLock); */
-    
 	return 0;
 }
 #undef ioMSecs
@@ -151,3 +132,44 @@ time_t convertToSqueakTime(time_t unixTime)
      and 52 non-leap years later than Squeak. */
   return unixTime + ((52*365UL + 17*366UL) * 24*60*60UL);
 }
+
+int pokeAtTimer(INTERPRETER_ARG);
+
+int pokeAtTimer(INTERPRETER_ARG) {
+	sqInt now = (ioMSecs()) & MillisecondClockMask;
+	DECL_MAC_STATE();
+	
+	
+	if ((INTERPRETER_PARAM != MAIN_VM) && (MAC_STATE(lowResMSecs) != ioLowResMSecs())) {
+		MAC_STATE(lowResMSecs) = ioLowResMSecs();
+		postNoOpEvent(INTERPRETER_PARAM);
+	}
+	
+	if (MAC_STATE(wakeUpTick) != 0) {
+		if (now < MAC_STATE(lastTick)) {
+			MAC_STATE(wakeUpTick) = (MAC_STATE(wakeUpTick) - MillisecondClockMask) - 1;
+		}
+		if (now >= MAC_STATE(wakeUpTick)) {
+
+			/* set timer interrupt to 0 for 'no timer' */
+
+			MAC_STATE(wakeUpTick) = 0;
+			signalTimerSemaphoreAsync(INTERPRETER_PARAM);
+		}
+	
+	} else {
+	}
+	MAC_STATE(lastTick) = now;
+	return true;
+}
+
+void ioScheduleTimerSemaphoreSignalAt(INTERPRETER_ARG_COMMA sqInt tick) {
+	DECL_MAC_STATE();
+	MAC_STATE(wakeUpTick) = tick  & MillisecondClockMask;
+}
+
+sqInt getNextWakeupTick(INTERPRETER_ARG) {
+	DECL_MAC_STATE();
+	return MAC_STATE(wakeUpTick); 
+}
+

@@ -94,12 +94,13 @@
 #include "sqaio.h"
 #include "sqMacNSPluginUILogic2.h"
 #include "sqUnixCharConv.h"
+#include "hydramacintoshextra.h"
 
 #include <unistd.h>
 #include <pthread.h>
 #include <Processes.h>
 
-extern pthread_mutex_t gEventQueueLock,gSleepLock;
+extern pthread_mutex_t gSleepLock;
 extern pthread_cond_t  gSleepLockCondition;
 
 OSErr			gSqueakFileLastError; 
@@ -117,7 +118,13 @@ int				gSqueakBrowserPipes[]= {-1, -1};
 Boolean			gSqueakBrowserSubProcess = false,gSqueakBrowserWasHeadlessButMadeFullScreen=false;
 Boolean			gSqueakBrowserExitRequested = false;
 
+struct VirtualMachine* interpreterProxy;
+
 void cocoInterfaceForTilda(CFStringRef aStringRef, char *buffer,int max_size);
+static void sqInitMacState(INTERPRETER_ARG);
+static void sqFinalizeMacState(INTERPRETER_ARG);
+sqInt attachStateBufferinitializeFnfinalizeFn(sqInt numberOfBytes, AttachedStateFn stateInitializeFn, AttachedStateFn stateFinalizeFn);
+
 /*** Main ***/
 
 /*** Variables -- globals for access from pluggable primitives ***/
@@ -125,7 +132,7 @@ int    argCnt= 0;
 char **argVec= 0;
 char **envVec= 0;
 
-sqInt printAllStacks(void);
+sqInt printAllStacks(INTERPRETER_ARG);
 extern BOOL NSApplicationLoad(void);
 
 static void sigsegv(int ignore)
@@ -139,7 +146,7 @@ static void sigsegv(int ignore)
   if (!printingStack)
     {
       printingStack= 1;
-      printAllStacks();
+      printAllStacks(MAIN_VM);
     }
   abort();
 }
@@ -170,6 +177,8 @@ void mtfsfi(unsigned long long fpscr)
 # define mtfsfi(fpscr)
 #endif
 
+sqInt macstateId;
+
 int main(int argc, char **argv, char **envp) {
 	EventRecord theEvent;
 	sqImageFile f;
@@ -198,11 +207,17 @@ int main(int argc, char **argv, char **envp) {
   mtfsfi(0);		/* disable signals, IEEE mode, round to nearest */
 
 	LoadScrap();
-	SetUpClipboard();
 	fetchPrefrences();
 
 	SetVMPathFromApplicationDirectory();
+	initializeVM();
+	/* add attached state */
+    macstateId = attachStateBufferinitializeFnfinalizeFn(sizeof(struct MacAttachedState),
+	  (AttachedStateFn)sqInitMacState,(AttachedStateFn)sqFinalizeMacState);
 
+	MAIN_VM = newInterpreterInstance();
+	initializeAllNewAttachedStates();
+	interpreterProxy = sqGetInterpreterProxy();
 	{
 		// Change working directory, this works under os-x, previous logic worked pre os-x 10.4
 		
@@ -214,14 +229,14 @@ int main(int argc, char **argv, char **envp) {
 
 	/* install apple event handlers and wait for open event */
 	InstallAppleEventHandlers();
-	while (ShortImageNameIsEmpty()) {
+	while (ShortImageNameIsEmpty(MAIN_VM)) {
 		GetNextEvent(everyEvent, &theEvent);
 		if (theEvent.what == kHighLevelEvent) {
 			AEProcessAppleEvent(&theEvent);
 		}
 	}
 
-	unixArgcInterface(argCnt,argVec,envVec);
+	unixArgcInterface(argCnt,argVec,envVec);   // this may set the image name 
 	
 	if (!gSqueakHeadless) {
 		ProcessSerialNumber psn = { 0, kCurrentProcess };
@@ -238,11 +253,11 @@ int main(int argc, char **argv, char **envp) {
 //		InitCursor();	large cursor support
 	}
 	
-	getShortImageNameWithEncoding(shortImageName,gCurrentVMEncoding);
-    if (gSqueakHeadless && ImageNameIsEmpty()) 
+	getShortImageNameWithEncoding(MAIN_VM,shortImageName,gCurrentVMEncoding);
+    if (gSqueakHeadless && ImageNameIsEmpty(MAIN_VM)) 
 		exit(-42);
 		
-	if (ImageNameIsEmpty()) {
+	if (ImageNameIsEmpty(MAIN_VM)) {
             CFBundleRef mainBundle;
             CFURLRef imageURL;
 
@@ -253,7 +268,7 @@ int main(int argc, char **argv, char **envp) {
 				
                 imagePath = CFURLCopyFileSystemPath (imageURL, kCFURLPOSIXPathStyle);
 
-				SetImageNameViaCFString(imagePath);
+				SetImageNameViaCFString(MAIN_VM,imagePath);
                 CFRelease(imageURL);
                 CFRelease(imagePath);
             } else {
@@ -265,10 +280,13 @@ int main(int argc, char **argv, char **envp) {
 			}
 	}
 
+	setInterpreterThread(MAIN_VM, ioGetCurrentThread());
+
 	/* read the image file and allocate memory for Squeak heap */
-	f = sqImageFileOpen(getImageName(), "rb");
+	f = sqImageFileOpen(getImageName(MAIN_VM), "rb");
     if (gSqueakHeadless && f == NULL) 
 			exit(-43);
+			
 	while (f == NULL) {
 	    //Failure attempt to ask the user to find the image file
 		char pathName[DOCUMENT_NAME_SIZE+1];
@@ -276,12 +294,13 @@ int main(int argc, char **argv, char **envp) {
 		if (err) 
 			ioExit();
 		getLastPathComponentInCurrentEncoding(pathName,shortImageName,gCurrentVMEncoding);
-		SetShortImageNameViaString(shortImageName,gCurrentVMEncoding);
-		SetImageNameViaString(pathName,gCurrentVMEncoding);
-		f = sqImageFileOpen(getImageName(), "rb");
+		SetShortImageNameViaString(MAIN_VM,shortImageName,gCurrentVMEncoding);
+		SetImageNameViaString(MAIN_VM,pathName,gCurrentVMEncoding);
+		f = sqImageFileOpen(getImageName(MAIN_VM), "rb");
  	}
 
-	readImageFromFileHeapSizeStartingAt(f, sqGetAvailableMemory(), 0);
+	ioInitSecurity();
+	readImageFromFileHeapSizeStartingAt(MAIN_VM, f, sqGetAvailableMemory(), 0);
 	sqImageFileClose(f);
         
 	if (!gSqueakHeadless) {
@@ -292,16 +311,20 @@ int main(int argc, char **argv, char **envp) {
 	}
 		
     SetUpTimers();
-
     aioInit();
-    pthread_mutex_init(&gEventQueueLock, NULL);
+	
 	if (gSqueakBrowserSubProcess) {
 		extern CGContextRef SharedBrowserBitMapContextRef;
 		setupPipes();
 		while (SharedBrowserBitMapContextRef == NULL)
 			aioSleep(100*1000);
 	}
+	
 	NSApplicationLoad();	//	Needed for Carbon based applications which call into Cocoa
+
+
+
+	
 	RunApplicationEventLoopWithSqueak();
     return 0;
 }
@@ -362,7 +385,7 @@ char * GetAttributeString(int id) {
 	   using a VM of 2.6 or earlier. */
 	if (id == 1) {
             static char path[IMAGE_NAME_SIZE + 1];
-            getImageNameWithEncoding(path,gCurrentVMEncoding);
+            getImageNameWithEncoding(MAIN_VM, path,gCurrentVMEncoding);
             return path;
         }
 
@@ -409,7 +432,11 @@ char * GetAttributeString(int id) {
 	/* vm build string */
 
     if (id == 1006) {
- 		return "Mac Carbon 3.8.18b2 17-Aug-07 >F439DEFF-4327-403D-969B-78695EE835DB<";
+ 		return "Mac Carbon 3.8.19b3 12-may-08 >3F7DEF7C-AAD2-4065-B3E6-1F073C29F57A<";
+// 		return "Mac Carbon 3.8.19b2 07-may-08 >3F7DEF7C-AAD2-4065-B3E6-1F073C29F57A<";
+// 		return "Mac Carbon 3.8.19b1 24-feb-08 >C6D3547A-2D0A-4030-8D14-50F2AE39C7EB<";
+// 		return "Mac Carbon 3.8.18b3 26-Sep-07 >DC0EAF5D-C46C-479D-B2A3-DBD4A2DF95A8<";
+//		return "Mac Carbon 3.8.18b2 17-Aug-07 >F439DEFF-4327-403D-969B-78695EE835DB<";
 // 		return "Mac Carbon 3.8.18b1 9-Jun-07 >4C61BDDD-B2AA-4C71-B20D-5758597201EF<";
 // 		return "Mac Carbon 3.8.17b5 16-May-07 >BBAC71BE-EF68-4994-8E57-D641A936733F<";
 // 		return "Mac Carbon 3.8.17b5 1-May-07 >B389476B-E7F3-4E6A-A8B6-EAE7B39B0EEA<";
@@ -451,7 +478,7 @@ char * GetAttributeString(int id) {
 	}
 
 	/* attribute undefined by this platform */
-	success(false);
+	success(MAIN_VM,false);
 	return "";
 }
 
@@ -663,10 +690,51 @@ void cocoInterfaceForTilda(CFStringRef aStringRef, char *buffer,int max_size) {
 
 }
 
+static void sqInitMacState(INTERPRETER_ARG)
+{
+	DECL_MAC_STATE();
+
+    MAC_STATE(wakeUpTick) = 0;
+    MAC_STATE(lastTick) = 0;
+    MAC_STATE(lowResMSecs) = 0;
+	MAC_STATE(keyBufGet) = 0;			/* index of next item of keyBuf to read */
+	MAC_STATE(keyBufPut) = 0;			/* index of next item of keyBuf to write */
+	MAC_STATE(keyBufOverflows) = 0;	/* number of characters dropped */
+	MAC_STATE(inputSemaphoreIndex) = 0;
+	MAC_STATE(eventBufferGet) = 0;
+	MAC_STATE(eventBufferPut) = 0;
+	MAC_STATE(eventQueueLock) = ioCreateMutexWithRecursion(0,false);
+
+	MAC_STATE(eventBuffer) = (struct sqInputEvent*)malloc(MAX_EVENT_BUFFER * sizeof(struct sqInputEvent));
+
+	if (INTERPRETER_PARAM == MAIN_VM)
+	{
+	}
+}
+
+static void sqFinalizeMacState(INTERPRETER_ARG)
+{
+	DECL_MAC_STATE();
+	free(MAC_STATE(eventBuffer));
+	ioDeleteMutex(MAC_STATE(eventQueueLock));
+	if (MAC_STATE(imageName))
+		CFRelease(MAC_STATE(imageName));
+	if (MAC_STATE(shortImageName))
+		CFRelease(MAC_STATE(shortImageName));
+}
 
 /*** Profiling Stubs ***/
 
-int clearProfile(void){return 0;}														
-int dumpProfile(void){return 0;}														
-int startProfiling(void){return 0;}													
-int stopProfiling(void)	{return 0;}													
+int clearProfile(INTERPRETER_ARG){
+	#pragma unused(intr)
+	return 0;}														
+int dumpProfile(INTERPRETER_ARG){	
+#pragma unused(intr)
+	return 0;}														
+int startProfiling(INTERPRETER_ARG){	
+#pragma unused(intr)
+	return 0;}													
+int stopProfiling(INTERPRETER_ARG) {	
+#pragma unused(intr)
+	return 0;}	
+		

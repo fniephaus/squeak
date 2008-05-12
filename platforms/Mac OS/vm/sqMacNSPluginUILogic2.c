@@ -150,13 +150,13 @@ Boolean inline browserActiveAndDrawingContextOk() {
 
 Boolean inline browserActiveAndDrawingContextOkAndInFullScreenMode() {
 	extern Boolean gSqueakBrowserWasHeadlessButMadeFullScreen;
-	extern sqInt getFullScreenFlag(void);
-	return browserActiveAndDrawingContextOk() && gSqueakBrowserWasHeadlessButMadeFullScreen && getFullScreenFlag();
+	extern sqInt getFullScreenFlag(struct Interpreter *intr);
+	return browserActiveAndDrawingContextOk() && gSqueakBrowserWasHeadlessButMadeFullScreen && getFullScreenFlag(MAIN_VM);
 }
 
 Boolean inline browserActiveAndDrawingContextOkAndNOTInFullScreenMode() {
-	extern sqInt getFullScreenFlag(void);
-	return browserActiveAndDrawingContextOk() && !getFullScreenFlag();
+	extern sqInt getFullScreenFlag(struct Interpreter *intr);
+	return browserActiveAndDrawingContextOk() && !getFullScreenFlag(MAIN_VM);
 }
 
 void setupPipes() { 
@@ -237,7 +237,8 @@ static void handle_CMD_SHARED_MEMORY() {
 	SharedBrowserBitMapLength = rowBytes*height+20;
 	SharedMemoryBlock= mmap(0, SharedBrowserBitMapLength, PROT_READ | PROT_WRITE, MAP_SHARED, SharedMemoryfd,0);
 	if (SharedMemoryBlock == MAP_FAILED)	{
-		dprintf((stderr,"VM: handle_CMD_SHARED_MEMORY failed mmap \n"));
+		perror("mmap returns error");
+		dprintf((stderr,"VM: handle_CMD_SHARED_MEMORY failed mmap length was %i fd was %i \n",SharedBrowserBitMapLength,SharedMemoryfd));
 		return;
 	}
 	SharedMemoryBlock->written = 0;
@@ -303,16 +304,16 @@ static void handle_CMD_EVENT() {
 					
 	    		case keyDown:
 	    		case autoKey:
-						recordKeyboardEvent(eventPtr,EventKeyDown);
+						recordKeyboardEvent(MAIN_VM, eventPtr,EventKeyDown);
 	    		break;
 
 				case keyUp:
-						recordKeyboardEvent(eventPtr,EventKeyUp);
+						recordKeyboardEvent(MAIN_VM, eventPtr,EventKeyUp);
 				break;
 
 	    		case updateEvt:
 					if (browserActiveAndDrawingContextOk())
-						fullDisplayUpdate();  /* ask VM to call ioShowDisplay */
+						fullDisplayUpdate(MAIN_VM);  /* ask VM to call ioShowDisplay */
 	    		break;
 	    		case getFocusEvent:
 	    		break;
@@ -372,7 +373,7 @@ static void browserReceiveData(void)
       req->localName= localName;
       req->state= ok;
       dprintf((stderr,"VM:  signaling semaphore, state=%i\n", ok));
-      signalSemaphoreWithIndex(req->semaIndex);
+      signalSemaphoreWithIndex(MAIN_VM, req->semaIndex);
     }
   }
 }
@@ -526,7 +527,7 @@ void recordMouseEvent(EventRecord *theEvent)  {
 	SetEventParameter(tmpEvent,kEventParamMouseLocation,typeQDPoint,sizeof(Point),&theEvent->where);
 	SetEventParameter(tmpEvent,kEventParamKeyModifiers,typeUInt32,sizeof(UInt32),&carbonModifiers);
 	SetEventParameter(tmpEvent,kEventParamMouseButton,typeMouseButton,sizeof(EventMouseButton),&mouseButton);
-	recordMouseEventCarbon(tmpEvent,theEvent->what,true);
+	recordMouseEventCarbon(MAIN_VM,tmpEvent,theEvent->what,true);
 	ReleaseEvent(tmpEvent);
 }
 
@@ -547,15 +548,13 @@ int MouseModifierStateFromBrowser(EventRecord *theEvent) {
 	return stButtons;
 }
 
-int recordKeyboardEvent(EventRecord *theEvent, int keyType) {
+int recordKeyboardEvent(INTERPRETER_ARG_COMMA EventRecord *theEvent, int keyType) {
 	int asciiChar, modifierBits;
 	sqKeyboardEvent *evt, *extra;
-	extern pthread_mutex_t gEventQueueLock;
-	extern sqInputEvent *nextEventPut(void);
+	extern sqInputEvent *sqNextEventPut(INTERPRETER_ARG);
 	extern int MouseModifierState(EventRecord *theEvent);
-	
-	pthread_mutex_lock(&gEventQueueLock);
-	evt = (sqKeyboardEvent*) nextEventPut();
+	DECL_MAC_STATE();	
+	evt = (sqKeyboardEvent*) sqNextEventPut(INTERPRETER_PARAM);
 
 	/* keystate: low byte is the ascii character; next 4 bits are modifier bits */
 	asciiChar = theEvent->message & charCodeMask;
@@ -586,14 +585,14 @@ int recordKeyboardEvent(EventRecord *theEvent, int keyType) {
 	evt->reserved1 = 0;
 	/* generate extra character event */
 	if (keyType == EventKeyDown) {
-		extra = (sqKeyboardEvent*)nextEventPut();
+		unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
+		extra = (sqKeyboardEvent*)sqNextEventPut(INTERPRETER_PARAM);
 		*extra = *evt;
 		extra->charCode = asciiChar;
 		extra->pressCode = EventKeyChar;
 		extra->utf32Code = MacRomanToUnicode[asciiChar];
 	}
-	pthread_mutex_unlock(&gEventQueueLock);
-	signalAnyInterestedParties();    
+	unlockAndSignalAnyInterestedParties(INTERPRETER_PARAM);
 	return 1;
 }
 

@@ -3,6 +3,7 @@
  *  SqueakVMUNIXPATHS
  *
  */
+#include "interp.h"
 
 void setupPipes(void);
 int plugInTimeToReturn(void);
@@ -10,10 +11,9 @@ int plugInNotifyUser(char *msg);
 int primitivePluginBrowserReady(void);
 void browserProcessCommand(void);
 int MouseModifierStateFromBrowser(EventRecord*);
-void signalAnyInterestedParties(void);
-int recordKeyboardEvent(EventRecord *, int );
+int recordKeyboardEvent(INTERPRETER_ARG_COMMA EventRecord *, int );
 void recordMouseEvent(EventRecord *);
-void recordMouseEventCarbon(EventRef ,UInt32 ,Boolean noPointConversion);
+void recordMouseEventCarbon(INTERPRETER_ARG_COMMA EventRef ,UInt32 ,Boolean noPointConversion);
 Boolean inline browserActiveAndDrawingContextOk(void);
 void browserSetCursor(Cursor *macCursor);
 int primitivePluginRequestState(void);

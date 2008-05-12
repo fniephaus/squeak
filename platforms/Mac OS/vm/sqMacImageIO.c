@@ -32,6 +32,22 @@ int vmPathSize(void) {
 	return strlen(path);
 }
 
+char *ioGetImageName(INTERPRETER_ARG)
+{
+ 	DECL_MAC_STATE();
+	
+    getImageNameWithEncoding(INTERPRETER_PARAM_COMMA MAC_STATE(workArea),gCurrentVMEncoding);
+	return MAC_STATE(workArea);
+};
+
+void ioSetImagePath(INTERPRETER_ARG_COMMA char * imgName)
+{
+	char shortImageName[SHORTIMAGE_NAME_SIZE+1];
+	getLastPathComponentInCurrentEncoding(imgName,shortImageName,gCurrentVMEncoding);
+	SetShortImageNameViaString(INTERPRETER_PARAM_COMMA shortImageName,gCurrentVMEncoding);
+	SetImageNameViaString(INTERPRETER_PARAM_COMMA imgName,gCurrentVMEncoding);
+}
+
 int vmPathGetLength(sqInt sqVMPathIndex, int length) {
 	char *stVMPath = (char *) sqVMPathIndex;
 	int count, i;
@@ -50,18 +66,18 @@ int vmPathGetLength(sqInt sqVMPathIndex, int length) {
 
 /*** Image File Naming ***/
 
-int imageNameSize(void) {
+int imageNameSize(INTERPRETER_ARG) {
     char path[IMAGE_NAME_SIZE+1];
-    getImageNameWithEncoding(path,gCurrentVMEncoding);
+    getImageNameWithEncoding(INTERPRETER_PARAM_COMMA path,gCurrentVMEncoding);
 
     return strlen(path);
 }
 
-int imageNameGetLength(sqInt sqImageNameIndex, int length) {
+int imageNameGetLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, int length) {
 	char *sqImageName = (char *) sqImageNameIndex;
 	int count, i;
         char path[IMAGE_NAME_SIZE+1];
-        getImageNameWithEncoding(path,gCurrentVMEncoding);
+        getImageNameWithEncoding(INTERPRETER_PARAM_COMMA path,gCurrentVMEncoding);
 
 	count = strlen(path);
 	count = (length < count) ? length : count;
@@ -73,7 +89,7 @@ int imageNameGetLength(sqInt sqImageNameIndex, int length) {
 	return count;
 }
 
-int imageNamePutLength(sqInt sqImageNameIndex, int length) {
+int imageNamePutLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, int length) {
 	char *sqImageName = (char *) sqImageNameIndex;
 	int count, i, ch, j;
 	int lastColonIndex = -1;
@@ -90,7 +106,7 @@ int imageNamePutLength(sqInt sqImageNameIndex, int length) {
 		}
 	}
 	name[count] = 0; 
-        SetImageNameViaString(name,gCurrentVMEncoding);
+        SetImageNameViaString(INTERPRETER_PARAM_COMMA name,gCurrentVMEncoding);
 
 	/* copy short image name into a null-terminated C string */
 	for (i = lastColonIndex + 1, j = 0; i < count; i++, j++) {
@@ -98,7 +114,7 @@ int imageNamePutLength(sqInt sqImageNameIndex, int length) {
 	}
 	shortImageName[j] = 0;
 
-        SetShortImageNameViaString(shortImageName,gCurrentVMEncoding);
+        SetShortImageNameViaString(INTERPRETER_PARAM_COMMA shortImageName,gCurrentVMEncoding);
 	SetWindowTitle(1,shortImageName);
 	return count;
 }

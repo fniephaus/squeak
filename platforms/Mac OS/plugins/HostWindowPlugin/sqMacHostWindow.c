@@ -12,6 +12,7 @@
 #include "sqVirtualMachine.h"
 #include "sqMacHostWindow.h"
 #include "sqMacWindow.h"
+#include "sq.h"
 
 extern struct VirtualMachine *interpreterProxy;
 int RemoveWindowBlock(windowDescriptorBlock * thisWindow);
@@ -34,7 +35,7 @@ int createWindowWidthheightoriginXyattrlength(int w,int h,int x,int y,  char * l
 	
 	index = windowBlock->windowIndex;
 	windowBlock->isInvisible = !MacIsWindowVisible(window);
-	SetUpCarbonEventForWindowIndex(index);
+	SetUpCarbonEventForWindowIndex(MAIN_VM, index);
 	QDBeginCGContext(GetWindowPort(windowBlock->handle),&windowBlock->context); 
 //	CreateCGContextForPort(GetWindowPort(windowBlock->handle),&windowBlock->context); 
 	windowBlock->width = w;

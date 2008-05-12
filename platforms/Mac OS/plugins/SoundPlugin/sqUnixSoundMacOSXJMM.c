@@ -458,7 +458,7 @@ typedef struct Stream
   void ioProcSignal(int semaphore)
 {
   if (semaphore)
-    signalSemaphoreWithIndex(semaphore);
+    signalSemaphoreWithIndex(MAIN_VM, semaphore);
 }
 
 
@@ -714,7 +714,7 @@ int Stream_stop(Stream *s)
 {
   if (output)
     return Buffer_free(output->buffer);
-  success(false);
+  success(MAIN_VM,false);
   return 8192;	// so that older images can cope
 }
 
@@ -827,7 +827,7 @@ int Stream_stop(Stream *s)
       return framesDone;
     }
 
-  success(false);
+  success(MAIN_VM, false);
   return frameCount;
 }
 
@@ -850,7 +850,7 @@ int Stream_stop(Stream *s)
 	}
       return 0;
     }
-  success(false);
+  success(MAIN_VM, false);
   return 8192;
 }
 
@@ -860,7 +860,7 @@ int Stream_stop(Stream *s)
  int sound_PlaySilence(void);
  int sound_PlaySilence(void)
 {
-  success(false);
+  success(MAIN_VM, false);
   return 8192;
 }
 
@@ -905,7 +905,7 @@ int Stream_stop(Stream *s)
 	}
       Stream_delete(s);
     }
-  return primitiveFail();
+  return primitiveFail(MAIN_VM);
 }
 
 
@@ -923,7 +923,7 @@ int Stream_stop(Stream *s)
   if (input)
     return (double)input->sampleRate;	//xxx FIXME: this should be FP
 
-  primitiveFail();
+  primitiveFail(MAIN_VM);
   return 0.0L;
 }
 
@@ -968,7 +968,7 @@ int Stream_stop(Stream *s)
 	}
       Stream_delete(s);
     }
-  return primitiveFail();
+  return primitiveFail(MAIN_VM);
 }
 
 
@@ -987,7 +987,7 @@ int Stream_stop(Stream *s)
 	}
       return 0;
     }
-  success(false);
+  success(MAIN_VM, false);
   return 0;
 }
 

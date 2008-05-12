@@ -7,18 +7,18 @@
  */
 
 #include <Carbon/Carbon.h>
+#include "interp.h"
 
 void getVMPathWithEncoding(char *target,UInt32 encoding);
 void SetVMPathFromCFString(CFMutableStringRef strRef);
-Boolean VMPathIsEmpty(void);
-void getImageNameWithEncoding(char *target,UInt32 encoding);
-void SetImageNameViaCFString(CFStringRef string);
-void SetImageNameViaString(char *string,UInt32 encoding);
-Boolean ImageNameIsEmpty(void);
-char *getImageName(void);
-void getShortImageNameWithEncoding(char *target,UInt32 encoding);
-void SetShortImageNameViaString(char *string,UInt32 encoding);
-Boolean ShortImageNameIsEmpty(void);
+void getImageNameWithEncoding(INTERPRETER_ARG_COMMA char *target,UInt32 encoding);
+void SetImageNameViaCFString(INTERPRETER_ARG_COMMA CFStringRef string);
+void SetImageNameViaString(INTERPRETER_ARG_COMMA char *string,UInt32 encoding);
+Boolean ImageNameIsEmpty(INTERPRETER_ARG);
+char *getImageName(INTERPRETER_ARG);
+void getShortImageNameWithEncoding(INTERPRETER_ARG_COMMA char *target,UInt32 encoding);
+void SetShortImageNameViaString(INTERPRETER_ARG_COMMA char *string,UInt32 encoding);
+Boolean ShortImageNameIsEmpty(INTERPRETER_ARG);
 void getDocumentNameWithEncoding(char *target,UInt32 encoding);
 void SetDocumentNameViaString(char *string,UInt32 encoding);
 

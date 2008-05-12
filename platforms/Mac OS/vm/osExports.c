@@ -26,9 +26,9 @@ WindowPtr getSTWindow(void);
 void setMessageHook(eventMessageHook theHook);
 void setPostMessageHook(eventMessageHook theHook);
 char * GetAttributeString(int id);
-int serialPortSetControl(int portNum,int control, char *data);
-int serialPortIsOpen(int portNum);
-int serialPortNames(int portNum, char *portName, char *inName, char *outName);
+//HYDRA int serialPortSetControl(int portNum,int control, char *data);
+//HYDRA int serialPortIsOpen(int portNum);
+//HYDRA int serialPortNames(int portNum, char *portName, char *inName, char *outName);
 Boolean IsKeyDown(void);
 int primitivePluginBrowserReady(void);
 #ifdef ENABLE_URL_FETCH
@@ -47,14 +47,14 @@ void *os_exports[][3] = {
 	XFN(setPostMessageHook)
 	XFN(GetAttributeString)
 	XFN(recordDragDropEvent)
-	XFN(serialPortSetControl)
-	XFN(serialPortIsOpen)
-	XFN(serialPortClose)
-	XFN(serialPortCount)
-	XFN(serialPortNames)
-	XFN(serialPortOpen)
-	XFN(serialPortReadInto)
-	XFN(serialPortWriteFrom)
+//HYDRA 	XFN(serialPortSetControl)
+//HYDRA 	XFN(serialPortIsOpen)
+//HYDRA 	XFN(serialPortClose)
+//HYDRA 	XFN(serialPortCount)
+//HYDRA 	XFN(serialPortNames)
+//HYDRA 	XFN(serialPortOpen)
+//HYDRA 	XFN(serialPortReadInto)
+//HYDRA 	XFN(serialPortWriteFrom)
 	XFN(IsKeyDown)
 	XFN(getUIToLock)
 /* Plugin support primitives
