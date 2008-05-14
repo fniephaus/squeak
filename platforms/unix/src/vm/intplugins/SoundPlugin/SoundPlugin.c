@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(31 October 2007 9:57:08 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:42 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -72,9 +74,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"SoundPlugin 31 October 2007 (i)"
+	"SoundPlugin 9 May 2008 (i)"
 #else
-	"SoundPlugin 31 October 2007 (e)"
+	"SoundPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -227,7 +229,7 @@ EXPORT(sqInt) primitiveSoundInsertSamples(void) {
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	interpreterProxy->success(frameCount <= (interpreterProxy->slotSizeOf(((sqInt)(long)(buf) - 4))));
+	interpreterProxy->success(frameCount <= (interpreterProxy->slotSizeOf((oopForPointer( buf ) - 4))));
 	if (!(interpreterProxy->failed())) {
 		framesPlayed = snd_InsertSamplesFromLeadTime(frameCount, (int)buf, leadTime);
 		interpreterProxy->success(framesPlayed >= 0);
@@ -257,7 +259,7 @@ EXPORT(sqInt) primitiveSoundPlaySamples(void) {
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	interpreterProxy->success((startIndex >= 1) && (((startIndex + frameCount) - 1) <= (interpreterProxy->slotSizeOf(((sqInt)(long)(buf) - 4)))));
+	interpreterProxy->success((startIndex >= 1) && (((startIndex + frameCount) - 1) <= (interpreterProxy->slotSizeOf((oopForPointer( buf ) - 4)))));
 	if (!(interpreterProxy->failed())) {
 		framesPlayed = snd_PlaySamplesFromAtLength(frameCount, (int)buf, startIndex - 1);
 		interpreterProxy->success(framesPlayed >= 0);
@@ -307,7 +309,7 @@ EXPORT(sqInt) primitiveSoundRecordSamples(void) {
 		return null;
 	}
 	if (!(interpreterProxy->failed())) {
-		bufSizeInBytes = (interpreterProxy->slotSizeOf(((sqInt)(long)(buf) - 4))) * 4;
+		bufSizeInBytes = (interpreterProxy->slotSizeOf((oopForPointer( buf ) - 4))) * 4;
 		interpreterProxy->success((startWordIndex >= 1) && (((startWordIndex - 1) * 2) < bufSizeInBytes));
 	}
 	if (!(interpreterProxy->failed())) {
@@ -564,27 +566,27 @@ static sqInt sqAssert(sqInt aBool) {
 
 
 void* SoundPlugin_exports[][3] = {
-	{"SoundPlugin", "primitiveSoundPlaySilence", (void*)primitiveSoundPlaySilence},
-	{"SoundPlugin", "primitiveSoundStartWithSemaphore", (void*)primitiveSoundStartWithSemaphore},
+	{"SoundPlugin", "primitiveSoundStart", (void*)primitiveSoundStart},
+	{"SoundPlugin", "primitiveSoundInsertSamples", (void*)primitiveSoundInsertSamples},
+	{"SoundPlugin", "shutdownModule", (void*)shutdownModule},
+	{"SoundPlugin", "primitiveSoundSetLeftVolume", (void*)primitiveSoundSetLeftVolume},
+	{"SoundPlugin", "setInterpreter", (void*)setInterpreter},
 	{"SoundPlugin", "primitiveSoundStopRecording", (void*)primitiveSoundStopRecording},
 	{"SoundPlugin", "getModuleName", (void*)getModuleName},
-	{"SoundPlugin", "setInterpreter", (void*)setInterpreter},
+	{"SoundPlugin", "primitiveSoundGetSwitch", (void*)primitiveSoundGetSwitch},
+	{"SoundPlugin", "primitiveSoundRecordSamples", (void*)primitiveSoundRecordSamples},
 	{"SoundPlugin", "primitiveSoundAvailableSpace", (void*)primitiveSoundAvailableSpace},
 	{"SoundPlugin", "primitiveSoundSetSwitch", (void*)primitiveSoundSetSwitch},
+	{"SoundPlugin", "primitiveSoundStartWithSemaphore", (void*)primitiveSoundStartWithSemaphore},
+	{"SoundPlugin", "initialiseModule", (void*)initialiseModule},
 	{"SoundPlugin", "primitiveSoundSetRecordLevel", (void*)primitiveSoundSetRecordLevel},
+	{"SoundPlugin", "primitiveSoundPlaySamples", (void*)primitiveSoundPlaySamples},
+	{"SoundPlugin", "primitiveSoundStartRecording", (void*)primitiveSoundStartRecording},
+	{"SoundPlugin", "primitiveSoundPlaySilence", (void*)primitiveSoundPlaySilence},
 	{"SoundPlugin", "primitiveSoundGetRecordingSampleRate", (void*)primitiveSoundGetRecordingSampleRate},
 	{"SoundPlugin", "primitiveSoundGetVolume", (void*)primitiveSoundGetVolume},
 	{"SoundPlugin", "primitiveSoundStop", (void*)primitiveSoundStop},
-	{"SoundPlugin", "primitiveSoundGetSwitch", (void*)primitiveSoundGetSwitch},
-	{"SoundPlugin", "primitiveSoundSetLeftVolume", (void*)primitiveSoundSetLeftVolume},
-	{"SoundPlugin", "primitiveSoundPlaySamples", (void*)primitiveSoundPlaySamples},
-	{"SoundPlugin", "primitiveSoundInsertSamples", (void*)primitiveSoundInsertSamples},
-	{"SoundPlugin", "shutdownModule", (void*)shutdownModule},
 	{"SoundPlugin", "primitiveSoundSetDevice", (void*)primitiveSoundSetDevice},
-	{"SoundPlugin", "primitiveSoundRecordSamples", (void*)primitiveSoundRecordSamples},
-	{"SoundPlugin", "primitiveSoundStart", (void*)primitiveSoundStart},
-	{"SoundPlugin", "initialiseModule", (void*)initialiseModule},
-	{"SoundPlugin", "primitiveSoundStartRecording", (void*)primitiveSoundStartRecording},
 	{NULL, NULL, NULL}
 };
 

@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:48 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:32 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -136,6 +138,9 @@ static void pitchSynchronousReset(void);
 EXPORT(sqInt) primitiveSynthesizeFrameIntoStartingAt(void);
 #pragma export off
 static float quphicosphisinphirphid(float  u, float  phi, float  cosphi, float  sinphi, float  rphid);
+static void resonatorfrequencybandwidth(sqInt index, float  freq, float  bw);
+static void resonatorfrequencybandwidthgain(sqInt index, float  freq, float  bw, float  gain);
+static float resonatorvalue(sqInt index, float  aFloat);
 static float resonatorA(sqInt index);
 static void resonatorAput(sqInt index, float  aFloat);
 static float resonatorB(sqInt index);
@@ -146,9 +151,6 @@ static float resonatorP1(sqInt index);
 static void resonatorP1put(sqInt index, float  aFloat);
 static float resonatorP2(sqInt index);
 static void resonatorP2put(sqInt index, float  aFloat);
-static void resonatorfrequencybandwidth(sqInt index, float  freq, float  bw);
-static void resonatorfrequencybandwidthgain(sqInt index, float  freq, float  bw, float  gain);
-static float resonatorvalue(sqInt index, float  aFloat);
 static void rorark(float  roNumber, float  raNumber, float  rkNumber);
 static sqInt saveTo(sqInt origKlattOop);
 static void setCurrentFrame(float * aKlattFrame);
@@ -173,9 +175,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"Klatt 11 October 2006 (i)"
+	"Klatt 9 May 2008 (i)"
 #else
-	"Klatt 11 October 2006 (e)"
+	"Klatt 9 May 2008 (e)"
 #endif
 ;
 static float nlast;
@@ -632,46 +634,6 @@ static float quphicosphisinphirphid(float  u, float  phi, float  cosphi, float  
 	return (expuphi * ((((rphid * ((u * u) + 1.0)) + u) * sinphi) - cosphi)) + 1.0;
 }
 
-static float resonatorA(sqInt index) {
-	return resonators[(index * 5) - 5];
-}
-
-static void resonatorAput(sqInt index, float  aFloat) {
-	resonators[(index * 5) - 5] = aFloat;
-}
-
-static float resonatorB(sqInt index) {
-	return resonators[(index * 5) - 4];
-}
-
-static void resonatorBput(sqInt index, float  aFloat) {
-	resonators[(index * 5) - 4] = aFloat;
-}
-
-static float resonatorC(sqInt index) {
-	return resonators[(index * 5) - 3];
-}
-
-static void resonatorCput(sqInt index, float  aFloat) {
-	resonators[(index * 5) - 3] = aFloat;
-}
-
-static float resonatorP1(sqInt index) {
-	return resonators[(index * 5) - 2];
-}
-
-static void resonatorP1put(sqInt index, float  aFloat) {
-	resonators[(index * 5) - 2] = aFloat;
-}
-
-static float resonatorP2(sqInt index) {
-	return resonators[(index * 5) - 1];
-}
-
-static void resonatorP2put(sqInt index, float  aFloat) {
-	resonators[(index * 5) - 1] = aFloat;
-}
-
 
 /*	Convert formant frequencies and bandwidth into
 	resonator difference equation coefficients. */
@@ -715,6 +677,46 @@ static float resonatorvalue(sqInt index, float  aFloat) {
 	resonatorP2put(index, p1);
 	resonatorP1put(index, answer);
 	return answer;
+}
+
+static float resonatorA(sqInt index) {
+	return resonators[(index * 5) - 5];
+}
+
+static void resonatorAput(sqInt index, float  aFloat) {
+	resonators[(index * 5) - 5] = aFloat;
+}
+
+static float resonatorB(sqInt index) {
+	return resonators[(index * 5) - 4];
+}
+
+static void resonatorBput(sqInt index, float  aFloat) {
+	resonators[(index * 5) - 4] = aFloat;
+}
+
+static float resonatorC(sqInt index) {
+	return resonators[(index * 5) - 3];
+}
+
+static void resonatorCput(sqInt index, float  aFloat) {
+	resonators[(index * 5) - 3] = aFloat;
+}
+
+static float resonatorP1(sqInt index) {
+	return resonators[(index * 5) - 2];
+}
+
+static void resonatorP1put(sqInt index, float  aFloat) {
+	resonators[(index * 5) - 2] = aFloat;
+}
+
+static float resonatorP2(sqInt index) {
+	return resonators[(index * 5) - 1];
+}
+
+static void resonatorP2put(sqInt index, float  aFloat) {
+	resonators[(index * 5) - 1] = aFloat;
 }
 
 static void rorark(float  roNumber, float  raNumber, float  rkNumber) {
@@ -1156,9 +1158,9 @@ static float zeroQphicosphisinphirphid(float  phi, float  cosphi, float  sinphi,
 
 
 void* Klatt_exports[][3] = {
-	{"Klatt", "getModuleName", (void*)getModuleName},
-	{"Klatt", "primitiveSynthesizeFrameIntoStartingAt", (void*)primitiveSynthesizeFrameIntoStartingAt},
 	{"Klatt", "setInterpreter", (void*)setInterpreter},
+	{"Klatt", "primitiveSynthesizeFrameIntoStartingAt", (void*)primitiveSynthesizeFrameIntoStartingAt},
+	{"Klatt", "getModuleName", (void*)getModuleName},
 	{NULL, NULL, NULL}
 };
 

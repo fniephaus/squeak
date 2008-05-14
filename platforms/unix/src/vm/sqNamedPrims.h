@@ -1,26 +1,27 @@
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:43 am)
+by VMMaker 3.8b6
+ */
 /* This is an automatically generated table of all builtin modules in the VM */
 
 extern sqExport vm_exports[];
 extern sqExport os_exports[];
 extern sqExport ADPCMCodecPlugin_exports[];
 extern sqExport AsynchFilePlugin_exports[];
+extern sqExport BMPReadWriterPlugin_exports[];
 extern sqExport B2DPlugin_exports[];
 extern sqExport BitBltPlugin_exports[];
-extern sqExport BMPReadWriterPlugin_exports[];
 extern sqExport CroquetPlugin_exports[];
+extern sqExport DSAPrims_exports[];
 extern sqExport ZipPlugin_exports[];
 extern sqExport DropPlugin_exports[];
-extern sqExport DSAPrims_exports[];
-extern sqExport SqueakFFIPrims_exports[];
 extern sqExport FFTPlugin_exports[];
 extern sqExport FilePlugin_exports[];
 extern sqExport FloatArrayPlugin_exports[];
 extern sqExport FloatMathPlugin_exports[];
 extern sqExport GeniePlugin_exports[];
-extern sqExport JoystickTabletPlugin_exports[];
-extern sqExport JPEGReaderPlugin_exports[];
 extern sqExport JPEGReadWriter2Plugin_exports[];
-extern sqExport KedamaPlugin2_exports[];
+extern sqExport JPEGReaderPlugin_exports[];
+extern sqExport JoystickTabletPlugin_exports[];
 extern sqExport Klatt_exports[];
 extern sqExport LargeIntegers_exports[];
 extern sqExport LocalePlugin_exports[];
@@ -41,23 +42,21 @@ sqExport *pluginExports[] = {
 	os_exports,
 	ADPCMCodecPlugin_exports,
 	AsynchFilePlugin_exports,
+	BMPReadWriterPlugin_exports,
 	B2DPlugin_exports,
 	BitBltPlugin_exports,
-	BMPReadWriterPlugin_exports,
 	CroquetPlugin_exports,
+	DSAPrims_exports,
 	ZipPlugin_exports,
 	DropPlugin_exports,
-	DSAPrims_exports,
-	SqueakFFIPrims_exports,
 	FFTPlugin_exports,
 	FilePlugin_exports,
 	FloatArrayPlugin_exports,
 	FloatMathPlugin_exports,
 	GeniePlugin_exports,
-	JoystickTabletPlugin_exports,
-	JPEGReaderPlugin_exports,
 	JPEGReadWriter2Plugin_exports,
-	KedamaPlugin2_exports,
+	JPEGReaderPlugin_exports,
+	JoystickTabletPlugin_exports,
 	Klatt_exports,
 	LargeIntegers_exports,
 	LocalePlugin_exports,

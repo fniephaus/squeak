@@ -27,7 +27,7 @@
 
 /* Author: Ian Piumarta <ian.piumarta@inria.fr>
  * 
- * Last edited: 2007-09-07 13:53:21 by piumarta on emilia
+ * Last edited: 2008-04-21 14:43:26 by piumarta on emilia
  * 
  * BUGS
  * 
@@ -65,6 +65,7 @@
 
 
 static	Atom	  XdndVersion= (Atom)3;
+
 static	Atom	  XdndAware;
 static	Atom	  XdndSelection;
 static	Atom	  XdndEnter;
@@ -97,6 +98,7 @@ static Atom	 *xdndInTypes= 0;   /* all targets in clipboard */
 
 static Window     xdndOutTarget= None;
 static Atom      *xdndOutTypes= 0;  /* Types offered by source window */
+
 static XSelectionRequestEvent xdndOutRequestEvent; /* RequestEvent from target */
 
 enum XdndState {
@@ -356,7 +358,7 @@ static enum XdndState dndOutMotion(enum XdndState state, XMotionEvent *evt)
       || (None == currentWindow)
       || (DndWindow == currentWindow))
     {
-  dprintf((stderr, "Receive MotionNotify current 0x%lx\n", currentWindow));
+      dprintf((stderr, "Receive MotionNotify current 0x%lx\n", currentWindow));
       xdndOutTarget= None;
       return XdndStateOutTracking;
     }
@@ -384,7 +386,7 @@ static enum XdndState dndOutStatus(enum XdndState state, XClientMessageEvent *ev
 
   if ((XdndStateOutTracking != state) && (XdndStateOutAccepted != state))
     {
-/*       printf("%i is not expected in XdndStatus\n", state); */
+      /*printf("%i is not expected in XdndStatus\n", state);*/
       sendLeave(ldata[0], DndWindow);
       return state;
     }
@@ -419,12 +421,10 @@ static enum XdndState dndOutRelease(enum XdndState state, XButtonEvent *evt)
 */
 static enum XdndState dndOutSelectionRequest(enum XdndState state, XSelectionRequestEvent *req)
 {
-  dprintf((stderr, "Receive SelectionRequest for %s from 0x%lx(output)\n",
-	   XGetAtomName(stDisplay, req->target),
-	   req->requestor));
+  dprintf((stderr, "Receive SelectionRequest for %s from 0x%lx(output)\n", XGetAtomName(stDisplay, req->target), req->requestor));
   if (XdndStateOutAccepted != state)
     {
-/*       printf("%i is not expected in SelectionRequest\n", state); */
+      /*printf("%i is not expected in SelectionRequest\n", state);*/
       return state;
     }
   memcpy(&xdndOutRequestEvent, req, sizeof(xdndOutRequestEvent));
@@ -570,8 +570,8 @@ static void dndSendStatus(int willAccept, Atom action)
 
   XSendEvent(stDisplay, xdndSourceWindow, 0, 0, (XEvent *)&evt);
 
-  /* dprintf((stderr, "  sent status to 0x%lx willAccept=%d data=%ld action=%s(%ld)\n", */
-/* 	   xdndSourceWindow, willAccept, evt.data.l[1], XGetAtomName(stDisplay, action), action)); */
+  /* dprintf((stderr, "  sent status to 0x%lx willAccept=%d data=%ld action=%s(%ld)\n",
+             xdndSourceWindow, willAccept, evt.data.l[1], XGetAtomName(stDisplay, action), action)); */
 }
 
 static void dndSendFinished(void)
@@ -588,8 +588,7 @@ static void dndSendFinished(void)
     xdndFinished_targetWindow(&evt)= DndWindow;
     XSendEvent(stDisplay, xdndSourceWindow, 0, 0, (XEvent *)&evt);
 
-    dprintf((stderr, "  dndSendFinished target: 0x%lx source: 0x%lx\n",
-	     DndWindow, xdndSourceWindow));
+    dprintf((stderr, "dndSendFinished target: 0x%lx source: 0x%lx\n", DndWindow, xdndSourceWindow));
 }
 
 
@@ -619,7 +618,7 @@ static enum XdndState dndInLeave(enum XdndState state)
 
 static enum XdndState dndInPosition(enum XdndState state, XClientMessageEvent *evt)
 {
-/*   dprintf((stderr, "Receive XdndPosition (input)\n")); */
+  /*dprintf((stderr, "Receive XdndPosition (input)\n"));*/
 
   if (xdndSourceWindow != xdndPosition_sourceWindow(evt))
     {
@@ -641,20 +640,20 @@ static enum XdndState dndInPosition(enum XdndState state, XClientMessageEvent *e
   if (xdndWillAccept)
     {
       Atom action= xdndPosition_action(evt);
-/*       dprintf((stderr, "  dndInPosition: action = %ld %s\n", action, XGetAtomName(stDisplay, action))); */
+      /*dprintf((stderr, "  dndInPosition: action = %ld %s\n", action, XGetAtomName(stDisplay, action)));*/
       xdndWillAccept= (action == XdndActionMove) | (action == XdndActionCopy)
 	|             (action == XdndActionLink) | (action == XdndActionAsk);
     }
 
   if (xdndWillAccept)
     {
-/*       dprintf((stderr, "  dndInPosition: accepting\n")); */
+      /*dprintf((stderr, "  dndInPosition: accepting\n"));*/
       dndSendStatus(1, XdndActionCopy);
       recordDragEvent(DragMove, 1);
     }
   else /* won't accept */
     {
-/*       dprintf((stderr, "  dndInPosition: not accepting\n")); */
+      /*dprintf((stderr, "  dndInPosition: not accepting\n"));*/
       dndSendStatus(0, XdndActionPrivate);
     }
   return XdndStateTracking;
@@ -678,7 +677,9 @@ enum XdndState dndInDrop(enum XdndState state, XClientMessageEvent *evt)
   dndInDestroyTypes();
 
   if (xdndSourceWindow != xdndDrop_sourceWindow(evt))
-    dprintf((stderr, "  dndInDrop: wrong source window\n"));
+    {
+      dprintf((stderr, "  dndInDrop: wrong source window\n"));
+    }
   else if (xdndWillAccept)
     {
       Window owner;
@@ -699,7 +700,9 @@ enum XdndState dndInDrop(enum XdndState state, XClientMessageEvent *evt)
 	}
     }
   else
-    dprintf((stderr, "  dndInDrop: refusing selection -- finishing\n"));
+    {
+      dprintf((stderr, "  dndInDrop: refusing selection -- finishing\n"));
+    }
 
   dndSendFinished();
   recordDragEvent(DragLeave, 1);
@@ -837,9 +840,9 @@ static void display_dndOutSend (char *bytes, int nbytes)
 {
   XEvent notify;
   XSelectionEvent *res= &notify.xselection;
-  Atom targetProperty= ((None == xdndOutRequestEvent.property) ?
-			xdndOutRequestEvent.target :
-			xdndOutRequestEvent.property);
+  Atom targetProperty= ((None == xdndOutRequestEvent.property)
+			? xdndOutRequestEvent.target
+			: xdndOutRequestEvent.property);
 
   res->type	  = SelectionNotify;
   res->display	  = xdndOutRequestEvent.display;
@@ -853,15 +856,13 @@ static void display_dndOutSend (char *bytes, int nbytes)
   XChangeProperty(stDisplay, res->requestor,
 		  targetProperty, xdndOutRequestEvent.target,
 		  8, PropModeReplace,
-		  (unsigned char *) bytes,
+		  (unsigned char *)bytes,
 		  nbytes);
 
   XSendEvent(stDisplay, res->requestor, False, 0, &notify);
-  dprintf((stderr, "Send data for %s from 0x%lx(output)\n",
-	   XGetAtomName(stDisplay, res->target),
-	   res->requestor));
-
+  dprintf((stderr, "Send data for %s from 0x%lx(output)\n", XGetAtomName(stDisplay, res->target), res->requestor));
 }
+
 static sqInt display_dndOutAcceptedType(char * buf, int nbuf)
 {
   char *type;

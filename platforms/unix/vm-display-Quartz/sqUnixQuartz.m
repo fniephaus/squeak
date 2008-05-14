@@ -24,7 +24,7 @@
  *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *   SOFTWARE.
  * 
- * Last edited: 2007-10-12 20:12:55 by piumarta on emilia
+ * Last edited: 2008-04-21 14:11:11 by piumarta on emilia
  */
 
 
@@ -1062,9 +1062,9 @@ static void display_clipboardWriteWithType(char *data, size_t nData, char *typeN
   return;
 }
 
-static sqInt display_dndOutStart(char *types, int ntypes) { return 0; }
-static void display_dndOutSend (char *bytes, int nbytes) {}
-static sqInt display_dndOutAcceptedType(char * buf, int nbuf) { return 0; }
+static sqInt display_dndOutStart(char *types, int ntypes)	{ return 0; }
+static void  display_dndOutSend(char *bytes, int nbytes)	{ return  ; }
+static sqInt display_dndOutAcceptedType(char * buf, int nbuf)	{ return 0; }
 
 static void display_winExit(void)
 {
@@ -1315,6 +1315,7 @@ static void setUpWindow(int fs)
       NSRect contentRect;
       if (fs)
 	{
+	  setUpDisplay();
 	  w= dpyWidth;
 	  h= dpyHeight;
 	}

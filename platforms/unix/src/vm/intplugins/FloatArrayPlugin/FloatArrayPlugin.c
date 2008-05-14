@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:42 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:28 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -63,9 +65,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"FloatArrayPlugin 11 October 2006 (i)"
+	"FloatArrayPlugin 9 May 2008 (i)"
 #else
-	"FloatArrayPlugin 11 October 2006 (e)"
+	"FloatArrayPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -547,21 +549,21 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
 
 
 void* FloatArrayPlugin_exports[][3] = {
-	{"FloatArrayPlugin", "primitiveAt", (void*)primitiveAt},
-	{"FloatArrayPlugin", "getModuleName", (void*)getModuleName},
-	{"FloatArrayPlugin", "primitiveAddScalar", (void*)primitiveAddScalar},
+	{"FloatArrayPlugin", "primitiveAtPut", (void*)primitiveAtPut},
 	{"FloatArrayPlugin", "setInterpreter", (void*)setInterpreter},
 	{"FloatArrayPlugin", "primitiveDivScalar", (void*)primitiveDivScalar},
-	{"FloatArrayPlugin", "primitiveAtPut", (void*)primitiveAtPut},
-	{"FloatArrayPlugin", "primitiveDotProduct", (void*)primitiveDotProduct},
-	{"FloatArrayPlugin", "primitiveSum", (void*)primitiveSum},
-	{"FloatArrayPlugin", "primitiveAddFloatArray", (void*)primitiveAddFloatArray},
-	{"FloatArrayPlugin", "primitiveHashArray", (void*)primitiveHashArray},
+	{"FloatArrayPlugin", "getModuleName", (void*)getModuleName},
 	{"FloatArrayPlugin", "primitiveSubScalar", (void*)primitiveSubScalar},
-	{"FloatArrayPlugin", "primitiveSubFloatArray", (void*)primitiveSubFloatArray},
 	{"FloatArrayPlugin", "primitiveMulFloatArray", (void*)primitiveMulFloatArray},
 	{"FloatArrayPlugin", "primitiveMulScalar", (void*)primitiveMulScalar},
+	{"FloatArrayPlugin", "primitiveSum", (void*)primitiveSum},
+	{"FloatArrayPlugin", "primitiveAt", (void*)primitiveAt},
+	{"FloatArrayPlugin", "primitiveAddScalar", (void*)primitiveAddScalar},
+	{"FloatArrayPlugin", "primitiveHashArray", (void*)primitiveHashArray},
+	{"FloatArrayPlugin", "primitiveSubFloatArray", (void*)primitiveSubFloatArray},
 	{"FloatArrayPlugin", "primitiveDivFloatArray", (void*)primitiveDivFloatArray},
+	{"FloatArrayPlugin", "primitiveDotProduct", (void*)primitiveDotProduct},
+	{"FloatArrayPlugin", "primitiveAddFloatArray", (void*)primitiveAddFloatArray},
 	{"FloatArrayPlugin", "primitiveEqual", (void*)primitiveEqual},
 	{NULL, NULL, NULL}
 };

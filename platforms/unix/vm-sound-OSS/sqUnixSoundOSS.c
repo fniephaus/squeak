@@ -2,7 +2,7 @@
  *
  * Author: Ian.Piumarta@squeakland.org
  * 
- * Last edited: 2006-10-18 09:57:01 by piumarta on emilia.local
+ * Last edited: 2008-04-21 14:51:45 by piumarta on emilia
  *
  *   Copyright (C) 1996-2005 by Ian Piumarta and other authors/contributors
  *                              listed elsewhere in this file.

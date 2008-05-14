@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(12 December 2007 7:40:30 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:25:02 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -64,7 +66,7 @@
 #define FormHeightIndex 2
 #define FormInstSize 5
 #define FormWidthIndex 1
-#define PluginVersion 34
+#define PluginVersion 35
 #define TextLineBottomIndex 3
 #define TextLineEndIndex 5
 #define TextLineInternalSpaceIndex 6
@@ -76,8 +78,8 @@
 
 /*** Function Prototypes ***/
 static sqInt addAlignmentinto(sqInt attrArrayOop, PangoAttrList * pangoAttrList);
-static void addColorStopTooffsetrgbalpha(cairo_pattern_t* pattern, sqInt intOffset, sqInt rgb, sqInt alpha);
 static sqInt addColorinto(sqInt attrArrayOop, PangoAttrList * pangoAttrList);
+static void addColorStopTooffsetrgbalpha(cairo_pattern_t* pattern, sqInt intOffset, sqInt rgb, sqInt alpha);
 static sqInt addDefaultInto(PangoAttrList * pangoAttrList);
 static sqInt addEmphasisinto(sqInt attrArrayOop, PangoAttrList * pangoAttrList);
 static sqInt addFontinto(sqInt attrArrayOop, PangoAttrList * pangoAttrList);
@@ -183,9 +185,9 @@ struct VirtualMachine* interpreterProxy;
 static sqInt maxSurfaceID;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"RomePlugin be.34 12 December 2007 (i)"
+	"RomePlugin bf.35 9 May 2008 (i)"
 #else
-	"RomePlugin be.34 12 December 2007 (e)"
+	"RomePlugin bf.35 9 May 2008 (e)"
 #endif
 ;
 static fn_ioRegisterSurface registerSurfaceFn;
@@ -225,21 +227,6 @@ static sqInt addAlignmentinto(sqInt attrArrayOop, PangoAttrList * pangoAttrList)
 	}
 }
 
-static void addColorStopTooffsetrgbalpha(cairo_pattern_t* pattern, sqInt intOffset, sqInt rgb, sqInt alpha) {
-	sqInt r;
-	sqInt b;
-	sqInt g;
-
-	r = (((usqInt) rgb) >> 20) & 1023;
-	g = (((usqInt) rgb) >> 10) & 1023;
-	b = (((usqInt) rgb) >> 0) & 1023;
-	if (alpha == 255) {
-		cairo_pattern_add_color_stop_rgb(pattern, intOffset / 65536.0, r / 1023.0, g / 1023.0, b / 1023.0);
-	} else {
-		cairo_pattern_add_color_stop_rgba(pattern, intOffset / 65536.0, r / 1023.0, g / 1023.0, b / 1023.0, alpha / 255.0);
-	}
-}
-
 static sqInt addColorinto(sqInt attrArrayOop, PangoAttrList * pangoAttrList) {
 	sqInt * attrArray;
 	PangoAttribute * pangoAttr;
@@ -274,6 +261,21 @@ static sqInt addColorinto(sqInt attrArrayOop, PangoAttrList * pangoAttrList) {
 	pangoAttr->start_index = start;
 	pangoAttr->end_index = end;
 	pango_attr_list_change(pangoAttrList, pangoAttr);
+}
+
+static void addColorStopTooffsetrgbalpha(cairo_pattern_t* pattern, sqInt intOffset, sqInt rgb, sqInt alpha) {
+	sqInt r;
+	sqInt b;
+	sqInt g;
+
+	r = (((usqInt) rgb) >> 20) & 1023;
+	g = (((usqInt) rgb) >> 10) & 1023;
+	b = (((usqInt) rgb) >> 0) & 1023;
+	if (alpha == 255) {
+		cairo_pattern_add_color_stop_rgb(pattern, intOffset / 65536.0, r / 1023.0, g / 1023.0, b / 1023.0);
+	} else {
+		cairo_pattern_add_color_stop_rgba(pattern, intOffset / 65536.0, r / 1023.0, g / 1023.0, b / 1023.0, alpha / 255.0);
+	}
 }
 
 static sqInt addDefaultInto(PangoAttrList * pangoAttrList) {
@@ -2896,54 +2898,54 @@ static sqInt unregisterSurface(sqInt surfaceID) {
 
 
 void* RomePlugin_exports[][3] = {
-	{"RomePlugin", "getModuleName", (void*)getModuleName},
-	{"RomePlugin", "primitiveGetLineWidth", (void*)primitiveGetLineWidth},
+	{"RomePlugin", "primitiveDestroyFormHandle", (void*)primitiveDestroyFormHandle},
+	{"RomePlugin", "primitiveTransformBy", (void*)primitiveTransformBy},
+	{"RomePlugin", "primitivePangoBlockAtIndex", (void*)primitivePangoBlockAtIndex},
+	{"RomePlugin", "shutdownModule", (void*)shutdownModule},
+	{"RomePlugin", "primitiveSaveState", (void*)primitiveSaveState},
+	{"RomePlugin", "primitivePluginVersion", (void*)primitivePluginVersion},
+	{"RomePlugin", "primitiveClose", (void*)primitiveClose},
+	{"RomePlugin", "setInterpreter", (void*)setInterpreter},
+	{"RomePlugin", "primitivePangoFontDescriptionIndex", (void*)primitivePangoFontDescriptionIndex},
+	{"RomePlugin", "primitiveClear", (void*)primitiveClear},
+	{"RomePlugin", "primitiveDrawRectangleLeftRightTopBottom", (void*)primitiveDrawRectangleLeftRightTopBottom},
+	{"RomePlugin", "primitiveScaleBy", (void*)primitiveScaleBy},
+	{"RomePlugin", "primitiveFillRadialOriginXYdirectionXYnormalXYcolorStops", (void*)primitiveFillRadialOriginXYdirectionXYnormalXYcolorStops},
 	{"RomePlugin", "primitiveDrawCurveFromXYviaXYandXYtoXY", (void*)primitiveDrawCurveFromXYviaXYandXYtoXY},
-	{"RomePlugin", "primitiveGetTransform", (void*)primitiveGetTransform},
-	{"RomePlugin", "primitiveDrawLineFromXYtoXY", (void*)primitiveDrawLineFromXYtoXY},
+	{"RomePlugin", "primitivePangoIsAvailable", (void*)primitivePangoIsAvailable},
+	{"RomePlugin", "moduleUnloaded", (void*)moduleUnloaded},
 	{"RomePlugin", "primitivePangoIndexAtPoint", (void*)primitivePangoIndexAtPoint},
-	{"RomePlugin", "primitivePangoShowString", (void*)primitivePangoShowString},
+	{"RomePlugin", "primitiveCreateFormHandle", (void*)primitiveCreateFormHandle},
 	{"RomePlugin", "primitiveDrawGeneralBezierShape", (void*)primitiveDrawGeneralBezierShape},
 	{"RomePlugin", "primitiveStencilImageSrcLRTBDestLRTB", (void*)primitiveStencilImageSrcLRTBDestLRTB},
 	{"RomePlugin", "primitiveDrawImageSrcLRTBDestLRTB", (void*)primitiveDrawImageSrcLRTBDestLRTB},
+	{"RomePlugin", "primitiveFillBitmapOriginXYdirectionXYnormalXYRepeatImage", (void*)primitiveFillBitmapOriginXYdirectionXYnormalXYRepeatImage},
 	{"RomePlugin", "primitiveRotateBy", (void*)primitiveRotateBy},
+	{"RomePlugin", "initialiseModule", (void*)initialiseModule},
 	{"RomePlugin", "primitiveSetTransform", (void*)primitiveSetTransform},
 	{"RomePlugin", "primitiveSetLineWidth", (void*)primitiveSetLineWidth},
-	{"RomePlugin", "primitiveSaveState", (void*)primitiveSaveState},
-	{"RomePlugin", "primitiveDrawZeroTerminatedUtf8StringXY", (void*)primitiveDrawZeroTerminatedUtf8StringXY},
-	{"RomePlugin", "moduleUnloaded", (void*)moduleUnloaded},
-	{"RomePlugin", "primitiveCreateFormHandle", (void*)primitiveCreateFormHandle},
-	{"RomePlugin", "primitiveDrawOvalLeftRightTopBottom", (void*)primitiveDrawOvalLeftRightTopBottom},
-	{"RomePlugin", "primitiveDrawPolyline", (void*)primitiveDrawPolyline},
-	{"RomePlugin", "primitiveRestoreState", (void*)primitiveRestoreState},
-	{"RomePlugin", "primitiveShowZeroTerminatedUtf8StringXY", (void*)primitiveShowZeroTerminatedUtf8StringXY},
-	{"RomePlugin", "primitiveTranslateBy", (void*)primitiveTranslateBy},
-	{"RomePlugin", "primitiveFillColorAlpha", (void*)primitiveFillColorAlpha},
-	{"RomePlugin", "primitiveTransformBy", (void*)primitiveTransformBy},
-	{"RomePlugin", "primitivePangoBlockAtIndex", (void*)primitivePangoBlockAtIndex},
-	{"RomePlugin", "primitiveFontSize", (void*)primitiveFontSize},
 	{"RomePlugin", "primitiveFillLinearOriginXYdirectionXYcolorStops", (void*)primitiveFillLinearOriginXYdirectionXYcolorStops},
-	{"RomePlugin", "setInterpreter", (void*)setInterpreter},
+	{"RomePlugin", "primitiveFillColorAlpha", (void*)primitiveFillColorAlpha},
+	{"RomePlugin", "primitiveOpen", (void*)primitiveOpen},
 	{"RomePlugin", "primitivePangoComposeString", (void*)primitivePangoComposeString},
 	{"RomePlugin", "primitiveDrawRoundRectLeftRightTopBottomRadiusCorner", (void*)primitiveDrawRoundRectLeftRightTopBottomRadiusCorner},
-	{"RomePlugin", "primitiveClear", (void*)primitiveClear},
-	{"RomePlugin", "primitiveFillBitmapOriginXYdirectionXYnormalXYRepeatImage", (void*)primitiveFillBitmapOriginXYdirectionXYnormalXYRepeatImage},
-	{"RomePlugin", "primitiveDestroyFormHandle", (void*)primitiveDestroyFormHandle},
+	{"RomePlugin", "primitiveDrawZeroTerminatedUtf8StringXY", (void*)primitiveDrawZeroTerminatedUtf8StringXY},
+	{"RomePlugin", "primitiveRestoreState", (void*)primitiveRestoreState},
+	{"RomePlugin", "primitiveTranslateBy", (void*)primitiveTranslateBy},
 	{"RomePlugin", "primitiveFontFace", (void*)primitiveFontFace},
-	{"RomePlugin", "primitiveScaleBy", (void*)primitiveScaleBy},
-	{"RomePlugin", "shutdownModule", (void*)shutdownModule},
-	{"RomePlugin", "primitiveDrawPolygon", (void*)primitiveDrawPolygon},
-	{"RomePlugin", "primitiveClipRectangleLeftRightTopBottom", (void*)primitiveClipRectangleLeftRightTopBottom},
-	{"RomePlugin", "primitiveDrawArcRadiusXYFromTo", (void*)primitiveDrawArcRadiusXYFromTo},
+	{"RomePlugin", "getModuleName", (void*)getModuleName},
+	{"RomePlugin", "primitiveGetTransform", (void*)primitiveGetTransform},
 	{"RomePlugin", "primitiveDrawCurveFromXYviaXYtoXY", (void*)primitiveDrawCurveFromXYviaXYtoXY},
-	{"RomePlugin", "primitivePluginVersion", (void*)primitivePluginVersion},
-	{"RomePlugin", "primitivePangoIsAvailable", (void*)primitivePangoIsAvailable},
-	{"RomePlugin", "primitiveClose", (void*)primitiveClose},
-	{"RomePlugin", "primitivePangoFontDescriptionIndex", (void*)primitivePangoFontDescriptionIndex},
-	{"RomePlugin", "initialiseModule", (void*)initialiseModule},
-	{"RomePlugin", "primitiveFillRadialOriginXYdirectionXYnormalXYcolorStops", (void*)primitiveFillRadialOriginXYdirectionXYnormalXYcolorStops},
-	{"RomePlugin", "primitiveDrawRectangleLeftRightTopBottom", (void*)primitiveDrawRectangleLeftRightTopBottom},
-	{"RomePlugin", "primitiveOpen", (void*)primitiveOpen},
+	{"RomePlugin", "primitiveDrawArcRadiusXYFromTo", (void*)primitiveDrawArcRadiusXYFromTo},
+	{"RomePlugin", "primitivePangoShowString", (void*)primitivePangoShowString},
+	{"RomePlugin", "primitiveDrawPolyline", (void*)primitiveDrawPolyline},
+	{"RomePlugin", "primitiveShowZeroTerminatedUtf8StringXY", (void*)primitiveShowZeroTerminatedUtf8StringXY},
+	{"RomePlugin", "primitiveFontSize", (void*)primitiveFontSize},
+	{"RomePlugin", "primitiveDrawPolygon", (void*)primitiveDrawPolygon},
+	{"RomePlugin", "primitiveGetLineWidth", (void*)primitiveGetLineWidth},
+	{"RomePlugin", "primitiveClipRectangleLeftRightTopBottom", (void*)primitiveClipRectangleLeftRightTopBottom},
+	{"RomePlugin", "primitiveDrawLineFromXYtoXY", (void*)primitiveDrawLineFromXYtoXY},
+	{"RomePlugin", "primitiveDrawOvalLeftRightTopBottom", (void*)primitiveDrawOvalLeftRightTopBottom},
 	{NULL, NULL, NULL}
 };
 

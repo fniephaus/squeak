@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:57 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:43 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -65,8 +67,8 @@ EXPORT(sqInt) primitiveGetRendererSurfaceHandle(void);
 EXPORT(sqInt) primitiveGetRendererSurfaceHeight(void);
 EXPORT(sqInt) primitiveGetRendererSurfaceWidth(void);
 EXPORT(sqInt) primitiveIsOverlayRenderer(void);
-EXPORT(sqInt) primitiveRendererVersion(void);
 EXPORT(sqInt) primitiveRenderVertexBuffer(void);
+EXPORT(sqInt) primitiveRendererVersion(void);
 EXPORT(sqInt) primitiveSetBufferRect(void);
 EXPORT(sqInt) primitiveSetFog(void);
 EXPORT(sqInt) primitiveSetIntProperty(void);
@@ -88,8 +90,8 @@ static sqInt stackLightArrayValue(sqInt stackIndex);
 static void * stackMaterialValue(sqInt stackIndex);
 static void* stackMatrix(sqInt index);
 static void* stackPrimitiveIndexArrayofSizevalidateforVertexSize(sqInt stackIndex, sqInt nItems, sqInt aBool, sqInt maxIndex);
-static void* stackPrimitiveVertexArrayofSize(sqInt index, sqInt nItems);
 static void* stackPrimitiveVertex(sqInt index);
+static void* stackPrimitiveVertexArrayofSize(sqInt index, sqInt nItems);
 /*** Variables ***/
 
 #ifdef SQUEAK_BUILTIN_PLUGIN
@@ -98,16 +100,15 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"B3DAcceleratorPlugin 11 October 2006 (i)"
+	"B3DAcceleratorPlugin 9 May 2008 (i)"
 #else
-	"B3DAcceleratorPlugin 11 October 2006 (e)"
+	"B3DAcceleratorPlugin 9 May 2008 (e)"
 #endif
 ;
 
 
 
 /*	Fetch the primitive light source from the given array.
-
 	Note: No checks are done within here - that happened in stackLightArrayValue: */
 
 static void* fetchLightSourceofObject(sqInt index, sqInt anArray) {
@@ -517,14 +518,6 @@ EXPORT(sqInt) primitiveIsOverlayRenderer(void) {
 	return interpreterProxy->pushBool(result);
 }
 
-EXPORT(sqInt) primitiveRendererVersion(void) {
-	if (!((interpreterProxy->methodArgumentCount()) == 0)) {
-		return interpreterProxy->primitiveFail();
-	}
-	interpreterProxy->pop(1);
-	return interpreterProxy->pushInteger(1);
-}
-
 EXPORT(sqInt) primitiveRenderVertexBuffer(void) {
     sqInt primType;
     sqInt texHandle;
@@ -560,9 +553,16 @@ EXPORT(sqInt) primitiveRenderVertexBuffer(void) {
 	return interpreterProxy->pop(8);
 }
 
+EXPORT(sqInt) primitiveRendererVersion(void) {
+	if (!((interpreterProxy->methodArgumentCount()) == 0)) {
+		return interpreterProxy->primitiveFail();
+	}
+	interpreterProxy->pop(1);
+	return interpreterProxy->pushInteger(1);
+}
+
 
 /*	Primitive. Set the buffer rectangle (e.g., the pixel area on screen) to use for this renderer.
-
 	The viewport is positioned within the buffer rectangle. */
 
 EXPORT(sqInt) primitiveSetBufferRect(void) {
@@ -984,7 +984,6 @@ static void * stackMaterialValue(sqInt stackIndex) {
 
 
 /*	Load a 4x4 transformation matrix from the interpreter stack.
-
 	Return a pointer to the matrix data if successful, nil otherwise. */
 
 static void* stackMatrix(sqInt index) {
@@ -1005,9 +1004,7 @@ static void* stackMatrix(sqInt index) {
 
 
 /*	Load a primitive index array from the interpreter stack.
-
 	If aBool is true then check that all the indexes are in the range (1,maxIndex).
-
 	Return a pointer to the index data if successful, nil otherwise. */
 
 static void* stackPrimitiveIndexArrayofSizevalidateforVertexSize(sqInt stackIndex, sqInt nItems, sqInt aBool, sqInt maxIndex) {
@@ -1041,8 +1038,24 @@ static void* stackPrimitiveIndexArrayofSizevalidateforVertexSize(sqInt stackInde
 }
 
 
-/*	Load a primitive vertex array from the interpreter stack.
+/*	Load a primitive vertex from the interpreter stack.
+	Return a pointer to the vertex data if successful, nil otherwise. */
 
+static void* stackPrimitiveVertex(sqInt index) {
+    sqInt oop;
+
+	oop = interpreterProxy->stackObjectValue(index);
+	if (oop == null) {
+		return null;
+	}
+	if ((interpreterProxy->isWords(oop)) && ((interpreterProxy->slotSizeOf(oop)) == PrimVertexSize)) {
+		return interpreterProxy->firstIndexableField(oop);
+	}
+	return null;
+}
+
+
+/*	Load a primitive vertex array from the interpreter stack.
 	Return a pointer to the vertex data if successful, nil otherwise. */
 
 static void* stackPrimitiveVertexArrayofSize(sqInt index, sqInt nItems) {
@@ -1063,65 +1076,47 @@ static void* stackPrimitiveVertexArrayofSize(sqInt index, sqInt nItems) {
 }
 
 
-/*	Load a primitive vertex from the interpreter stack.
-
-	Return a pointer to the vertex data if successful, nil otherwise. */
-
-static void* stackPrimitiveVertex(sqInt index) {
-    sqInt oop;
-
-	oop = interpreterProxy->stackObjectValue(index);
-	if (oop == null) {
-		return null;
-	}
-	if ((interpreterProxy->isWords(oop)) && ((interpreterProxy->slotSizeOf(oop)) == PrimVertexSize)) {
-		return interpreterProxy->firstIndexableField(oop);
-	}
-	return null;
-}
-
-
 #ifdef SQUEAK_BUILTIN_PLUGIN
 
 
 void* B3DAcceleratorPlugin_exports[][3] = {
-	{"B3DAcceleratorPlugin", "primitiveGetIntProperty", (void*)primitiveGetIntProperty},
-	{"B3DAcceleratorPlugin", "primitiveGetRendererSurfaceDepth", (void*)primitiveGetRendererSurfaceDepth},
+	{"B3DAcceleratorPlugin", "primitiveTextureUpload", (void*)primitiveTextureUpload},
+	{"B3DAcceleratorPlugin", "primitiveFinishRenderer", (void*)primitiveFinishRenderer},
+	{"B3DAcceleratorPlugin", "shutdownModule", (void*)shutdownModule},
 	{"B3DAcceleratorPlugin", "primitiveTextureSurfaceHandle", (void*)primitiveTextureSurfaceHandle},
-	{"B3DAcceleratorPlugin", "primitiveAllocateTexture", (void*)primitiveAllocateTexture},
-	{"B3DAcceleratorPlugin", "getModuleName", (void*)getModuleName},
-	{"B3DAcceleratorPlugin", "primitiveTextureByteSex", (void*)primitiveTextureByteSex},
-	{"B3DAcceleratorPlugin", "primitiveSetVerboseLevel", (void*)primitiveSetVerboseLevel},
-	{"B3DAcceleratorPlugin", "primitiveSetTransform", (void*)primitiveSetTransform},
-	{"B3DAcceleratorPlugin", "primitiveDestroyRenderer", (void*)primitiveDestroyRenderer},
-	{"B3DAcceleratorPlugin", "primitiveSwapRendererBuffers", (void*)primitiveSwapRendererBuffers},
-	{"B3DAcceleratorPlugin", "primitiveSetFog", (void*)primitiveSetFog},
-	{"B3DAcceleratorPlugin", "primitiveSetBufferRect", (void*)primitiveSetBufferRect},
-	{"B3DAcceleratorPlugin", "primitiveIsOverlayRenderer", (void*)primitiveIsOverlayRenderer},
-	{"B3DAcceleratorPlugin", "primitiveTextureGetColorMasks", (void*)primitiveTextureGetColorMasks},
-	{"B3DAcceleratorPlugin", "primitiveRendererVersion", (void*)primitiveRendererVersion},
-	{"B3DAcceleratorPlugin", "primitiveTextureDepth", (void*)primitiveTextureDepth},
 	{"B3DAcceleratorPlugin", "primitiveGetRendererSurfaceHeight", (void*)primitiveGetRendererSurfaceHeight},
 	{"B3DAcceleratorPlugin", "setInterpreter", (void*)setInterpreter},
-	{"B3DAcceleratorPlugin", "primitiveSetMaterial", (void*)primitiveSetMaterial},
-	{"B3DAcceleratorPlugin", "primitiveGetRendererSurfaceHandle", (void*)primitiveGetRendererSurfaceHandle},
-	{"B3DAcceleratorPlugin", "primitiveSetViewport", (void*)primitiveSetViewport},
-	{"B3DAcceleratorPlugin", "primitiveSetLights", (void*)primitiveSetLights},
+	{"B3DAcceleratorPlugin", "primitiveClearViewport", (void*)primitiveClearViewport},
+	{"B3DAcceleratorPlugin", "primitiveTextureByteSex", (void*)primitiveTextureByteSex},
+	{"B3DAcceleratorPlugin", "primitiveSetVerboseLevel", (void*)primitiveSetVerboseLevel},
 	{"B3DAcceleratorPlugin", "primitiveCreateRenderer", (void*)primitiveCreateRenderer},
 	{"B3DAcceleratorPlugin", "primitiveSetIntProperty", (void*)primitiveSetIntProperty},
-	{"B3DAcceleratorPlugin", "primitiveClearDepthBuffer", (void*)primitiveClearDepthBuffer},
-	{"B3DAcceleratorPlugin", "primitiveTextureUpload", (void*)primitiveTextureUpload},
-	{"B3DAcceleratorPlugin", "primitiveRenderVertexBuffer", (void*)primitiveRenderVertexBuffer},
-	{"B3DAcceleratorPlugin", "primitiveGetRendererSurfaceWidth", (void*)primitiveGetRendererSurfaceWidth},
-	{"B3DAcceleratorPlugin", "shutdownModule", (void*)shutdownModule},
-	{"B3DAcceleratorPlugin", "primitiveFinishRenderer", (void*)primitiveFinishRenderer},
-	{"B3DAcceleratorPlugin", "primitiveGetRendererColorMasks", (void*)primitiveGetRendererColorMasks},
-	{"B3DAcceleratorPlugin", "primitiveFlushRenderer", (void*)primitiveFlushRenderer},
-	{"B3DAcceleratorPlugin", "primitiveClearViewport", (void*)primitiveClearViewport},
-	{"B3DAcceleratorPlugin", "primitiveDestroyTexture", (void*)primitiveDestroyTexture},
-	{"B3DAcceleratorPlugin", "primitiveCompositeTexture", (void*)primitiveCompositeTexture},
+	{"B3DAcceleratorPlugin", "primitiveSetFog", (void*)primitiveSetFog},
+	{"B3DAcceleratorPlugin", "primitiveSetBufferRect", (void*)primitiveSetBufferRect},
+	{"B3DAcceleratorPlugin", "primitiveSetMaterial", (void*)primitiveSetMaterial},
+	{"B3DAcceleratorPlugin", "primitiveSetViewport", (void*)primitiveSetViewport},
+	{"B3DAcceleratorPlugin", "primitiveTextureGetColorMasks", (void*)primitiveTextureGetColorMasks},
 	{"B3DAcceleratorPlugin", "initialiseModule", (void*)initialiseModule},
 	{"B3DAcceleratorPlugin", "primitiveCreateRendererFlags", (void*)primitiveCreateRendererFlags},
+	{"B3DAcceleratorPlugin", "primitiveRenderVertexBuffer", (void*)primitiveRenderVertexBuffer},
+	{"B3DAcceleratorPlugin", "primitiveSetTransform", (void*)primitiveSetTransform},
+	{"B3DAcceleratorPlugin", "primitiveSwapRendererBuffers", (void*)primitiveSwapRendererBuffers},
+	{"B3DAcceleratorPlugin", "primitiveGetRendererColorMasks", (void*)primitiveGetRendererColorMasks},
+	{"B3DAcceleratorPlugin", "primitiveSetLights", (void*)primitiveSetLights},
+	{"B3DAcceleratorPlugin", "primitiveCompositeTexture", (void*)primitiveCompositeTexture},
+	{"B3DAcceleratorPlugin", "primitiveRendererVersion", (void*)primitiveRendererVersion},
+	{"B3DAcceleratorPlugin", "primitiveTextureDepth", (void*)primitiveTextureDepth},
+	{"B3DAcceleratorPlugin", "primitiveGetIntProperty", (void*)primitiveGetIntProperty},
+	{"B3DAcceleratorPlugin", "primitiveGetRendererSurfaceDepth", (void*)primitiveGetRendererSurfaceDepth},
+	{"B3DAcceleratorPlugin", "primitiveAllocateTexture", (void*)primitiveAllocateTexture},
+	{"B3DAcceleratorPlugin", "getModuleName", (void*)getModuleName},
+	{"B3DAcceleratorPlugin", "primitiveDestroyTexture", (void*)primitiveDestroyTexture},
+	{"B3DAcceleratorPlugin", "primitiveClearDepthBuffer", (void*)primitiveClearDepthBuffer},
+	{"B3DAcceleratorPlugin", "primitiveGetRendererSurfaceWidth", (void*)primitiveGetRendererSurfaceWidth},
+	{"B3DAcceleratorPlugin", "primitiveDestroyRenderer", (void*)primitiveDestroyRenderer},
+	{"B3DAcceleratorPlugin", "primitiveIsOverlayRenderer", (void*)primitiveIsOverlayRenderer},
+	{"B3DAcceleratorPlugin", "primitiveFlushRenderer", (void*)primitiveFlushRenderer},
+	{"B3DAcceleratorPlugin", "primitiveGetRendererSurfaceHandle", (void*)primitiveGetRendererSurfaceHandle},
 	{NULL, NULL, NULL}
 };
 

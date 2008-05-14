@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:39 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:24 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -61,9 +63,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"CroquetPlugin 11 October 2006 (i)"
+	"CroquetPlugin 9 May 2008 (i)"
 #else
-	"CroquetPlugin 11 October 2006 (e)"
+	"CroquetPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -589,17 +591,17 @@ static sqInt transformMatrixwithinto(float *src, float *arg, float *dst) {
 
 
 void* CroquetPlugin_exports[][3] = {
-	{"CroquetPlugin", "primitiveMD5Transform", (void*)primitiveMD5Transform},
-	{"CroquetPlugin", "getModuleName", (void*)getModuleName},
-	{"CroquetPlugin", "primitiveGatherEntropy", (void*)primitiveGatherEntropy},
-	{"CroquetPlugin", "setInterpreter", (void*)setInterpreter},
-	{"CroquetPlugin", "primitiveTransposeMatrix", (void*)primitiveTransposeMatrix},
-	{"CroquetPlugin", "primitiveTransformMatrixWithInto", (void*)primitiveTransformMatrixWithInto},
 	{"CroquetPlugin", "primitiveInplaceHouseHolderInvert", (void*)primitiveInplaceHouseHolderInvert},
 	{"CroquetPlugin", "primitiveOrthoNormInverseMatrix", (void*)primitiveOrthoNormInverseMatrix},
-	{"CroquetPlugin", "primitiveTransformVector3", (void*)primitiveTransformVector3},
-	{"CroquetPlugin", "primitiveTransformDirection", (void*)primitiveTransformDirection},
 	{"CroquetPlugin", "primitiveARC4Transform", (void*)primitiveARC4Transform},
+	{"CroquetPlugin", "primitiveGatherEntropy", (void*)primitiveGatherEntropy},
+	{"CroquetPlugin", "primitiveTransposeMatrix", (void*)primitiveTransposeMatrix},
+	{"CroquetPlugin", "primitiveMD5Transform", (void*)primitiveMD5Transform},
+	{"CroquetPlugin", "primitiveTransformVector3", (void*)primitiveTransformVector3},
+	{"CroquetPlugin", "setInterpreter", (void*)setInterpreter},
+	{"CroquetPlugin", "primitiveTransformDirection", (void*)primitiveTransformDirection},
+	{"CroquetPlugin", "getModuleName", (void*)getModuleName},
+	{"CroquetPlugin", "primitiveTransformMatrixWithInto", (void*)primitiveTransformMatrixWithInto},
 	{NULL, NULL, NULL}
 };
 

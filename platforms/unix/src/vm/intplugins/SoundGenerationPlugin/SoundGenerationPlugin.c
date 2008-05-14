@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(13 July 2007 11:58:01 am) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:41 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -54,8 +56,8 @@
 #define IncrementFractionBits 16
 #define LoopIndexFractionMask 511
 #define LoopIndexScaleFactor 512
-#define ScaledIndexOverflow 536870912
 #define ScaleFactor 32768
+#define ScaledIndexOverflow 536870912
 
 /*** Variables ***/
 
@@ -65,9 +67,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"SoundGenerationPlugin 13 July 2007 (i)"
+	"SoundGenerationPlugin 9 May 2008 (i)"
 #else
-	"SoundGenerationPlugin 13 July 2007 (e)"
+	"SoundGenerationPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -671,11 +673,11 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
 void* SoundGenerationPlugin_exports[][3] = {
 	{"SoundGenerationPlugin", "primitiveMixPluckedSound", (void*)primitiveMixPluckedSound},
 	{"SoundGenerationPlugin", "getModuleName", (void*)getModuleName},
-	{"SoundGenerationPlugin", "setInterpreter", (void*)setInterpreter},
-	{"SoundGenerationPlugin", "primitiveApplyReverb", (void*)primitiveApplyReverb},
 	{"SoundGenerationPlugin", "primitiveMixFMSound", (void*)primitiveMixFMSound},
-	{"SoundGenerationPlugin", "primitiveMixLoopedSampledSound", (void*)primitiveMixLoopedSampledSound},
+	{"SoundGenerationPlugin", "primitiveApplyReverb", (void*)primitiveApplyReverb},
 	{"SoundGenerationPlugin", "primitiveMixSampledSound", (void*)primitiveMixSampledSound},
+	{"SoundGenerationPlugin", "setInterpreter", (void*)setInterpreter},
+	{"SoundGenerationPlugin", "primitiveMixLoopedSampledSound", (void*)primitiveMixLoopedSampledSound},
 	{NULL, NULL, NULL}
 };
 

@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:43 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:30 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -56,9 +58,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"GeniePlugin v2.0 11 October 2006 (i)"
+	"GeniePlugin v2.0 9 May 2008 (i)"
 #else
-	"GeniePlugin v2.0 11 October 2006 (e)"
+	"GeniePlugin v2.0 9 May 2008 (e)"
 #endif
 ;
 
@@ -369,10 +371,10 @@ static sqInt sqAssert(sqInt aBool) {
 
 
 void* GeniePlugin_exports[][3] = {
-	{"GeniePlugin", "primSameClassAbsoluteStrokeDistanceMyPoints_otherPoints_myVectors_otherVectors_mySquaredLengths_otherSquaredLengths_myAngles_otherAngles_maxSizeAndReferenceFlag_rowBase_rowInsertRemove_rowInsertRemoveCount", (void*)primSameClassAbsoluteStrokeDistanceMyPoints_otherPoints_myVectors_otherVectors_mySquaredLengths_otherSquaredLengths_myAngles_otherAngles_maxSizeAndReferenceFlag_rowBase_rowInsertRemove_rowInsertRemoveCount},
 	{"GeniePlugin", "primVersionNO", (void*)primVersionNO},
-	{"GeniePlugin", "getModuleName", (void*)getModuleName},
+	{"GeniePlugin", "primSameClassAbsoluteStrokeDistanceMyPoints_otherPoints_myVectors_otherVectors_mySquaredLengths_otherSquaredLengths_myAngles_otherAngles_maxSizeAndReferenceFlag_rowBase_rowInsertRemove_rowInsertRemoveCount", (void*)primSameClassAbsoluteStrokeDistanceMyPoints_otherPoints_myVectors_otherVectors_mySquaredLengths_otherSquaredLengths_myAngles_otherAngles_maxSizeAndReferenceFlag_rowBase_rowInsertRemove_rowInsertRemoveCount},
 	{"GeniePlugin", "setInterpreter", (void*)setInterpreter},
+	{"GeniePlugin", "getModuleName", (void*)getModuleName},
 	{NULL, NULL, NULL}
 };
 

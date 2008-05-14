@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on #(13 December 2007 10:06:59 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:25 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -27,44 +29,41 @@
 #endif
 #include "OggPlugin.h"
 
-/* memory access macros */
-#define byteAt(i) (*((unsigned char *) (i)))
-#define byteAtput(i, val) (*((unsigned char *) (i)) = val)
-#define longAt(i) (*((int *) (i)))
-#define longAtput(i, val) (*((int *) (i)) = val)
+#include "sqMemoryAccess.h"
 
 
 /*** Constants ***/
 
 /*** Function Prototypes ***/
+static VirtualMachine * getInterpreter(void);
 #pragma export on
 EXPORT(const char*) getModuleName(void);
 #pragma export off
-static int halt(void);
-static int msg(char *s);
-static SqOggPtr * oggInstanceOf(int oggOop);
+static sqInt halt(void);
+static sqInt msg(char * s);
+static SqOggPtr * oggInstanceOf(sqInt oggOop);
 #pragma export on
-EXPORT(int) primitiveClose(void);
-EXPORT(int) primitiveExtractMono(void);
-EXPORT(int) primitiveGetChannels(void);
-EXPORT(int) primitiveGetComment(void);
-EXPORT(int) primitiveGetCommentSize(void);
-EXPORT(int) primitiveGetRate(void);
-EXPORT(int) primitiveGetState(void);
-EXPORT(int) primitiveGetVendor(void);
-EXPORT(int) primitiveOpen(void);
-EXPORT(int) primitivePacketFlush(void);
-EXPORT(int) primitiveRead(void);
-EXPORT(int) primitiveReadSize(void);
-EXPORT(int) primitiveSetChannels(void);
-EXPORT(int) primitiveSetQuality(void);
-EXPORT(int) primitiveSetRate(void);
-EXPORT(int) primitiveVersion(void);
-EXPORT(int) primitiveWrite(void);
-EXPORT(int) primitiveWriteEOS(void);
-EXPORT(int) setInterpreter(struct VirtualMachine* anInterpreter);
+EXPORT(sqInt) primitiveClose(void);
+EXPORT(sqInt) primitiveExtractMono(void);
+EXPORT(sqInt) primitiveGetChannels(void);
+EXPORT(sqInt) primitiveGetComment(void);
+EXPORT(sqInt) primitiveGetCommentSize(void);
+EXPORT(sqInt) primitiveGetRate(void);
+EXPORT(sqInt) primitiveGetState(void);
+EXPORT(sqInt) primitiveGetVendor(void);
+EXPORT(sqInt) primitiveOpen(void);
+EXPORT(sqInt) primitivePacketFlush(void);
+EXPORT(sqInt) primitiveRead(void);
+EXPORT(sqInt) primitiveReadSize(void);
+EXPORT(sqInt) primitiveSetChannels(void);
+EXPORT(sqInt) primitiveSetQuality(void);
+EXPORT(sqInt) primitiveSetRate(void);
+EXPORT(sqInt) primitiveVersion(void);
+EXPORT(sqInt) primitiveWrite(void);
+EXPORT(sqInt) primitiveWriteEOS(void);
+EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 #pragma export off
-static int sqAssert(int aBool);
+static sqInt sqAssert(sqInt aBool);
 /*** Variables ***/
 
 #ifdef SQUEAK_BUILTIN_PLUGIN
@@ -73,12 +72,19 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"OggPlugin 13 December 2007 (i)"
+	"OggPlugin 9 May 2008 (i)"
 #else
-	"OggPlugin 13 December 2007 (e)"
+	"OggPlugin 9 May 2008 (e)"
 #endif
 ;
 
+
+
+/*	Note: This is coded so that plugins can be run from Squeak. */
+
+static VirtualMachine * getInterpreter(void) {
+	return interpreterProxy;
+}
 
 
 /*	Note: This is hardcoded so it can be run from Squeak.
@@ -90,18 +96,18 @@ EXPORT(const char*) getModuleName(void) {
 	return moduleName;
 }
 
-static int halt(void) {
+static sqInt halt(void) {
 	;
 }
 
-static int msg(char *s) {
+static sqInt msg(char * s) {
 	fprintf(stderr, "\n%s: %s", moduleName, s);
 }
 
 
 /*	Convert from Squeak pointer to SqOggPtr */
 
-static SqOggPtr * oggInstanceOf(int oggOop) {
+static SqOggPtr * oggInstanceOf(sqInt oggOop) {
 	SqOggPtr * oggp;
 
 	interpreterProxy->success((interpreterProxy->isBytes(oggOop)) && ((interpreterProxy->byteSizeOf(oggOop)) == (sizeof(SqOggPtr))));
@@ -109,7 +115,7 @@ static SqOggPtr * oggInstanceOf(int oggOop) {
 	return oggp;
 }
 
-EXPORT(int) primitiveClose(void) {
+EXPORT(sqInt) primitiveClose(void) {
 	char *oggPtr;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
@@ -125,14 +131,14 @@ EXPORT(int) primitiveClose(void) {
 	return null;
 }
 
-EXPORT(int) primitiveExtractMono(void) {
-	int channel;
+EXPORT(sqInt) primitiveExtractMono(void) {
+	sqInt channel;
 	short * dest;
-	int size;
-	int i;
+	sqInt size;
+	sqInt i;
 	short * src;
-	int srcOop;
-	int destOop;
+	sqInt srcOop;
+	sqInt destOop;
 
 	if (!((interpreterProxy->methodArgumentCount()) == 4)) {
 		return interpreterProxy->primitiveFail();
@@ -161,9 +167,9 @@ EXPORT(int) primitiveExtractMono(void) {
 	return interpreterProxy->pop(4);
 }
 
-EXPORT(int) primitiveGetChannels(void) {
+EXPORT(sqInt) primitiveGetChannels(void) {
 	char *oggPtr;
-	int _return_value;
+	sqInt _return_value;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
 	oggPtr = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
@@ -178,11 +184,11 @@ EXPORT(int) primitiveGetChannels(void) {
 	return null;
 }
 
-EXPORT(int) primitiveGetComment(void) {
+EXPORT(sqInt) primitiveGetComment(void) {
 	char *oggPtr;
 	char *buffer;
-	int size;
-	int _return_value;
+	sqInt size;
+	sqInt _return_value;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(2)));
 	oggPtr = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(2))));
@@ -200,9 +206,9 @@ EXPORT(int) primitiveGetComment(void) {
 	return null;
 }
 
-EXPORT(int) primitiveGetCommentSize(void) {
+EXPORT(sqInt) primitiveGetCommentSize(void) {
 	char *oggPtr;
-	int _return_value;
+	sqInt _return_value;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
 	oggPtr = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
@@ -217,9 +223,9 @@ EXPORT(int) primitiveGetCommentSize(void) {
 	return null;
 }
 
-EXPORT(int) primitiveGetRate(void) {
+EXPORT(sqInt) primitiveGetRate(void) {
 	char *oggPtr;
-	int _return_value;
+	sqInt _return_value;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
 	oggPtr = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
@@ -234,9 +240,9 @@ EXPORT(int) primitiveGetRate(void) {
 	return null;
 }
 
-EXPORT(int) primitiveGetState(void) {
+EXPORT(sqInt) primitiveGetState(void) {
 	char *oggPtr;
-	int _return_value;
+	sqInt _return_value;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
 	oggPtr = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
@@ -251,11 +257,11 @@ EXPORT(int) primitiveGetState(void) {
 	return null;
 }
 
-EXPORT(int) primitiveGetVendor(void) {
+EXPORT(sqInt) primitiveGetVendor(void) {
 	char *oggPtr;
 	char *buffer;
-	int size;
-	int _return_value;
+	sqInt size;
+	sqInt _return_value;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(2)));
 	oggPtr = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(2))));
@@ -273,10 +279,10 @@ EXPORT(int) primitiveGetVendor(void) {
 	return null;
 }
 
-EXPORT(int) primitiveOpen(void) {
+EXPORT(sqInt) primitiveOpen(void) {
 	SqOggPtr * oggp;
-	int oggOop;
-	int mode;
+	sqInt oggOop;
+	sqInt mode;
 
 	mode = interpreterProxy->stackIntegerValue(0);
 	if (interpreterProxy->failed()) {
@@ -292,7 +298,7 @@ EXPORT(int) primitiveOpen(void) {
 	return null;
 }
 
-EXPORT(int) primitivePacketFlush(void) {
+EXPORT(sqInt) primitivePacketFlush(void) {
 	char *oggPtr;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
@@ -308,13 +314,13 @@ EXPORT(int) primitivePacketFlush(void) {
 	return null;
 }
 
-EXPORT(int) primitiveRead(void) {
+EXPORT(sqInt) primitiveRead(void) {
 	SqOggPtr * oggp;
-	int bufferOop;
-	int size;
+	sqInt bufferOop;
+	sqInt size;
 	char * buffer;
-	int result;
-	int oggOop;
+	sqInt result;
+	sqInt oggOop;
 
 	if (!((interpreterProxy->methodArgumentCount()) == 3)) {
 		return interpreterProxy->primitiveFail();
@@ -333,9 +339,9 @@ EXPORT(int) primitiveRead(void) {
 	return interpreterProxy->pushInteger(result);
 }
 
-EXPORT(int) primitiveReadSize(void) {
+EXPORT(sqInt) primitiveReadSize(void) {
 	char *oggPtr;
-	int _return_value;
+	sqInt _return_value;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
 	oggPtr = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(0))));
@@ -350,9 +356,9 @@ EXPORT(int) primitiveReadSize(void) {
 	return null;
 }
 
-EXPORT(int) primitiveSetChannels(void) {
+EXPORT(sqInt) primitiveSetChannels(void) {
 	char *oggPtr;
-	int value;
+	sqInt value;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(1)));
 	oggPtr = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(1))));
@@ -368,7 +374,7 @@ EXPORT(int) primitiveSetChannels(void) {
 	return null;
 }
 
-EXPORT(int) primitiveSetQuality(void) {
+EXPORT(sqInt) primitiveSetQuality(void) {
 	char *oggPtr;
 	double value;
 
@@ -386,9 +392,9 @@ EXPORT(int) primitiveSetQuality(void) {
 	return null;
 }
 
-EXPORT(int) primitiveSetRate(void) {
+EXPORT(sqInt) primitiveSetRate(void) {
 	char *oggPtr;
-	int value;
+	sqInt value;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(1)));
 	oggPtr = ((char *) (interpreterProxy->firstIndexableField(interpreterProxy->stackValue(1))));
@@ -404,8 +410,8 @@ EXPORT(int) primitiveSetRate(void) {
 	return null;
 }
 
-EXPORT(int) primitiveVersion(void) {
-	int _return_value;
+EXPORT(sqInt) primitiveVersion(void) {
+	sqInt _return_value;
 
 	_return_value = interpreterProxy->integerObjectOf(1);
 	if (interpreterProxy->failed()) {
@@ -419,16 +425,16 @@ EXPORT(int) primitiveVersion(void) {
 /*	Write to the buffer. It is written traditional InterpreterPlugin way
 	because the second buffer can be words or bytes array */
 
-EXPORT(int) primitiveWrite(void) {
-	int size;
-	int chunkSize;
-	int result;
-	int bufSize;
+EXPORT(sqInt) primitiveWrite(void) {
+	sqInt size;
+	sqInt chunkSize;
+	sqInt result;
+	sqInt bufSize;
 	SqOggPtr * oggp;
-	int i;
+	sqInt i;
 	char * buffer;
-	int bufferOop;
-	int oggOop;
+	sqInt bufferOop;
+	sqInt oggOop;
 
 	bufSize = 4096;
 	if (!((interpreterProxy->methodArgumentCount()) == 3)) {
@@ -455,7 +461,7 @@ EXPORT(int) primitiveWrite(void) {
 	return interpreterProxy->pushInteger(result);
 }
 
-EXPORT(int) primitiveWriteEOS(void) {
+EXPORT(sqInt) primitiveWriteEOS(void) {
 	char *oggPtr;
 
 	interpreterProxy->success(interpreterProxy->isBytes(interpreterProxy->stackValue(0)));
@@ -474,8 +480,8 @@ EXPORT(int) primitiveWriteEOS(void) {
 
 /*	Note: This is coded so that is can be run from Squeak. */
 
-EXPORT(int) setInterpreter(struct VirtualMachine* anInterpreter) {
-	int ok;
+EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
+	sqInt ok;
 
 	interpreterProxy = anInterpreter;
 	ok = interpreterProxy->majorVersion() == VM_PROXY_MAJOR;
@@ -486,7 +492,7 @@ EXPORT(int) setInterpreter(struct VirtualMachine* anInterpreter) {
 	return ok;
 }
 
-static int sqAssert(int aBool) {
+static sqInt sqAssert(sqInt aBool) {
 	/* missing DebugCode */;
 }
 
@@ -495,26 +501,26 @@ static int sqAssert(int aBool) {
 
 
 void* OggPlugin_exports[][3] = {
-	{"OggPlugin", "primitiveVersion", (void*)primitiveVersion},
-	{"OggPlugin", "primitiveExtractMono", (void*)primitiveExtractMono},
-	{"OggPlugin", "primitiveClose", (void*)primitiveClose},
 	{"OggPlugin", "primitiveWriteEOS", (void*)primitiveWriteEOS},
+	{"OggPlugin", "primitiveGetCommentSize", (void*)primitiveGetCommentSize},
+	{"OggPlugin", "primitivePacketFlush", (void*)primitivePacketFlush},
+	{"OggPlugin", "setInterpreter", (void*)setInterpreter},
+	{"OggPlugin", "primitiveClose", (void*)primitiveClose},
+	{"OggPlugin", "primitiveVersion", (void*)primitiveVersion},
+	{"OggPlugin", "getModuleName", (void*)getModuleName},
+	{"OggPlugin", "primitiveGetVendor", (void*)primitiveGetVendor},
+	{"OggPlugin", "primitiveSetQuality", (void*)primitiveSetQuality},
 	{"OggPlugin", "primitiveReadSize", (void*)primitiveReadSize},
-	{"OggPlugin", "primitiveGetRate", (void*)primitiveGetRate},
+	{"OggPlugin", "primitiveExtractMono", (void*)primitiveExtractMono},
+	{"OggPlugin", "primitiveGetChannels", (void*)primitiveGetChannels},
+	{"OggPlugin", "primitiveOpen", (void*)primitiveOpen},
+	{"OggPlugin", "primitiveSetChannels", (void*)primitiveSetChannels},
+	{"OggPlugin", "primitiveWrite", (void*)primitiveWrite},
 	{"OggPlugin", "primitiveRead", (void*)primitiveRead},
 	{"OggPlugin", "primitiveGetComment", (void*)primitiveGetComment},
-	{"OggPlugin", "primitiveSetChannels", (void*)primitiveSetChannels},
-	{"OggPlugin", "getModuleName", (void*)getModuleName},
-	{"OggPlugin", "primitiveGetChannels", (void*)primitiveGetChannels},
-	{"OggPlugin", "setInterpreter", (void*)setInterpreter},
-	{"OggPlugin", "primitivePacketFlush", (void*)primitivePacketFlush},
-	{"OggPlugin", "primitiveWrite", (void*)primitiveWrite},
-	{"OggPlugin", "primitiveGetVendor", (void*)primitiveGetVendor},
-	{"OggPlugin", "primitiveGetState", (void*)primitiveGetState},
-	{"OggPlugin", "primitiveSetQuality", (void*)primitiveSetQuality},
-	{"OggPlugin", "primitiveOpen", (void*)primitiveOpen},
 	{"OggPlugin", "primitiveSetRate", (void*)primitiveSetRate},
-	{"OggPlugin", "primitiveGetCommentSize", (void*)primitiveGetCommentSize},
+	{"OggPlugin", "primitiveGetRate", (void*)primitiveGetRate},
+	{"OggPlugin", "primitiveGetState", (void*)primitiveGetState},
 	{NULL, NULL, NULL}
 };
 

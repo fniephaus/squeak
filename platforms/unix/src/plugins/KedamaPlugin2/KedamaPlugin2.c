@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(19 April 2007 12:22:56 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:58 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -57,6 +59,13 @@ EXPORT(sqInt) makeTurtlesMap(void);
 #pragma export off
 static sqInt msg(char * s);
 #pragma export on
+EXPORT(sqInt) primPixelAtXY(void);
+EXPORT(sqInt) primPixelAtXYPut(void);
+EXPORT(sqInt) primPixelsAtXY(void);
+EXPORT(sqInt) primScalarForward(void);
+EXPORT(sqInt) primSetPixelsAtXY(void);
+EXPORT(sqInt) primTurtlesForward(void);
+EXPORT(sqInt) primUpHill(void);
 EXPORT(sqInt) primitiveAddArrays(void);
 EXPORT(sqInt) primitiveAddScalar(void);
 EXPORT(sqInt) primitiveAndByteArray(void);
@@ -88,13 +97,6 @@ EXPORT(sqInt) primitiveRemArrays(void);
 EXPORT(sqInt) primitiveRemScalar(void);
 EXPORT(sqInt) primitiveSubArrays(void);
 EXPORT(sqInt) primitiveSubScalar(void);
-EXPORT(sqInt) primPixelAtXY(void);
-EXPORT(sqInt) primPixelAtXYPut(void);
-EXPORT(sqInt) primPixelsAtXY(void);
-EXPORT(sqInt) primScalarForward(void);
-EXPORT(sqInt) primSetPixelsAtXY(void);
-EXPORT(sqInt) primTurtlesForward(void);
-EXPORT(sqInt) primUpHill(void);
 #pragma export off
 static double radiansToDegrees(double radians);
 #pragma export on
@@ -128,9 +130,9 @@ struct VirtualMachine* interpreterProxy;
 static unsigned int kedamaRandomSeed;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"KedamaPlugin2 19 April 2007 (i)"
+	"KedamaPlugin2 9 May 2008 (i)"
 #else
-	"KedamaPlugin2 19 April 2007 (e)"
+	"KedamaPlugin2 9 May 2008 (e)"
 #endif
 ;
 static unsigned int randA;
@@ -610,6 +612,548 @@ EXPORT(sqInt) makeTurtlesMap(void) {
 
 static sqInt msg(char * s) {
 	fprintf(stderr, "\n%s: %s", moduleName, s);
+}
+
+EXPORT(sqInt) primPixelAtXY(void) {
+    sqInt ret;
+    unsigned int *bits;
+    sqInt y;
+    sqInt bitsOop;
+    double yPos;
+    double xPos;
+    sqInt x;
+    sqInt index;
+    sqInt width;
+    sqInt height;
+
+	height = interpreterProxy->stackIntegerValue(0);
+	width = interpreterProxy->stackIntegerValue(1);
+	yPos = interpreterProxy->stackFloatValue(2);
+	xPos = interpreterProxy->stackFloatValue(3);
+	bitsOop = interpreterProxy->stackValue(4);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if (!(interpreterProxy->isWords(bitsOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if ((interpreterProxy->slotSizeOf(bitsOop)) != (height * width)) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	x = xPos;
+	y = yPos;
+	bits = interpreterProxy->firstIndexableField(bitsOop);
+	if ((((x >= 0) && (x < width)) && (y >= 0)) && (y < height)) {
+		index = (y * width) + x;
+		ret = bits[index];
+	} else {
+		ret = 0;
+	}
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(6);
+	interpreterProxy->pushInteger(ret);
+}
+
+EXPORT(sqInt) primPixelAtXYPut(void) {
+    sqInt v;
+    sqInt value;
+    unsigned int *bits;
+    sqInt y;
+    sqInt bitsOop;
+    double yPos;
+    double xPos;
+    sqInt x;
+    sqInt index;
+    sqInt width;
+    sqInt height;
+
+	height = interpreterProxy->stackIntegerValue(0);
+	width = interpreterProxy->stackIntegerValue(1);
+	value = interpreterProxy->stackIntegerValue(2);
+	yPos = interpreterProxy->stackFloatValue(3);
+	xPos = interpreterProxy->stackFloatValue(4);
+	bitsOop = interpreterProxy->stackValue(5);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if (!(interpreterProxy->isWords(bitsOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if ((interpreterProxy->slotSizeOf(bitsOop)) != (height * width)) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	x = xPos;
+	y = yPos;
+	v = value;
+	if (v > 1073741823) {
+		v = 1073741823;
+	}
+	if (v < 0) {
+		v = 0;
+	}
+	bits = interpreterProxy->firstIndexableField(bitsOop);
+	if ((((x >= 0) && (x < width)) && (y >= 0)) && (y < height)) {
+		index = (y * width) + x;
+		bits[index] = v;
+	}
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(6);
+}
+
+EXPORT(sqInt) primPixelsAtXY(void) {
+    unsigned int *bits;
+    sqInt yArrayOop;
+    float *yArray;
+    sqInt i;
+    sqInt bitsIndex;
+    sqInt bitsHeight;
+    sqInt x;
+    float *xArray;
+    sqInt bitsWidth;
+    sqInt xArrayOop;
+    sqInt size;
+    sqInt y;
+    sqInt destWordsOop;
+    sqInt bitsOop;
+    unsigned int *destWords;
+
+	destWordsOop = interpreterProxy->stackValue(0);
+	bitsHeight = interpreterProxy->stackIntegerValue(1);
+	bitsWidth = interpreterProxy->stackIntegerValue(2);
+	bitsOop = interpreterProxy->stackValue(3);
+	yArrayOop = interpreterProxy->stackValue(4);
+	xArrayOop = interpreterProxy->stackValue(5);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if (!(interpreterProxy->isWords(destWordsOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (!(interpreterProxy->isWords(xArrayOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (!(interpreterProxy->isWords(yArrayOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (!(interpreterProxy->isWords(bitsOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if ((bitsHeight * bitsWidth) != (interpreterProxy->slotSizeOf(bitsOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	size = interpreterProxy->slotSizeOf(xArrayOop);
+	if ((interpreterProxy->slotSizeOf(yArrayOop)) != size) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if ((interpreterProxy->slotSizeOf(destWordsOop)) != size) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	xArray = interpreterProxy->firstIndexableField(xArrayOop);
+	yArray = interpreterProxy->firstIndexableField(yArrayOop);
+	destWords = interpreterProxy->firstIndexableField(destWordsOop);
+	bits = interpreterProxy->firstIndexableField(bitsOop);
+	for (i = 0; i <= (size - 1); i += 1) {
+		x = ((int) (xArray[i]));
+		;
+		y = ((int) (yArray[i]));
+		;
+		if (((x >= 0) && (y >= 0)) && ((x < bitsWidth) && (y < bitsHeight))) {
+			bitsIndex = (y * bitsWidth) + x;
+			destWords[i] = (bits[bitsIndex]);
+		}
+	}
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(6);
+}
+
+EXPORT(sqInt) primScalarForward(void) {
+    double val;
+    sqInt yOop;
+    sqInt rightEdgeMode;
+    sqInt xOop;
+    float *yArray;
+    sqInt i;
+    double newY;
+    float *xArray;
+    sqInt index;
+    sqInt headingOop;
+    sqInt size;
+    sqInt leftEdgeMode;
+    double destWidth;
+    sqInt topEdgeMode;
+    double destHeight;
+    double dist;
+    double newX;
+    float *headingArray;
+    sqInt bottomEdgeMode;
+
+	bottomEdgeMode = interpreterProxy->stackIntegerValue(0);
+	topEdgeMode = interpreterProxy->stackIntegerValue(1);
+	rightEdgeMode = interpreterProxy->stackIntegerValue(2);
+	leftEdgeMode = interpreterProxy->stackIntegerValue(3);
+	destHeight = interpreterProxy->stackFloatValue(4);
+	destWidth = interpreterProxy->stackFloatValue(5);
+	val = interpreterProxy->stackFloatValue(6);
+	headingOop = interpreterProxy->stackValue(7);
+	yOop = interpreterProxy->stackValue(8);
+	xOop = interpreterProxy->stackValue(9);
+	index = interpreterProxy->stackIntegerValue(10);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if (!(interpreterProxy->isWords(xOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (!(interpreterProxy->isWords(yOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (!(interpreterProxy->isWords(headingOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	size = interpreterProxy->slotSizeOf(xOop);
+	if ((interpreterProxy->slotSizeOf(yOop)) != size) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if ((interpreterProxy->slotSizeOf(headingOop)) != size) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	xArray = interpreterProxy->firstIndexableField(xOop);
+	yArray = interpreterProxy->firstIndexableField(yOop);
+	headingArray = interpreterProxy->firstIndexableField(headingOop);
+	dist = val;
+	i = index - 1;
+	newX = (xArray[i]) + (dist * (cos(headingArray[i])));
+	newY = (yArray[i]) - (dist * (sin(headingArray[i])));
+	scalarXAtxArrayheadingArrayvaluedestWidthleftEdgeModerightEdgeMode(i, xArray, headingArray, newX, destWidth, leftEdgeMode, rightEdgeMode);
+	scalarYAtyArrayheadingArrayvaluedestHeighttopEdgeModebottomEdgeMode(i, yArray, headingArray, newY, destHeight, topEdgeMode, bottomEdgeMode);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(11);
+}
+
+EXPORT(sqInt) primSetPixelsAtXY(void) {
+    sqInt pArrayOop;
+    sqInt isValueInt;
+    unsigned int *bits;
+    sqInt yArrayOop;
+    float *yArray;
+    sqInt i;
+    sqInt bitsIndex;
+    sqInt bitsHeight;
+    sqInt x;
+    float *xArray;
+    sqInt bitsWidth;
+    sqInt xArrayOop;
+    float *floatsValue;
+    sqInt fv;
+    sqInt size;
+    unsigned int *wordsValue;
+    unsigned int value;
+    sqInt valueOop;
+    sqInt y;
+    sqInt isValueWordArray;
+    sqInt bitsOop;
+    unsigned char *pArray;
+    unsigned int intValue;
+
+	valueOop = interpreterProxy->stackValue(0);
+	bitsHeight = interpreterProxy->stackIntegerValue(1);
+	bitsWidth = interpreterProxy->stackIntegerValue(2);
+	bitsOop = interpreterProxy->stackValue(3);
+	yArrayOop = interpreterProxy->stackValue(4);
+	xArrayOop = interpreterProxy->stackValue(5);
+	pArrayOop = interpreterProxy->stackValue(6);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if (!(interpreterProxy->isBytes(pArrayOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (!(interpreterProxy->isWords(xArrayOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (!(interpreterProxy->isWords(yArrayOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (!(interpreterProxy->isWords(bitsOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if ((bitsHeight * bitsWidth) != (interpreterProxy->slotSizeOf(bitsOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	size = interpreterProxy->slotSizeOf(xArrayOop);
+	if ((interpreterProxy->slotSizeOf(pArrayOop)) != size) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if ((interpreterProxy->slotSizeOf(yArrayOop)) != size) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	pArray = interpreterProxy->firstIndexableField(pArrayOop);
+	xArray = interpreterProxy->firstIndexableField(xArrayOop);
+	yArray = interpreterProxy->firstIndexableField(yArrayOop);
+	isValueInt = (valueOop & 1);
+	if (isValueInt) {
+		intValue = (valueOop >> 1);
+		value = intValue;
+	} else {
+		if ((interpreterProxy->slotSizeOf(valueOop)) != size) {
+			interpreterProxy->primitiveFail();
+			return null;
+		}
+		isValueWordArray = interpreterProxy->isMemberOf(valueOop, "WordArray");
+		if (isValueWordArray) {
+			wordsValue = interpreterProxy->firstIndexableField(valueOop);
+		} else {
+			floatsValue = interpreterProxy->firstIndexableField(valueOop);
+		}
+	}
+	bits = interpreterProxy->firstIndexableField(bitsOop);
+	for (i = 0; i <= (size - 1); i += 1) {
+		if ((pArray[i]) == 1) {
+			x = ((int) (xArray[i]));
+			;
+			y = ((int) (yArray[i]));
+			;
+			if (((x >= 0) && (y >= 0)) && ((x < bitsWidth) && (y < bitsHeight))) {
+				bitsIndex = (y * bitsWidth) + x;
+				if (isValueInt) {
+					bits[bitsIndex] = value;
+				} else {
+					if (isValueWordArray) {
+						bits[bitsIndex] = (wordsValue[i]);
+					} else {
+						fv = floatsValue[i];
+						;
+						bits[bitsIndex] = fv;
+					}
+				}
+			}
+		}
+	}
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(7);
+}
+
+EXPORT(sqInt) primTurtlesForward(void) {
+    double val;
+    double newX;
+    unsigned char *pArray;
+    sqInt yOop;
+    sqInt rightEdgeMode;
+    sqInt xOop;
+    sqInt pOop;
+    float *yArray;
+    sqInt i;
+    double newY;
+    sqInt isValVector;
+    float *xArray;
+    float *valArray;
+    sqInt headingOop;
+    sqInt size;
+    sqInt leftEdgeMode;
+    double destWidth;
+    sqInt topEdgeMode;
+    double destHeight;
+    sqInt valOop;
+    double dist;
+    float *headingArray;
+    sqInt bottomEdgeMode;
+
+	bottomEdgeMode = interpreterProxy->stackIntegerValue(0);
+	topEdgeMode = interpreterProxy->stackIntegerValue(1);
+	rightEdgeMode = interpreterProxy->stackIntegerValue(2);
+	leftEdgeMode = interpreterProxy->stackIntegerValue(3);
+	destHeight = interpreterProxy->stackFloatValue(4);
+	destWidth = interpreterProxy->stackFloatValue(5);
+	valOop = interpreterProxy->stackValue(6);
+	headingOop = interpreterProxy->stackValue(7);
+	yOop = interpreterProxy->stackValue(8);
+	xOop = interpreterProxy->stackValue(9);
+	pOop = interpreterProxy->stackValue(10);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if (!(interpreterProxy->isBytes(pOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (!(interpreterProxy->isWords(xOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (!(interpreterProxy->isWords(yOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (!(interpreterProxy->isWords(headingOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (interpreterProxy->isFloatObject(valOop)) {
+		isValVector = 0;
+	} else {
+		if (interpreterProxy->isWords(valOop)) {
+			isValVector = 1;
+		} else {
+			interpreterProxy->primitiveFail();
+			return null;
+		}
+	}
+	size = interpreterProxy->slotSizeOf(xOop);
+	if ((interpreterProxy->slotSizeOf(yOop)) != size) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if ((interpreterProxy->slotSizeOf(headingOop)) != size) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if ((interpreterProxy->slotSizeOf(pOop)) != size) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if (isValVector) {
+		if ((interpreterProxy->slotSizeOf(valOop)) != size) {
+			interpreterProxy->primitiveFail();
+			return null;
+		}
+	}
+	pArray = interpreterProxy->firstIndexableField(pOop);
+	xArray = interpreterProxy->firstIndexableField(xOop);
+	yArray = interpreterProxy->firstIndexableField(yOop);
+	headingArray = interpreterProxy->firstIndexableField(headingOop);
+	if (isValVector) {
+		valArray = interpreterProxy->firstIndexableField(valOop);
+	} else {
+		val = interpreterProxy->floatValueOf(valOop);
+	}
+	for (i = 0; i <= (size - 1); i += 1) {
+		if ((pArray[i]) == 1) {
+			if (isValVector) {
+				dist = valArray[i];
+			} else {
+				dist = val;
+			}
+			newX = (xArray[i]) + (dist * (cos(headingArray[i])));
+			newY = (yArray[i]) - (dist * (sin(headingArray[i])));
+			scalarXAtxArrayheadingArrayvaluedestWidthleftEdgeModerightEdgeMode(i, xArray, headingArray, newX, destWidth, leftEdgeMode, rightEdgeMode);
+			scalarYAtyArrayheadingArrayvaluedestHeighttopEdgeModebottomEdgeMode(i, yArray, headingArray, newY, destHeight, topEdgeMode, bottomEdgeMode);
+		}
+	}
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(11);
+}
+
+EXPORT(sqInt) primUpHill(void) {
+    sqInt rowOffset;
+    sqInt endX;
+    sqInt turtleY;
+    unsigned int *bits;
+    sqInt thisVal;
+    double tY;
+    sqInt x;
+    sqInt maxValY;
+    double tH;
+    sqInt startX;
+    sqInt width;
+    sqInt height;
+    sqInt ret;
+    sqInt endY;
+    sqInt y;
+    sqInt turtleX;
+    sqInt maxVal;
+    sqInt bitsOop;
+    sqInt startY;
+    double tX;
+    sqInt sniffRange;
+    sqInt maxValX;
+
+	sniffRange = interpreterProxy->stackIntegerValue(0);
+	height = interpreterProxy->stackIntegerValue(1);
+	width = interpreterProxy->stackIntegerValue(2);
+	bitsOop = interpreterProxy->stackValue(3);
+	tH = interpreterProxy->stackFloatValue(4);
+	tY = interpreterProxy->stackFloatValue(5);
+	tX = interpreterProxy->stackFloatValue(6);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if (!(interpreterProxy->isWords(bitsOop))) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	if ((interpreterProxy->slotSizeOf(bitsOop)) != (height * width)) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	bits = interpreterProxy->firstIndexableField(bitsOop);
+	turtleX = tX;
+	turtleY = tY;
+	turtleX = ((turtleX < 0) ? 0 : turtleX);
+	turtleY = ((turtleY < 0) ? 0 : turtleY);
+	turtleX = ((turtleX < (width - 1)) ? turtleX : (width - 1));
+	turtleY = ((turtleY < (height - 1)) ? turtleY : (height - 1));
+	startX = (((turtleX - sniffRange) < 0) ? 0 : (turtleX - sniffRange));
+	endX = (((turtleX + sniffRange) < (width - 1)) ? (turtleX + sniffRange) : (width - 1));
+	startY = (((turtleY - sniffRange) < 0) ? 0 : (turtleY - sniffRange));
+	endY = (((turtleY + sniffRange) < (height - 1)) ? (turtleY + sniffRange) : (height - 1));
+	maxVal = bits[(turtleY * width) + turtleX];
+	maxValX = -1;
+	for (y = startY; y <= endY; y += 1) {
+		rowOffset = y * width;
+		for (x = startX; x <= endX; x += 1) {
+			thisVal = bits[rowOffset + x];
+			if (thisVal > maxVal) {
+				maxValX = x;
+				maxValY = y;
+				maxVal = thisVal;
+			}
+		}
+	}
+	if (-1 == maxValX) {
+		ret = radiansToDegrees(tH);
+	} else {
+		ret = (degreesFromXy(((double) (maxValX - turtleX)), ((double) (maxValY - turtleY)))) + 90.0;
+	}
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(8);
+	interpreterProxy->pushFloat(ret);
 }
 
 EXPORT(sqInt) primitiveAddArrays(void) {
@@ -2777,548 +3321,6 @@ EXPORT(sqInt) primitiveSubScalar(void) {
 	interpreterProxy->push(resultOop);
 }
 
-EXPORT(sqInt) primPixelAtXY(void) {
-    sqInt ret;
-    unsigned int *bits;
-    sqInt y;
-    sqInt bitsOop;
-    double yPos;
-    double xPos;
-    sqInt x;
-    sqInt index;
-    sqInt width;
-    sqInt height;
-
-	height = interpreterProxy->stackIntegerValue(0);
-	width = interpreterProxy->stackIntegerValue(1);
-	yPos = interpreterProxy->stackFloatValue(2);
-	xPos = interpreterProxy->stackFloatValue(3);
-	bitsOop = interpreterProxy->stackValue(4);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	if (!(interpreterProxy->isWords(bitsOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if ((interpreterProxy->slotSizeOf(bitsOop)) != (height * width)) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	x = xPos;
-	y = yPos;
-	bits = interpreterProxy->firstIndexableField(bitsOop);
-	if ((((x >= 0) && (x < width)) && (y >= 0)) && (y < height)) {
-		index = (y * width) + x;
-		ret = bits[index];
-	} else {
-		ret = 0;
-	}
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->pop(6);
-	interpreterProxy->pushInteger(ret);
-}
-
-EXPORT(sqInt) primPixelAtXYPut(void) {
-    sqInt v;
-    sqInt value;
-    unsigned int *bits;
-    sqInt y;
-    sqInt bitsOop;
-    double yPos;
-    double xPos;
-    sqInt x;
-    sqInt index;
-    sqInt width;
-    sqInt height;
-
-	height = interpreterProxy->stackIntegerValue(0);
-	width = interpreterProxy->stackIntegerValue(1);
-	value = interpreterProxy->stackIntegerValue(2);
-	yPos = interpreterProxy->stackFloatValue(3);
-	xPos = interpreterProxy->stackFloatValue(4);
-	bitsOop = interpreterProxy->stackValue(5);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	if (!(interpreterProxy->isWords(bitsOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if ((interpreterProxy->slotSizeOf(bitsOop)) != (height * width)) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	x = xPos;
-	y = yPos;
-	v = value;
-	if (v > 1073741823) {
-		v = 1073741823;
-	}
-	if (v < 0) {
-		v = 0;
-	}
-	bits = interpreterProxy->firstIndexableField(bitsOop);
-	if ((((x >= 0) && (x < width)) && (y >= 0)) && (y < height)) {
-		index = (y * width) + x;
-		bits[index] = v;
-	}
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->pop(6);
-}
-
-EXPORT(sqInt) primPixelsAtXY(void) {
-    unsigned int *bits;
-    sqInt yArrayOop;
-    float *yArray;
-    sqInt i;
-    sqInt bitsIndex;
-    sqInt bitsHeight;
-    sqInt x;
-    float *xArray;
-    sqInt bitsWidth;
-    sqInt xArrayOop;
-    sqInt size;
-    sqInt y;
-    sqInt destWordsOop;
-    sqInt bitsOop;
-    unsigned int *destWords;
-
-	destWordsOop = interpreterProxy->stackValue(0);
-	bitsHeight = interpreterProxy->stackIntegerValue(1);
-	bitsWidth = interpreterProxy->stackIntegerValue(2);
-	bitsOop = interpreterProxy->stackValue(3);
-	yArrayOop = interpreterProxy->stackValue(4);
-	xArrayOop = interpreterProxy->stackValue(5);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	if (!(interpreterProxy->isWords(destWordsOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (!(interpreterProxy->isWords(xArrayOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (!(interpreterProxy->isWords(yArrayOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (!(interpreterProxy->isWords(bitsOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if ((bitsHeight * bitsWidth) != (interpreterProxy->slotSizeOf(bitsOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	size = interpreterProxy->slotSizeOf(xArrayOop);
-	if ((interpreterProxy->slotSizeOf(yArrayOop)) != size) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if ((interpreterProxy->slotSizeOf(destWordsOop)) != size) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	xArray = interpreterProxy->firstIndexableField(xArrayOop);
-	yArray = interpreterProxy->firstIndexableField(yArrayOop);
-	destWords = interpreterProxy->firstIndexableField(destWordsOop);
-	bits = interpreterProxy->firstIndexableField(bitsOop);
-	for (i = 0; i <= (size - 1); i += 1) {
-		x = ((int) (xArray[i]));
-		;
-		y = ((int) (yArray[i]));
-		;
-		if (((x >= 0) && (y >= 0)) && ((x < bitsWidth) && (y < bitsHeight))) {
-			bitsIndex = (y * bitsWidth) + x;
-			destWords[i] = (bits[bitsIndex]);
-		}
-	}
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->pop(6);
-}
-
-EXPORT(sqInt) primScalarForward(void) {
-    double val;
-    sqInt yOop;
-    sqInt rightEdgeMode;
-    sqInt xOop;
-    float *yArray;
-    sqInt i;
-    double newY;
-    float *xArray;
-    sqInt index;
-    sqInt headingOop;
-    sqInt size;
-    sqInt leftEdgeMode;
-    double destWidth;
-    sqInt topEdgeMode;
-    double destHeight;
-    double dist;
-    double newX;
-    float *headingArray;
-    sqInt bottomEdgeMode;
-
-	bottomEdgeMode = interpreterProxy->stackIntegerValue(0);
-	topEdgeMode = interpreterProxy->stackIntegerValue(1);
-	rightEdgeMode = interpreterProxy->stackIntegerValue(2);
-	leftEdgeMode = interpreterProxy->stackIntegerValue(3);
-	destHeight = interpreterProxy->stackFloatValue(4);
-	destWidth = interpreterProxy->stackFloatValue(5);
-	val = interpreterProxy->stackFloatValue(6);
-	headingOop = interpreterProxy->stackValue(7);
-	yOop = interpreterProxy->stackValue(8);
-	xOop = interpreterProxy->stackValue(9);
-	index = interpreterProxy->stackIntegerValue(10);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	if (!(interpreterProxy->isWords(xOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (!(interpreterProxy->isWords(yOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (!(interpreterProxy->isWords(headingOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	size = interpreterProxy->slotSizeOf(xOop);
-	if ((interpreterProxy->slotSizeOf(yOop)) != size) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if ((interpreterProxy->slotSizeOf(headingOop)) != size) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	xArray = interpreterProxy->firstIndexableField(xOop);
-	yArray = interpreterProxy->firstIndexableField(yOop);
-	headingArray = interpreterProxy->firstIndexableField(headingOop);
-	dist = val;
-	i = index - 1;
-	newX = (xArray[i]) + (dist * (cos(headingArray[i])));
-	newY = (yArray[i]) - (dist * (sin(headingArray[i])));
-	scalarXAtxArrayheadingArrayvaluedestWidthleftEdgeModerightEdgeMode(i, xArray, headingArray, newX, destWidth, leftEdgeMode, rightEdgeMode);
-	scalarYAtyArrayheadingArrayvaluedestHeighttopEdgeModebottomEdgeMode(i, yArray, headingArray, newY, destHeight, topEdgeMode, bottomEdgeMode);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->pop(11);
-}
-
-EXPORT(sqInt) primSetPixelsAtXY(void) {
-    sqInt pArrayOop;
-    sqInt isValueInt;
-    unsigned int *bits;
-    sqInt yArrayOop;
-    float *yArray;
-    sqInt i;
-    sqInt bitsIndex;
-    sqInt bitsHeight;
-    sqInt x;
-    float *xArray;
-    sqInt bitsWidth;
-    sqInt xArrayOop;
-    float *floatsValue;
-    sqInt fv;
-    sqInt size;
-    unsigned int *wordsValue;
-    unsigned int value;
-    sqInt valueOop;
-    sqInt y;
-    sqInt isValueWordArray;
-    sqInt bitsOop;
-    unsigned char *pArray;
-    unsigned int intValue;
-
-	valueOop = interpreterProxy->stackValue(0);
-	bitsHeight = interpreterProxy->stackIntegerValue(1);
-	bitsWidth = interpreterProxy->stackIntegerValue(2);
-	bitsOop = interpreterProxy->stackValue(3);
-	yArrayOop = interpreterProxy->stackValue(4);
-	xArrayOop = interpreterProxy->stackValue(5);
-	pArrayOop = interpreterProxy->stackValue(6);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	if (!(interpreterProxy->isBytes(pArrayOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (!(interpreterProxy->isWords(xArrayOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (!(interpreterProxy->isWords(yArrayOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (!(interpreterProxy->isWords(bitsOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if ((bitsHeight * bitsWidth) != (interpreterProxy->slotSizeOf(bitsOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	size = interpreterProxy->slotSizeOf(xArrayOop);
-	if ((interpreterProxy->slotSizeOf(pArrayOop)) != size) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if ((interpreterProxy->slotSizeOf(yArrayOop)) != size) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	pArray = interpreterProxy->firstIndexableField(pArrayOop);
-	xArray = interpreterProxy->firstIndexableField(xArrayOop);
-	yArray = interpreterProxy->firstIndexableField(yArrayOop);
-	isValueInt = (valueOop & 1);
-	if (isValueInt) {
-		intValue = (valueOop >> 1);
-		value = intValue;
-	} else {
-		if ((interpreterProxy->slotSizeOf(valueOop)) != size) {
-			interpreterProxy->primitiveFail();
-			return null;
-		}
-		isValueWordArray = interpreterProxy->isMemberOf(valueOop, "WordArray");
-		if (isValueWordArray) {
-			wordsValue = interpreterProxy->firstIndexableField(valueOop);
-		} else {
-			floatsValue = interpreterProxy->firstIndexableField(valueOop);
-		}
-	}
-	bits = interpreterProxy->firstIndexableField(bitsOop);
-	for (i = 0; i <= (size - 1); i += 1) {
-		if ((pArray[i]) == 1) {
-			x = ((int) (xArray[i]));
-			;
-			y = ((int) (yArray[i]));
-			;
-			if (((x >= 0) && (y >= 0)) && ((x < bitsWidth) && (y < bitsHeight))) {
-				bitsIndex = (y * bitsWidth) + x;
-				if (isValueInt) {
-					bits[bitsIndex] = value;
-				} else {
-					if (isValueWordArray) {
-						bits[bitsIndex] = (wordsValue[i]);
-					} else {
-						fv = floatsValue[i];
-						;
-						bits[bitsIndex] = fv;
-					}
-				}
-			}
-		}
-	}
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->pop(7);
-}
-
-EXPORT(sqInt) primTurtlesForward(void) {
-    double val;
-    double newX;
-    unsigned char *pArray;
-    sqInt yOop;
-    sqInt rightEdgeMode;
-    sqInt xOop;
-    sqInt pOop;
-    float *yArray;
-    sqInt i;
-    double newY;
-    sqInt isValVector;
-    float *xArray;
-    float *valArray;
-    sqInt headingOop;
-    sqInt size;
-    sqInt leftEdgeMode;
-    double destWidth;
-    sqInt topEdgeMode;
-    double destHeight;
-    sqInt valOop;
-    double dist;
-    float *headingArray;
-    sqInt bottomEdgeMode;
-
-	bottomEdgeMode = interpreterProxy->stackIntegerValue(0);
-	topEdgeMode = interpreterProxy->stackIntegerValue(1);
-	rightEdgeMode = interpreterProxy->stackIntegerValue(2);
-	leftEdgeMode = interpreterProxy->stackIntegerValue(3);
-	destHeight = interpreterProxy->stackFloatValue(4);
-	destWidth = interpreterProxy->stackFloatValue(5);
-	valOop = interpreterProxy->stackValue(6);
-	headingOop = interpreterProxy->stackValue(7);
-	yOop = interpreterProxy->stackValue(8);
-	xOop = interpreterProxy->stackValue(9);
-	pOop = interpreterProxy->stackValue(10);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	if (!(interpreterProxy->isBytes(pOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (!(interpreterProxy->isWords(xOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (!(interpreterProxy->isWords(yOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (!(interpreterProxy->isWords(headingOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (interpreterProxy->isFloatObject(valOop)) {
-		isValVector = 0;
-	} else {
-		if (interpreterProxy->isWords(valOop)) {
-			isValVector = 1;
-		} else {
-			interpreterProxy->primitiveFail();
-			return null;
-		}
-	}
-	size = interpreterProxy->slotSizeOf(xOop);
-	if ((interpreterProxy->slotSizeOf(yOop)) != size) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if ((interpreterProxy->slotSizeOf(headingOop)) != size) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if ((interpreterProxy->slotSizeOf(pOop)) != size) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if (isValVector) {
-		if ((interpreterProxy->slotSizeOf(valOop)) != size) {
-			interpreterProxy->primitiveFail();
-			return null;
-		}
-	}
-	pArray = interpreterProxy->firstIndexableField(pOop);
-	xArray = interpreterProxy->firstIndexableField(xOop);
-	yArray = interpreterProxy->firstIndexableField(yOop);
-	headingArray = interpreterProxy->firstIndexableField(headingOop);
-	if (isValVector) {
-		valArray = interpreterProxy->firstIndexableField(valOop);
-	} else {
-		val = interpreterProxy->floatValueOf(valOop);
-	}
-	for (i = 0; i <= (size - 1); i += 1) {
-		if ((pArray[i]) == 1) {
-			if (isValVector) {
-				dist = valArray[i];
-			} else {
-				dist = val;
-			}
-			newX = (xArray[i]) + (dist * (cos(headingArray[i])));
-			newY = (yArray[i]) - (dist * (sin(headingArray[i])));
-			scalarXAtxArrayheadingArrayvaluedestWidthleftEdgeModerightEdgeMode(i, xArray, headingArray, newX, destWidth, leftEdgeMode, rightEdgeMode);
-			scalarYAtyArrayheadingArrayvaluedestHeighttopEdgeModebottomEdgeMode(i, yArray, headingArray, newY, destHeight, topEdgeMode, bottomEdgeMode);
-		}
-	}
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->pop(11);
-}
-
-EXPORT(sqInt) primUpHill(void) {
-    sqInt rowOffset;
-    sqInt endX;
-    sqInt turtleY;
-    unsigned int *bits;
-    sqInt thisVal;
-    double tY;
-    sqInt x;
-    sqInt maxValY;
-    double tH;
-    sqInt startX;
-    sqInt width;
-    sqInt height;
-    sqInt ret;
-    sqInt endY;
-    sqInt y;
-    sqInt turtleX;
-    sqInt maxVal;
-    sqInt bitsOop;
-    sqInt startY;
-    double tX;
-    sqInt sniffRange;
-    sqInt maxValX;
-
-	sniffRange = interpreterProxy->stackIntegerValue(0);
-	height = interpreterProxy->stackIntegerValue(1);
-	width = interpreterProxy->stackIntegerValue(2);
-	bitsOop = interpreterProxy->stackValue(3);
-	tH = interpreterProxy->stackFloatValue(4);
-	tY = interpreterProxy->stackFloatValue(5);
-	tX = interpreterProxy->stackFloatValue(6);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	if (!(interpreterProxy->isWords(bitsOop))) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	if ((interpreterProxy->slotSizeOf(bitsOop)) != (height * width)) {
-		interpreterProxy->primitiveFail();
-		return null;
-	}
-	bits = interpreterProxy->firstIndexableField(bitsOop);
-	turtleX = tX;
-	turtleY = tY;
-	turtleX = ((turtleX < 0) ? 0 : turtleX);
-	turtleY = ((turtleY < 0) ? 0 : turtleY);
-	turtleX = ((turtleX < (width - 1)) ? turtleX : (width - 1));
-	turtleY = ((turtleY < (height - 1)) ? turtleY : (height - 1));
-	startX = (((turtleX - sniffRange) < 0) ? 0 : (turtleX - sniffRange));
-	endX = (((turtleX + sniffRange) < (width - 1)) ? (turtleX + sniffRange) : (width - 1));
-	startY = (((turtleY - sniffRange) < 0) ? 0 : (turtleY - sniffRange));
-	endY = (((turtleY + sniffRange) < (height - 1)) ? (turtleY + sniffRange) : (height - 1));
-	maxVal = bits[(turtleY * width) + turtleX];
-	maxValX = -1;
-	for (y = startY; y <= endY; y += 1) {
-		rowOffset = y * width;
-		for (x = startX; x <= endX; x += 1) {
-			thisVal = bits[rowOffset + x];
-			if (thisVal > maxVal) {
-				maxValX = x;
-				maxValY = y;
-				maxVal = thisVal;
-			}
-		}
-	}
-	if (-1 == maxValX) {
-		ret = radiansToDegrees(tH);
-	} else {
-		ret = (degreesFromXy(((double) (maxValX - turtleX)), ((double) (maxValY - turtleY)))) + 90.0;
-	}
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->pop(8);
-	interpreterProxy->pushFloat(ret);
-}
-
 static double radiansToDegrees(double radians) {
     double deg;
     double degrees;
@@ -4255,69 +4257,69 @@ EXPORT(sqInt) zoomBitmap(void) {
 
 
 void* KedamaPlugin2_exports[][3] = {
-	{"KedamaPlugin2", "setHeadingArrayFrom", (void*)setHeadingArrayFrom},
-	{"KedamaPlugin2", "drawTurtlesInArray", (void*)drawTurtlesInArray},
 	{"KedamaPlugin2", "primitivePredicateReplaceWords", (void*)primitivePredicateReplaceWords},
-	{"KedamaPlugin2", "turtlesSetY", (void*)turtlesSetY},
-	{"KedamaPlugin2", "primSetPixelsAtXY", (void*)primSetPixelsAtXY},
-	{"KedamaPlugin2", "makeMaskLog", (void*)makeMaskLog},
-	{"KedamaPlugin2", "primitivePredicateAtAllPutBoolean", (void*)primitivePredicateAtAllPutBoolean},
-	{"KedamaPlugin2", "primitiveAddScalar", (void*)primitiveAddScalar},
-	{"KedamaPlugin2", "getModuleName", (void*)getModuleName},
-	{"KedamaPlugin2", "primitiveMulArrays", (void*)primitiveMulArrays},
-	{"KedamaPlugin2", "primitiveLEArrays", (void*)primitiveLEArrays},
-	{"KedamaPlugin2", "getScalarHeading", (void*)getScalarHeading},
-	{"KedamaPlugin2", "primitiveAddArrays", (void*)primitiveAddArrays},
-	{"KedamaPlugin2", "primitiveSubScalar", (void*)primitiveSubScalar},
-	{"KedamaPlugin2", "vectorGetDistanceTo", (void*)vectorGetDistanceTo},
-	{"KedamaPlugin2", "scalarGetAngleTo", (void*)scalarGetAngleTo},
-	{"KedamaPlugin2", "primitivePredicateAtAllPutObject", (void*)primitivePredicateAtAllPutObject},
-	{"KedamaPlugin2", "setScalarHeading", (void*)setScalarHeading},
-	{"KedamaPlugin2", "primitiveSubArrays", (void*)primitiveSubArrays},
-	{"KedamaPlugin2", "primPixelAtXYPut", (void*)primPixelAtXYPut},
-	{"KedamaPlugin2", "primitiveAndByteArray", (void*)primitiveAndByteArray},
-	{"KedamaPlugin2", "makeTurtlesMap", (void*)makeTurtlesMap},
-	{"KedamaPlugin2", "vectorGetAngleTo", (void*)vectorGetAngleTo},
-	{"KedamaPlugin2", "primitiveRemScalar", (void*)primitiveRemScalar},
-	{"KedamaPlugin2", "primTurtlesForward", (void*)primTurtlesForward},
-	{"KedamaPlugin2", "shutdownModule", (void*)shutdownModule},
-	{"KedamaPlugin2", "primitiveNEScalar", (void*)primitiveNEScalar},
-	{"KedamaPlugin2", "primitiveRemArrays", (void*)primitiveRemArrays},
-	{"KedamaPlugin2", "primPixelsAtXY", (void*)primPixelsAtXY},
-	{"KedamaPlugin2", "primitiveGTScalar", (void*)primitiveGTScalar},
-	{"KedamaPlugin2", "getHeadingArrayInto", (void*)getHeadingArrayInto},
-	{"KedamaPlugin2", "primitiveDivScalar", (void*)primitiveDivScalar},
-	{"KedamaPlugin2", "randomRange", (void*)randomRange},
-	{"KedamaPlugin2", "kedamaSetRandomSeed", (void*)kedamaSetRandomSeed},
-	{"KedamaPlugin2", "primitiveNEArrays", (void*)primitiveNEArrays},
-	{"KedamaPlugin2", "primitivePredicateAtAllPutColor", (void*)primitivePredicateAtAllPutColor},
-	{"KedamaPlugin2", "primitiveEQScalar", (void*)primitiveEQScalar},
-	{"KedamaPlugin2", "primitiveGTArrays", (void*)primitiveGTArrays},
-	{"KedamaPlugin2", "primScalarForward", (void*)primScalarForward},
-	{"KedamaPlugin2", "primPixelAtXY", (void*)primPixelAtXY},
-	{"KedamaPlugin2", "primitiveGEScalar", (void*)primitiveGEScalar},
-	{"KedamaPlugin2", "primitiveDivArrays", (void*)primitiveDivArrays},
-	{"KedamaPlugin2", "scalarGetDistanceTo", (void*)scalarGetDistanceTo},
-	{"KedamaPlugin2", "primitivePredicateReplaceBytes", (void*)primitivePredicateReplaceBytes},
-	{"KedamaPlugin2", "primUpHill", (void*)primUpHill},
-	{"KedamaPlugin2", "primitiveEQArrays", (void*)primitiveEQArrays},
 	{"KedamaPlugin2", "zoomBitmap", (void*)zoomBitmap},
-	{"KedamaPlugin2", "primitiveOrByteArray", (void*)primitiveOrByteArray},
+	{"KedamaPlugin2", "primSetPixelsAtXY", (void*)primSetPixelsAtXY},
 	{"KedamaPlugin2", "setInterpreter", (void*)setInterpreter},
-	{"KedamaPlugin2", "primitiveLTScalar", (void*)primitiveLTScalar},
-	{"KedamaPlugin2", "primitiveGEArrays", (void*)primitiveGEArrays},
-	{"KedamaPlugin2", "turtleScalarSetX", (void*)turtleScalarSetX},
-	{"KedamaPlugin2", "makeMask", (void*)makeMask},
-	{"KedamaPlugin2", "primitiveNotByteArray", (void*)primitiveNotByteArray},
+	{"KedamaPlugin2", "primitiveDivScalar", (void*)primitiveDivScalar},
+	{"KedamaPlugin2", "primitiveLEArrays", (void*)primitiveLEArrays},
 	{"KedamaPlugin2", "primitivePredicateAtAllPutNumber", (void*)primitivePredicateAtAllPutNumber},
-	{"KedamaPlugin2", "turtlesSetX", (void*)turtlesSetX},
-	{"KedamaPlugin2", "randomIntoIntegerArray", (void*)randomIntoIntegerArray},
-	{"KedamaPlugin2", "primitiveLTArrays", (void*)primitiveLTArrays},
+	{"KedamaPlugin2", "primScalarForward", (void*)primScalarForward},
+	{"KedamaPlugin2", "primitiveGEScalar", (void*)primitiveGEScalar},
 	{"KedamaPlugin2", "randomIntoFloatArray", (void*)randomIntoFloatArray},
-	{"KedamaPlugin2", "primitiveMulScalar", (void*)primitiveMulScalar},
 	{"KedamaPlugin2", "turtleScalarSetY", (void*)turtleScalarSetY},
 	{"KedamaPlugin2", "initialiseModule", (void*)initialiseModule},
+	{"KedamaPlugin2", "primitivePredicateReplaceBytes", (void*)primitivePredicateReplaceBytes},
+	{"KedamaPlugin2", "primUpHill", (void*)primUpHill},
+	{"KedamaPlugin2", "turtlesSetY", (void*)turtlesSetY},
+	{"KedamaPlugin2", "primitiveEQArrays", (void*)primitiveEQArrays},
+	{"KedamaPlugin2", "primitiveGTScalar", (void*)primitiveGTScalar},
+	{"KedamaPlugin2", "makeMaskLog", (void*)makeMaskLog},
+	{"KedamaPlugin2", "primitivePredicateAtAllPutBoolean", (void*)primitivePredicateAtAllPutBoolean},
+	{"KedamaPlugin2", "getHeadingArrayInto", (void*)getHeadingArrayInto},
+	{"KedamaPlugin2", "randomRange", (void*)randomRange},
+	{"KedamaPlugin2", "primitiveNotByteArray", (void*)primitiveNotByteArray},
+	{"KedamaPlugin2", "primitiveNEArrays", (void*)primitiveNEArrays},
+	{"KedamaPlugin2", "primitiveRemScalar", (void*)primitiveRemScalar},
+	{"KedamaPlugin2", "primTurtlesForward", (void*)primTurtlesForward},
+	{"KedamaPlugin2", "primitivePredicateAtAllPutColor", (void*)primitivePredicateAtAllPutColor},
+	{"KedamaPlugin2", "primPixelAtXY", (void*)primPixelAtXY},
+	{"KedamaPlugin2", "primitiveSubScalar", (void*)primitiveSubScalar},
+	{"KedamaPlugin2", "primitiveMulScalar", (void*)primitiveMulScalar},
+	{"KedamaPlugin2", "primitiveDivArrays", (void*)primitiveDivArrays},
+	{"KedamaPlugin2", "primPixelsAtXY", (void*)primPixelsAtXY},
+	{"KedamaPlugin2", "primitiveAddScalar", (void*)primitiveAddScalar},
+	{"KedamaPlugin2", "primitiveLTScalar", (void*)primitiveLTScalar},
+	{"KedamaPlugin2", "primitiveGEArrays", (void*)primitiveGEArrays},
+	{"KedamaPlugin2", "vectorGetAngleTo", (void*)vectorGetAngleTo},
+	{"KedamaPlugin2", "shutdownModule", (void*)shutdownModule},
+	{"KedamaPlugin2", "primitiveGTArrays", (void*)primitiveGTArrays},
+	{"KedamaPlugin2", "vectorGetDistanceTo", (void*)vectorGetDistanceTo},
+	{"KedamaPlugin2", "scalarGetDistanceTo", (void*)scalarGetDistanceTo},
+	{"KedamaPlugin2", "primitiveRemArrays", (void*)primitiveRemArrays},
+	{"KedamaPlugin2", "primitiveSubArrays", (void*)primitiveSubArrays},
+	{"KedamaPlugin2", "primitiveOrByteArray", (void*)primitiveOrByteArray},
+	{"KedamaPlugin2", "primitiveMulArrays", (void*)primitiveMulArrays},
+	{"KedamaPlugin2", "kedamaSetRandomSeed", (void*)kedamaSetRandomSeed},
+	{"KedamaPlugin2", "randomIntoIntegerArray", (void*)randomIntoIntegerArray},
+	{"KedamaPlugin2", "primitiveAddArrays", (void*)primitiveAddArrays},
+	{"KedamaPlugin2", "primitiveLTArrays", (void*)primitiveLTArrays},
+	{"KedamaPlugin2", "primitivePredicateAtAllPutObject", (void*)primitivePredicateAtAllPutObject},
 	{"KedamaPlugin2", "primitiveLEScalar", (void*)primitiveLEScalar},
+	{"KedamaPlugin2", "setScalarHeading", (void*)setScalarHeading},
+	{"KedamaPlugin2", "setHeadingArrayFrom", (void*)setHeadingArrayFrom},
+	{"KedamaPlugin2", "drawTurtlesInArray", (void*)drawTurtlesInArray},
+	{"KedamaPlugin2", "getModuleName", (void*)getModuleName},
+	{"KedamaPlugin2", "primPixelAtXYPut", (void*)primPixelAtXYPut},
+	{"KedamaPlugin2", "turtleScalarSetX", (void*)turtleScalarSetX},
+	{"KedamaPlugin2", "primitiveAndByteArray", (void*)primitiveAndByteArray},
+	{"KedamaPlugin2", "makeTurtlesMap", (void*)makeTurtlesMap},
+	{"KedamaPlugin2", "makeMask", (void*)makeMask},
+	{"KedamaPlugin2", "primitiveEQScalar", (void*)primitiveEQScalar},
+	{"KedamaPlugin2", "getScalarHeading", (void*)getScalarHeading},
+	{"KedamaPlugin2", "turtlesSetX", (void*)turtlesSetX},
+	{"KedamaPlugin2", "scalarGetAngleTo", (void*)scalarGetAngleTo},
+	{"KedamaPlugin2", "primitiveNEScalar", (void*)primitiveNEScalar},
 	{NULL, NULL, NULL}
 };
 

@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:51 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:36 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -60,9 +62,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"MiscPrimitivePlugin 11 October 2006 (i)"
+	"MiscPrimitivePlugin 9 May 2008 (i)"
 #else
-	"MiscPrimitivePlugin 11 October 2006 (e)"
+	"MiscPrimitivePlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -688,15 +690,15 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
 void* MiscPrimitivePlugin_exports[][3] = {
 	{"MiscPrimitivePlugin", "primitiveCompareString", (void*)primitiveCompareString},
 	{"MiscPrimitivePlugin", "primitiveCompressToByteArray", (void*)primitiveCompressToByteArray},
-	{"MiscPrimitivePlugin", "getModuleName", (void*)getModuleName},
-	{"MiscPrimitivePlugin", "setInterpreter", (void*)setInterpreter},
+	{"MiscPrimitivePlugin", "primitiveDecompressFromByteArray", (void*)primitiveDecompressFromByteArray},
 	{"MiscPrimitivePlugin", "primitiveConvert8BitSigned", (void*)primitiveConvert8BitSigned},
 	{"MiscPrimitivePlugin", "primitiveFindFirstInString", (void*)primitiveFindFirstInString},
-	{"MiscPrimitivePlugin", "primitiveDecompressFromByteArray", (void*)primitiveDecompressFromByteArray},
-	{"MiscPrimitivePlugin", "primitiveTranslateStringWithTable", (void*)primitiveTranslateStringWithTable},
+	{"MiscPrimitivePlugin", "primitiveIndexOfAsciiInString", (void*)primitiveIndexOfAsciiInString},
+	{"MiscPrimitivePlugin", "setInterpreter", (void*)setInterpreter},
 	{"MiscPrimitivePlugin", "primitiveFindSubstring", (void*)primitiveFindSubstring},
 	{"MiscPrimitivePlugin", "primitiveStringHash", (void*)primitiveStringHash},
-	{"MiscPrimitivePlugin", "primitiveIndexOfAsciiInString", (void*)primitiveIndexOfAsciiInString},
+	{"MiscPrimitivePlugin", "getModuleName", (void*)getModuleName},
+	{"MiscPrimitivePlugin", "primitiveTranslateStringWithTable", (void*)primitiveTranslateStringWithTable},
 	{NULL, NULL, NULL}
 };
 

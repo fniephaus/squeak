@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(2 December 2007 6:17:45 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:27 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -61,9 +63,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DropPlugin 2 December 2007 (i)"
+	"DropPlugin 9 May 2008 (i)"
 #else
-	"DropPlugin 2 December 2007 (e)"
+	"DropPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -117,7 +119,7 @@ EXPORT(sqInt) primitiveDndOutSend(void) {
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	nbytes = interpreterProxy->slotSizeOf(((sqInt)(long)(bytes) - 4));
+	nbytes = interpreterProxy->slotSizeOf((oopForPointer( bytes ) - 4));
 	sqDndOutSend(bytes, nbytes);
 	if (interpreterProxy->failed()) {
 		return null;
@@ -138,7 +140,7 @@ EXPORT(sqInt) primitiveDndOutStart(void) {
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	ntypes = interpreterProxy->slotSizeOf(((sqInt)(long)(types) - 4));
+	ntypes = interpreterProxy->slotSizeOf((oopForPointer( types ) - 4));
 	sqDndOutStart(types, ntypes);
 	if (interpreterProxy->failed()) {
 		return null;
@@ -232,16 +234,16 @@ static sqInt sqAssert(sqInt aBool) {
 
 
 void* DropPlugin_exports[][3] = {
-	{"DropPlugin", "primitiveDropRequestFileName", (void*)primitiveDropRequestFileName},
 	{"DropPlugin", "shutdownModule", (void*)shutdownModule},
-	{"DropPlugin", "getModuleName", (void*)getModuleName},
 	{"DropPlugin", "primitiveDndOutAcceptedType", (void*)primitiveDndOutAcceptedType},
+	{"DropPlugin", "primitiveDropRequestFileName", (void*)primitiveDropRequestFileName},
 	{"DropPlugin", "primitiveDndOutStart", (void*)primitiveDndOutStart},
 	{"DropPlugin", "setInterpreter", (void*)setInterpreter},
-	{"DropPlugin", "setFileAccessCallback", (void*)setFileAccessCallback},
+	{"DropPlugin", "primitiveDndOutSend", (void*)primitiveDndOutSend},
 	{"DropPlugin", "initialiseModule", (void*)initialiseModule},
 	{"DropPlugin", "primitiveDropRequestFileHandle", (void*)primitiveDropRequestFileHandle},
-	{"DropPlugin", "primitiveDndOutSend", (void*)primitiveDndOutSend},
+	{"DropPlugin", "getModuleName", (void*)getModuleName},
+	{"DropPlugin", "setFileAccessCallback", (void*)setFileAccessCallback},
 	{NULL, NULL, NULL}
 };
 

@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(3 April 2008 3:29:13 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:52 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -43,7 +45,19 @@ EXPORT(const char*) getModuleName(void);
 static sqInt halt(void);
 static sqInt initialiseModule(void);
 static sqInt msg(char * s);
+static sqInt positive64BitIntegerForOverride(sqLong integerValue);
 #pragma export on
+EXPORT(sqInt) primitiveSqueakSinkAllocate(void);
+EXPORT(sqInt) primitiveSqueakSinkAudioGetData(void);
+EXPORT(sqInt) primitiveSqueakSinkFree(void);
+EXPORT(sqInt) primitiveSqueakSinkGetFrameRateDenominator(void);
+EXPORT(sqInt) primitiveSqueakSinkGetFrameRateNumerator(void);
+EXPORT(sqInt) primitiveSqueakSinkGetHeight(void);
+EXPORT(sqInt) primitiveSqueakSinkGetWidth(void);
+EXPORT(sqInt) primitiveSqueakSinkVideo(void);
+EXPORT(sqInt) primitiveSqueakSrc(void);
+EXPORT(sqInt) primitiveSqueakSrcAllocate(void);
+EXPORT(sqInt) primitiveSqueakSrcWithTime(void);
 EXPORT(sqInt) primitivegetinterpreterproxy(void);
 EXPORT(sqInt) primitivegetoop(void);
 EXPORT(sqInt) primitivegobjectclasslistproperties(void);
@@ -147,17 +161,6 @@ EXPORT(sqInt) primitivegstregistryforksetenabled(void);
 EXPORT(sqInt) primitivegstsegtrapisenabled(void);
 EXPORT(sqInt) primitivegstsegtrapsetenabled(void);
 EXPORT(sqInt) primitivegstversionstring(void);
-EXPORT(sqInt) primitiveSqueakSinkAllocate(void);
-EXPORT(sqInt) primitiveSqueakSinkAudioGetData(void);
-EXPORT(sqInt) primitiveSqueakSinkFree(void);
-EXPORT(sqInt) primitiveSqueakSinkGetFrameRateDenominator(void);
-EXPORT(sqInt) primitiveSqueakSinkGetFrameRateNumerator(void);
-EXPORT(sqInt) primitiveSqueakSinkGetHeight(void);
-EXPORT(sqInt) primitiveSqueakSinkGetWidth(void);
-EXPORT(sqInt) primitiveSqueakSinkVideo(void);
-EXPORT(sqInt) primitiveSqueakSrc(void);
-EXPORT(sqInt) primitiveSqueakSrcAllocate(void);
-EXPORT(sqInt) primitiveSqueakSrcWithTime(void);
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 #pragma export off
 static sqInt shutdownModule(void);
@@ -174,9 +177,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"GStreamerPlugin 3 April 2008 (i)"
+	"GStreamerPlugin 9 May 2008 (i)"
 #else
-	"GStreamerPlugin 3 April 2008 (e)"
+	"GStreamerPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -239,7 +242,402 @@ static sqInt initialiseModule(void) {
 }
 
 static sqInt msg(char * s) {
-	fprintf(stderr, "%s: %s\n", moduleName, s);
+	fprintf(stderr, "\n%s: %s", moduleName, s);
+}
+
+
+/*	Note - integerValue is interpreted as POSITIVE, eg, as the result of
+		Bitmap>at:, or integer>bitAnd:. */
+
+static sqInt positive64BitIntegerForOverride(sqLong integerValue) {
+	sqInt highWord;
+	sqInt value;
+	unsigned char * where;
+	sqInt i;
+	sqInt newLargeInteger;
+	sqInt sz;
+
+	if ((sizeof(integerValue)) == 4) {
+		return interpreterProxy->positive32BitIntegerFor(integerValue);
+	}
+
+	/* shift is coerced to usqInt otherwise */
+
+	highWord = integerValue >> 32;
+	if (highWord == 0) {
+		return interpreterProxy->positive32BitIntegerFor(integerValue);
+	}
+	sz = 5;
+	if (!((highWord = ((usqInt) highWord) >> 8) == 0)) {
+		sz += 1;
+	}
+	if (!((highWord = ((usqInt) highWord) >> 8) == 0)) {
+		sz += 1;
+	}
+	if (!((highWord = ((usqInt) highWord) >> 8) == 0)) {
+		sz += 1;
+	}
+	newLargeInteger = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classLargePositiveInteger(), sz);
+	where = interpreterProxy->firstIndexableField(newLargeInteger);
+	for (i = 0; i <= (sz - 1); i += 1) {
+		value = (integerValue >> (i * 8)) & 255;
+		where[i] = value;
+	}
+	return newLargeInteger;
+}
+
+EXPORT(sqInt) primitiveSqueakSinkAllocate(void) {
+	SqueakAudioVideoSinkPtr squeaker;
+	GstElement*  gstElement;
+	sqInt type;
+	sqInt semaphoreIndex;
+	sqInt gstElementOoop;
+	sqInt _return_value;
+
+	type = interpreterProxy->stackIntegerValue(2);
+	semaphoreIndex = interpreterProxy->stackIntegerValue(1);
+	gstElementOoop = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	gstElement = ((GstElement*) (interpreterProxy->positive32BitValueOf(gstElementOoop)));
+	squeaker = 0;
+	
+		squeaker = g_malloc0(sizeof(SqueakAudioVideoSink));
+		if (type) 
+			squeaker->handler = squeakVideoHandOff;
+		else
+			squeaker->handler = squeakAudioHandOff;
+		squeaker->owner = gstElement;
+		squeaker->interpreterProxy = interpreterProxy;
+		squeaker->semaphoreIndexForSink = semaphoreIndex;
+		squeaker->prerollCounter = 5;
+	;
+	;
+	_return_value = interpreterProxy->positive32BitIntegerFor(squeaker);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(4, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSinkAudioGetData(void) {
+	SqueakAudioVideoSinkPtr  sink;
+	sqInt newBytes;
+	sqInt aSqueakSinkObject;
+	sqInt _return_value;
+
+	aSqueakSinkObject = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	sink = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
+	newBytes = 0;
+	;
+	
+	GST_LOCK(sink->owner);
+	if (sink->copyToSendToSqueakAudio && GST_BUFFER_DATA(sink->copyToSendToSqueakAudio) 
+		&& GST_BUFFER_OFFSET_END(sink->copyToSendToSqueakAudio)) {
+		
+	/* Got data, yes lets move that into Squeak object space */ 
+	/* Also turn the semaphore off */
+			
+		newBytes = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classByteArray(), 
+			GST_BUFFER_OFFSET_END(sink->copyToSendToSqueakAudio));
+		if (newBytes) 
+			memcpy(interpreterProxy->arrayValueOf(newBytes), GST_BUFFER_DATA(sink->copyToSendToSqueakAudio),
+				 GST_BUFFER_OFFSET_END(sink->copyToSendToSqueakAudio));
+		GST_BUFFER_OFFSET_END(sink->copyToSendToSqueakAudio) = 0;
+	}
+
+	sink->semaphoreWasSignaled = 0;
+	GST_UNLOCK(sink->owner);
+	if (newBytes == 0) {
+		_return_value = interpreterProxy->nilObject();
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(2, _return_value);
+		return null;
+	}
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(2, newBytes);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSinkFree(void) {
+	SqueakAudioVideoSinkPtr  squeakSinkObject;
+	sqInt aSqueakSinkObject;
+
+	aSqueakSinkObject = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	squeakSinkObject = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
+	if (squeakSinkObject-> copyToSendToSqueakAudio) gst_buffer_unref(squeakSinkObject-> copyToSendToSqueakAudio);
+		if (squeakSinkObject-> copyToSendToSqueakVideo) g_free(squeakSinkObject->copyToSendToSqueakVideo); 
+		g_free(squeakSinkObject);
+	;
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->pop(1);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSinkGetFrameRateDenominator(void) {
+	sqInt value;
+	SqueakAudioVideoSinkPtr  squeakSinkObject;
+	sqInt aSqueakSinkObject;
+	sqInt _return_value;
+
+	aSqueakSinkObject = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	squeakSinkObject = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
+	;
+	value = 0;
+	value = squeakSinkObject->fps_d;
+	_return_value = interpreterProxy->positive32BitIntegerFor(value);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(2, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSinkGetFrameRateNumerator(void) {
+	sqInt value;
+	SqueakAudioVideoSinkPtr  squeakSinkObject;
+	sqInt aSqueakSinkObject;
+	sqInt _return_value;
+
+	aSqueakSinkObject = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	squeakSinkObject = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
+	;
+	value = 0;
+	value = squeakSinkObject->fps_n;
+	_return_value = interpreterProxy->positive32BitIntegerFor(value);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(2, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSinkGetHeight(void) {
+	sqInt value;
+	SqueakAudioVideoSinkPtr  squeakSinkObject;
+	sqInt aSqueakSinkObject;
+	sqInt _return_value;
+
+	aSqueakSinkObject = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	squeakSinkObject = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
+	;
+	value = 0;
+	value = squeakSinkObject->height;
+	_return_value = interpreterProxy->positive32BitIntegerFor(value);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(2, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSinkGetWidth(void) {
+	sqInt value;
+	SqueakAudioVideoSinkPtr  squeakSinkObject;
+	sqInt aSqueakSinkObject;
+	sqInt _return_value;
+
+	aSqueakSinkObject = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	squeakSinkObject = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
+	;
+	value = 0;
+	value = squeakSinkObject->width;
+	_return_value = interpreterProxy->positive32BitIntegerFor(value);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(2, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSinkVideo(void) {
+	SqueakAudioVideoSinkPtr  sink;
+	sqInt returnValue;
+	sqInt aSqueakSinkObject;
+	sqInt aBitMap;
+	sqInt _return_value;
+
+	aSqueakSinkObject = interpreterProxy->stackValue(1);
+	aBitMap = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	sink = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
+	returnValue = 0;
+	;
+	
+	GST_LOCK(sink->owner);
+	if (sink->allocbytes) {
+		
+	/* Got data, yes lets move that into Squeak object space */ 
+	/* Also turn the semaphore off */
+		memcpy(interpreterProxy->arrayValueOf(aBitMap), sink->copyToSendToSqueakVideo,sink->allocbytes);
+		returnValue = sink->frame_ready;
+	}
+
+	sink->semaphoreWasSignaled = 0;
+	sink->frame_ready = FALSE;
+	GST_UNLOCK(sink->owner);
+	_return_value = (returnValue) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(3, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSrc(void) {
+	sqInt doesFrameExist;
+	SqueakAudioVideoSinkPtr  sink;
+	sqInt aSqueakSinkObject;
+	sqInt data;
+	sqInt _return_value;
+
+	aSqueakSinkObject = interpreterProxy->stackValue(1);
+	data = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	sink = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
+	;
+	doesFrameExist = 0;
+	doesFrameExist = sink->frame_ready;
+	if (doesFrameExist) {
+		_return_value = (0) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+	
+	GST_LOCK(sink->owner);
+	sink->actualbytes = interpreterProxy->byteSizeOf(data);
+	if (sink->allocbytes && (sink->allocbytes >= sink->actualbytes)) {
+		memcpy(sink->copyToSendToSqueakVideo,interpreterProxy->arrayValueOf(data),sink->actualbytes);
+		sink->frame_ready = TRUE;
+	}
+
+	GST_UNLOCK(sink->owner);
+	_return_value = (1) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(3, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSrcAllocate(void) {
+	SqueakAudioVideoSinkPtr squeaker;
+	GstElement*  gstElement;
+	sqInt numberOfBytes;
+	sqInt semaphoreIndex;
+	sqInt gstElementOoop;
+	sqInt _return_value;
+
+	numberOfBytes = interpreterProxy->stackIntegerValue(2);
+	semaphoreIndex = interpreterProxy->stackIntegerValue(1);
+	gstElementOoop = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	gstElement = ((GstElement*) (interpreterProxy->positive32BitValueOf(gstElementOoop)));
+	squeaker = 0;
+	
+		squeaker = g_malloc0(sizeof(SqueakAudioVideoSink));
+		squeaker->handler = squeakSrcHandOff;
+		squeaker->owner = gstElement;
+		squeaker->semaphoreIndexForSink = semaphoreIndex;
+		squeaker->copyToSendToSqueakVideo = g_malloc(numberOfBytes);
+		squeaker->allocbytes = numberOfBytes;
+		squeaker->interpreterProxy = interpreterProxy;
+	;
+	;
+	_return_value = interpreterProxy->positive32BitIntegerFor(squeaker);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(4, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitiveSqueakSrcWithTime(void) {
+	GstClockTime  durationValue;
+	SqueakAudioVideoSinkPtr  sink;
+	sqInt doesFrameExist;
+	GstClockTime  startTimeValue;
+	sqInt aSqueakSinkObject;
+	sqInt data;
+	sqInt startTime;
+	sqInt duration;
+	sqInt _return_value;
+
+	aSqueakSinkObject = interpreterProxy->stackValue(3);
+	data = interpreterProxy->stackValue(2);
+	startTime = interpreterProxy->stackValue(1);
+	duration = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	sink = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
+	startTimeValue = ((GstClockTime) (interpreterProxy->positive64BitValueOf(startTime)));
+	durationValue = ((GstClockTime) (interpreterProxy->positive64BitValueOf(duration)));
+	;
+	;
+	;
+	doesFrameExist = 0;
+	doesFrameExist = sink->frame_ready;
+	if (doesFrameExist) {
+		_return_value = (0) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(5, _return_value);
+		return null;
+	}
+	
+	GST_LOCK(sink->owner);
+	sink->actualbytes = interpreterProxy->byteSizeOf(data);
+	if (sink->allocbytes && (sink->allocbytes >= sink->actualbytes)) {
+		memcpy(sink->copyToSendToSqueakVideo,interpreterProxy->arrayValueOf(data),sink->actualbytes);
+		sink->frame_ready = TRUE;
+		sink->startTime = startTimeValue;
+		sink->duration = durationValue;
+	}
+
+	GST_UNLOCK(sink->owner);
+	_return_value = (1) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(5, _return_value);
+	return null;
 }
 
 EXPORT(sqInt) primitivegetinterpreterproxy(void) {
@@ -308,9 +706,11 @@ EXPORT(sqInt) primitivegobjectclasslistproperties(void) {
 EXPORT(sqInt) primitivegobjectclasslistpropertyboolatIndex(void) {
 	 GParamSpec **  propertyspecs;
 	gboolean defaultValue;
+	GParamSpecBoolean * pstring;
 	sqInt boolValueOop;
 	sqInt defaultValueOop;
 	sqInt arrayOop;
+	GParamSpec * param;
 	gboolean boolValue;
 	GValue valueType = { 0, };
 	sqInt readable;
@@ -324,10 +724,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyboolatIndex(void) {
 	}
 	defaultValue = 0;
 	boolValue = 0;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecBoolean *pstring = G_PARAM_SPEC_BOOLEAN (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_BOOLEAN (param);
 		defaultValue = pstring->default_value;
 	interpreterProxy->pushRemappableOop(interpreterProxy->instantiateClassindexableSize(interpreterProxy->classArray(), 2));
 	defaultValueOop = (defaultValue) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
@@ -359,12 +763,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertydoubleatIndex(void) {
 	 GParamSpec **  propertyspecs;
 	sqInt longValueOop;
 	gdouble defaultValue;
+	GParamSpecDouble * pstring;
 	sqInt doubleValueOop;
 	gdouble minimumValue;
 	sqInt defaultValueOop;
 	sqInt doubleValue;
 	sqInt arrayOop;
 	sqInt minimumValueOop;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	gdouble maximumValue;
 	sqInt maximumValueOop;
@@ -379,10 +785,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertydoubleatIndex(void) {
 	}
 	defaultValue = 0;
 	doubleValue = 0;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecDouble *pstring = G_PARAM_SPEC_DOUBLE (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_DOUBLE (param);
 		defaultValue = pstring->default_value;
 		minimumValue = pstring->minimum;
 		maximumValue = pstring->maximum;
@@ -425,8 +835,10 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyenumatIndex(void) {
 	long longValue;
 	sqInt longValueOop;
 	long defaultValue;
+	GParamSpecEnum * pstring;
 	sqInt defaultValueOop;
 	sqInt arrayOop;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	sqInt readable;
 	sqInt index;
@@ -439,10 +851,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyenumatIndex(void) {
 	}
 	defaultValue = 0;
 	longValue = 0;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecEnum *pstring = G_PARAM_SPEC_ENUM (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_ENUM (param);
 		defaultValue = pstring->default_value;
 	interpreterProxy->pushRemappableOop(interpreterProxy->instantiateClassindexableSize(interpreterProxy->classArray(), 2));
 	defaultValueOop = interpreterProxy->positive32BitIntegerFor(defaultValue);
@@ -474,10 +890,12 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyfloatatIndex(void) {
 	 GParamSpec **  propertyspecs;
 	gfloat defaultValue;
 	gfloat floatValue;
+	GParamSpecFloat * pstring;
 	gfloat minimumValue;
 	sqInt defaultValueOop;
 	sqInt arrayOop;
 	sqInt minimumValueOop;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	sqInt floatValueOop;
 	gfloat maximumValue;
@@ -493,10 +911,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyfloatatIndex(void) {
 	}
 	defaultValue = 0;
 	floatValue = 0;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecFloat *pstring = G_PARAM_SPEC_FLOAT (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_FLOAT (param);
 		defaultValue = pstring->default_value;
 		minimumValue = pstring->minimum;
 		maximumValue = pstring->maximum;
@@ -538,10 +960,12 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyintatIndex(void) {
 	 GParamSpec **  propertyspecs;
 	int intValue;
 	int defaultValue;
+	GParamSpecInt * pstring;
 	int minimumValue;
 	sqInt defaultValueOop;
 	sqInt arrayOop;
 	sqInt minimumValueOop;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	int maximumValue;
 	sqInt maximumValueOop;
@@ -557,10 +981,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyintatIndex(void) {
 	}
 	defaultValue = 0;
 	intValue = 0;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecInt *pstring = G_PARAM_SPEC_INT (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_INT (param);
 		defaultValue = pstring->default_value;
 		minimumValue = pstring->minimum;
 		maximumValue = pstring->maximum;
@@ -603,10 +1031,12 @@ EXPORT(sqInt) primitivegobjectclasslistpropertylongatIndex(void) {
 	long longValue;
 	sqInt longValueOop;
 	long defaultValue;
+	GParamSpecLong * pstring;
 	long minimumValue;
 	sqInt defaultValueOop;
 	sqInt arrayOop;
 	sqInt minimumValueOop;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	long maximumValue;
 	sqInt maximumValueOop;
@@ -621,10 +1051,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertylongatIndex(void) {
 	}
 	defaultValue = 0;
 	longValue = 0;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecLong *pstring = G_PARAM_SPEC_LONG (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_LONG (param);
 		defaultValue = pstring->default_value;
 		minimumValue = pstring->minimum;
 		maximumValue = pstring->maximum;
@@ -665,10 +1099,12 @@ EXPORT(sqInt) primitivegobjectclasslistpropertylongatIndex(void) {
 EXPORT(sqInt) primitivegobjectclasslistpropertylonglongatIndex(void) {
 	 GParamSpec **  propertyspecs;
 	long long defaultValue;
+	GParamSpecInt64 * pstring;
 	long long minimumValue;
 	sqInt defaultValueOop;
 	sqInt arrayOop;
 	sqInt minimumValueOop;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	long long maximumValue;
 	sqInt longlongValueOop;
@@ -685,10 +1121,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertylonglongatIndex(void) {
 	}
 	defaultValue = 0;
 	longlongValue = 0;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecInt64 *pstring = G_PARAM_SPEC_INT64 (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_INT64 (param);
 		defaultValue = pstring->default_value;
 		minimumValue = pstring->minimum;
 		maximumValue = pstring->maximum;
@@ -735,6 +1175,7 @@ EXPORT(sqInt) primitivegobjectclasslistpropertymetaDataatIndex(void) {
 	sqInt arrayOop;
 	sqInt readwrite;
 	 char *  blurb;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	sqInt valueCodeOop;
 	 char *  name;
@@ -748,7 +1189,9 @@ EXPORT(sqInt) primitivegobjectclasslistpropertymetaDataatIndex(void) {
 	}
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
+	param = 0;
+	;
+	param = propertyspecs[index];
 	interpreterProxy->pushRemappableOop(interpreterProxy->instantiateClassindexableSize(interpreterProxy->classArray(), 4));
 	g_value_init (&valueType, param->value_type); 
 		valueCode = G_VALUE_TYPE (&valueType);
@@ -785,9 +1228,11 @@ EXPORT(sqInt) primitivegobjectclasslistpropertymetaDataatIndex(void) {
 EXPORT(sqInt) primitivegobjectclasslistpropertypointeratIndex(void) {
 	 GParamSpec **  propertyspecs;
 	long defaultValue;
+	GParamSpecEnum * pstring;
 	sqInt defaultValueOop;
 	sqInt pointerValueOop;
 	sqInt arrayOop;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	GObject *pointerValue;
 	sqInt readable;
@@ -801,10 +1246,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertypointeratIndex(void) {
 	}
 	defaultValue = 0;
 	pointerValue = 0;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecEnum *pstring = G_PARAM_SPEC_ENUM (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_ENUM (param);
 		defaultValue = pstring->default_value;
 	interpreterProxy->pushRemappableOop(interpreterProxy->instantiateClassindexableSize(interpreterProxy->classArray(), 2));
 	defaultValueOop = interpreterProxy->positive32BitIntegerFor(defaultValue);
@@ -836,9 +1285,11 @@ EXPORT(sqInt) primitivegobjectclasslistpropertystringatIndex(void) {
 	 GParamSpec **  propertyspecs;
 	sqInt readable;
 	 gchar *  defaultValue;
+	GParamSpecString * pstring;
 	sqInt defaultValueOop;
 	char *stringValue;
 	sqInt arrayOop;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	sqInt stringValueOop;
 	sqInt index;
@@ -851,10 +1302,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertystringatIndex(void) {
 	}
 	defaultValue = 0;
 	stringValue = null;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecString *pstring = G_PARAM_SPEC_STRING (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_STRING (param);
 		defaultValue = pstring->default_value;
 	interpreterProxy->pushRemappableOop(interpreterProxy->instantiateClassindexableSize(interpreterProxy->classArray(), 2));
 	if (defaultValue == 0) {
@@ -889,11 +1344,13 @@ EXPORT(sqInt) primitivegobjectclasslistpropertystringatIndex(void) {
 EXPORT(sqInt) primitivegobjectclasslistpropertyuintatIndex(void) {
 	 GParamSpec **  propertyspecs;
 	unsigned int  defaultValue;
+	GParamSpecUInt * pstring;
 	unsigned int  minimumValue;
 	sqInt defaultValueOop;
 	sqInt arrayOop;
 	unsigned int uintValue;
 	sqInt minimumValueOop;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	sqInt uintValueOop;
 	unsigned int  maximumValue;
@@ -909,10 +1366,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyuintatIndex(void) {
 	}
 	defaultValue = 0;
 	uintValue = 0;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecUInt *pstring = G_PARAM_SPEC_UINT (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_UINT (param);
 		defaultValue = pstring->default_value;
 		minimumValue = pstring->minimum;
 		maximumValue = pstring->maximum;
@@ -953,12 +1414,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyuintatIndex(void) {
 EXPORT(sqInt) primitivegobjectclasslistpropertyulongatIndex(void) {
 	 GParamSpec **  propertyspecs;
 	unsigned long  defaultValue;
+	GParamSpecULong * pstring;
 	unsigned long minimumValue;
 	sqInt defaultValueOop;
 	sqInt ulongValueOop;
 	sqInt arrayOop;
 	unsigned long ulongValue;
 	sqInt minimumValueOop;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	unsigned long maximumValue;
 	sqInt maximumValueOop;
@@ -973,10 +1436,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyulongatIndex(void) {
 	}
 	defaultValue = 0;
 	ulongValue = 0;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecULong *pstring = G_PARAM_SPEC_ULONG (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_ULONG (param);
 		defaultValue = pstring->default_value;
 		minimumValue = pstring->minimum;
 		maximumValue = pstring->maximum;
@@ -1017,12 +1484,14 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyulongatIndex(void) {
 EXPORT(sqInt) primitivegobjectclasslistpropertyulonglongatIndex(void) {
 	 GParamSpec **  propertyspecs;
 	unsigned long long defaultValue;
+	GParamSpecUInt64 * pstring;
 	unsigned long long minimumValue;
 	unsigned long long ulonglongValue;
 	sqInt defaultValueOop;
 	sqInt ulonglongValueOop;
 	sqInt arrayOop;
 	sqInt minimumValueOop;
+	GParamSpec * param;
 	GValue valueType = { 0, };
 	unsigned long long maximumValue;
 	sqInt maximumValueOop;
@@ -1037,26 +1506,30 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyulonglongatIndex(void) {
 	}
 	defaultValue = 0;
 	ulonglongValue = 0;
+	param = 0;
+	;
+	pstring = 0;
+	;
 	propertyspecs = ((GParamSpec **) (interpreterProxy->positive32BitValueOf(propertyspecsOop)));
 	;
-	GParamSpec *param = propertyspecs[index];
-	GParamSpecUInt64 *pstring = G_PARAM_SPEC_UINT64 (param);
+	param = propertyspecs[index];
+	pstring = G_PARAM_SPEC_UINT64 (param);
 		defaultValue = pstring->default_value;
 		minimumValue = pstring->minimum;
 		maximumValue = pstring->maximum;
 	interpreterProxy->pushRemappableOop(interpreterProxy->instantiateClassindexableSize(interpreterProxy->classArray(), 4));
-	defaultValueOop = interpreterProxy->positive64BitIntegerFor(defaultValue);
+	defaultValueOop = positive64BitIntegerForOverride(defaultValue);
 	interpreterProxy->pushRemappableOop(defaultValueOop);
-	minimumValueOop = interpreterProxy->positive64BitIntegerFor(minimumValue);
+	minimumValueOop = positive64BitIntegerForOverride(minimumValue);
 	interpreterProxy->pushRemappableOop(minimumValueOop);
-	maximumValueOop = interpreterProxy->positive64BitIntegerFor(maximumValue);
+	maximumValueOop = positive64BitIntegerForOverride(maximumValue);
 	interpreterProxy->pushRemappableOop(maximumValueOop);
 	readable = 0;
 	if (param->flags & G_PARAM_READABLE) readable = 1;
 	if (readable) {
 		g_value_init (&valueType, param->value_type);
 					ulonglongValue = g_value_get_uint64 (&valueType);
-		ulonglongValueOop = interpreterProxy->positive64BitIntegerFor(ulonglongValue);
+		ulonglongValueOop = positive64BitIntegerForOverride(ulonglongValue);
 	} else {
 		ulonglongValueOop = interpreterProxy->nilObject();
 	}
@@ -1358,7 +1831,7 @@ EXPORT(sqInt) primitivegobjectgetulonglongfrom(void) {
 	;
 	;
 	g_object_get(gstObject,aName,&value,NULL);
-	_return_value = interpreterProxy->positive64BitIntegerFor(value);
+	_return_value = positive64BitIntegerForOverride(value);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -2197,7 +2670,7 @@ EXPORT(sqInt) primitivegstelementgsignalconnect(void) {
 		return null;
 	}
 	element = ((GstElement *) (interpreterProxy->positive32BitValueOf(elementOop)));
-	listLength = interpreterProxy->slotSizeOf(((sqInt)(long)(data) - 4));
+	listLength = interpreterProxy->slotSizeOf((oopForPointer( data ) - 4));
 	callBackData = 0;
 	callBackData = (sqInt*) g_malloc0(sizeof(sqInt)*(1+listLength));
 	callBackData[0] = (((sqInt) listLength));
@@ -3209,7 +3682,7 @@ EXPORT(sqInt) primitivegstpipelinegetdelay(void) {
 	gstClockTime = 0;
 	;
 	gstClockTime = gst_pipeline_get_delay(gstPipeline);
-	_return_value = interpreterProxy->positive64BitIntegerFor(gstClockTime);
+	_return_value = positive64BitIntegerForOverride(gstClockTime);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -3235,7 +3708,7 @@ EXPORT(sqInt) primitivegstpipelinegetlaststreamtime(void) {
 	gstClockTime = 0;
 	;
 	gstClockTime = gst_pipeline_get_last_stream_time(gstPipeline);
-	_return_value = interpreterProxy->positive64BitIntegerFor(gstClockTime);
+	_return_value = positive64BitIntegerForOverride(gstClockTime);
 	if (interpreterProxy->failed()) {
 		return null;
 	}
@@ -3412,7 +3885,7 @@ EXPORT(sqInt) primitivegstpipelineuseclock(void) {
 /*	Applications might want to disable/enable the usage of fork() when rebuilding the registry. See gst_registry_fork_is_enabled() for more information.
 On platforms without fork(), this function will have no effect on the return value of gst_registry_fork_is_enabled().
 
-enabled :
+enabled:
 whether rebuilding the registry may fork
  */
 
@@ -3487,360 +3960,6 @@ EXPORT(sqInt) primitivegstversionstring(void) {
 		return null;
 	}
 	interpreterProxy->popthenPush(1, versionOOp);
-	return null;
-}
-
-EXPORT(sqInt) primitiveSqueakSinkAllocate(void) {
-	SqueakAudioVideoSinkPtr squeaker;
-	GstElement*  gstElement;
-	sqInt type;
-	sqInt semaphoreIndex;
-	sqInt gstElementOoop;
-	sqInt _return_value;
-
-	type = interpreterProxy->stackIntegerValue(2);
-	semaphoreIndex = interpreterProxy->stackIntegerValue(1);
-	gstElementOoop = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	gstElement = ((GstElement*) (interpreterProxy->positive32BitValueOf(gstElementOoop)));
-	squeaker = 0;
-	
-		squeaker = g_malloc0(sizeof(SqueakAudioVideoSink));
-		if (type) 
-			squeaker->handler = squeakVideoHandOff;
-		else
-			squeaker->handler = squeakAudioHandOff;
-		squeaker->owner = gstElement;
-		squeaker->interpreterProxy = interpreterProxy;
-		squeaker->semaphoreIndexForSink = semaphoreIndex;
-		squeaker->prerollCounter = 5;
-	;
-	;
-	_return_value = interpreterProxy->positive32BitIntegerFor(squeaker);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(4, _return_value);
-	return null;
-}
-
-EXPORT(sqInt) primitiveSqueakSinkAudioGetData(void) {
-	SqueakAudioVideoSinkPtr  sink;
-	sqInt newBytes;
-	sqInt aSqueakSinkObject;
-	sqInt _return_value;
-
-	aSqueakSinkObject = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	sink = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
-	newBytes = 0;
-	;
-	
-	GST_LOCK(sink->owner);
-	if (sink->copyToSendToSqueakAudio && GST_BUFFER_DATA(sink->copyToSendToSqueakAudio) 
-		&& GST_BUFFER_OFFSET_END(sink->copyToSendToSqueakAudio)) {
-		
-	/* Got data, yes lets move that into Squeak object space */ 
-	/* Also turn the semaphore off */
-			
-		newBytes = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classByteArray(), 
-			GST_BUFFER_OFFSET_END(sink->copyToSendToSqueakAudio));
-		if (newBytes) 
-			memcpy(interpreterProxy->arrayValueOf(newBytes), GST_BUFFER_DATA(sink->copyToSendToSqueakAudio),
-				 GST_BUFFER_OFFSET_END(sink->copyToSendToSqueakAudio));
-		GST_BUFFER_OFFSET_END(sink->copyToSendToSqueakAudio) = 0;
-	}
-
-	sink->semaphoreWasSignaled = 0;
-	GST_UNLOCK(sink->owner);
-	if (newBytes == 0) {
-		_return_value = interpreterProxy->nilObject();
-		if (interpreterProxy->failed()) {
-			return null;
-		}
-		interpreterProxy->popthenPush(2, _return_value);
-		return null;
-	}
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(2, newBytes);
-	return null;
-}
-
-EXPORT(sqInt) primitiveSqueakSinkFree(void) {
-	SqueakAudioVideoSinkPtr  squeakSinkObject;
-	sqInt aSqueakSinkObject;
-
-	aSqueakSinkObject = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	squeakSinkObject = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
-	if (squeakSinkObject-> copyToSendToSqueakAudio) gst_buffer_unref(squeakSinkObject-> copyToSendToSqueakAudio);
-		if (squeakSinkObject-> copyToSendToSqueakVideo) g_free(squeakSinkObject->copyToSendToSqueakVideo); 
-		g_free(squeakSinkObject);
-	;
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->pop(1);
-	return null;
-}
-
-EXPORT(sqInt) primitiveSqueakSinkGetFrameRateDenominator(void) {
-	sqInt value;
-	SqueakAudioVideoSinkPtr  squeakSinkObject;
-	sqInt aSqueakSinkObject;
-	sqInt _return_value;
-
-	aSqueakSinkObject = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	squeakSinkObject = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
-	;
-	value = 0;
-	value = squeakSinkObject->fps_d;
-	_return_value = interpreterProxy->positive32BitIntegerFor(value);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(2, _return_value);
-	return null;
-}
-
-EXPORT(sqInt) primitiveSqueakSinkGetFrameRateNumerator(void) {
-	sqInt value;
-	SqueakAudioVideoSinkPtr  squeakSinkObject;
-	sqInt aSqueakSinkObject;
-	sqInt _return_value;
-
-	aSqueakSinkObject = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	squeakSinkObject = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
-	;
-	value = 0;
-	value = squeakSinkObject->fps_n;
-	_return_value = interpreterProxy->positive32BitIntegerFor(value);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(2, _return_value);
-	return null;
-}
-
-EXPORT(sqInt) primitiveSqueakSinkGetHeight(void) {
-	sqInt value;
-	SqueakAudioVideoSinkPtr  squeakSinkObject;
-	sqInt aSqueakSinkObject;
-	sqInt _return_value;
-
-	aSqueakSinkObject = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	squeakSinkObject = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
-	;
-	value = 0;
-	value = squeakSinkObject->height;
-	_return_value = interpreterProxy->positive32BitIntegerFor(value);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(2, _return_value);
-	return null;
-}
-
-EXPORT(sqInt) primitiveSqueakSinkGetWidth(void) {
-	sqInt value;
-	SqueakAudioVideoSinkPtr  squeakSinkObject;
-	sqInt aSqueakSinkObject;
-	sqInt _return_value;
-
-	aSqueakSinkObject = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	squeakSinkObject = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
-	;
-	value = 0;
-	value = squeakSinkObject->width;
-	_return_value = interpreterProxy->positive32BitIntegerFor(value);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(2, _return_value);
-	return null;
-}
-
-EXPORT(sqInt) primitiveSqueakSinkVideo(void) {
-	SqueakAudioVideoSinkPtr  sink;
-	sqInt returnValue;
-	sqInt aSqueakSinkObject;
-	sqInt aBitMap;
-	sqInt _return_value;
-
-	aSqueakSinkObject = interpreterProxy->stackValue(1);
-	aBitMap = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	sink = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
-	returnValue = 0;
-	;
-	
-	GST_LOCK(sink->owner);
-	if (sink->allocbytes) {
-		
-	/* Got data, yes lets move that into Squeak object space */ 
-	/* Also turn the semaphore off */
-		memcpy(interpreterProxy->arrayValueOf(aBitMap), sink->copyToSendToSqueakVideo,sink->allocbytes);
-		returnValue = sink->frame_ready;
-	}
-
-	sink->semaphoreWasSignaled = 0;
-	sink->frame_ready = FALSE;
-	GST_UNLOCK(sink->owner);
-	_return_value = (returnValue) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(3, _return_value);
-	return null;
-}
-
-EXPORT(sqInt) primitiveSqueakSrc(void) {
-	sqInt doesFrameExist;
-	SqueakAudioVideoSinkPtr  sink;
-	sqInt aSqueakSinkObject;
-	sqInt data;
-	sqInt _return_value;
-
-	aSqueakSinkObject = interpreterProxy->stackValue(1);
-	data = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	sink = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
-	;
-	doesFrameExist = 0;
-	doesFrameExist = sink->frame_ready;
-	if (doesFrameExist) {
-		_return_value = (0) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
-		if (interpreterProxy->failed()) {
-			return null;
-		}
-		interpreterProxy->popthenPush(3, _return_value);
-		return null;
-	}
-	
-	GST_LOCK(sink->owner);
-	sink->actualbytes = interpreterProxy->byteSizeOf(data);
-	if (sink->allocbytes && (sink->allocbytes >= sink->actualbytes)) {
-		memcpy(sink->copyToSendToSqueakVideo,interpreterProxy->arrayValueOf(data),sink->actualbytes);
-		sink->frame_ready = TRUE;
-	}
-
-	GST_UNLOCK(sink->owner);
-	_return_value = (1) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(3, _return_value);
-	return null;
-}
-
-EXPORT(sqInt) primitiveSqueakSrcAllocate(void) {
-	SqueakAudioVideoSinkPtr squeaker;
-	GstElement*  gstElement;
-	sqInt numberOfBytes;
-	sqInt semaphoreIndex;
-	sqInt gstElementOoop;
-	sqInt _return_value;
-
-	numberOfBytes = interpreterProxy->stackIntegerValue(2);
-	semaphoreIndex = interpreterProxy->stackIntegerValue(1);
-	gstElementOoop = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	gstElement = ((GstElement*) (interpreterProxy->positive32BitValueOf(gstElementOoop)));
-	squeaker = 0;
-	
-		squeaker = g_malloc0(sizeof(SqueakAudioVideoSink));
-		squeaker->handler = squeakSrcHandOff;
-		squeaker->owner = gstElement;
-		squeaker->semaphoreIndexForSink = semaphoreIndex;
-		squeaker->copyToSendToSqueakVideo = g_malloc(numberOfBytes);
-		squeaker->allocbytes = numberOfBytes;
-		squeaker->interpreterProxy = interpreterProxy;
-	;
-	;
-	_return_value = interpreterProxy->positive32BitIntegerFor(squeaker);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(4, _return_value);
-	return null;
-}
-
-EXPORT(sqInt) primitiveSqueakSrcWithTime(void) {
-	GstClockTime  durationValue;
-	SqueakAudioVideoSinkPtr  sink;
-	sqInt doesFrameExist;
-	GstClockTime  startTimeValue;
-	sqInt aSqueakSinkObject;
-	sqInt data;
-	sqInt startTime;
-	sqInt duration;
-	sqInt _return_value;
-
-	aSqueakSinkObject = interpreterProxy->stackValue(3);
-	data = interpreterProxy->stackValue(2);
-	startTime = interpreterProxy->stackValue(1);
-	duration = interpreterProxy->stackValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	sink = ((SqueakAudioVideoSinkPtr) (interpreterProxy->positive32BitValueOf(aSqueakSinkObject)));
-	startTimeValue = ((GstClockTime) (interpreterProxy->positive64BitValueOf(startTime)));
-	durationValue = ((GstClockTime) (interpreterProxy->positive64BitValueOf(duration)));
-	;
-	;
-	;
-	doesFrameExist = 0;
-	doesFrameExist = sink->frame_ready;
-	if (doesFrameExist) {
-		_return_value = (0) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
-		if (interpreterProxy->failed()) {
-			return null;
-		}
-		interpreterProxy->popthenPush(5, _return_value);
-		return null;
-	}
-	
-	GST_LOCK(sink->owner);
-	sink->actualbytes = interpreterProxy->byteSizeOf(data);
-	if (sink->allocbytes && (sink->allocbytes >= sink->actualbytes)) {
-		memcpy(sink->copyToSendToSqueakVideo,interpreterProxy->arrayValueOf(data),sink->actualbytes);
-		sink->frame_ready = TRUE;
-		sink->startTime = startTimeValue;
-		sink->duration = durationValue;
-	}
-
-	GST_UNLOCK(sink->owner);
-	_return_value = (1) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(5, _return_value);
 	return null;
 }
 
@@ -4034,122 +4153,122 @@ static sqInt stringFromCString(const char * aCString) {
 
 
 void* GStreamerPlugin_exports[][3] = {
-	{"GStreamerPlugin", "primitivegstelementfactorygeturitype", (void*)primitivegstelementfactorygeturitype},
+	{"GStreamerPlugin", "primitiveSqueakSinkGetFrameRateDenominator", (void*)primitiveSqueakSinkGetFrameRateDenominator},
 	{"GStreamerPlugin", "primitivegsignalconnect", (void*)primitivegsignalconnect},
-	{"GStreamerPlugin", "primitivegstghostpadnew", (void*)primitivegstghostpadnew},
 	{"GStreamerPlugin", "primitivegstelementgetcompatiblepad", (void*)primitivegstelementgetcompatiblepad},
-	{"GStreamerPlugin", "primitiveSqueakSinkGetWidth", (void*)primitiveSqueakSinkGetWidth},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertystringatIndex", (void*)primitivegobjectclasslistpropertystringatIndex},
-	{"GStreamerPlugin", "primitivegstmessageparsebuffering", (void*)primitivegstmessageparsebuffering},
-	{"GStreamerPlugin", "primitivegstcapstostring", (void*)primitivegstcapstostring},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertymetaDataatIndex", (void*)primitivegobjectclasslistpropertymetaDataatIndex},
-	{"GStreamerPlugin", "primitivegstelementreleaserequestpad", (void*)primitivegstelementreleaserequestpad},
-	{"GStreamerPlugin", "primitivegstmessageparsesegmentstart", (void*)primitivegstmessageparsesegmentstart},
-	{"GStreamerPlugin", "primitivegstelementgsignalconnect", (void*)primitivegstelementgsignalconnect},
-	{"GStreamerPlugin", "primitivegstpipelinegetclock", (void*)primitivegstpipelinegetclock},
+	{"GStreamerPlugin", "primitivegstpipelinesetnewstreamtime", (void*)primitivegstpipelinesetnewstreamtime},
 	{"GStreamerPlugin", "primitivegstpipelinegetbus", (void*)primitivegstpipelinegetbus},
-	{"GStreamerPlugin", "primitivegstmessageparseduration", (void*)primitivegstmessageparseduration},
-	{"GStreamerPlugin", "primitivegstpipelinegetdelay", (void*)primitivegstpipelinegetdelay},
-	{"GStreamerPlugin", "primitivegstelementfactorygetklass", (void*)primitivegstelementfactorygetklass},
-	{"GStreamerPlugin", "primitiveSqueakSinkAudioGetData", (void*)primitiveSqueakSinkAudioGetData},
-	{"GStreamerPlugin", "primitivegobjectfree", (void*)primitivegobjectfree},
-	{"GStreamerPlugin", "primitivegstbinadd", (void*)primitivegstbinadd},
-	{"GStreamerPlugin", "primitivegstbuspeek", (void*)primitivegstbuspeek},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertypointeratIndex", (void*)primitivegobjectclasslistpropertypointeratIndex},
-	{"GStreamerPlugin", "primitivegobjectsetulonglongon", (void*)primitivegobjectsetulonglongon},
-	{"GStreamerPlugin", "primitivegstmessageparseerror", (void*)primitivegstmessageparseerror},
-	{"GStreamerPlugin", "primitivegobjectgetstringfrom", (void*)primitivegobjectgetstringfrom},
-	{"GStreamerPlugin", "primitivegstpipelinegetautoflushbus", (void*)primitivegstpipelinegetautoflushbus},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertyuintatIndex", (void*)primitivegobjectclasslistpropertyuintatIndex},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertydoubleatIndex", (void*)primitivegobjectclasslistpropertydoubleatIndex},
-	{"GStreamerPlugin", "primitivegstmessageparseinfo", (void*)primitivegstmessageparseinfo},
-	{"GStreamerPlugin", "primitivegstelementlinkfiltered", (void*)primitivegstelementlinkfiltered},
-	{"GStreamerPlugin", "primitivegobjectgetulonglongfrom", (void*)primitivegobjectgetulonglongfrom},
-	{"GStreamerPlugin", "primitivegobjectsetulongon", (void*)primitivegobjectsetulongon},
-	{"GStreamerPlugin", "primitivegobjectgetpointerfrom", (void*)primitivegobjectgetpointerfrom},
-	{"GStreamerPlugin", "primitivegstmessageparsesegmentdone", (void*)primitivegstmessageparsesegmentdone},
+	{"GStreamerPlugin", "setInterpreter", (void*)setInterpreter},
+	{"GStreamerPlugin", "primitiveSqueakSinkGetWidth", (void*)primitiveSqueakSinkGetWidth},
+	{"GStreamerPlugin", "primitivegobjectclasslistproperties", (void*)primitivegobjectclasslistproperties},
+	{"GStreamerPlugin", "primitivegstmessagetypestring", (void*)primitivegstmessagetypestring},
 	{"GStreamerPlugin", "primitiveSqueakSinkFree", (void*)primitiveSqueakSinkFree},
-	{"GStreamerPlugin", "primitivegstelementseeksimple", (void*)primitivegstelementseeksimple},
-	{"GStreamerPlugin", "primitivegstelementfactorymake", (void*)primitivegstelementfactorymake},
-	{"GStreamerPlugin", "primitiveSqueakSinkGetHeight", (void*)primitiveSqueakSinkGetHeight},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertyulongatIndex", (void*)primitivegobjectclasslistpropertyulongatIndex},
-	{"GStreamerPlugin", "primitivegstmessagesrc", (void*)primitivegstmessagesrc},
-	{"GStreamerPlugin", "primitivegstobjectunref", (void*)primitivegstobjectunref},
-	{"GStreamerPlugin", "primitivegetoop", (void*)primitivegetoop},
-	{"GStreamerPlugin", "primitivegstmessageparsestatechanged", (void*)primitivegstmessageparsestatechanged},
-	{"GStreamerPlugin", "primitivegstbinnew", (void*)primitivegstbinnew},
-	{"GStreamerPlugin", "primitivegstpadacceptcaps", (void*)primitivegstpadacceptcaps},
-	{"GStreamerPlugin", "primitivegstelementsetstate", (void*)primitivegstelementsetstate},
-	{"GStreamerPlugin", "primitivegstelementseek", (void*)primitivegstelementseek},
-	{"GStreamerPlugin", "primitivegobjectgetlongfrom", (void*)primitivegobjectgetlongfrom},
-	{"GStreamerPlugin", "primitivegstelementqueryconvert", (void*)primitivegstelementqueryconvert},
-	{"GStreamerPlugin", "primitivegobjectgetsmalltalkobject", (void*)primitivegobjectgetsmalltalkobject},
-	{"GStreamerPlugin", "primitivegstelementgetrequestpad", (void*)primitivegstelementgetrequestpad},
-	{"GStreamerPlugin", "primitiveSqueakSrc", (void*)primitiveSqueakSrc},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertylongatIndex", (void*)primitivegobjectclasslistpropertylongatIndex},
-	{"GStreamerPlugin", "primitivegstelementqueryposition", (void*)primitivegstelementqueryposition},
-	{"GStreamerPlugin", "primitivegstpipelinesetautoflushbus", (void*)primitivegstpipelinesetautoflushbus},
-	{"GStreamerPlugin", "getModuleName", (void*)getModuleName},
-	{"GStreamerPlugin", "primitiveSqueakSrcAllocate", (void*)primitiveSqueakSrcAllocate},
-	{"GStreamerPlugin", "primitivegobjectgetlonglongfrom", (void*)primitivegobjectgetlonglongfrom},
-	{"GStreamerPlugin", "primitivegobjectgetdoublefrom", (void*)primitivegobjectgetdoublefrom},
 	{"GStreamerPlugin", "primitivegobjectsetstringon", (void*)primitivegobjectsetstringon},
-	{"GStreamerPlugin", "primitivegobjectsetlonglongon", (void*)primitivegobjectsetlonglongon},
-	{"GStreamerPlugin", "primitivegstpadsetcaps", (void*)primitivegstpadsetcaps},
-	{"GStreamerPlugin", "primitivegobjectsetfloaton", (void*)primitivegobjectsetfloaton},
+	{"GStreamerPlugin", "primitiveSqueakSinkAudioGetData", (void*)primitiveSqueakSinkAudioGetData},
+	{"GStreamerPlugin", "primitivegstpadsetactive", (void*)primitivegstpadsetactive},
+	{"GStreamerPlugin", "primitivegstpadlink", (void*)primitivegstpadlink},
+	{"GStreamerPlugin", "primitiveSqueakSrcWithTime", (void*)primitiveSqueakSrcWithTime},
 	{"GStreamerPlugin", "primitivegstpipelineautoclock", (void*)primitivegstpipelineautoclock},
-	{"GStreamerPlugin", "primitivegstsegtrapsetenabled", (void*)primitivegstsegtrapsetenabled},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertylongatIndex", (void*)primitivegobjectclasslistpropertylongatIndex},
+	{"GStreamerPlugin", "primitivegstbuspeek", (void*)primitivegstbuspeek},
+	{"GStreamerPlugin", "primitivegstmessagesrc", (void*)primitivegstmessagesrc},
 	{"GStreamerPlugin", "primitivegobjectgetulongfrom", (void*)primitivegobjectgetulongfrom},
-	{"GStreamerPlugin", "primitivegstelementgetstaticpad", (void*)primitivegstelementgetstaticpad},
-	{"GStreamerPlugin", "primitivegstpipelinenew", (void*)primitivegstpipelinenew},
-	{"GStreamerPlugin", "primitivegstcapsfromstring", (void*)primitivegstcapsfromstring},
-	{"GStreamerPlugin", "primitivegstpipelineuseclock", (void*)primitivegstpipelineuseclock},
-	{"GStreamerPlugin", "primitivegstelementqueryduration", (void*)primitivegstelementqueryduration},
-	{"GStreamerPlugin", "primitivegobjectgetboolfrom", (void*)primitivegobjectgetboolfrom},
+	{"GStreamerPlugin", "primitivegstmessageparsesegmentstart", (void*)primitivegstmessageparsesegmentstart},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertyfloatatIndex", (void*)primitivegobjectclasslistpropertyfloatatIndex},
+	{"GStreamerPlugin", "primitivegstelementfactorygetlongname", (void*)primitivegstelementfactorygetlongname},
+	{"GStreamerPlugin", "primitivegstpipelinegetautoflushbus", (void*)primitivegstpipelinegetautoflushbus},
+	{"GStreamerPlugin", "primitivegstpadacceptcaps", (void*)primitivegstpadacceptcaps},
+	{"GStreamerPlugin", "primitiveSqueakSrcAllocate", (void*)primitiveSqueakSrcAllocate},
+	{"GStreamerPlugin", "primitivegstbushavepending", (void*)primitivegstbushavepending},
+	{"GStreamerPlugin", "primitivegstelementqueryconvert", (void*)primitivegstelementqueryconvert},
+	{"GStreamerPlugin", "primitivegobjectgetulonglongfrom", (void*)primitivegobjectgetulonglongfrom},
+	{"GStreamerPlugin", "primitivegobjectgetdoublefrom", (void*)primitivegobjectgetdoublefrom},
+	{"GStreamerPlugin", "primitivegstmessageparsebuffering", (void*)primitivegstmessageparsebuffering},
+	{"GStreamerPlugin", "primitivegstpipelinegetdelay", (void*)primitivegstpipelinegetdelay},
+	{"GStreamerPlugin", "primitivegobjectgetpointerfrom", (void*)primitivegobjectgetpointerfrom},
+	{"GStreamerPlugin", "primitiveSqueakSrc", (void*)primitiveSqueakSrc},
+	{"GStreamerPlugin", "primitivegstelementfactorymake", (void*)primitivegstelementfactorymake},
+	{"GStreamerPlugin", "primitivegobjectsetlongon", (void*)primitivegobjectsetlongon},
+	{"GStreamerPlugin", "primitivegobjectfree", (void*)primitivegobjectfree},
+	{"GStreamerPlugin", "primitivegobjectsetboolon", (void*)primitivegobjectsetboolon},
+	{"GStreamerPlugin", "primitivegstelementlink", (void*)primitivegstelementlink},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertyboolatIndex", (void*)primitivegobjectclasslistpropertyboolatIndex},
+	{"GStreamerPlugin", "primitivegstsegtrapsetenabled", (void*)primitivegstsegtrapsetenabled},
+	{"GStreamerPlugin", "primitivegstelementgetstate", (void*)primitivegstelementgetstate},
+	{"GStreamerPlugin", "primitivegstpipelinesetdelay", (void*)primitivegstpipelinesetdelay},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertyulongatIndex", (void*)primitivegobjectclasslistpropertyulongatIndex},
+	{"GStreamerPlugin", "primitivegobjectsetulonglongon", (void*)primitivegobjectsetulonglongon},
+	{"GStreamerPlugin", "primitivegstelementgsignalconnect", (void*)primitivegstelementgsignalconnect},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertylonglongatIndex", (void*)primitivegobjectclasslistpropertylonglongatIndex},
+	{"GStreamerPlugin", "primitivegstelementsetstate", (void*)primitivegstelementsetstate},
 	{"GStreamerPlugin", "primitivegstversionstring", (void*)primitivegstversionstring},
 	{"GStreamerPlugin", "primitiveSqueakSinkAllocate", (void*)primitiveSqueakSinkAllocate},
-	{"GStreamerPlugin", "primitivegobjectclasslistproperties", (void*)primitivegobjectclasslistproperties},
-	{"GStreamerPlugin", "primitivegstpipelinesetclock", (void*)primitivegstpipelinesetclock},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertyboolatIndex", (void*)primitivegobjectclasslistpropertyboolatIndex},
-	{"GStreamerPlugin", "primitivegobjectsetlongon", (void*)primitivegobjectsetlongon},
-	{"GStreamerPlugin", "primitivegstelementfactorygetdescription", (void*)primitivegstelementfactorygetdescription},
-	{"GStreamerPlugin", "primitivegstelementlink", (void*)primitivegstelementlink},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertyenumatIndex", (void*)primitivegobjectclasslistpropertyenumatIndex},
-	{"GStreamerPlugin", "primitivegstinitcheck", (void*)primitivegstinitcheck},
-	{"GStreamerPlugin", "primitivegstpipelinesetdelay", (void*)primitivegstpipelinesetdelay},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertyulonglongatIndex", (void*)primitivegobjectclasslistpropertyulonglongatIndex},
-	{"GStreamerPlugin", "primitivegstelementfactorycreate", (void*)primitivegstelementfactorycreate},
-	{"GStreamerPlugin", "primitivegobjectsetpointeron", (void*)primitivegobjectsetpointeron},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertylonglongatIndex", (void*)primitivegobjectclasslistpropertylonglongatIndex},
-	{"GStreamerPlugin", "primitivegetinterpreterproxy", (void*)primitivegetinterpreterproxy},
-	{"GStreamerPlugin", "primitivegstbushavepending", (void*)primitivegstbushavepending},
-	{"GStreamerPlugin", "primitiveSqueakSinkVideo", (void*)primitiveSqueakSinkVideo},
-	{"GStreamerPlugin", "primitivegstmessageparsewarning", (void*)primitivegstmessageparsewarning},
 	{"GStreamerPlugin", "primitivegobjectgetfloatfrom", (void*)primitivegobjectgetfloatfrom},
+	{"GStreamerPlugin", "primitivegobjectsetulongon", (void*)primitivegobjectsetulongon},
 	{"GStreamerPlugin", "primitivegstmessageunref", (void*)primitivegstmessageunref},
-	{"GStreamerPlugin", "primitivegstpadsetactive", (void*)primitivegstpadsetactive},
+	{"GStreamerPlugin", "primitivegstmessageparsesegmentdone", (void*)primitivegstmessageparsesegmentdone},
+	{"GStreamerPlugin", "primitivegstelementfactoryfind", (void*)primitivegstelementfactoryfind},
 	{"GStreamerPlugin", "primitivegstsegtrapisenabled", (void*)primitivegstsegtrapisenabled},
-	{"GStreamerPlugin", "primitivegstpadlink", (void*)primitivegstpadlink},
-	{"GStreamerPlugin", "primitivegstpadgetcaps", (void*)primitivegstpadgetcaps},
+	{"GStreamerPlugin", "primitivegstbinadd", (void*)primitivegstbinadd},
+	{"GStreamerPlugin", "primitivegstelementqueryposition", (void*)primitivegstelementqueryposition},
+	{"GStreamerPlugin", "primitivegstcapstostring", (void*)primitivegstcapstostring},
 	{"GStreamerPlugin", "primitiveSqueakSinkGetFrameRateNumerator", (void*)primitiveSqueakSinkGetFrameRateNumerator},
+	{"GStreamerPlugin", "primitivegstinitcheck", (void*)primitivegstinitcheck},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertyenumatIndex", (void*)primitivegobjectclasslistpropertyenumatIndex},
+	{"GStreamerPlugin", "primitivegstelementreleaserequestpad", (void*)primitivegstelementreleaserequestpad},
+	{"GStreamerPlugin", "primitivegstregistryforksetenabled", (void*)primitivegstregistryforksetenabled},
+	{"GStreamerPlugin", "primitivegstobjectunref", (void*)primitivegstobjectunref},
+	{"GStreamerPlugin", "primitivegobjectsetdoubleon", (void*)primitivegobjectsetdoubleon},
+	{"GStreamerPlugin", "primitivegstbuspop", (void*)primitivegstbuspop},
+	{"GStreamerPlugin", "primitivegstelementfactorygetauthor", (void*)primitivegstelementfactorygetauthor},
+	{"GStreamerPlugin", "primitivegobjectgetstringfrom", (void*)primitivegobjectgetstringfrom},
+	{"GStreamerPlugin", "primitivegstcapsfromstring", (void*)primitivegstcapsfromstring},
+	{"GStreamerPlugin", "primitivegstelementfactorygeturitype", (void*)primitivegstelementfactorygeturitype},
+	{"GStreamerPlugin", "primitivegstelementqueryduration", (void*)primitivegstelementqueryduration},
+	{"GStreamerPlugin", "primitivegstelementadd", (void*)primitivegstelementadd},
+	{"GStreamerPlugin", "primitivegstbinnew", (void*)primitivegstbinnew},
+	{"GStreamerPlugin", "primitivegstpipelinegetclock", (void*)primitivegstpipelinegetclock},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertyuintatIndex", (void*)primitivegobjectclasslistpropertyuintatIndex},
+	{"GStreamerPlugin", "primitivegobjectgetboolfrom", (void*)primitivegobjectgetboolfrom},
+	{"GStreamerPlugin", "primitivegobjectgetlonglongfrom", (void*)primitivegobjectgetlonglongfrom},
+	{"GStreamerPlugin", "primitivegstmessageparsewarning", (void*)primitivegstmessageparsewarning},
+	{"GStreamerPlugin", "primitivegobjectgetsmalltalkobject", (void*)primitivegobjectgetsmalltalkobject},
+	{"GStreamerPlugin", "primitivegstelementgetrequestpad", (void*)primitivegstelementgetrequestpad},
+	{"GStreamerPlugin", "primitivegstpipelinesetclock", (void*)primitivegstpipelinesetclock},
+	{"GStreamerPlugin", "primitivegstpadsetcaps", (void*)primitivegstpadsetcaps},
+	{"GStreamerPlugin", "primitivegobjectsetfloaton", (void*)primitivegobjectsetfloaton},
+	{"GStreamerPlugin", "primitivegstpadgetcaps", (void*)primitivegstpadgetcaps},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertymetaDataatIndex", (void*)primitivegobjectclasslistpropertymetaDataatIndex},
 	{"GStreamerPlugin", "primitivegstpipelinegetlaststreamtime", (void*)primitivegstpipelinegetlaststreamtime},
 	{"GStreamerPlugin", "primitivegstbuspopfilter", (void*)primitivegstbuspopfilter},
-	{"GStreamerPlugin", "primitivegstelementgetstate", (void*)primitivegstelementgetstate},
-	{"GStreamerPlugin", "primitivegstregistryforksetenabled", (void*)primitivegstregistryforksetenabled},
-	{"GStreamerPlugin", "primitivegobjectclasslistpropertyfloatatIndex", (void*)primitivegobjectclasslistpropertyfloatatIndex},
-	{"GStreamerPlugin", "primitiveSqueakSinkGetFrameRateDenominator", (void*)primitiveSqueakSinkGetFrameRateDenominator},
-	{"GStreamerPlugin", "primitivegstelementadd", (void*)primitivegstelementadd},
-	{"GStreamerPlugin", "primitivegstpipelinesetnewstreamtime", (void*)primitivegstpipelinesetnewstreamtime},
-	{"GStreamerPlugin", "setInterpreter", (void*)setInterpreter},
-	{"GStreamerPlugin", "primitivegstmessagetypestring", (void*)primitivegstmessagetypestring},
-	{"GStreamerPlugin", "primitivegstelementfactoryfind", (void*)primitivegstelementfactoryfind},
-	{"GStreamerPlugin", "primitivegobjectsetboolon", (void*)primitivegobjectsetboolon},
-	{"GStreamerPlugin", "primitiveSqueakSrcWithTime", (void*)primitiveSqueakSrcWithTime},
+	{"GStreamerPlugin", "primitivegstpipelinenew", (void*)primitivegstpipelinenew},
+	{"GStreamerPlugin", "primitivegobjectsetpointeron", (void*)primitivegobjectsetpointeron},
+	{"GStreamerPlugin", "primitivegstmessageparsestatechanged", (void*)primitivegstmessageparsestatechanged},
+	{"GStreamerPlugin", "primitivegstmessageparseerror", (void*)primitivegstmessageparseerror},
+	{"GStreamerPlugin", "getModuleName", (void*)getModuleName},
+	{"GStreamerPlugin", "primitivegstghostpadnew", (void*)primitivegstghostpadnew},
+	{"GStreamerPlugin", "primitivegstelementseek", (void*)primitivegstelementseek},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertydoubleatIndex", (void*)primitivegobjectclasslistpropertydoubleatIndex},
+	{"GStreamerPlugin", "primitivegstmessageparseinfo", (void*)primitivegstmessageparseinfo},
+	{"GStreamerPlugin", "primitivegobjectgetlongfrom", (void*)primitivegobjectgetlongfrom},
+	{"GStreamerPlugin", "primitivegstelementlinkfiltered", (void*)primitivegstelementlinkfiltered},
+	{"GStreamerPlugin", "primitivegstmessageparseduration", (void*)primitivegstmessageparseduration},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertystringatIndex", (void*)primitivegobjectclasslistpropertystringatIndex},
+	{"GStreamerPlugin", "primitivegetinterpreterproxy", (void*)primitivegetinterpreterproxy},
+	{"GStreamerPlugin", "primitiveSqueakSinkVideo", (void*)primitiveSqueakSinkVideo},
+	{"GStreamerPlugin", "primitivegstelementseeksimple", (void*)primitivegstelementseeksimple},
+	{"GStreamerPlugin", "primitivegobjectsetlonglongon", (void*)primitivegobjectsetlonglongon},
+	{"GStreamerPlugin", "primitiveSqueakSinkGetHeight", (void*)primitiveSqueakSinkGetHeight},
+	{"GStreamerPlugin", "primitivegstelementfactorygetklass", (void*)primitivegstelementfactorygetklass},
+	{"GStreamerPlugin", "primitivegstelementfactorygetdescription", (void*)primitivegstelementfactorygetdescription},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertypointeratIndex", (void*)primitivegobjectclasslistpropertypointeratIndex},
 	{"GStreamerPlugin", "primitivegobjectclasslistpropertyintatIndex", (void*)primitivegobjectclasslistpropertyintatIndex},
-	{"GStreamerPlugin", "primitivegobjectsetdoubleon", (void*)primitivegobjectsetdoubleon},
-	{"GStreamerPlugin", "primitivegstelementfactorygetauthor", (void*)primitivegstelementfactorygetauthor},
-	{"GStreamerPlugin", "primitivegstbuspop", (void*)primitivegstbuspop},
-	{"GStreamerPlugin", "primitivegstelementfactorygetlongname", (void*)primitivegstelementfactorygetlongname},
+	{"GStreamerPlugin", "primitivegobjectclasslistpropertyulonglongatIndex", (void*)primitivegobjectclasslistpropertyulonglongatIndex},
+	{"GStreamerPlugin", "primitivegstpipelinesetautoflushbus", (void*)primitivegstpipelinesetautoflushbus},
+	{"GStreamerPlugin", "primitivegstelementgetstaticpad", (void*)primitivegstelementgetstaticpad},
+	{"GStreamerPlugin", "primitivegetoop", (void*)primitivegetoop},
+	{"GStreamerPlugin", "primitivegstelementfactorycreate", (void*)primitivegstelementfactorycreate},
+	{"GStreamerPlugin", "primitivegstpipelineuseclock", (void*)primitivegstpipelineuseclock},
 	{NULL, NULL, NULL}
 };
 

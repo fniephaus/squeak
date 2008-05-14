@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(13 July 2007 11:57:57 am) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:12 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -60,9 +62,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"ADPCMCodecPlugin 13 July 2007 (i)"
+	"ADPCMCodecPlugin 9 May 2008 (i)"
 #else
-	"ADPCMCodecPlugin 13 July 2007 (e)"
+	"ADPCMCodecPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -754,6 +756,9 @@ EXPORT(sqInt) primitiveEncodeMono(void) {
 	pop(1);
 }
 
+
+/*	not yet implemented */
+
 EXPORT(sqInt) primitiveEncodeStereo(void) {
     sqInt rcvr;
     sqInt count;
@@ -790,12 +795,12 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
 
 
 void* ADPCMCodecPlugin_exports[][3] = {
-	{"ADPCMCodecPlugin", "setInterpreter", (void*)setInterpreter},
 	{"ADPCMCodecPlugin", "primitiveEncodeStereo", (void*)primitiveEncodeStereo},
-	{"ADPCMCodecPlugin", "primitiveDecodeStereo", (void*)primitiveDecodeStereo},
-	{"ADPCMCodecPlugin", "primitiveEncodeMono", (void*)primitiveEncodeMono},
-	{"ADPCMCodecPlugin", "getModuleName", (void*)getModuleName},
 	{"ADPCMCodecPlugin", "primitiveDecodeMono", (void*)primitiveDecodeMono},
+	{"ADPCMCodecPlugin", "getModuleName", (void*)getModuleName},
+	{"ADPCMCodecPlugin", "primitiveDecodeStereo", (void*)primitiveDecodeStereo},
+	{"ADPCMCodecPlugin", "setInterpreter", (void*)setInterpreter},
+	{"ADPCMCodecPlugin", "primitiveEncodeMono", (void*)primitiveEncodeMono},
 	{NULL, NULL, NULL}
 };
 

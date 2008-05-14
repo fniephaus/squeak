@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:54 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:39 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -59,9 +61,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"SerialPlugin 11 October 2006 (i)"
+	"SerialPlugin 9 May 2008 (i)"
 #else
-	"SerialPlugin 11 October 2006 (e)"
+	"SerialPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -160,7 +162,7 @@ EXPORT(sqInt) primitiveSerialPortRead(void) {
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	interpreterProxy->success((startIndex >= 1) && (((startIndex + count) - 1) <= (interpreterProxy->byteSizeOf(((sqInt)(long)(array) - 4)))));
+	interpreterProxy->success((startIndex >= 1) && (((startIndex + count) - 1) <= (interpreterProxy->byteSizeOf((oopForPointer( array ) - 4)))));
 	arrayPtr = ((((sqInt) array )) + startIndex) - 1;
 	bytesRead = serialPortReadInto( portNum, count, arrayPtr);
 	_return_value = interpreterProxy->integerObjectOf(bytesRead);
@@ -188,7 +190,7 @@ EXPORT(sqInt) primitiveSerialPortWrite(void) {
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	interpreterProxy->success((startIndex >= 1) && (((startIndex + count) - 1) <= (interpreterProxy->byteSizeOf(((sqInt)(long)(array) - 4)))));
+	interpreterProxy->success((startIndex >= 1) && (((startIndex + count) - 1) <= (interpreterProxy->byteSizeOf((oopForPointer( array ) - 4)))));
 	if (!(interpreterProxy->failed())) {
 		arrayPtr = ((((sqInt) array )) + startIndex) - 1;
 		bytesWritten = serialPortWriteFrom(portNum, count, arrayPtr);
@@ -229,14 +231,14 @@ static sqInt sqAssert(sqInt aBool) {
 
 
 void* SerialPlugin_exports[][3] = {
+	{"SerialPlugin", "primitiveSerialPortWrite", (void*)primitiveSerialPortWrite},
 	{"SerialPlugin", "shutdownModule", (void*)shutdownModule},
 	{"SerialPlugin", "getModuleName", (void*)getModuleName},
 	{"SerialPlugin", "primitiveSerialPortClose", (void*)primitiveSerialPortClose},
-	{"SerialPlugin", "setInterpreter", (void*)setInterpreter},
 	{"SerialPlugin", "primitiveSerialPortOpen", (void*)primitiveSerialPortOpen},
-	{"SerialPlugin", "primitiveSerialPortWrite", (void*)primitiveSerialPortWrite},
-	{"SerialPlugin", "initialiseModule", (void*)initialiseModule},
+	{"SerialPlugin", "setInterpreter", (void*)setInterpreter},
 	{"SerialPlugin", "primitiveSerialPortRead", (void*)primitiveSerialPortRead},
+	{"SerialPlugin", "initialiseModule", (void*)initialiseModule},
 	{NULL, NULL, NULL}
 };
 

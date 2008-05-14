@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:43 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:29 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -72,9 +74,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"FloatMathPlugin 11 October 2006 (i)"
+	"FloatMathPlugin 9 May 2008 (i)"
 #else
-	"FloatMathPlugin 11 October 2006 (e)"
+	"FloatMathPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -116,9 +118,6 @@ EXPORT(sqInt) primitiveArcCos(void) {
 		return null;
 	}
 	result = __ieee754_acos(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -135,9 +134,6 @@ EXPORT(sqInt) primitiveArcCosH(void) {
 		return null;
 	}
 	result = __ieee754_acosh(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -154,9 +150,6 @@ EXPORT(sqInt) primitiveArcSin(void) {
 		return null;
 	}
 	result = __ieee754_asin(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -173,9 +166,6 @@ EXPORT(sqInt) primitiveArcSinH(void) {
 		return null;
 	}
 	result = __ieee754_asinh(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -192,9 +182,6 @@ EXPORT(sqInt) primitiveArcTan(void) {
 		return null;
 	}
 	result = __ieee754_atan(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -213,9 +200,6 @@ EXPORT(sqInt) primitiveArcTan2(void) {
 		return null;
 	}
 	result = __ieee754_atan2(rcvr, arg);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -232,9 +216,6 @@ EXPORT(sqInt) primitiveArcTanH(void) {
 		return null;
 	}
 	result = __ieee754_atanh(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -251,9 +232,6 @@ EXPORT(sqInt) primitiveCos(void) {
 		return null;
 	}
 	result = __ieee754_cos(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -270,9 +248,6 @@ EXPORT(sqInt) primitiveCosH(void) {
 		return null;
 	}
 	result = __ieee754_cosh(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -289,9 +264,6 @@ EXPORT(sqInt) primitiveExp(void) {
 		return null;
 	}
 	result = __ieee754_exp(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -310,9 +282,6 @@ EXPORT(sqInt) primitiveFMod(void) {
 		return null;
 	}
 	result = __ieee754_fmod(rcvr, arg);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -330,9 +299,6 @@ EXPORT(sqInt) primitiveFractionalPart(void) {
 		return null;
 	}
 	result = __ieee754_modf(rcvr, &trunc);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -351,9 +317,6 @@ EXPORT(sqInt) primitiveHypot(void) {
 		return null;
 	}
 	result = __ieee754_hypot(rcvr, arg);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -373,9 +336,6 @@ EXPORT(sqInt) primitiveLog10(void) {
 		return interpreterProxy->primitiveFail();
 	}
 	result = __ieee754_log10(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -395,9 +355,6 @@ EXPORT(sqInt) primitiveLogN(void) {
 		return interpreterProxy->primitiveFail();
 	}
 	result = __ieee754_log(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -416,9 +373,6 @@ EXPORT(sqInt) primitiveRaisedToPower(void) {
 		return null;
 	}
 	result = __ieee754_pow(rcvr, arg);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -435,9 +389,6 @@ EXPORT(sqInt) primitiveSin(void) {
 		return null;
 	}
 	result = __ieee754_sin(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -454,9 +405,6 @@ EXPORT(sqInt) primitiveSinH(void) {
 		return null;
 	}
 	result = __ieee754_sinh(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -476,9 +424,6 @@ EXPORT(sqInt) primitiveSqrt(void) {
 		return interpreterProxy->primitiveFail();
 	}
 	result = __ieee754_sqrt(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -495,9 +440,6 @@ EXPORT(sqInt) primitiveTan(void) {
 		return null;
 	}
 	result = __ieee754_tan(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -514,9 +456,6 @@ EXPORT(sqInt) primitiveTanH(void) {
 		return null;
 	}
 	result = __ieee754_tanh(rcvr);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -535,9 +474,6 @@ EXPORT(sqInt) primitiveTimesTwoPower(void) {
 		return null;
 	}
 	result = __ieee754_ldexp(rcvr, arg);
-	if (isnan(result)) {
-		return interpreterProxy->primitiveFail();
-	}
 	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
 	interpreterProxy->pushFloat(result);
 }
@@ -562,30 +498,30 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
 
 
 void* FloatMathPlugin_exports[][3] = {
-	{"FloatMathPlugin", "primitiveTan", (void*)primitiveTan},
-	{"FloatMathPlugin", "primitiveLogN", (void*)primitiveLogN},
+	{"FloatMathPlugin", "primitiveFMod", (void*)primitiveFMod},
 	{"FloatMathPlugin", "primitiveArcSinH", (void*)primitiveArcSinH},
-	{"FloatMathPlugin", "primitiveFractionalPart", (void*)primitiveFractionalPart},
+	{"FloatMathPlugin", "primitiveHypot", (void*)primitiveHypot},
 	{"FloatMathPlugin", "primitiveLog10", (void*)primitiveLog10},
-	{"FloatMathPlugin", "getModuleName", (void*)getModuleName},
-	{"FloatMathPlugin", "primitiveTimesTwoPower", (void*)primitiveTimesTwoPower},
-	{"FloatMathPlugin", "setInterpreter", (void*)setInterpreter},
-	{"FloatMathPlugin", "primitiveArcCos", (void*)primitiveArcCos},
-	{"FloatMathPlugin", "primitiveArcSin", (void*)primitiveArcSin},
-	{"FloatMathPlugin", "primitiveArcTanH", (void*)primitiveArcTanH},
-	{"FloatMathPlugin", "primitiveCosH", (void*)primitiveCosH},
-	{"FloatMathPlugin", "primitiveArcTan2", (void*)primitiveArcTan2},
-	{"FloatMathPlugin", "primitiveSinH", (void*)primitiveSinH},
 	{"FloatMathPlugin", "primitiveArcTan", (void*)primitiveArcTan},
-	{"FloatMathPlugin", "primitiveExp", (void*)primitiveExp},
-	{"FloatMathPlugin", "primitiveSqrt", (void*)primitiveSqrt},
+	{"FloatMathPlugin", "setInterpreter", (void*)setInterpreter},
+	{"FloatMathPlugin", "primitiveTan", (void*)primitiveTan},
+	{"FloatMathPlugin", "primitiveArcCos", (void*)primitiveArcCos},
+	{"FloatMathPlugin", "primitiveCos", (void*)primitiveCos},
+	{"FloatMathPlugin", "getModuleName", (void*)getModuleName},
 	{"FloatMathPlugin", "primitiveSin", (void*)primitiveSin},
 	{"FloatMathPlugin", "primitiveTanH", (void*)primitiveTanH},
-	{"FloatMathPlugin", "primitiveFMod", (void*)primitiveFMod},
-	{"FloatMathPlugin", "primitiveRaisedToPower", (void*)primitiveRaisedToPower},
-	{"FloatMathPlugin", "primitiveCos", (void*)primitiveCos},
-	{"FloatMathPlugin", "primitiveHypot", (void*)primitiveHypot},
+	{"FloatMathPlugin", "primitiveTimesTwoPower", (void*)primitiveTimesTwoPower},
+	{"FloatMathPlugin", "primitiveExp", (void*)primitiveExp},
+	{"FloatMathPlugin", "primitiveArcTanH", (void*)primitiveArcTanH},
+	{"FloatMathPlugin", "primitiveCosH", (void*)primitiveCosH},
+	{"FloatMathPlugin", "primitiveFractionalPart", (void*)primitiveFractionalPart},
 	{"FloatMathPlugin", "primitiveArcCosH", (void*)primitiveArcCosH},
+	{"FloatMathPlugin", "primitiveArcTan2", (void*)primitiveArcTan2},
+	{"FloatMathPlugin", "primitiveSqrt", (void*)primitiveSqrt},
+	{"FloatMathPlugin", "primitiveLogN", (void*)primitiveLogN},
+	{"FloatMathPlugin", "primitiveRaisedToPower", (void*)primitiveRaisedToPower},
+	{"FloatMathPlugin", "primitiveArcSin", (void*)primitiveArcSin},
+	{"FloatMathPlugin", "primitiveSinH", (void*)primitiveSinH},
 	{NULL, NULL, NULL}
 };
 
