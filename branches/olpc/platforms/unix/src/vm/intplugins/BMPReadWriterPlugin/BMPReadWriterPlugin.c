@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:39 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:13 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -51,9 +53,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"BMPReadWriterPlugin 11 October 2006 (i)"
+	"BMPReadWriterPlugin 9 May 2008 (i)"
 #else
-	"BMPReadWriterPlugin 11 October 2006 (e)"
+	"BMPReadWriterPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -199,9 +201,9 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
 
 void* BMPReadWriterPlugin_exports[][3] = {
 	{"BMPReadWriterPlugin", "primitiveRead24BmpLine", (void*)primitiveRead24BmpLine},
+	{"BMPReadWriterPlugin", "setInterpreter", (void*)setInterpreter},
 	{"BMPReadWriterPlugin", "getModuleName", (void*)getModuleName},
 	{"BMPReadWriterPlugin", "primitiveWrite24BmpLine", (void*)primitiveWrite24BmpLine},
-	{"BMPReadWriterPlugin", "setInterpreter", (void*)setInterpreter},
 	{NULL, NULL, NULL}
 };
 

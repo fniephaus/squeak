@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:50 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:34 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -32,12 +34,15 @@
 /*** Constants ***/
 
 /*** Function Prototypes ***/
+#pragma export on
+EXPORT(sqInt) _primDigitBitShift(void);
+#pragma export off
 static sqInt anyBitOfBytesfromto(sqInt aBytesOop, sqInt start, sqInt stopArg);
 static sqInt byteSizeOfBytes(sqInt bytesOop);
-static sqInt bytesOrIntgrowTo(sqInt oop, sqInt len);
-static sqInt bytesgrowTo(sqInt aBytesObject, sqInt newLen);
 static sqInt bytesLshift(sqInt aBytesOop, sqInt shiftCount);
 static sqInt bytesRshiftbyteslookfirst(sqInt aBytesOop, sqInt anInteger, sqInt b, sqInt a);
+static sqInt bytesgrowTo(sqInt aBytesObject, sqInt newLen);
+static sqInt bytesOrIntgrowTo(sqInt oop, sqInt len);
 static sqInt cByteOpshortlenlongleninto(sqInt opIndex, unsigned char *  pByteShort, sqInt shortLen, unsigned char *  pByteLong, sqInt longLen, unsigned char *  pByteRes);
 static int cBytesCopyFromtolen(unsigned char *  pFrom, unsigned char *  pTo, sqInt len);
 static sqInt cBytesHighBitlen(unsigned char *   pByte, sqInt len);
@@ -60,8 +65,8 @@ static sqInt digitCompareLargewith(sqInt firstInteger, sqInt secondInteger);
 static sqInt digitDivLargewithnegative(sqInt firstInteger, sqInt secondInteger, sqInt neg);
 static sqInt digitLength(sqInt oop);
 static sqInt digitMultiplyLargewithnegative(sqInt firstInteger, sqInt secondInteger, sqInt neg);
-static sqInt digitOfBytesat(sqInt aBytesOop, sqInt ix);
 static sqInt digitOfat(sqInt oop, sqInt ix);
+static sqInt digitOfBytesat(sqInt aBytesOop, sqInt ix);
 static sqInt digitSubLargewith(sqInt firstInteger, sqInt secondInteger);
 static VirtualMachine * getInterpreter(void);
 #pragma export on
@@ -73,9 +78,9 @@ static void initialize(void);
 static sqInt isNormalized(sqInt anInteger);
 static sqInt msg(char * s);
 static sqInt negative(sqInt aLarge);
+static sqInt normalize(sqInt aLargeInteger);
 static sqInt normalizeNegative(sqInt aLargeNegativeInteger);
 static sqInt normalizePositive(sqInt aLargePositiveInteger);
-static sqInt normalize(sqInt aLargeInteger);
 #pragma export on
 EXPORT(sqInt) primAnyBitFromTo(void);
 EXPORT(sqInt) primAsLargeInteger(void);
@@ -105,9 +110,6 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 static sqInt sqAssert(sqInt aBool);
 static sqInt think(void);
 static sqInt unsafeByteOfat(sqInt bytesOop, sqInt ix);
-#pragma export on
-EXPORT(sqInt) _primDigitBitShift(void);
-#pragma export off
 /*** Variables ***/
 static const int  andOpIndex = 0;
 
@@ -117,14 +119,62 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"LargeIntegers v1.5 11 October 2006 (i)"
+	"LargeIntegers v1.5 9 May 2008 (i)"
 #else
-	"LargeIntegers v1.5 11 October 2006 (e)"
+	"LargeIntegers v1.5 9 May 2008 (e)"
 #endif
 ;
 static const int  orOpIndex = 1;
 static const int  xorOpIndex = 2;
 
+
+EXPORT(sqInt) _primDigitBitShift(void) {
+	sqInt rShift;
+	sqInt aLarge;
+	sqInt anInteger;
+	sqInt shiftCount;
+	sqInt _return_value;
+	sqInt aLargeInteger;
+
+	interpreterProxy->success(interpreterProxy->isKindOf(interpreterProxy->stackValue(1), "Integer"));
+	anInteger = interpreterProxy->stackValue(1);
+	shiftCount = interpreterProxy->stackIntegerValue(0);
+	/* missing DebugCode */;
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if ((anInteger & 1)) {
+		aLarge = createLargeFromSmallInteger(anInteger);
+	} else {
+		aLarge = anInteger;
+	}
+	if (shiftCount >= 0) {
+		_return_value = bytesLshift(aLarge, shiftCount);
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	} else {
+		rShift = 0 - shiftCount;
+		/* begin normalize: */
+		aLargeInteger = bytesRshiftbyteslookfirst(aLarge, rShift & 7, ((usqInt) rShift >> 3), interpreterProxy->slotSizeOf(aLarge));
+		/* missing DebugCode */;
+		if ((interpreterProxy->fetchClassOf(aLargeInteger)) == (interpreterProxy->classLargePositiveInteger())) {
+			_return_value = normalizePositive(aLargeInteger);
+			goto l1;
+		} else {
+			_return_value = normalizeNegative(aLargeInteger);
+			goto l1;
+		}
+	l1:	/* end normalize: */;
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->popthenPush(3, _return_value);
+		return null;
+	}
+}
 
 
 /*	Argument has to be aBytesOop! */
@@ -188,51 +238,6 @@ static sqInt anyBitOfBytesfromto(sqInt aBytesOop, sqInt start, sqInt stopArg) {
 
 static sqInt byteSizeOfBytes(sqInt bytesOop) {
 	return interpreterProxy->slotSizeOf(bytesOop);
-}
-
-
-/*	Attention: this method invalidates all oop's! Only newBytes is valid at return. */
-
-static sqInt bytesOrIntgrowTo(sqInt oop, sqInt len) {
-	sqInt val;
-	sqInt class;
-	sqInt newBytes;
-
-	if ((oop & 1)) {
-		val = (oop >> 1);
-		if (val < 0) {
-			class = interpreterProxy->classLargeNegativeInteger();
-		} else {
-			class = interpreterProxy->classLargePositiveInteger();
-		}
-		newBytes = interpreterProxy->instantiateClassindexableSize(class, len);
-		cCopyIntValtoBytes(val, newBytes);
-	} else {
-		newBytes = bytesgrowTo(oop, len);
-	}
-	return newBytes;
-}
-
-
-/*	Attention: this method invalidates all oop's! Only newBytes is valid at return. */
-/*	Does not normalize. */
-
-static sqInt bytesgrowTo(sqInt aBytesObject, sqInt newLen) {
-	sqInt copyLen;
-	sqInt oldLen;
-	sqInt newBytes;
-
-	interpreterProxy->pushRemappableOop(aBytesObject);
-	newBytes = interpreterProxy->instantiateClassindexableSize(interpreterProxy->fetchClassOf(aBytesObject), newLen);
-	aBytesObject = interpreterProxy->popRemappableOop();
-	oldLen = interpreterProxy->slotSizeOf(aBytesObject);
-	if (oldLen < newLen) {
-		copyLen = oldLen;
-	} else {
-		copyLen = newLen;
-	}
-	cBytesCopyFromtolen(interpreterProxy->firstIndexableField(aBytesObject), interpreterProxy->firstIndexableField(newBytes), copyLen);
-	return newBytes;
 }
 
 
@@ -313,6 +318,51 @@ l2:	/* end digitOfBytes:at: */;
 	newBytes = interpreterProxy->instantiateClassindexableSize(interpreterProxy->fetchClassOf(aBytesOop), newLen);
 	aBytesOop = interpreterProxy->popRemappableOop();
 	cCoreBytesRshiftCountnmfbytesfromlentolen(i, n, m, f, b, interpreterProxy->firstIndexableField(aBytesOop), oldLen, interpreterProxy->firstIndexableField(newBytes), newLen);
+	return newBytes;
+}
+
+
+/*	Attention: this method invalidates all oop's! Only newBytes is valid at return. */
+/*	Does not normalize. */
+
+static sqInt bytesgrowTo(sqInt aBytesObject, sqInt newLen) {
+	sqInt copyLen;
+	sqInt oldLen;
+	sqInt newBytes;
+
+	interpreterProxy->pushRemappableOop(aBytesObject);
+	newBytes = interpreterProxy->instantiateClassindexableSize(interpreterProxy->fetchClassOf(aBytesObject), newLen);
+	aBytesObject = interpreterProxy->popRemappableOop();
+	oldLen = interpreterProxy->slotSizeOf(aBytesObject);
+	if (oldLen < newLen) {
+		copyLen = oldLen;
+	} else {
+		copyLen = newLen;
+	}
+	cBytesCopyFromtolen(interpreterProxy->firstIndexableField(aBytesObject), interpreterProxy->firstIndexableField(newBytes), copyLen);
+	return newBytes;
+}
+
+
+/*	Attention: this method invalidates all oop's! Only newBytes is valid at return. */
+
+static sqInt bytesOrIntgrowTo(sqInt oop, sqInt len) {
+	sqInt val;
+	sqInt class;
+	sqInt newBytes;
+
+	if ((oop & 1)) {
+		val = (oop >> 1);
+		if (val < 0) {
+			class = interpreterProxy->classLargeNegativeInteger();
+		} else {
+			class = interpreterProxy->classLargePositiveInteger();
+		}
+		newBytes = interpreterProxy->instantiateClassindexableSize(class, len);
+		cCopyIntValtoBytes(val, newBytes);
+	} else {
+		newBytes = bytesgrowTo(oop, len);
+	}
 	return newBytes;
 }
 
@@ -1055,17 +1105,6 @@ static sqInt digitMultiplyLargewithnegative(sqInt firstInteger, sqInt secondInte
 	return null;
 }
 
-
-/*	Argument has to be aLargeInteger! */
-
-static sqInt digitOfBytesat(sqInt aBytesOop, sqInt ix) {
-	if (ix > (interpreterProxy->slotSizeOf(aBytesOop))) {
-		return 0;
-	} else {
-		return ((interpreterProxy->stObjectat(aBytesOop, ix)) >> 1);
-	}
-}
-
 static sqInt digitOfat(sqInt oop, sqInt ix) {
 	if ((oop & 1)) {
 		return cDigitOfCSIat((oop >> 1), ix);
@@ -1077,6 +1116,17 @@ static sqInt digitOfat(sqInt oop, sqInt ix) {
 			return ((interpreterProxy->stObjectat(oop, ix)) >> 1);
 		}
 		return null;
+	}
+}
+
+
+/*	Argument has to be aLargeInteger! */
+
+static sqInt digitOfBytesat(sqInt aBytesOop, sqInt ix) {
+	if (ix > (interpreterProxy->slotSizeOf(aBytesOop))) {
+		return 0;
+	} else {
+		return ((interpreterProxy->stObjectat(aBytesOop, ix)) >> 1);
 	}
 }
 
@@ -1256,6 +1306,18 @@ static sqInt negative(sqInt aLarge) {
 
 
 /*	Check for leading zeroes and return shortened copy if so. */
+
+static sqInt normalize(sqInt aLargeInteger) {
+	/* missing DebugCode */;
+	if ((interpreterProxy->fetchClassOf(aLargeInteger)) == (interpreterProxy->classLargePositiveInteger())) {
+		return normalizePositive(aLargeInteger);
+	} else {
+		return normalizeNegative(aLargeInteger);
+	}
+}
+
+
+/*	Check for leading zeroes and return shortened copy if so. */
 /*	First establish len = significant length. */
 
 static sqInt normalizeNegative(sqInt aLargeNegativeInteger) {
@@ -1337,18 +1399,6 @@ static sqInt normalizePositive(sqInt aLargePositiveInteger) {
 		return bytesgrowTo(aLargePositiveInteger, len);
 	} else {
 		return aLargePositiveInteger;
-	}
-}
-
-
-/*	Check for leading zeroes and return shortened copy if so. */
-
-static sqInt normalize(sqInt aLargeInteger) {
-	/* missing DebugCode */;
-	if ((interpreterProxy->fetchClassOf(aLargeInteger)) == (interpreterProxy->classLargePositiveInteger())) {
-		return normalizePositive(aLargeInteger);
-	} else {
-		return normalizeNegative(aLargeInteger);
 	}
 }
 
@@ -2220,85 +2270,37 @@ static sqInt unsafeByteOfat(sqInt bytesOop, sqInt ix) {
 	return ((interpreterProxy->stObjectat(bytesOop, ix)) >> 1);
 }
 
-EXPORT(sqInt) _primDigitBitShift(void) {
-	sqInt rShift;
-	sqInt aLarge;
-	sqInt anInteger;
-	sqInt shiftCount;
-	sqInt _return_value;
-	sqInt aLargeInteger;
-
-	interpreterProxy->success(interpreterProxy->isKindOf(interpreterProxy->stackValue(1), "Integer"));
-	anInteger = interpreterProxy->stackValue(1);
-	shiftCount = interpreterProxy->stackIntegerValue(0);
-	/* missing DebugCode */;
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	if ((anInteger & 1)) {
-		aLarge = createLargeFromSmallInteger(anInteger);
-	} else {
-		aLarge = anInteger;
-	}
-	if (shiftCount >= 0) {
-		_return_value = bytesLshift(aLarge, shiftCount);
-		if (interpreterProxy->failed()) {
-			return null;
-		}
-		interpreterProxy->popthenPush(3, _return_value);
-		return null;
-	} else {
-		rShift = 0 - shiftCount;
-		/* begin normalize: */
-		aLargeInteger = bytesRshiftbyteslookfirst(aLarge, rShift & 7, ((usqInt) rShift >> 3), interpreterProxy->slotSizeOf(aLarge));
-		/* missing DebugCode */;
-		if ((interpreterProxy->fetchClassOf(aLargeInteger)) == (interpreterProxy->classLargePositiveInteger())) {
-			_return_value = normalizePositive(aLargeInteger);
-			goto l1;
-		} else {
-			_return_value = normalizeNegative(aLargeInteger);
-			goto l1;
-		}
-	l1:	/* end normalize: */;
-		if (interpreterProxy->failed()) {
-			return null;
-		}
-		interpreterProxy->popthenPush(3, _return_value);
-		return null;
-	}
-}
-
 
 #ifdef SQUEAK_BUILTIN_PLUGIN
 
 
 void* LargeIntegers_exports[][3] = {
-	{"LargeIntegers", "primDigitAdd", (void*)primDigitAdd},
-	{"LargeIntegers", "primDigitDivNegative", (void*)primDigitDivNegative},
+	{"LargeIntegers", "primDigitMultiplyNegative", (void*)primDigitMultiplyNegative},
+	{"LargeIntegers", "primNormalizePositive", (void*)primNormalizePositive},
+	{"LargeIntegers", "primAnyBitFromTo", (void*)primAnyBitFromTo},
+	{"LargeIntegers", "setInterpreter", (void*)setInterpreter},
 	{"LargeIntegers", "getModuleName", (void*)getModuleName},
 	{"LargeIntegers", "primAsLargeInteger", (void*)primAsLargeInteger},
+	{"LargeIntegers", "primDigitBitAnd", (void*)primDigitBitAnd},
 	{"LargeIntegers", "primGetModuleName", (void*)primGetModuleName},
-	{"LargeIntegers", "primDigitMultiplyNegative", (void*)primDigitMultiplyNegative},
+	{"LargeIntegers", "_primDigitBitShift", (void*)_primDigitBitShift},
+	{"LargeIntegers", "primDigitAddWith", (void*)primDigitAddWith},
 	{"LargeIntegers", "primDigitCompareWith", (void*)primDigitCompareWith},
-	{"LargeIntegers", "primDigitDivWithNegative", (void*)primDigitDivWithNegative},
+	{"LargeIntegers", "primDigitSubtractWith", (void*)primDigitSubtractWith},
+	{"LargeIntegers", "primDigitBitShift", (void*)primDigitBitShift},
 	{"LargeIntegers", "primDigitSubtract", (void*)primDigitSubtract},
 	{"LargeIntegers", "primNormalizeNegative", (void*)primNormalizeNegative},
-	{"LargeIntegers", "_primDigitBitShift", (void*)_primDigitBitShift},
-	{"LargeIntegers", "primCheckIfCModuleExists", (void*)primCheckIfCModuleExists},
-	{"LargeIntegers", "primDigitBitShiftMagnitude", (void*)primDigitBitShiftMagnitude},
-	{"LargeIntegers", "primDigitBitAnd", (void*)primDigitBitAnd},
-	{"LargeIntegers", "primNormalizePositive", (void*)primNormalizePositive},
-	{"LargeIntegers", "primDigitBitXor", (void*)primDigitBitXor},
 	{"LargeIntegers", "primDigitBitLogicWithOp", (void*)primDigitBitLogicWithOp},
-	{"LargeIntegers", "primDigitBitShift", (void*)primDigitBitShift},
-	{"LargeIntegers", "setInterpreter", (void*)setInterpreter},
-	{"LargeIntegers", "primDigitMultiplyWithNegative", (void*)primDigitMultiplyWithNegative},
-	{"LargeIntegers", "primNormalize", (void*)primNormalize},
+	{"LargeIntegers", "primDigitAdd", (void*)primDigitAdd},
+	{"LargeIntegers", "primDigitDivWithNegative", (void*)primDigitDivWithNegative},
+	{"LargeIntegers", "primDigitBitShiftMagnitude", (void*)primDigitBitShiftMagnitude},
 	{"LargeIntegers", "primDigitBitOr", (void*)primDigitBitOr},
-	{"LargeIntegers", "primDigitAddWith", (void*)primDigitAddWith},
-	{"LargeIntegers", "primAnyBitFromTo", (void*)primAnyBitFromTo},
-	{"LargeIntegers", "primDigitSubtractWith", (void*)primDigitSubtractWith},
+	{"LargeIntegers", "primDigitMultiplyWithNegative", (void*)primDigitMultiplyWithNegative},
+	{"LargeIntegers", "primDigitBitXor", (void*)primDigitBitXor},
+	{"LargeIntegers", "primCheckIfCModuleExists", (void*)primCheckIfCModuleExists},
+	{"LargeIntegers", "primDigitDivNegative", (void*)primDigitDivNegative},
 	{"LargeIntegers", "primDigitCompare", (void*)primDigitCompare},
+	{"LargeIntegers", "primNormalize", (void*)primNormalize},
 	{NULL, NULL, NULL}
 };
 

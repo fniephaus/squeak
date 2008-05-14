@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(30 May 2007 6:15:17 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:46 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -57,9 +59,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"ClipboardExtendedPlugin 30 May 2007 (i)"
+	"ClipboardExtendedPlugin 9 May 2008 (i)"
 #else
-	"ClipboardExtendedPlugin 30 May 2007 (e)"
+	"ClipboardExtendedPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -102,8 +104,8 @@ EXPORT(sqInt) ioAddClipboardData(void) {
 		return null;
 	}
 	clipboardAddress = interpreterProxy->positive32BitValueOf(clipboard);
-	dataLength = interpreterProxy->slotSizeOf(((sqInt)(long)(data) - 4));
-	formatLength = interpreterProxy->slotSizeOf(((sqInt)(long)(aFormat) - 4));
+	dataLength = interpreterProxy->slotSizeOf((oopForPointer( data ) - 4));
+	formatLength = interpreterProxy->slotSizeOf((oopForPointer( aFormat ) - 4));
 	sqPasteboardPutItemFlavordatalengthformatTypeformatLength(clipboardAddress, data, dataLength, aFormat, formatLength);
 	if (interpreterProxy->failed()) {
 		return null;
@@ -184,7 +186,7 @@ EXPORT(sqInt) ioReadClipboardData(void) {
 		return null;
 	}
 	clipboardAddress = interpreterProxy->positive32BitValueOf(clipboard);
-	formatLength = interpreterProxy->slotSizeOf(((sqInt)(long)(format) - 4));
+	formatLength = interpreterProxy->slotSizeOf((oopForPointer( format ) - 4));
 	_return_value = sqPasteboardCopyItemFlavorDataformatformatLength(clipboardAddress, format, formatLength);
 	if (interpreterProxy->failed()) {
 		return null;
@@ -221,13 +223,13 @@ static sqInt sqAssert(sqInt aBool) {
 
 
 void* ClipboardExtendedPlugin_exports[][3] = {
-	{"ClipboardExtendedPlugin", "ioCreateClipboard", (void*)ioCreateClipboard},
-	{"ClipboardExtendedPlugin", "getModuleName", (void*)getModuleName},
-	{"ClipboardExtendedPlugin", "ioClearClipboard", (void*)ioClearClipboard},
-	{"ClipboardExtendedPlugin", "setInterpreter", (void*)setInterpreter},
-	{"ClipboardExtendedPlugin", "ioReadClipboardData", (void*)ioReadClipboardData},
 	{"ClipboardExtendedPlugin", "ioAddClipboardData", (void*)ioAddClipboardData},
 	{"ClipboardExtendedPlugin", "ioGetClipboardFormat", (void*)ioGetClipboardFormat},
+	{"ClipboardExtendedPlugin", "getModuleName", (void*)getModuleName},
+	{"ClipboardExtendedPlugin", "ioCreateClipboard", (void*)ioCreateClipboard},
+	{"ClipboardExtendedPlugin", "setInterpreter", (void*)setInterpreter},
+	{"ClipboardExtendedPlugin", "ioClearClipboard", (void*)ioClearClipboard},
+	{"ClipboardExtendedPlugin", "ioReadClipboardData", (void*)ioReadClipboardData},
 	{NULL, NULL, NULL}
 };
 

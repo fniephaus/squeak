@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:48:03 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:25:03 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -56,9 +58,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"UUIDPlugin 11 October 2006 (i)"
+	"UUIDPlugin 9 May 2008 (i)"
 #else
-	"UUIDPlugin 11 October 2006 (e)"
+	"UUIDPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -141,11 +143,11 @@ static sqInt sqAssert(sqInt aBool) {
 
 
 void* UUIDPlugin_exports[][3] = {
-	{"UUIDPlugin", "setInterpreter", (void*)setInterpreter},
-	{"UUIDPlugin", "initialiseModule", (void*)initialiseModule},
-	{"UUIDPlugin", "shutdownModule", (void*)shutdownModule},
-	{"UUIDPlugin", "getModuleName", (void*)getModuleName},
 	{"UUIDPlugin", "primitiveMakeUUID", (void*)primitiveMakeUUID},
+	{"UUIDPlugin", "getModuleName", (void*)getModuleName},
+	{"UUIDPlugin", "shutdownModule", (void*)shutdownModule},
+	{"UUIDPlugin", "initialiseModule", (void*)initialiseModule},
+	{"UUIDPlugin", "setInterpreter", (void*)setInterpreter},
 	{NULL, NULL, NULL}
 };
 

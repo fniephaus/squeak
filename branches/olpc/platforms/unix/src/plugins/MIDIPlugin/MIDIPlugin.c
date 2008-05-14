@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(25 March 2007 9:33:34 am) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:59 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -66,9 +68,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"MIDIPlugin 25 March 2007 (i)"
+	"MIDIPlugin 9 May 2008 (i)"
 #else
-	"MIDIPlugin 25 March 2007 (e)"
+	"MIDIPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -273,7 +275,7 @@ EXPORT(sqInt) primitiveMIDIRead(void) {
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	arrayLength = interpreterProxy->byteSizeOf(((sqInt)(long)(array) - 4));
+	arrayLength = interpreterProxy->byteSizeOf((oopForPointer( array ) - 4));
 	bytesRead = sqMIDIPortReadInto(portNum, arrayLength, ((sqInt) array ));
 	_return_value = interpreterProxy->integerObjectOf(bytesRead);
 	if (interpreterProxy->failed()) {
@@ -298,7 +300,7 @@ EXPORT(sqInt) primitiveMIDIWrite(void) {
 	if (interpreterProxy->failed()) {
 		return null;
 	}
-	arrayLength = interpreterProxy->byteSizeOf(((sqInt)(long)(array) - 4));
+	arrayLength = interpreterProxy->byteSizeOf((oopForPointer( array ) - 4));
 	bytesWritten = sqMIDIPortWriteFromAt(portNum, arrayLength, ((sqInt) array ), time);
 	_return_value = interpreterProxy->integerObjectOf(bytesWritten);
 	if (interpreterProxy->failed()) {
@@ -337,20 +339,20 @@ static sqInt sqAssert(sqInt aBool) {
 
 void* MIDIPlugin_exports[][3] = {
 	{"MIDIPlugin", "primitiveMIDIClosePort", (void*)primitiveMIDIClosePort},
-	{"MIDIPlugin", "primitiveMIDIRead", (void*)primitiveMIDIRead},
-	{"MIDIPlugin", "getModuleName", (void*)getModuleName},
-	{"MIDIPlugin", "setInterpreter", (void*)setInterpreter},
-	{"MIDIPlugin", "primitiveMIDIGetPortName", (void*)primitiveMIDIGetPortName},
-	{"MIDIPlugin", "primitiveMIDIParameterGetOrSet", (void*)primitiveMIDIParameterGetOrSet},
-	{"MIDIPlugin", "shutdownModule", (void*)shutdownModule},
 	{"MIDIPlugin", "primitiveMIDIWrite", (void*)primitiveMIDIWrite},
-	{"MIDIPlugin", "primitiveMIDIGetClock", (void*)primitiveMIDIGetClock},
+	{"MIDIPlugin", "primitiveMIDIParameterGet", (void*)primitiveMIDIParameterGet},
+	{"MIDIPlugin", "shutdownModule", (void*)shutdownModule},
+	{"MIDIPlugin", "primitiveMIDIOpenPort", (void*)primitiveMIDIOpenPort},
+	{"MIDIPlugin", "initialiseModule", (void*)initialiseModule},
+	{"MIDIPlugin", "setInterpreter", (void*)setInterpreter},
+	{"MIDIPlugin", "primitiveMIDIGetPortCount", (void*)primitiveMIDIGetPortCount},
+	{"MIDIPlugin", "getModuleName", (void*)getModuleName},
+	{"MIDIPlugin", "primitiveMIDIRead", (void*)primitiveMIDIRead},
 	{"MIDIPlugin", "primitiveMIDIGetPortDirectionality", (void*)primitiveMIDIGetPortDirectionality},
 	{"MIDIPlugin", "primitiveMIDIParameterSet", (void*)primitiveMIDIParameterSet},
-	{"MIDIPlugin", "initialiseModule", (void*)initialiseModule},
-	{"MIDIPlugin", "primitiveMIDIOpenPort", (void*)primitiveMIDIOpenPort},
-	{"MIDIPlugin", "primitiveMIDIGetPortCount", (void*)primitiveMIDIGetPortCount},
-	{"MIDIPlugin", "primitiveMIDIParameterGet", (void*)primitiveMIDIParameterGet},
+	{"MIDIPlugin", "primitiveMIDIGetPortName", (void*)primitiveMIDIGetPortName},
+	{"MIDIPlugin", "primitiveMIDIGetClock", (void*)primitiveMIDIGetClock},
+	{"MIDIPlugin", "primitiveMIDIParameterGetOrSet", (void*)primitiveMIDIParameterGetOrSet},
 	{NULL, NULL, NULL}
 };
 

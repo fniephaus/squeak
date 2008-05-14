@@ -26,7 +26,7 @@
  *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *   SOFTWARE.
  * 
- * Last edited: 2007-09-07 14:36:23 by piumarta on emilia
+ * Last edited: 2008-04-21 11:40:05 by piumarta on emilia
  */
 
 /* Why on earth does this plugin exist at all?  Brain death strikes
@@ -78,16 +78,17 @@ int dropRequestFileHandle(int dropIndex)
   return interpreterProxy->nilObject();
 }
 
-void sqDndOutStart(char * types, int ntypes)
+void sqDndOutStart(char *types, int ntypes)
 {
-  /* Now Squeak XDnD support up to 3 types */
-  if (! dndOutStart(types, ntypes))
+  /* XDnD supports up to 3 types */
+  if (!dndOutStart(types, ntypes))
     interpreterProxy->success(false);
 }
-int sqDndOutAcceptedType()
+
+int sqDndOutAcceptedType(void)
 {
   int outData;
-  char * dest;
+  char *dest;
   size_t nbuf;
   char buf[256];
 
@@ -101,7 +102,8 @@ int sqDndOutAcceptedType()
 
   return outData;
 }
-void sqDndOutSend(char * aByteArray, int nbytes)
+
+void sqDndOutSend(char *aByteArray, int nbytes)
 {
   dndOutSend(aByteArray, nbytes);
 }

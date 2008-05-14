@@ -1,6 +1,6 @@
 %define name    squeak-vm
-%define version 3.9
-%define minor   13
+%define version 3.10
+%define minor   3
 %define release %{minor}olpc1
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
@@ -63,10 +63,12 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
-* Wed Mar 26 2008 Bert Freudenberg <bert@freudenbergs.de>
-  - 3.9.13 NOT RELEASED YET
+* Wed May 14 2008 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.10-3olpc1; SVN r. 1878
   - updated DBus plugin (incompatible w/ previous versions)
-  - add GStreamer plugin
+  - add plugins: GStreamer, ImmX11, Aio
+  - fixed international keyboard input
+  - merged with trunk
 * Fri Jan 04 2008 Bert Freudenberg <bert@freudenbergs.de>
   - 3.9-12olpc5; SVN r. 1811
   - remove Mpeg3Plugin

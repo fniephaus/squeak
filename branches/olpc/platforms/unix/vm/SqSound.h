@@ -28,7 +28,7 @@ struct SqSound
   sqInt  (*snd_SetRecordLevel)(sqInt level);
   int    (*snd_GetSwitch)(int id, int captureFlag, int channel);
   int    (*snd_SetSwitch)(int id, int captureFlag, int parameter);
-  int    (*snd_SetDevice)(int id, char* name);
+  int    (*snd_SetDevice)(int id, char *name);
 };
 
 

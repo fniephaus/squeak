@@ -28,11 +28,11 @@
 # 
 # Author: Ian.Piumarta@SqueakLand.org
 # 
-# Last edited: 2007-09-07 13:37:14 by piumarta on emilia
+# Last edited: 2008-05-09 11:06:34 by piumarta on emilia
 
 AC_INIT([config.h.in])
 
-AC_VM_VERSION(3,9,12, 3,9x,7024)
+AC_VM_VERSION(3,10,3, 3,10,7159)
 
 topdir=`cd ${srcdir}/../../..; pwd`
 cfgdir=`cd ${srcdir}; pwd`
@@ -251,7 +251,8 @@ AC_C_BYTEORDER
 AC_C_DOUBLE_ALIGNMENT
 AC_C_DOUBLE_ORDER
 
-#override FC6 new hash style to preserve compatibility across distros
+# Override Fedora Core 6 new hash style to preserve compatibility across distros
+
 AC_CACHE_CHECK(for --hash-style option,
   ld_cv_hashstyle, [dnl
   if AC_TRY_COMMAND([${LD-ld} --hash-style=sysv --version 1>&AS_MESSAGE_LOG_FD])

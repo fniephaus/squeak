@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:58 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:45 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -92,9 +94,9 @@
 #define PrimVtxRasterPosX 8
 #define PrimVtxRasterPosY 9
 #define PrimVtxRasterPosZ 10
-#define PrimVtxTexCoords 6
 #define PrimVtxTexCoordU 6
 #define PrimVtxTexCoordV 7
+#define PrimVtxTexCoords 6
 #define SpecularPart 8
 #define SpotLightDeltaCos 24
 #define SpotLightExponent 25
@@ -116,8 +118,8 @@ EXPORT(sqInt) b3dClipPolygon(void);
 EXPORT(sqInt) b3dComputeMinIndexZ(void);
 EXPORT(sqInt) b3dComputeMinZ(void);
 EXPORT(sqInt) b3dDetermineClipFlags(void);
-EXPORT(sqInt) b3dInitializeRasterizerState(void);
 EXPORT(sqInt) b3dInitPrimitiveObject(void);
+EXPORT(sqInt) b3dInitializeRasterizerState(void);
 EXPORT(sqInt) b3dInplaceHouseHolderInvert(void);
 EXPORT(sqInt) b3dLoadIndexArray(void);
 EXPORT(sqInt) b3dLoadVertexBuffer(void);
@@ -127,28 +129,28 @@ EXPORT(sqInt) b3dPrimitiveNextClippedTriangle(void);
 EXPORT(sqInt) b3dPrimitiveObjectSize(void);
 EXPORT(sqInt) b3dPrimitiveTextureSize(void);
 EXPORT(sqInt) b3dRasterizerVersion(void);
-EXPORT(sqInt) b3dShaderVersion(void);
 EXPORT(sqInt) b3dShadeVertexBuffer(void);
+EXPORT(sqInt) b3dShaderVersion(void);
 EXPORT(sqInt) b3dStartRasterizer(void);
 EXPORT(sqInt) b3dTransformDirection(void);
-EXPORT(sqInt) b3dTransformerVersion(void);
 EXPORT(sqInt) b3dTransformMatrixWithInto(void);
 EXPORT(sqInt) b3dTransformPoint(void);
 EXPORT(sqInt) b3dTransformPrimitiveNormal(void);
 EXPORT(sqInt) b3dTransformPrimitivePosition(void);
 EXPORT(sqInt) b3dTransformPrimitiveRasterPosition(void);
 EXPORT(sqInt) b3dTransformVertexBuffer(void);
+EXPORT(sqInt) b3dTransformerVersion(void);
 EXPORT(sqInt) b3dTransposeMatrix(void);
 #pragma export off
 static double backClipValueFromto(sqInt last, sqInt next);
 static double bottomClipValueFromto(sqInt last, sqInt next);
+static sqInt clipPolygoncountwithmask(int *vtxArray, sqInt vtxCount, int *tempVtxArray, sqInt outMask);
 static sqInt clipPolygonBackFromtocount(int *buf1, int *buf2, sqInt n);
 static sqInt clipPolygonBottomFromtocount(int *buf1, int *buf2, sqInt n);
 static sqInt clipPolygonFrontFromtocount(int *buf1, int *buf2, sqInt n);
 static sqInt clipPolygonLeftFromtocount(int *buf1, int *buf2, sqInt n);
 static sqInt clipPolygonRightFromtocount(int *buf1, int *buf2, sqInt n);
 static sqInt clipPolygonTopFromtocount(int *buf1, int *buf2, sqInt n);
-static sqInt clipPolygoncountwithmask(int *vtxArray, sqInt vtxCount, int *tempVtxArray, sqInt outMask);
 static sqInt computeAttenuation(void);
 static sqInt computeDirection(void);
 static sqInt computeSpecularDirection(void);
@@ -173,8 +175,8 @@ static sqInt loadObjectsFrom(sqInt stackIndex);
 static sqInt loadPrimitiveLightSource(void);
 static sqInt loadPrimitiveVertex(void);
 static sqInt loadRasterizerState(sqInt stackIndex);
-static sqInt loadTexturesFrom(sqInt stackIndex);
 static sqInt loadTextureinto(sqInt textureOop, B3DTexture *destPtr);
+static sqInt loadTexturesFrom(sqInt stackIndex);
 static sqInt loadViewportFrom(sqInt stackIndex);
 static sqInt mapVBofSizeinto(void *vtxArray, sqInt vtxCount, sqInt boxArray);
 #pragma export on
@@ -184,10 +186,10 @@ static sqInt msg(char * s);
 #pragma export on
 EXPORT(sqInt) primitiveSetBitBltPlugin(void);
 #pragma export off
-static sqInt processIndexedIDXofSizeidxArrayidxSize(float *vtxArray, sqInt vtxSize, int *idxArray, sqInt idxSize);
 static double processIndexedofSizeidxArrayidxSize(float *vtxArray, sqInt vtxSize, int *idxArray, sqInt idxSize);
-static sqInt processNonIndexedIDXofSize(float *vtxArray, sqInt vtxSize);
+static sqInt processIndexedIDXofSizeidxArrayidxSize(float *vtxArray, sqInt vtxSize, int *idxArray, sqInt idxSize);
 static double processNonIndexedofSize(float *vtxArray, sqInt vtxSize);
+static sqInt processNonIndexedIDXofSize(float *vtxArray, sqInt vtxSize);
 static double rightClipValueFromto(sqInt last, sqInt next);
 #pragma export on
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
@@ -197,16 +199,16 @@ static sqInt stackLightArrayValue(sqInt stackIndex);
 static void * stackMaterialValue(sqInt stackIndex);
 static void* stackMatrix(sqInt index);
 static void* stackPrimitiveIndexArrayofSizevalidateforVertexSize(sqInt stackIndex, sqInt nItems, sqInt aBool, sqInt maxIndex);
-static void* stackPrimitiveVertexArrayofSize(sqInt index, sqInt nItems);
 static void* stackPrimitiveVertex(sqInt index);
+static void* stackPrimitiveVertexArrayofSize(sqInt index, sqInt nItems);
 static sqInt storeObjectsInto(sqInt stackIndex);
 static sqInt storePrimitiveVertex(void);
 static double topClipValueFromto(sqInt last, sqInt next);
 static sqInt transformMatrixwithinto(float *src, float *arg, float *dst);
 static sqInt transformPrimitiveNormalbyrescale(float *pVertex, float *matrix, sqInt rescale);
-static sqInt transformPrimitivePositionFasterby(float *pVertex, float *matrix);
-static sqInt transformPrimitivePositionFastby(float *pVertex, float *matrix);
 static sqInt transformPrimitivePositionby(float *pVertex, float *matrix);
+static sqInt transformPrimitivePositionFastby(float *pVertex, float *matrix);
+static sqInt transformPrimitivePositionFasterby(float *pVertex, float *matrix);
 static sqInt transformPrimitiveRasterPositionby(float *pVertex, float *matrix);
 static sqInt transformVBcountbyandflags(float *vtxArray, sqInt vtxCount, float *modelViewMatrix, float *projectionMatrix, sqInt flags);
 static void* vbLoadArraysize(sqInt oop, sqInt count);
@@ -227,9 +229,9 @@ static float* litVertex;
 static sqInt loadBBFn;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"Squeak3D 11 October 2006 (i)"
+	"Squeak3D 9 May 2008 (i)"
 #else
-	"Squeak3D 11 October 2006 (e)"
+	"Squeak3D 9 May 2008 (e)"
 #endif
 ;
 static float* primLight;
@@ -243,7 +245,6 @@ static double vtxOutColor[4];
 
 
 /*	Add the given light part to the output color, scaled by the given scale factor.
-
 	If the given flag is set in vbFlags then load the part from the primitive vertex */
 
 static sqInt addPartfromtrackFlagscale(float *lightPart, float *materialPart, sqInt vbTrackFlag, double scale) {
@@ -435,6 +436,76 @@ EXPORT(sqInt) b3dDetermineClipFlags(void) {
 	}
 }
 
+EXPORT(sqInt) b3dInitPrimitiveObject(void) {
+    sqInt vtxSize;
+    sqInt textureIndex;
+    sqInt primSize;
+    sqInt idxSize;
+    void *primObj;
+    int *idxArray;
+    int *vtxArray;
+    sqInt primitive;
+    sqInt primOop;
+
+	if (!((interpreterProxy->methodArgumentCount()) == 8)) {
+		return interpreterProxy->primitiveFail();
+	}
+	textureIndex = interpreterProxy->stackIntegerValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	loadViewportFrom(1);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	vtxSize = interpreterProxy->stackIntegerValue(4);
+	vtxArray = stackPrimitiveVertexArrayofSize(5, vtxSize);
+	if (vtxArray == null) {
+		return interpreterProxy->primitiveFail();
+	}
+	idxSize = interpreterProxy->stackIntegerValue(2);
+	idxArray = stackPrimitiveIndexArrayofSizevalidateforVertexSize(3, idxSize, 1, vtxSize);
+	if (idxArray == null) {
+		return interpreterProxy->primitiveFail();
+	}
+	primitive = interpreterProxy->stackIntegerValue(6);
+	if ((primitive < 1) || (primitive > PrimTypeMax)) {
+		return interpreterProxy->primitiveFail();
+	}
+	if (!((primitive == 3) || ((primitive == 5) || (primitive == 6)))) {
+		return interpreterProxy->primitiveFail();
+	}
+	primOop = interpreterProxy->stackObjectValue(7);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	if (!(interpreterProxy->isWords(primOop))) {
+		return interpreterProxy->primitiveFail();
+	}
+	primObj = interpreterProxy->firstIndexableField(primOop);
+
+	/* Do the work */
+
+	primSize = interpreterProxy->byteSizeOf(primOop);
+	if (primitive == 3) {
+		if (b3dAddPolygonObject((void*) primObj, primSize, B3D_FACE_RGB, textureIndex, (B3DPrimitiveVertex*) vtxArray, vtxSize, &viewport) != B3D_NO_ERROR) {
+			return interpreterProxy->primitiveFail();
+		}
+	}
+	if (primitive == 5) {
+		if (b3dAddIndexedTriangleObject((void*) primObj, primSize, B3D_FACE_RGB, textureIndex, (B3DPrimitiveVertex*) vtxArray, vtxSize, (B3DInputFace*) idxArray, idxSize / 3, &viewport) != B3D_NO_ERROR) {
+			return interpreterProxy->primitiveFail();
+		}
+	}
+	if (primitive == 6) {
+		if (b3dAddIndexedQuadObject((void*) primObj, primSize, B3D_FACE_RGB, textureIndex, (B3DPrimitiveVertex*) vtxArray, vtxSize, (B3DInputQuad*) idxArray, idxSize / 4, &viewport) != B3D_NO_ERROR) {
+			return interpreterProxy->primitiveFail();
+		}
+	}
+	interpreterProxy->pop(9);
+	interpreterProxy->push(primOop);
+}
+
 
 /*	Primitive. Initialize the primitive level objects of the given rasterizer. */
 
@@ -508,76 +579,6 @@ EXPORT(sqInt) b3dInitializeRasterizerState(void) {
 	if (b3dInitializeFillList(obj, objLen) != B3D_NO_ERROR) {
 		return interpreterProxy->primitiveFail();
 	}
-}
-
-EXPORT(sqInt) b3dInitPrimitiveObject(void) {
-    sqInt vtxSize;
-    sqInt textureIndex;
-    sqInt primSize;
-    sqInt idxSize;
-    void *primObj;
-    int *idxArray;
-    int *vtxArray;
-    sqInt primitive;
-    sqInt primOop;
-
-	if (!((interpreterProxy->methodArgumentCount()) == 8)) {
-		return interpreterProxy->primitiveFail();
-	}
-	textureIndex = interpreterProxy->stackIntegerValue(0);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	loadViewportFrom(1);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	vtxSize = interpreterProxy->stackIntegerValue(4);
-	vtxArray = stackPrimitiveVertexArrayofSize(5, vtxSize);
-	if (vtxArray == null) {
-		return interpreterProxy->primitiveFail();
-	}
-	idxSize = interpreterProxy->stackIntegerValue(2);
-	idxArray = stackPrimitiveIndexArrayofSizevalidateforVertexSize(3, idxSize, 1, vtxSize);
-	if (idxArray == null) {
-		return interpreterProxy->primitiveFail();
-	}
-	primitive = interpreterProxy->stackIntegerValue(6);
-	if ((primitive < 1) || (primitive > PrimTypeMax)) {
-		return interpreterProxy->primitiveFail();
-	}
-	if (!((primitive == 3) || ((primitive == 5) || (primitive == 6)))) {
-		return interpreterProxy->primitiveFail();
-	}
-	primOop = interpreterProxy->stackObjectValue(7);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	if (!(interpreterProxy->isWords(primOop))) {
-		return interpreterProxy->primitiveFail();
-	}
-	primObj = interpreterProxy->firstIndexableField(primOop);
-
-	/* Do the work */
-
-	primSize = interpreterProxy->byteSizeOf(primOop);
-	if (primitive == 3) {
-		if (b3dAddPolygonObject((void*) primObj, primSize, B3D_FACE_RGB, textureIndex, (B3DPrimitiveVertex*) vtxArray, vtxSize, &viewport) != B3D_NO_ERROR) {
-			return interpreterProxy->primitiveFail();
-		}
-	}
-	if (primitive == 5) {
-		if (b3dAddIndexedTriangleObject((void*) primObj, primSize, B3D_FACE_RGB, textureIndex, (B3DPrimitiveVertex*) vtxArray, vtxSize, (B3DInputFace*) idxArray, idxSize / 3, &viewport) != B3D_NO_ERROR) {
-			return interpreterProxy->primitiveFail();
-		}
-	}
-	if (primitive == 6) {
-		if (b3dAddIndexedQuadObject((void*) primObj, primSize, B3D_FACE_RGB, textureIndex, (B3DPrimitiveVertex*) vtxArray, vtxSize, (B3DInputQuad*) idxArray, idxSize / 4, &viewport) != B3D_NO_ERROR) {
-			return interpreterProxy->primitiveFail();
-		}
-	}
-	interpreterProxy->pop(9);
-	interpreterProxy->push(primOop);
 }
 
 
@@ -660,7 +661,6 @@ EXPORT(sqInt) b3dInplaceHouseHolderInvert(void) {
 
 
 /*	Primitive. Load the given index array into the receiver.
-
 	NOTE: dstStart is a zero-based index. */
 
 EXPORT(sqInt) b3dLoadIndexArray(void) {
@@ -719,7 +719,6 @@ EXPORT(sqInt) b3dLoadIndexArray(void) {
 
 
 /*	Primitive. Load the data into the given vertex buffer.
-
 	NOTE: dstStart is a zero-based index. */
 
 EXPORT(sqInt) b3dLoadVertexBuffer(void) {
@@ -965,14 +964,6 @@ EXPORT(sqInt) b3dRasterizerVersion(void) {
 }
 
 
-/*	Return the current shader version. */
-
-EXPORT(sqInt) b3dShaderVersion(void) {
-	interpreterProxy->pop(1);
-	interpreterProxy->pushInteger(1);
-}
-
-
 /*	Primitive. Shade all the vertices in the vertex buffer using the given array of primitive light sources. Return true on success. */
 
 EXPORT(sqInt) b3dShadeVertexBuffer(void) {
@@ -1048,6 +1039,14 @@ EXPORT(sqInt) b3dShadeVertexBuffer(void) {
 }
 
 
+/*	Return the current shader version. */
+
+EXPORT(sqInt) b3dShaderVersion(void) {
+	interpreterProxy->pop(1);
+	interpreterProxy->pushInteger(1);
+}
+
+
 /*	Primitive. Start the rasterizer. */
 
 EXPORT(sqInt) b3dStartRasterizer(void) {
@@ -1112,14 +1111,6 @@ EXPORT(sqInt) b3dTransformDirection(void) {
 	vertex[2] = (((float) rz));
 	interpreterProxy->pop(2);
 	interpreterProxy->push(v3Oop);
-}
-
-
-/*	Return the current version of the transformer */
-
-EXPORT(sqInt) b3dTransformerVersion(void) {
-	interpreterProxy->pop(1);
-	interpreterProxy->pushInteger(1);
 }
 
 
@@ -1223,7 +1214,6 @@ EXPORT(sqInt) b3dTransformPrimitiveNormal(void) {
 
 
 /*	Transform the position of the given primitive vertex the given matrix
-
 	and store the result back inplace. */
 
 EXPORT(sqInt) b3dTransformPrimitivePosition(void) {
@@ -1241,7 +1231,6 @@ EXPORT(sqInt) b3dTransformPrimitivePosition(void) {
 
 
 /*	Transform the position of the given primitive vertex the given matrix
-
 	and store the result in homogenous coordinates at rasterPos. */
 
 EXPORT(sqInt) b3dTransformPrimitiveRasterPosition(void) {
@@ -1280,6 +1269,14 @@ EXPORT(sqInt) b3dTransformVertexBuffer(void) {
 	}
 	transformVBcountbyandflags(vtxArray, vtxCount, modelViewMatrix, projectionMatrix, flags);
 	interpreterProxy->pop(5);
+}
+
+
+/*	Return the current version of the transformer */
+
+EXPORT(sqInt) b3dTransformerVersion(void) {
+	interpreterProxy->pop(1);
+	interpreterProxy->pushInteger(1);
 }
 
 EXPORT(sqInt) b3dTransposeMatrix(void) {
@@ -1330,6 +1327,52 @@ static double backClipValueFromto(sqInt last, sqInt next) {
 
 static double bottomClipValueFromto(sqInt last, sqInt next) {
 	return (0.0 - (((((float *) last))[PrimVtxRasterPosY]) + ((((float *) last))[PrimVtxRasterPosW]))) / ((((((float *) next))[PrimVtxRasterPosW]) - ((((float *) last))[PrimVtxRasterPosW])) + (((((float *) next))[PrimVtxRasterPosY]) - ((((float *) last))[PrimVtxRasterPosY])));
+}
+
+static sqInt clipPolygoncountwithmask(int *vtxArray, sqInt vtxCount, int *tempVtxArray, sqInt outMask) {
+    sqInt count;
+
+	if (outMask == OutLeftBit) {
+		return clipPolygonLeftFromtocount(tempVtxArray, vtxArray, vtxCount);
+	}
+	if (outMask == OutRightBit) {
+		return clipPolygonRightFromtocount(tempVtxArray, vtxArray, vtxCount);
+	}
+	if (outMask == OutTopBit) {
+		return clipPolygonTopFromtocount(tempVtxArray, vtxArray, vtxCount);
+	}
+	if (outMask == OutBottomBit) {
+		return clipPolygonBottomFromtocount(tempVtxArray, vtxArray, vtxCount);
+	}
+	if (outMask == OutFrontBit) {
+		return clipPolygonFrontFromtocount(tempVtxArray, vtxArray, vtxCount);
+	}
+	if (outMask == OutBackBit) {
+		return clipPolygonBackFromtocount(tempVtxArray, vtxArray, vtxCount);
+	}
+	count = vtxCount;
+	count = clipPolygonLeftFromtocount(vtxArray, tempVtxArray, count);
+	if (count == 0) {
+		return 0;
+	}
+	count = clipPolygonRightFromtocount(tempVtxArray, vtxArray, count);
+	if (count == 0) {
+		return 0;
+	}
+	count = clipPolygonTopFromtocount(vtxArray, tempVtxArray, count);
+	if (count == 0) {
+		return 0;
+	}
+	count = clipPolygonBottomFromtocount(tempVtxArray, vtxArray, count);
+	if (count == 0) {
+		return 0;
+	}
+	count = clipPolygonFrontFromtocount(vtxArray, tempVtxArray, count);
+	if (count == 0) {
+		return 0;
+	}
+	count = clipPolygonBackFromtocount(tempVtxArray, vtxArray, count);
+	return count;
 }
 
 static sqInt clipPolygonBackFromtocount(int *buf1, int *buf2, sqInt n) {
@@ -1536,52 +1579,6 @@ static sqInt clipPolygonTopFromtocount(int *buf1, int *buf2, sqInt n) {
 	return outIndex;
 }
 
-static sqInt clipPolygoncountwithmask(int *vtxArray, sqInt vtxCount, int *tempVtxArray, sqInt outMask) {
-    sqInt count;
-
-	if (outMask == OutLeftBit) {
-		return clipPolygonLeftFromtocount(tempVtxArray, vtxArray, vtxCount);
-	}
-	if (outMask == OutRightBit) {
-		return clipPolygonRightFromtocount(tempVtxArray, vtxArray, vtxCount);
-	}
-	if (outMask == OutTopBit) {
-		return clipPolygonTopFromtocount(tempVtxArray, vtxArray, vtxCount);
-	}
-	if (outMask == OutBottomBit) {
-		return clipPolygonBottomFromtocount(tempVtxArray, vtxArray, vtxCount);
-	}
-	if (outMask == OutFrontBit) {
-		return clipPolygonFrontFromtocount(tempVtxArray, vtxArray, vtxCount);
-	}
-	if (outMask == OutBackBit) {
-		return clipPolygonBackFromtocount(tempVtxArray, vtxArray, vtxCount);
-	}
-	count = vtxCount;
-	count = clipPolygonLeftFromtocount(vtxArray, tempVtxArray, count);
-	if (count == 0) {
-		return 0;
-	}
-	count = clipPolygonRightFromtocount(tempVtxArray, vtxArray, count);
-	if (count == 0) {
-		return 0;
-	}
-	count = clipPolygonTopFromtocount(vtxArray, tempVtxArray, count);
-	if (count == 0) {
-		return 0;
-	}
-	count = clipPolygonBottomFromtocount(tempVtxArray, vtxArray, count);
-	if (count == 0) {
-		return 0;
-	}
-	count = clipPolygonFrontFromtocount(vtxArray, tempVtxArray, count);
-	if (count == 0) {
-		return 0;
-	}
-	count = clipPolygonBackFromtocount(tempVtxArray, vtxArray, count);
-	return count;
-}
-
 
 /*	Compute the attenuation for the current light and vertex */
 
@@ -1621,9 +1618,7 @@ static sqInt computeDirection(void) {
 
 
 /*	Computes
-
 		l2vSpecDir _ l2vSpecDir - vtx position safelyNormalized.
-
 	 */
 
 static sqInt computeSpecularDirection(void) {
@@ -1720,7 +1715,6 @@ static double dotProductOfFloatwithDouble(float * v1, double *v2) {
 
 
 /*	Fetch the primitive light source from the given array.
-
 	Note: No checks are done within here - that happened in stackLightArrayValue: */
 
 static void* fetchLightSourceofObject(sqInt index, sqInt anArray) {
@@ -2040,29 +2034,6 @@ static sqInt loadRasterizerState(sqInt stackIndex) {
 	return !(interpreterProxy->failed());
 }
 
-static sqInt loadTexturesFrom(sqInt stackIndex) {
-    B3DTexture *destPtr;
-    sqInt arrayOop;
-    sqInt n;
-    sqInt i;
-    sqInt textureOop;
-
-	arrayOop = interpreterProxy->stackObjectValue(stackIndex);
-	if (!((interpreterProxy->fetchClassOf(arrayOop)) == (interpreterProxy->classArray()))) {
-		return interpreterProxy->primitiveFail();
-	}
-	n = interpreterProxy->slotSizeOf(arrayOop);
-	n = ((n < (state.nTextures)) ? n : (state.nTextures));
-	for (i = 0; i <= (n - 1); i += 1) {
-		destPtr = state.textures + i;
-		textureOop = interpreterProxy->fetchPointerofObject(i, arrayOop);
-		if (!(loadTextureinto(textureOop, destPtr))) {
-			return interpreterProxy->primitiveFail();
-		}
-	}
-	return 0;
-}
-
 
 /*	Note: This still uses the old-style textures */
 
@@ -2111,6 +2082,29 @@ static sqInt loadTextureinto(sqInt textureOop, B3DTexture *destPtr) {
 
 	bitsPtr = interpreterProxy->firstIndexableField(formBits);
 	return b3dLoadTexture(destPtr, formWidth, formHeight, formDepth, (unsigned int*) bitsPtr, 0, NULL) == B3D_NO_ERROR;
+}
+
+static sqInt loadTexturesFrom(sqInt stackIndex) {
+    B3DTexture *destPtr;
+    sqInt arrayOop;
+    sqInt n;
+    sqInt i;
+    sqInt textureOop;
+
+	arrayOop = interpreterProxy->stackObjectValue(stackIndex);
+	if (!((interpreterProxy->fetchClassOf(arrayOop)) == (interpreterProxy->classArray()))) {
+		return interpreterProxy->primitiveFail();
+	}
+	n = interpreterProxy->slotSizeOf(arrayOop);
+	n = ((n < (state.nTextures)) ? n : (state.nTextures));
+	for (i = 0; i <= (n - 1); i += 1) {
+		destPtr = state.textures + i;
+		textureOop = interpreterProxy->fetchPointerofObject(i, arrayOop);
+		if (!(loadTextureinto(textureOop, destPtr))) {
+			return interpreterProxy->primitiveFail();
+		}
+	}
+	return 0;
 }
 
 
@@ -2235,7 +2229,6 @@ static sqInt mapVBofSizeinto(void *vtxArray, sqInt vtxCount, sqInt boxArray) {
 
 
 /*	The module with the given name was just unloaded.
-
 	Make sure we have no dangling references. */
 
 EXPORT(sqInt) moduleUnloaded(char * aModuleName) {
@@ -2290,6 +2283,32 @@ EXPORT(sqInt) primitiveSetBitBltPlugin(void) {
 	interpreterProxy->pop(1);
 }
 
+static double processIndexedofSizeidxArrayidxSize(float *vtxArray, sqInt vtxSize, int *idxArray, sqInt idxSize) {
+    double zValue;
+    float *vtxPtr;
+    sqInt i;
+    double minZ;
+    double wValue;
+    sqInt index;
+
+	minZ = 10.0;
+	for (i = 1; i <= idxSize; i += 1) {
+		index = idxArray[i];
+		if (index > 0) {
+			vtxPtr = vtxArray + ((index - 1) * PrimVertexSize);
+			zValue = vtxPtr[PrimVtxRasterPosZ];
+			wValue = vtxPtr[PrimVtxRasterPosW];
+			if (!(wValue == 0.0)) {
+				zValue = zValue / wValue;
+			}
+			if (zValue < minZ) {
+				minZ = zValue;
+			}
+		}
+	}
+	return minZ;
+}
+
 static sqInt processIndexedIDXofSizeidxArrayidxSize(float *vtxArray, sqInt vtxSize, int *idxArray, sqInt idxSize) {
     double zValue;
     float *vtxPtr;
@@ -2319,27 +2338,23 @@ static sqInt processIndexedIDXofSizeidxArrayidxSize(float *vtxArray, sqInt vtxSi
 	return minIndex;
 }
 
-static double processIndexedofSizeidxArrayidxSize(float *vtxArray, sqInt vtxSize, int *idxArray, sqInt idxSize) {
+static double processNonIndexedofSize(float *vtxArray, sqInt vtxSize) {
     double zValue;
     float *vtxPtr;
     sqInt i;
     double minZ;
     double wValue;
-    sqInt index;
 
 	minZ = 10.0;
-	for (i = 1; i <= idxSize; i += 1) {
-		index = idxArray[i];
-		if (index > 0) {
-			vtxPtr = vtxArray + ((index - 1) * PrimVertexSize);
-			zValue = vtxPtr[PrimVtxRasterPosZ];
-			wValue = vtxPtr[PrimVtxRasterPosW];
-			if (!(wValue == 0.0)) {
-				zValue = zValue / wValue;
-			}
-			if (zValue < minZ) {
-				minZ = zValue;
-			}
+	vtxPtr = vtxArray;
+	for (i = 1; i <= vtxSize; i += 1) {
+		zValue = vtxPtr[PrimVtxRasterPosZ];
+		wValue = vtxPtr[PrimVtxRasterPosW];
+		if (!(wValue == 0.0)) {
+			zValue = zValue / wValue;
+		}
+		if (zValue < minZ) {
+			minZ = zValue;
 		}
 	}
 	return minZ;
@@ -2368,28 +2383,6 @@ static sqInt processNonIndexedIDXofSize(float *vtxArray, sqInt vtxSize) {
 		}
 	}
 	return minIndex;
-}
-
-static double processNonIndexedofSize(float *vtxArray, sqInt vtxSize) {
-    double zValue;
-    float *vtxPtr;
-    sqInt i;
-    double minZ;
-    double wValue;
-
-	minZ = 10.0;
-	vtxPtr = vtxArray;
-	for (i = 1; i <= vtxSize; i += 1) {
-		zValue = vtxPtr[PrimVtxRasterPosZ];
-		wValue = vtxPtr[PrimVtxRasterPosW];
-		if (!(wValue == 0.0)) {
-			zValue = zValue / wValue;
-		}
-		if (zValue < minZ) {
-			minZ = zValue;
-		}
-	}
-	return minZ;
 }
 
 static double rightClipValueFromto(sqInt last, sqInt next) {
@@ -2454,7 +2447,6 @@ static sqInt shadeVertex(void) {
 		if (cosAngle > 0.0) {
 
 			/* cosAngle should be somewhere between 0 and 1.
-
 			If not, then the vertex normal was not normalized */
 
 			cosAngle = cosAngle * (inverseLengthOfDouble(l2vSpecDir));
@@ -2519,7 +2511,6 @@ static void * stackMaterialValue(sqInt stackIndex) {
 
 
 /*	Load a 4x4 transformation matrix from the interpreter stack.
-
 	Return a pointer to the matrix data if successful, nil otherwise. */
 
 static void* stackMatrix(sqInt index) {
@@ -2537,9 +2528,7 @@ static void* stackMatrix(sqInt index) {
 
 
 /*	Load a primitive index array from the interpreter stack.
-
 	If aBool is true then check that all the indexes are in the range (1,maxIndex).
-
 	Return a pointer to the index data if successful, nil otherwise. */
 
 static void* stackPrimitiveIndexArrayofSizevalidateforVertexSize(sqInt stackIndex, sqInt nItems, sqInt aBool, sqInt maxIndex) {
@@ -2573,8 +2562,24 @@ static void* stackPrimitiveIndexArrayofSizevalidateforVertexSize(sqInt stackInde
 }
 
 
-/*	Load a primitive vertex array from the interpreter stack.
+/*	Load a primitive vertex from the interpreter stack.
+	Return a pointer to the vertex data if successful, nil otherwise. */
 
+static void* stackPrimitiveVertex(sqInt index) {
+    sqInt oop;
+
+	oop = interpreterProxy->stackObjectValue(index);
+	if (oop == null) {
+		return null;
+	}
+	if ((interpreterProxy->isWords(oop)) && ((interpreterProxy->slotSizeOf(oop)) == PrimVertexSize)) {
+		return interpreterProxy->firstIndexableField(oop);
+	}
+	return null;
+}
+
+
+/*	Load a primitive vertex array from the interpreter stack.
 	Return a pointer to the vertex data if successful, nil otherwise. */
 
 static void* stackPrimitiveVertexArrayofSize(sqInt index, sqInt nItems) {
@@ -2590,24 +2595,6 @@ static void* stackPrimitiveVertexArrayofSize(sqInt index, sqInt nItems) {
 		if (((oopSize >= nItems) * PrimVertexSize) && ((oopSize % PrimVertexSize) == 0)) {
 			return interpreterProxy->firstIndexableField(oop);
 		}
-	}
-	return null;
-}
-
-
-/*	Load a primitive vertex from the interpreter stack.
-
-	Return a pointer to the vertex data if successful, nil otherwise. */
-
-static void* stackPrimitiveVertex(sqInt index) {
-    sqInt oop;
-
-	oop = interpreterProxy->stackObjectValue(index);
-	if (oop == null) {
-		return null;
-	}
-	if ((interpreterProxy->isWords(oop)) && ((interpreterProxy->slotSizeOf(oop)) == PrimVertexSize)) {
-		return interpreterProxy->firstIndexableField(oop);
 	}
 	return null;
 }
@@ -2628,7 +2615,6 @@ static sqInt storeObjectsInto(sqInt stackIndex) {
 
 
 /*	Store the computed output color back into the current primitive vertex.
-
 	Clamp the r,g,b,a part to be in the range 0-255. */
 
 static sqInt storePrimitiveVertex(void) {
@@ -2657,7 +2643,6 @@ static double topClipValueFromto(sqInt last, sqInt next) {
 
 
 /*	Transform src with arg into dst.
-
 	It is allowed that src == dst but not arg == dst */
 
 static sqInt transformMatrixwithinto(float *src, float *arg, float *dst) {
@@ -2727,54 +2712,6 @@ static sqInt transformPrimitiveNormalbyrescale(float *pVertex, float *matrix, sq
 }
 
 
-/*	Transform the position of the given primitive vertex assuming that 
-
-	matrix a14 = a24 = a34 = a41 = a42 = a43 = 0.0 and a44 = 1.0 */
-
-static sqInt transformPrimitivePositionFasterby(float *pVertex, float *matrix) {
-    double rz;
-    double z;
-    double ry;
-    double y;
-    double rx;
-    double x;
-
-	x = pVertex[PrimVtxPositionX];
-	y = pVertex[PrimVtxPositionY];
-	z = pVertex[PrimVtxPositionZ];
-	rx = ((x * (matrix[0])) + (y * (matrix[1]))) + (z * (matrix[2]));
-	ry = ((x * (matrix[4])) + (y * (matrix[5]))) + (z * (matrix[6]));
-	rz = ((x * (matrix[8])) + (y * (matrix[9]))) + (z * (matrix[10]));
-	pVertex[PrimVtxPositionX] = (((float) rx));
-	pVertex[PrimVtxPositionY] = (((float) ry));
-	pVertex[PrimVtxPositionZ] = (((float) rz));
-}
-
-
-/*	Transform the position of the given primitive vertex assuming that 
-
-	matrix a41 = a42 = a43 = 0.0 and a44 = 1.0 */
-
-static sqInt transformPrimitivePositionFastby(float *pVertex, float *matrix) {
-    double rz;
-    double z;
-    double ry;
-    double y;
-    double rx;
-    double x;
-
-	x = pVertex[PrimVtxPositionX];
-	y = pVertex[PrimVtxPositionY];
-	z = pVertex[PrimVtxPositionZ];
-	rx = (((x * (matrix[0])) + (y * (matrix[1]))) + (z * (matrix[2]))) + (matrix[3]);
-	ry = (((x * (matrix[4])) + (y * (matrix[5]))) + (z * (matrix[6]))) + (matrix[7]);
-	rz = (((x * (matrix[8])) + (y * (matrix[9]))) + (z * (matrix[10]))) + (matrix[11]);
-	pVertex[PrimVtxPositionX] = (((float) rx));
-	pVertex[PrimVtxPositionY] = (((float) ry));
-	pVertex[PrimVtxPositionZ] = (((float) rz));
-}
-
-
 /*	Transform the normal of the given primitive vertex */
 
 static sqInt transformPrimitivePositionby(float *pVertex, float *matrix) {
@@ -2807,6 +2744,52 @@ static sqInt transformPrimitivePositionby(float *pVertex, float *matrix) {
 		pVertex[PrimVtxPositionY] = (((float) (ry * rw)));
 		pVertex[PrimVtxPositionZ] = (((float) (rz * rw)));
 	}
+}
+
+
+/*	Transform the position of the given primitive vertex assuming that 
+	matrix a41 = a42 = a43 = 0.0 and a44 = 1.0 */
+
+static sqInt transformPrimitivePositionFastby(float *pVertex, float *matrix) {
+    double rz;
+    double z;
+    double ry;
+    double y;
+    double rx;
+    double x;
+
+	x = pVertex[PrimVtxPositionX];
+	y = pVertex[PrimVtxPositionY];
+	z = pVertex[PrimVtxPositionZ];
+	rx = (((x * (matrix[0])) + (y * (matrix[1]))) + (z * (matrix[2]))) + (matrix[3]);
+	ry = (((x * (matrix[4])) + (y * (matrix[5]))) + (z * (matrix[6]))) + (matrix[7]);
+	rz = (((x * (matrix[8])) + (y * (matrix[9]))) + (z * (matrix[10]))) + (matrix[11]);
+	pVertex[PrimVtxPositionX] = (((float) rx));
+	pVertex[PrimVtxPositionY] = (((float) ry));
+	pVertex[PrimVtxPositionZ] = (((float) rz));
+}
+
+
+/*	Transform the position of the given primitive vertex assuming that 
+	matrix a14 = a24 = a34 = a41 = a42 = a43 = 0.0 and a44 = 1.0 */
+
+static sqInt transformPrimitivePositionFasterby(float *pVertex, float *matrix) {
+    double rz;
+    double z;
+    double ry;
+    double y;
+    double rx;
+    double x;
+
+	x = pVertex[PrimVtxPositionX];
+	y = pVertex[PrimVtxPositionY];
+	z = pVertex[PrimVtxPositionZ];
+	rx = ((x * (matrix[0])) + (y * (matrix[1]))) + (z * (matrix[2]));
+	ry = ((x * (matrix[4])) + (y * (matrix[5]))) + (z * (matrix[6]));
+	rz = ((x * (matrix[8])) + (y * (matrix[9]))) + (z * (matrix[10]));
+	pVertex[PrimVtxPositionX] = (((float) rx));
+	pVertex[PrimVtxPositionY] = (((float) ry));
+	pVertex[PrimVtxPositionZ] = (((float) rz));
 }
 
 
@@ -2958,38 +2941,38 @@ static void* vbLoadArraysize(sqInt oop, sqInt count) {
 
 
 void* Squeak3D_exports[][3] = {
-	{"Squeak3D", "b3dTransformPrimitiveNormal", (void*)b3dTransformPrimitiveNormal},
+	{"Squeak3D", "setInterpreter", (void*)setInterpreter},
+	{"Squeak3D", "b3dLoadVertexBuffer", (void*)b3dLoadVertexBuffer},
+	{"Squeak3D", "b3dDetermineClipFlags", (void*)b3dDetermineClipFlags},
 	{"Squeak3D", "b3dPrimitiveNextClippedTriangle", (void*)b3dPrimitiveNextClippedTriangle},
-	{"Squeak3D", "primitiveSetBitBltPlugin", (void*)primitiveSetBitBltPlugin},
-	{"Squeak3D", "getModuleName", (void*)getModuleName},
-	{"Squeak3D", "b3dInplaceHouseHolderInvert", (void*)b3dInplaceHouseHolderInvert},
+	{"Squeak3D", "b3dInitializeRasterizerState", (void*)b3dInitializeRasterizerState},
+	{"Squeak3D", "b3dTransformerVersion", (void*)b3dTransformerVersion},
+	{"Squeak3D", "b3dTransformMatrixWithInto", (void*)b3dTransformMatrixWithInto},
+	{"Squeak3D", "initialiseModule", (void*)initialiseModule},
 	{"Squeak3D", "b3dTransformVertexBuffer", (void*)b3dTransformVertexBuffer},
-	{"Squeak3D", "b3dTransformDirection", (void*)b3dTransformDirection},
-	{"Squeak3D", "b3dTransformPrimitivePosition", (void*)b3dTransformPrimitivePosition},
+	{"Squeak3D", "moduleUnloaded", (void*)moduleUnloaded},
+	{"Squeak3D", "b3dShaderVersion", (void*)b3dShaderVersion},
 	{"Squeak3D", "b3dLoadIndexArray", (void*)b3dLoadIndexArray},
+	{"Squeak3D", "b3dComputeMinIndexZ", (void*)b3dComputeMinIndexZ},
+	{"Squeak3D", "primitiveSetBitBltPlugin", (void*)primitiveSetBitBltPlugin},
+	{"Squeak3D", "b3dMapVertexBuffer", (void*)b3dMapVertexBuffer},
+	{"Squeak3D", "b3dRasterizerVersion", (void*)b3dRasterizerVersion},
+	{"Squeak3D", "b3dTransformDirection", (void*)b3dTransformDirection},
+	{"Squeak3D", "b3dTransformPoint", (void*)b3dTransformPoint},
+	{"Squeak3D", "getModuleName", (void*)getModuleName},
+	{"Squeak3D", "b3dShadeVertexBuffer", (void*)b3dShadeVertexBuffer},
+	{"Squeak3D", "b3dOrthoNormInverseMatrix", (void*)b3dOrthoNormInverseMatrix},
 	{"Squeak3D", "b3dInitPrimitiveObject", (void*)b3dInitPrimitiveObject},
 	{"Squeak3D", "b3dPrimitiveTextureSize", (void*)b3dPrimitiveTextureSize},
-	{"Squeak3D", "b3dTransposeMatrix", (void*)b3dTransposeMatrix},
-	{"Squeak3D", "b3dShadeVertexBuffer", (void*)b3dShadeVertexBuffer},
-	{"Squeak3D", "b3dTransformerVersion", (void*)b3dTransformerVersion},
-	{"Squeak3D", "moduleUnloaded", (void*)moduleUnloaded},
-	{"Squeak3D", "b3dOrthoNormInverseMatrix", (void*)b3dOrthoNormInverseMatrix},
-	{"Squeak3D", "b3dShaderVersion", (void*)b3dShaderVersion},
-	{"Squeak3D", "b3dTransformPoint", (void*)b3dTransformPoint},
-	{"Squeak3D", "b3dStartRasterizer", (void*)b3dStartRasterizer},
-	{"Squeak3D", "b3dDetermineClipFlags", (void*)b3dDetermineClipFlags},
-	{"Squeak3D", "b3dComputeMinIndexZ", (void*)b3dComputeMinIndexZ},
-	{"Squeak3D", "setInterpreter", (void*)setInterpreter},
-	{"Squeak3D", "b3dClipPolygon", (void*)b3dClipPolygon},
 	{"Squeak3D", "b3dTransformPrimitiveRasterPosition", (void*)b3dTransformPrimitiveRasterPosition},
-	{"Squeak3D", "b3dInitializeRasterizerState", (void*)b3dInitializeRasterizerState},
+	{"Squeak3D", "b3dStartRasterizer", (void*)b3dStartRasterizer},
+	{"Squeak3D", "b3dTransformPrimitiveNormal", (void*)b3dTransformPrimitiveNormal},
 	{"Squeak3D", "b3dPrimitiveObjectSize", (void*)b3dPrimitiveObjectSize},
+	{"Squeak3D", "b3dTransposeMatrix", (void*)b3dTransposeMatrix},
 	{"Squeak3D", "b3dComputeMinZ", (void*)b3dComputeMinZ},
-	{"Squeak3D", "b3dMapVertexBuffer", (void*)b3dMapVertexBuffer},
-	{"Squeak3D", "b3dTransformMatrixWithInto", (void*)b3dTransformMatrixWithInto},
-	{"Squeak3D", "b3dLoadVertexBuffer", (void*)b3dLoadVertexBuffer},
-	{"Squeak3D", "b3dRasterizerVersion", (void*)b3dRasterizerVersion},
-	{"Squeak3D", "initialiseModule", (void*)initialiseModule},
+	{"Squeak3D", "b3dInplaceHouseHolderInvert", (void*)b3dInplaceHouseHolderInvert},
+	{"Squeak3D", "b3dClipPolygon", (void*)b3dClipPolygon},
+	{"Squeak3D", "b3dTransformPrimitivePosition", (void*)b3dTransformPrimitivePosition},
 	{NULL, NULL, NULL}
 };
 

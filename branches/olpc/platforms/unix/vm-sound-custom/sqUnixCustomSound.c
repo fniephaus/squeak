@@ -1,6 +1,6 @@
 /* sqUnixCustomSound.c -- sound module for custom sound system
  *
- * Last edited: 2005-04-06 05:44:40 by piumarta on pauillac.hpl.hp.com
+ * Last edited: 2008-04-21 14:49:27 by piumarta on emilia
  *
  * This is a template for creating your own sound drivers for Squeak:
  * 

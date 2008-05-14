@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(25 March 2007 9:33:30 am) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:49 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -74,22 +76,22 @@ static sqInt ffiArgByValue(sqInt oop);
 static sqInt ffiArgumentSpecClass(sqInt oop, sqInt argSpec, sqInt argClass);
 static sqInt ffiAtomicArgByReferenceClass(sqInt oop, sqInt oopClass);
 static sqInt ffiAtomicStructByReferenceClass(sqInt oop, sqInt oopClass);
-static sqInt ffiCalloutToWithFlags(sqInt address, sqInt callType);
 static sqInt ffiCallWithFlagsAndTypes(sqInt address, sqInt callType, sqInt argTypeArray);
 static sqInt ffiCallWithFlagsArgsAndTypesOfSize(sqInt address, sqInt callType, sqInt argArray, sqInt argTypeArray, sqInt nArgs);
+static sqInt ffiCalloutToWithFlags(sqInt address, sqInt callType);
 static sqInt ffiCheckReturnWith(sqInt retSpec, sqInt retClass);
 static sqInt ffiContentsOfHandleerrCode(sqInt oop, sqInt errCode);
 static sqInt ffiCreateLongLongReturn(sqInt isSigned);
+static sqInt ffiCreateReturn(sqInt retVal);
 static sqInt ffiCreateReturnOop(sqInt retVal);
 static sqInt ffiCreateReturnPointer(sqInt retVal);
 static sqInt ffiCreateReturnStruct(void);
-static sqInt ffiCreateReturn(sqInt retVal);
 static sqInt ffiFail(sqInt reason);
 static double ffiFloatValueOf(sqInt oop);
 static sqInt ffiGetLastError(void);
 static sqInt ffiIntegerValueOf(sqInt oop);
-static sqInt ffiLoadCalloutAddressFrom(sqInt oop);
 static sqInt ffiLoadCalloutAddress(sqInt lit);
+static sqInt ffiLoadCalloutAddressFrom(sqInt oop);
 static sqInt ffiLoadCalloutModule(sqInt module);
 static sqInt ffiPushPointerContentsOf(sqInt oop);
 static sqInt ffiPushSignedLongLongOop(sqInt oop);
@@ -139,9 +141,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"SqueakFFIPrims 25 March 2007 (i)"
+	"SqueakFFIPrims 9 May 2008 (i)"
 #else
-	"SqueakFFIPrims 25 March 2007 (e)"
+	"SqueakFFIPrims 9 May 2008 (e)"
 #endif
 ;
 
@@ -834,114 +836,6 @@ static sqInt ffiAtomicStructByReferenceClass(sqInt oop, sqInt oopClass) {
 }
 
 
-/*	Go out, call this guy and create the return value */
-
-static sqInt ffiCalloutToWithFlags(sqInt address, sqInt callType) {
-    sqInt retVal;
-    sqInt oop;
-    sqInt retOop;
-    sqInt structSize;
-    sqInt oop1;
-    sqInt atomicType;
-    sqInt retOop1;
-    sqInt atomicType1;
-    sqInt value;
-    sqInt byteSize;
-    sqInt shift;
-    sqInt mask;
-
-	if (ffiRetHeader & FFIFlagPointer) {
-		retVal = ffiCallAddressOfWithPointerReturn(address, callType);
-		return ffiCreateReturnPointer(retVal);
-	}
-	if (ffiRetHeader & FFIFlagStructure) {
-		ffiCallAddressOfWithStructReturn(address, callType, ((int*) ffiRetSpec), ffiRetSpecSize);
-		/* begin ffiCreateReturnStruct */
-		if (interpreterProxy->failed()) {
-			return null;
-		}
-		interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
-		structSize = ffiRetHeader & FFIStructSizeMask;
-		interpreterProxy->pushRemappableOop(ffiRetClass);
-		oop = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classByteArray(), structSize);
-		ffiStoreStructure(((int) (interpreterProxy->firstIndexableField(oop))), structSize);
-		ffiRetClass = interpreterProxy->popRemappableOop();
-		interpreterProxy->pushRemappableOop(oop);
-		retOop = interpreterProxy->instantiateClassindexableSize(ffiRetClass, 0);
-		oop = interpreterProxy->popRemappableOop();
-		interpreterProxy->storePointerofObjectwithValue(0, retOop, oop);
-		return interpreterProxy->push(retOop);
-	}
-	retVal = ffiCallAddressOfWithReturnType(address, callType, ffiRetHeader);
-	/* begin ffiCreateReturn: */
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	atomicType = ((usqInt) (ffiRetHeader & FFIAtomicTypeMask)) >> FFIAtomicTypeShift;
-	if (atomicType <= FFITypeVoid) {
-		return interpreterProxy->pop(interpreterProxy->methodArgumentCount());
-	}
-	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
-	interpreterProxy->pushRemappableOop(ffiRetClass);
-	/* begin ffiCreateReturnOop: */
-	atomicType1 = ((usqInt) (ffiRetHeader & FFIAtomicTypeMask)) >> FFIAtomicTypeShift;
-	if (atomicType1 == FFITypeBool) {
-		byteSize = ffiRetHeader & FFIStructSizeMask;
-		if (byteSize == 4) {
-			value = retVal;
-		} else {
-			value = retVal & ((1 << (byteSize * 8)) - 1);
-		}
-		if (value == 0) {
-			retOop1 = interpreterProxy->falseObject();
-			goto l1;
-		} else {
-			retOop1 = interpreterProxy->trueObject();
-			goto l1;
-		}
-	}
-	if (atomicType1 <= FFITypeSignedInt) {
-		if (atomicType1 <= FFITypeSignedShort) {
-			shift = (((usqInt) atomicType1) >> 1) * 8;
-			value = retVal & ((1 << shift) - 1);
-			if (atomicType1 & 1) {
-				mask = 1 << (shift - 1);
-				value = (value & (mask - 1)) - (value & mask);
-			}
-			retOop1 = ((value << 1) | 1);
-			goto l1;
-		}
-		if (atomicType1 & 1) {
-			retOop1 = interpreterProxy->signed32BitIntegerFor(retVal);
-			goto l1;
-		} else {
-			retOop1 = interpreterProxy->positive32BitIntegerFor(retVal);
-			goto l1;
-		}
-	}
-	if (atomicType1 < FFITypeSingleFloat) {
-		if ((((usqInt) atomicType1) >> 1) == (((usqInt) FFITypeSignedLongLong) >> 1)) {
-			retOop1 = ffiCreateLongLongReturn(atomicType1 & 1);
-			goto l1;
-		} else {
-			retOop1 = interpreterProxy->fetchPointerofObject(retVal & 255, interpreterProxy->characterTable());
-			goto l1;
-		}
-	}
-	retOop1 = interpreterProxy->floatObjectOf(ffiReturnFloatValue());
-l1:	/* end ffiCreateReturnOop: */;
-	ffiRetClass = interpreterProxy->popRemappableOop();
-	if (ffiRetClass == (interpreterProxy->nilObject())) {
-		return interpreterProxy->push(retOop1);
-	}
-	interpreterProxy->pushRemappableOop(retOop1);
-	retOop1 = interpreterProxy->instantiateClassindexableSize(ffiRetClass, 0);
-	oop1 = interpreterProxy->popRemappableOop();
-	interpreterProxy->storePointerofObjectwithValue(0, retOop1, oop1);
-	return interpreterProxy->push(retOop1);
-}
-
-
 /*	Generic callout. Does the actual work. */
 
 static sqInt ffiCallWithFlagsAndTypes(sqInt address, sqInt callType, sqInt argTypeArray) {
@@ -1120,6 +1014,114 @@ l1:	/* end ffiCheckReturn:With: */;
 }
 
 
+/*	Go out, call this guy and create the return value */
+
+static sqInt ffiCalloutToWithFlags(sqInt address, sqInt callType) {
+    sqInt retVal;
+    sqInt oop;
+    sqInt retOop;
+    sqInt structSize;
+    sqInt oop1;
+    sqInt atomicType;
+    sqInt retOop1;
+    sqInt atomicType1;
+    sqInt value;
+    sqInt byteSize;
+    sqInt shift;
+    sqInt mask;
+
+	if (ffiRetHeader & FFIFlagPointer) {
+		retVal = ffiCallAddressOfWithPointerReturn(address, callType);
+		return ffiCreateReturnPointer(retVal);
+	}
+	if (ffiRetHeader & FFIFlagStructure) {
+		ffiCallAddressOfWithStructReturn(address, callType, ((int*) ffiRetSpec), ffiRetSpecSize);
+		/* begin ffiCreateReturnStruct */
+		if (interpreterProxy->failed()) {
+			return null;
+		}
+		interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
+		structSize = ffiRetHeader & FFIStructSizeMask;
+		interpreterProxy->pushRemappableOop(ffiRetClass);
+		oop = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classByteArray(), structSize);
+		ffiStoreStructure(((int) (interpreterProxy->firstIndexableField(oop))), structSize);
+		ffiRetClass = interpreterProxy->popRemappableOop();
+		interpreterProxy->pushRemappableOop(oop);
+		retOop = interpreterProxy->instantiateClassindexableSize(ffiRetClass, 0);
+		oop = interpreterProxy->popRemappableOop();
+		interpreterProxy->storePointerofObjectwithValue(0, retOop, oop);
+		return interpreterProxy->push(retOop);
+	}
+	retVal = ffiCallAddressOfWithReturnType(address, callType, ffiRetHeader);
+	/* begin ffiCreateReturn: */
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	atomicType = ((usqInt) (ffiRetHeader & FFIAtomicTypeMask)) >> FFIAtomicTypeShift;
+	if (atomicType <= FFITypeVoid) {
+		return interpreterProxy->pop(interpreterProxy->methodArgumentCount());
+	}
+	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
+	interpreterProxy->pushRemappableOop(ffiRetClass);
+	/* begin ffiCreateReturnOop: */
+	atomicType1 = ((usqInt) (ffiRetHeader & FFIAtomicTypeMask)) >> FFIAtomicTypeShift;
+	if (atomicType1 == FFITypeBool) {
+		byteSize = ffiRetHeader & FFIStructSizeMask;
+		if (byteSize == 4) {
+			value = retVal;
+		} else {
+			value = retVal & ((1 << (byteSize * 8)) - 1);
+		}
+		if (value == 0) {
+			retOop1 = interpreterProxy->falseObject();
+			goto l1;
+		} else {
+			retOop1 = interpreterProxy->trueObject();
+			goto l1;
+		}
+	}
+	if (atomicType1 <= FFITypeSignedInt) {
+		if (atomicType1 <= FFITypeSignedShort) {
+			shift = (((usqInt) atomicType1) >> 1) * 8;
+			value = retVal & ((1 << shift) - 1);
+			if (atomicType1 & 1) {
+				mask = 1 << (shift - 1);
+				value = (value & (mask - 1)) - (value & mask);
+			}
+			retOop1 = ((value << 1) | 1);
+			goto l1;
+		}
+		if (atomicType1 & 1) {
+			retOop1 = interpreterProxy->signed32BitIntegerFor(retVal);
+			goto l1;
+		} else {
+			retOop1 = interpreterProxy->positive32BitIntegerFor(retVal);
+			goto l1;
+		}
+	}
+	if (atomicType1 < FFITypeSingleFloat) {
+		if ((((usqInt) atomicType1) >> 1) == (((usqInt) FFITypeSignedLongLong) >> 1)) {
+			retOop1 = ffiCreateLongLongReturn(atomicType1 & 1);
+			goto l1;
+		} else {
+			retOop1 = interpreterProxy->fetchPointerofObject(retVal & 255, interpreterProxy->characterTable());
+			goto l1;
+		}
+	}
+	retOop1 = interpreterProxy->floatObjectOf(ffiReturnFloatValue());
+l1:	/* end ffiCreateReturnOop: */;
+	ffiRetClass = interpreterProxy->popRemappableOop();
+	if (ffiRetClass == (interpreterProxy->nilObject())) {
+		return interpreterProxy->push(retOop1);
+	}
+	interpreterProxy->pushRemappableOop(retOop1);
+	retOop1 = interpreterProxy->instantiateClassindexableSize(ffiRetClass, 0);
+	oop1 = interpreterProxy->popRemappableOop();
+	interpreterProxy->storePointerofObjectwithValue(0, retOop1, oop1);
+	return interpreterProxy->push(retOop1);
+}
+
+
 /*	Make sure we can return an object of the given type */
 
 static sqInt ffiCheckReturnWith(sqInt retSpec, sqInt retClass) {
@@ -1255,6 +1257,89 @@ static sqInt ffiCreateLongLongReturn(sqInt isSigned) {
 	ptr[1] = ((((usqInt) lowWord) >> 8) & 255);
 	ptr[0] = (lowWord & 255);
 	return largeInt;
+}
+
+
+/*	Generic callout support. Create an atomic return value from an external function call */
+
+static sqInt ffiCreateReturn(sqInt retVal) {
+    sqInt oop;
+    sqInt atomicType;
+    sqInt retOop;
+    sqInt atomicType1;
+    sqInt value;
+    sqInt byteSize;
+    sqInt shift;
+    sqInt mask;
+
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+
+	/* void returns self */
+
+	atomicType = ((usqInt) (ffiRetHeader & FFIAtomicTypeMask)) >> FFIAtomicTypeShift;
+	if (atomicType <= FFITypeVoid) {
+		return interpreterProxy->pop(interpreterProxy->methodArgumentCount());
+	}
+	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
+	interpreterProxy->pushRemappableOop(ffiRetClass);
+	/* begin ffiCreateReturnOop: */
+	atomicType1 = ((usqInt) (ffiRetHeader & FFIAtomicTypeMask)) >> FFIAtomicTypeShift;
+	if (atomicType1 == FFITypeBool) {
+		byteSize = ffiRetHeader & FFIStructSizeMask;
+		if (byteSize == 4) {
+			value = retVal;
+		} else {
+			value = retVal & ((1 << (byteSize * 8)) - 1);
+		}
+		if (value == 0) {
+			retOop = interpreterProxy->falseObject();
+			goto l1;
+		} else {
+			retOop = interpreterProxy->trueObject();
+			goto l1;
+		}
+	}
+	if (atomicType1 <= FFITypeSignedInt) {
+		if (atomicType1 <= FFITypeSignedShort) {
+			shift = (((usqInt) atomicType1) >> 1) * 8;
+			value = retVal & ((1 << shift) - 1);
+			if (atomicType1 & 1) {
+				mask = 1 << (shift - 1);
+				value = (value & (mask - 1)) - (value & mask);
+			}
+			retOop = ((value << 1) | 1);
+			goto l1;
+		}
+		if (atomicType1 & 1) {
+			retOop = interpreterProxy->signed32BitIntegerFor(retVal);
+			goto l1;
+		} else {
+			retOop = interpreterProxy->positive32BitIntegerFor(retVal);
+			goto l1;
+		}
+	}
+	if (atomicType1 < FFITypeSingleFloat) {
+		if ((((usqInt) atomicType1) >> 1) == (((usqInt) FFITypeSignedLongLong) >> 1)) {
+			retOop = ffiCreateLongLongReturn(atomicType1 & 1);
+			goto l1;
+		} else {
+			retOop = interpreterProxy->fetchPointerofObject(retVal & 255, interpreterProxy->characterTable());
+			goto l1;
+		}
+	}
+	retOop = interpreterProxy->floatObjectOf(ffiReturnFloatValue());
+l1:	/* end ffiCreateReturnOop: */;
+	ffiRetClass = interpreterProxy->popRemappableOop();
+	if (ffiRetClass == (interpreterProxy->nilObject())) {
+		return interpreterProxy->push(retOop);
+	}
+	interpreterProxy->pushRemappableOop(retOop);
+	retOop = interpreterProxy->instantiateClassindexableSize(ffiRetClass, 0);
+	oop = interpreterProxy->popRemappableOop();
+	interpreterProxy->storePointerofObjectwithValue(0, retOop, oop);
+	return interpreterProxy->push(retOop);
 }
 
 
@@ -1394,89 +1479,6 @@ static sqInt ffiCreateReturnStruct(void) {
 	return interpreterProxy->push(retOop);
 }
 
-
-/*	Generic callout support. Create an atomic return value from an external function call */
-
-static sqInt ffiCreateReturn(sqInt retVal) {
-    sqInt oop;
-    sqInt atomicType;
-    sqInt retOop;
-    sqInt atomicType1;
-    sqInt value;
-    sqInt byteSize;
-    sqInt shift;
-    sqInt mask;
-
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-
-	/* void returns self */
-
-	atomicType = ((usqInt) (ffiRetHeader & FFIAtomicTypeMask)) >> FFIAtomicTypeShift;
-	if (atomicType <= FFITypeVoid) {
-		return interpreterProxy->pop(interpreterProxy->methodArgumentCount());
-	}
-	interpreterProxy->pop((interpreterProxy->methodArgumentCount()) + 1);
-	interpreterProxy->pushRemappableOop(ffiRetClass);
-	/* begin ffiCreateReturnOop: */
-	atomicType1 = ((usqInt) (ffiRetHeader & FFIAtomicTypeMask)) >> FFIAtomicTypeShift;
-	if (atomicType1 == FFITypeBool) {
-		byteSize = ffiRetHeader & FFIStructSizeMask;
-		if (byteSize == 4) {
-			value = retVal;
-		} else {
-			value = retVal & ((1 << (byteSize * 8)) - 1);
-		}
-		if (value == 0) {
-			retOop = interpreterProxy->falseObject();
-			goto l1;
-		} else {
-			retOop = interpreterProxy->trueObject();
-			goto l1;
-		}
-	}
-	if (atomicType1 <= FFITypeSignedInt) {
-		if (atomicType1 <= FFITypeSignedShort) {
-			shift = (((usqInt) atomicType1) >> 1) * 8;
-			value = retVal & ((1 << shift) - 1);
-			if (atomicType1 & 1) {
-				mask = 1 << (shift - 1);
-				value = (value & (mask - 1)) - (value & mask);
-			}
-			retOop = ((value << 1) | 1);
-			goto l1;
-		}
-		if (atomicType1 & 1) {
-			retOop = interpreterProxy->signed32BitIntegerFor(retVal);
-			goto l1;
-		} else {
-			retOop = interpreterProxy->positive32BitIntegerFor(retVal);
-			goto l1;
-		}
-	}
-	if (atomicType1 < FFITypeSingleFloat) {
-		if ((((usqInt) atomicType1) >> 1) == (((usqInt) FFITypeSignedLongLong) >> 1)) {
-			retOop = ffiCreateLongLongReturn(atomicType1 & 1);
-			goto l1;
-		} else {
-			retOop = interpreterProxy->fetchPointerofObject(retVal & 255, interpreterProxy->characterTable());
-			goto l1;
-		}
-	}
-	retOop = interpreterProxy->floatObjectOf(ffiReturnFloatValue());
-l1:	/* end ffiCreateReturnOop: */;
-	ffiRetClass = interpreterProxy->popRemappableOop();
-	if (ffiRetClass == (interpreterProxy->nilObject())) {
-		return interpreterProxy->push(retOop);
-	}
-	interpreterProxy->pushRemappableOop(retOop);
-	retOop = interpreterProxy->instantiateClassindexableSize(ffiRetClass, 0);
-	oop = interpreterProxy->popRemappableOop();
-	interpreterProxy->storePointerofObjectwithValue(0, retOop, oop);
-	return interpreterProxy->push(retOop);
-}
-
 static sqInt ffiFail(sqInt reason) {
 	ffiLastError = reason;
 	return interpreterProxy->primitiveFail();
@@ -1528,37 +1530,6 @@ static sqInt ffiIntegerValueOf(sqInt oop) {
 }
 
 
-/*	Load the function address for a call out to an external function */
-
-static sqInt ffiLoadCalloutAddressFrom(sqInt oop) {
-    sqInt moduleHandle;
-    sqInt address;
-    sqInt functionName;
-    sqInt module;
-    sqInt functionLength;
-
-	module = interpreterProxy->fetchPointerofObject(4, oop);
-	moduleHandle = ffiLoadCalloutModule(module);
-	if (interpreterProxy->failed()) {
-		return 0;
-	}
-	functionName = interpreterProxy->fetchPointerofObject(3, oop);
-	if (!(interpreterProxy->isBytes(functionName))) {
-		/* begin ffiFail: */
-		ffiLastError = FFIErrorBadExternalFunction;
-		return interpreterProxy->primitiveFail();
-	}
-	functionLength = interpreterProxy->byteSizeOf(functionName);
-	address = interpreterProxy->ioLoadSymbolOfLengthFromModule(((int) (interpreterProxy->firstIndexableField(functionName))), functionLength, moduleHandle);
-	if ((interpreterProxy->failed()) || (address == 0)) {
-		/* begin ffiFail: */
-		ffiLastError = FFIErrorAddressNotFound;
-		return interpreterProxy->primitiveFail();
-	}
-	return address;
-}
-
-
 /*	Load the address of the foreign function from the given object */
 
 static sqInt ffiLoadCalloutAddress(sqInt lit) {
@@ -1606,6 +1577,37 @@ l1:	/* end ffiContentsOfHandle:errCode: */;
 		}
 		ptr = interpreterProxy->firstIndexableField(addressPtr);
 		ptr[0] = address;
+	}
+	return address;
+}
+
+
+/*	Load the function address for a call out to an external function */
+
+static sqInt ffiLoadCalloutAddressFrom(sqInt oop) {
+    sqInt moduleHandle;
+    sqInt address;
+    sqInt functionName;
+    sqInt module;
+    sqInt functionLength;
+
+	module = interpreterProxy->fetchPointerofObject(4, oop);
+	moduleHandle = ffiLoadCalloutModule(module);
+	if (interpreterProxy->failed()) {
+		return 0;
+	}
+	functionName = interpreterProxy->fetchPointerofObject(3, oop);
+	if (!(interpreterProxy->isBytes(functionName))) {
+		/* begin ffiFail: */
+		ffiLastError = FFIErrorBadExternalFunction;
+		return interpreterProxy->primitiveFail();
+	}
+	functionLength = interpreterProxy->byteSizeOf(functionName);
+	address = interpreterProxy->ioLoadSymbolOfLengthFromModule(((int) (interpreterProxy->firstIndexableField(functionName))), functionLength, moduleHandle);
+	if ((interpreterProxy->failed()) || (address == 0)) {
+		/* begin ffiFail: */
+		ffiLastError = FFIErrorAddressNotFound;
+		return interpreterProxy->primitiveFail();
 	}
 	return address;
 }
@@ -2518,7 +2520,7 @@ EXPORT(sqInt) primitiveFFIIntegerAt(void) {
 		if (byteSize == 1) {
 			value = byteAt(addr);
 		} else {
-			value = *((short int *) addr);
+			value = *((unsigned short int *) addr);
 		}
 		if (isSigned) {
 			mask = 1 << ((byteSize * 8) - 1);
@@ -2685,20 +2687,20 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
 
 
 void* SqueakFFIPrims_exports[][3] = {
-	{"SqueakFFIPrims", "primitiveFFIAllocate", (void*)primitiveFFIAllocate},
 	{"SqueakFFIPrims", "primitiveFFIFloatAt", (void*)primitiveFFIFloatAt},
+	{"SqueakFFIPrims", "primitiveCallout", (void*)primitiveCallout},
+	{"SqueakFFIPrims", "primitiveFFIAllocate", (void*)primitiveFFIAllocate},
+	{"SqueakFFIPrims", "primitiveCalloutWithArgs", (void*)primitiveCalloutWithArgs},
+	{"SqueakFFIPrims", "primitiveFFIFloatAtPut", (void*)primitiveFFIFloatAtPut},
+	{"SqueakFFIPrims", "setInterpreter", (void*)setInterpreter},
+	{"SqueakFFIPrims", "primitiveFFIGetLastError", (void*)primitiveFFIGetLastError},
+	{"SqueakFFIPrims", "primitiveFFIDoubleAt", (void*)primitiveFFIDoubleAt},
 	{"SqueakFFIPrims", "getModuleName", (void*)getModuleName},
 	{"SqueakFFIPrims", "primitiveForceLoad", (void*)primitiveForceLoad},
 	{"SqueakFFIPrims", "primitiveFFIIntegerAt", (void*)primitiveFFIIntegerAt},
-	{"SqueakFFIPrims", "setInterpreter", (void*)setInterpreter},
-	{"SqueakFFIPrims", "primitiveFFIFree", (void*)primitiveFFIFree},
-	{"SqueakFFIPrims", "primitiveFFIGetLastError", (void*)primitiveFFIGetLastError},
-	{"SqueakFFIPrims", "primitiveCallout", (void*)primitiveCallout},
-	{"SqueakFFIPrims", "primitiveCalloutWithArgs", (void*)primitiveCalloutWithArgs},
 	{"SqueakFFIPrims", "primitiveFFIIntegerAtPut", (void*)primitiveFFIIntegerAtPut},
-	{"SqueakFFIPrims", "primitiveFFIFloatAtPut", (void*)primitiveFFIFloatAtPut},
 	{"SqueakFFIPrims", "primitiveFFIDoubleAtPut", (void*)primitiveFFIDoubleAtPut},
-	{"SqueakFFIPrims", "primitiveFFIDoubleAt", (void*)primitiveFFIDoubleAt},
+	{"SqueakFFIPrims", "primitiveFFIFree", (void*)primitiveFFIFree},
 	{NULL, NULL, NULL}
 };
 

@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:53 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:39 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -47,9 +49,10 @@ EXPORT(sqInt) primitiveCanWriteImage(void);
 EXPORT(sqInt) primitiveDisableImageWrite(void);
 EXPORT(sqInt) primitiveGetSecureUserDirectory(void);
 EXPORT(sqInt) primitiveGetUntrustedUserDirectory(void);
+EXPORT(sqInt) secCanListenOnPort(sqInt socket, sqInt port);
 EXPORT(sqInt) secCanConnectToPort(sqInt addr, sqInt port);
-EXPORT(sqInt) secCanCreatePathOfSize(char * dirName, sqInt dirNameSize);
 EXPORT(sqInt) secCanCreateSocketOfType(sqInt netType, sqInt socketType);
+EXPORT(sqInt) secCanCreatePathOfSize(char * dirName, sqInt dirNameSize);
 EXPORT(sqInt) secCanDeleteFileOfSize(char * fileName, sqInt fileNameSize);
 EXPORT(sqInt) secCanDeletePathOfSize(char * dirName, sqInt dirNameSize);
 EXPORT(sqInt) secCanGetFileTypeOfSize(char * fileName, sqInt fileNameSize);
@@ -60,7 +63,6 @@ EXPORT(sqInt) secCanRenameFileOfSize(char * fileName, sqInt fileNameSize);
 EXPORT(sqInt) secCanRenameImage(void);
 EXPORT(sqInt) secCanSetFileTypeOfSize(char * fileName, sqInt fileNameSize);
 EXPORT(sqInt) secCanWriteImage(void);
-EXPORT(sqInt) secCanListenOnPort(sqInt socket, sqInt port);
 EXPORT(sqInt) secDisableFileAccess(void);
 EXPORT(sqInt) secDisableSocketAccess(void);
 EXPORT(sqInt) secHasFileAccess(void);
@@ -75,9 +77,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"SecurityPlugin 11 October 2006 (i)"
+	"SecurityPlugin 9 May 2008 (i)"
 #else
-	"SecurityPlugin 11 October 2006 (e)"
+	"SecurityPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -175,16 +177,20 @@ EXPORT(sqInt) primitiveGetUntrustedUserDirectory(void) {
 	interpreterProxy->popthenPush(1, dirOop);
 }
 
+EXPORT(sqInt) secCanListenOnPort(sqInt socket, sqInt port) {
+	return ioCanListenOnPort(socket, port);
+}
+
 EXPORT(sqInt) secCanConnectToPort(sqInt addr, sqInt port) {
 	return ioCanConnectToPort(addr, port);
 }
 
-EXPORT(sqInt) secCanCreatePathOfSize(char * dirName, sqInt dirNameSize) {
-	return ioCanCreatePathOfSize(dirName, dirNameSize);
-}
-
 EXPORT(sqInt) secCanCreateSocketOfType(sqInt netType, sqInt socketType) {
 	return ioCanCreateSocketOfType(netType, socketType);
+}
+
+EXPORT(sqInt) secCanCreatePathOfSize(char * dirName, sqInt dirNameSize) {
+	return ioCanCreatePathOfSize(dirName, dirNameSize);
 }
 
 EXPORT(sqInt) secCanDeleteFileOfSize(char * fileName, sqInt fileNameSize) {
@@ -227,10 +233,6 @@ EXPORT(sqInt) secCanWriteImage(void) {
 	return ioCanWriteImage();
 }
 
-EXPORT(sqInt) secCanListenOnPort(sqInt socket, sqInt port) {
-	return ioCanListenOnPort(socket, port);
-}
-
 EXPORT(sqInt) secDisableFileAccess(void) {
 	return ioDisableFileAccess();
 }
@@ -267,31 +269,31 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
 
 
 void* SecurityPlugin_exports[][3] = {
-	{"SecurityPlugin", "secDisableSocketAccess", (void*)secDisableSocketAccess},
-	{"SecurityPlugin", "getModuleName", (void*)getModuleName},
-	{"SecurityPlugin", "secCanRenameFileOfSize", (void*)secCanRenameFileOfSize},
+	{"SecurityPlugin", "secCanWriteImage", (void*)secCanWriteImage},
 	{"SecurityPlugin", "secCanRenameImage", (void*)secCanRenameImage},
 	{"SecurityPlugin", "primitiveGetSecureUserDirectory", (void*)primitiveGetSecureUserDirectory},
-	{"SecurityPlugin", "secCanDeleteFileOfSize", (void*)secCanDeleteFileOfSize},
-	{"SecurityPlugin", "secCanConnectToPort", (void*)secCanConnectToPort},
-	{"SecurityPlugin", "primitiveDisableImageWrite", (void*)primitiveDisableImageWrite},
 	{"SecurityPlugin", "secCanListPathOfSize", (void*)secCanListPathOfSize},
 	{"SecurityPlugin", "secCanSetFileTypeOfSize", (void*)secCanSetFileTypeOfSize},
-	{"SecurityPlugin", "secCanCreateSocketOfType", (void*)secCanCreateSocketOfType},
-	{"SecurityPlugin", "primitiveCanWriteImage", (void*)primitiveCanWriteImage},
-	{"SecurityPlugin", "secCanGetFileTypeOfSize", (void*)secCanGetFileTypeOfSize},
-	{"SecurityPlugin", "secCanDeletePathOfSize", (void*)secCanDeletePathOfSize},
-	{"SecurityPlugin", "secDisableFileAccess", (void*)secDisableFileAccess},
-	{"SecurityPlugin", "secCanOpenFileOfSizeWritable", (void*)secCanOpenFileOfSizeWritable},
 	{"SecurityPlugin", "secHasFileAccess", (void*)secHasFileAccess},
 	{"SecurityPlugin", "secHasSocketAccess", (void*)secHasSocketAccess},
-	{"SecurityPlugin", "secCanWriteImage", (void*)secCanWriteImage},
 	{"SecurityPlugin", "setInterpreter", (void*)setInterpreter},
-	{"SecurityPlugin", "secCanOpenAsyncFileOfSizeWritable", (void*)secCanOpenAsyncFileOfSizeWritable},
-	{"SecurityPlugin", "secCanListenOnPort", (void*)secCanListenOnPort},
+	{"SecurityPlugin", "secCanDeleteFileOfSize", (void*)secCanDeleteFileOfSize},
 	{"SecurityPlugin", "primitiveGetUntrustedUserDirectory", (void*)primitiveGetUntrustedUserDirectory},
-	{"SecurityPlugin", "initialiseModule", (void*)initialiseModule},
+	{"SecurityPlugin", "getModuleName", (void*)getModuleName},
+	{"SecurityPlugin", "secCanConnectToPort", (void*)secCanConnectToPort},
+	{"SecurityPlugin", "secCanDeletePathOfSize", (void*)secCanDeletePathOfSize},
+	{"SecurityPlugin", "secDisableSocketAccess", (void*)secDisableSocketAccess},
+	{"SecurityPlugin", "primitiveDisableImageWrite", (void*)primitiveDisableImageWrite},
+	{"SecurityPlugin", "secCanCreateSocketOfType", (void*)secCanCreateSocketOfType},
 	{"SecurityPlugin", "secCanCreatePathOfSize", (void*)secCanCreatePathOfSize},
+	{"SecurityPlugin", "secCanGetFileTypeOfSize", (void*)secCanGetFileTypeOfSize},
+	{"SecurityPlugin", "initialiseModule", (void*)initialiseModule},
+	{"SecurityPlugin", "secCanRenameFileOfSize", (void*)secCanRenameFileOfSize},
+	{"SecurityPlugin", "secCanOpenAsyncFileOfSizeWritable", (void*)secCanOpenAsyncFileOfSizeWritable},
+	{"SecurityPlugin", "secDisableFileAccess", (void*)secDisableFileAccess},
+	{"SecurityPlugin", "secCanOpenFileOfSizeWritable", (void*)secCanOpenFileOfSizeWritable},
+	{"SecurityPlugin", "primitiveCanWriteImage", (void*)primitiveCanWriteImage},
+	{"SecurityPlugin", "secCanListenOnPort", (void*)secCanListenOnPort},
 	{NULL, NULL, NULL}
 };
 

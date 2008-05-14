@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:40 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:26 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -72,8 +74,8 @@ static sqInt sendBlockwithwithwith(sqInt literalStream, sqInt distanceStream, sq
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 #pragma export off
 static sqInt shouldFlush(void);
-static sqInt updateHashAt(sqInt here);
 static sqInt updateHash(sqInt nextValue);
+static sqInt updateHashAt(sqInt here);
 static sqInt zipDecodeValueFromsize(unsigned int * table, sqInt tableSize);
 static sqInt zipDecompressBlock(void);
 static sqInt zipNextBits(sqInt n);
@@ -85,9 +87,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"ZipPlugin 11 October 2006 (i)"
+	"ZipPlugin 9 May 2008 (i)"
 #else
-	"ZipPlugin 11 October 2006 (e)"
+	"ZipPlugin 9 May 2008 (e)"
 #endif
 ;
 static unsigned int zipBaseDistance[] = {
@@ -119,6 +121,8 @@ static unsigned int zipCrcTable[] = {
 2262029012U, 4057260610U, 1759359992, 534414190, 2176718541U, 4139329115U, 1873836001, 414664567, 2282248934U, 4279200368U, 1711684554, 285281116, 2405801727U, 4167216745U, 1634467795, 376229701, 
 2685067896U, 3608007406U, 1308918612, 956543938, 2808555105U, 3495958263U, 1231636301, 1047427035, 2932959818U, 3654703836U, 1088359270, 936918000, 2847714899U, 3736837829U, 1202900863, 817233897, 
 3183342108U, 3401237130U, 1404277552, 615818150, 3134207493U, 3453421203U, 1423857449, 601450431, 3009837614U, 3294710456U, 1567103746, 711928724, 3020668471U, 3272380065U, 1510334235, 755167117};
+static unsigned int* zipDistTable;
+static sqInt zipDistTableSize;
 static unsigned int zipDistanceCodes[] = {
 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 
 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9, 
@@ -154,8 +158,6 @@ static unsigned int zipDistanceCodes[] = {
 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29};
 static unsigned int* zipDistanceFreq;
 static unsigned int* zipDistances;
-static unsigned int* zipDistTable;
-static sqInt zipDistTableSize;
 static unsigned int zipExtraDistanceBits[] = {
 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 
 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13};
@@ -165,12 +167,12 @@ static unsigned int zipExtraLengthBits[] = {
 static unsigned int* zipHashHead;
 static unsigned int* zipHashTail;
 static sqInt zipHashValue;
+static unsigned int* zipLitTable;
+static sqInt zipLitTableSize;
 static sqInt zipLiteralCount;
 static unsigned int* zipLiteralFreq;
 static sqInt zipLiteralSize;
 static unsigned char* zipLiterals;
-static unsigned int* zipLitTable;
-static sqInt zipLitTableSize;
 static sqInt zipMatchCount;
 static unsigned int zipMatchLengthCodes[] = {
 257, 258, 259, 260, 261, 262, 263, 264, 265, 265, 266, 266, 267, 267, 268, 268, 
@@ -1159,18 +1161,18 @@ static sqInt shouldFlush(void) {
 }
 
 
-/*	Update the hash value at position here (one based) */
-
-static sqInt updateHashAt(sqInt here) {
-	return ((((usqInt) zipHashValue << 5)) ^ (zipCollection[here])) & DeflateHashMask;
-}
-
-
 /*	Update the running hash value based on the next input byte.
 	Return the new updated hash value. */
 
 static sqInt updateHash(sqInt nextValue) {
 	return ((((usqInt) zipHashValue << 5)) ^ nextValue) & DeflateHashMask;
+}
+
+
+/*	Update the hash value at position here (one based) */
+
+static sqInt updateHashAt(sqInt here) {
+	return ((((usqInt) zipHashValue << 5)) ^ (zipCollection[here])) & DeflateHashMask;
 }
 
 
@@ -1311,11 +1313,11 @@ static sqInt zipNextBits(sqInt n) {
 void* ZipPlugin_exports[][3] = {
 	{"ZipPlugin", "primitiveDeflateBlock", (void*)primitiveDeflateBlock},
 	{"ZipPlugin", "getModuleName", (void*)getModuleName},
-	{"ZipPlugin", "setInterpreter", (void*)setInterpreter},
-	{"ZipPlugin", "primitiveDeflateUpdateHashTable", (void*)primitiveDeflateUpdateHashTable},
-	{"ZipPlugin", "primitiveUpdateGZipCrc32", (void*)primitiveUpdateGZipCrc32},
-	{"ZipPlugin", "primitiveInflateDecompressBlock", (void*)primitiveInflateDecompressBlock},
 	{"ZipPlugin", "primitiveZipSendBlock", (void*)primitiveZipSendBlock},
+	{"ZipPlugin", "primitiveUpdateGZipCrc32", (void*)primitiveUpdateGZipCrc32},
+	{"ZipPlugin", "primitiveDeflateUpdateHashTable", (void*)primitiveDeflateUpdateHashTable},
+	{"ZipPlugin", "primitiveInflateDecompressBlock", (void*)primitiveInflateDecompressBlock},
+	{"ZipPlugin", "setInterpreter", (void*)setInterpreter},
 	{"ZipPlugin", "primitiveUpdateAdler32", (void*)primitiveUpdateAdler32},
 	{NULL, NULL, NULL}
 };

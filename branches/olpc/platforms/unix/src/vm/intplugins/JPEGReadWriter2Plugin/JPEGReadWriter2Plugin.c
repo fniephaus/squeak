@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:45 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:30 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -64,9 +66,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"JPEGReadWriter2Plugin 11 October 2006 (i)"
+	"JPEGReadWriter2Plugin 9 May 2008 (i)"
 #else
-	"JPEGReadWriter2Plugin 11 October 2006 (e)"
+	"JPEGReadWriter2Plugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -668,19 +670,19 @@ static sqInt sqAssert(sqInt aBool) {
 
 
 void* JPEGReadWriter2Plugin_exports[][3] = {
-	{"JPEGReadWriter2Plugin", "getModuleName", (void*)getModuleName},
-	{"JPEGReadWriter2Plugin", "primJPEGWriteImageonByteArrayformqualityprogressiveJPEGerrorMgr", (void*)primJPEGWriteImageonByteArrayformqualityprogressiveJPEGerrorMgr},
-	{"JPEGReadWriter2Plugin", "primImageWidth", (void*)primImageWidth},
-	{"JPEGReadWriter2Plugin", "setInterpreter", (void*)setInterpreter},
-	{"JPEGReadWriter2Plugin", "primJPEGCompressStructSize", (void*)primJPEGCompressStructSize},
-	{"JPEGReadWriter2Plugin", "primJPEGReadImagefromByteArrayonFormdoDitheringerrorMgr", (void*)primJPEGReadImagefromByteArrayonFormdoDitheringerrorMgr},
 	{"JPEGReadWriter2Plugin", "primJPEGDecompressStructSize", (void*)primJPEGDecompressStructSize},
-	{"JPEGReadWriter2Plugin", "primImageHeight", (void*)primImageHeight},
 	{"JPEGReadWriter2Plugin", "shutdownModule", (void*)shutdownModule},
 	{"JPEGReadWriter2Plugin", "primJPEGPluginIsPresent", (void*)primJPEGPluginIsPresent},
-	{"JPEGReadWriter2Plugin", "primJPEGErrorMgr2StructSize", (void*)primJPEGErrorMgr2StructSize},
+	{"JPEGReadWriter2Plugin", "primImageHeight", (void*)primImageHeight},
 	{"JPEGReadWriter2Plugin", "initialiseModule", (void*)initialiseModule},
 	{"JPEGReadWriter2Plugin", "primJPEGReadHeaderfromByteArrayerrorMgr", (void*)primJPEGReadHeaderfromByteArrayerrorMgr},
+	{"JPEGReadWriter2Plugin", "setInterpreter", (void*)setInterpreter},
+	{"JPEGReadWriter2Plugin", "primJPEGErrorMgr2StructSize", (void*)primJPEGErrorMgr2StructSize},
+	{"JPEGReadWriter2Plugin", "primJPEGCompressStructSize", (void*)primJPEGCompressStructSize},
+	{"JPEGReadWriter2Plugin", "getModuleName", (void*)getModuleName},
+	{"JPEGReadWriter2Plugin", "primImageWidth", (void*)primImageWidth},
+	{"JPEGReadWriter2Plugin", "primJPEGWriteImageonByteArrayformqualityprogressiveJPEGerrorMgr", (void*)primJPEGWriteImageonByteArrayformqualityprogressiveJPEGerrorMgr},
+	{"JPEGReadWriter2Plugin", "primJPEGReadImagefromByteArrayonFormdoDitheringerrorMgr", (void*)primJPEGReadImagefromByteArrayonFormdoDitheringerrorMgr},
 	{NULL, NULL, NULL}
 };
 

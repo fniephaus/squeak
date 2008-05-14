@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:48:04 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:25:07 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -60,7 +62,7 @@ static sqInt securityHeurisitic(void);
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 EXPORT(sqInt) shutdownModule(void);
 #pragma export off
-static sqInt stringFromCString(char *aCString);
+static sqInt stringFromCString(const char * aCString);
 static char * transientCStringFromString(sqInt aString);
 static char * versionString(void);
 /*** Variables ***/
@@ -71,9 +73,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"XDisplayControlPlugin 11 October 2006 (i)"
+	"XDisplayControlPlugin 9 May 2008 (i)"
 #else
-	"XDisplayControlPlugin 11 October 2006 (e)"
+	"XDisplayControlPlugin 9 May 2008 (e)"
 #endif
 ;
 static int osprocessSandboxSecurity;
@@ -102,6 +104,7 @@ static sqInt halt(void) {
 
 EXPORT(sqInt) initialiseModule(void) {
 	osprocessSandboxSecurity = -1;
+	return 1;
 }
 
 static sqInt msg(char * s) {
@@ -200,11 +203,7 @@ EXPORT(sqInt) primitiveKillDisplay(void) {
 /*	Answer a string containing the module name string for this plugin. */
 
 EXPORT(sqInt) primitiveModuleName(void) {
-    char *s;
-
-	s= (char *)moduleName;
-	interpreterProxy->pop(1);
-	interpreterProxy->push(stringFromCString(s));
+	interpreterProxy->popthenPush(1, stringFromCString(moduleName));
 }
 
 
@@ -325,15 +324,13 @@ EXPORT(sqInt) shutdownModule(void) {
 /*	Answer a new String copied from a null-terminated C string.
 	Caution: This may invoke the garbage collector. */
 
-static sqInt stringFromCString(char *aCString) {
+static sqInt stringFromCString(const char * aCString) {
     sqInt len;
-    char *stringPtr;
     sqInt newString;
 
 	len = strlen(aCString);
 	newString = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classString(), len);
-	stringPtr = interpreterProxy->arrayValueOf(newString);
-	(char *)strncpy(stringPtr, aCString, len);
+	strncpy(interpreterProxy->arrayValueOf(newString), aCString, len);
 	return newString;
 }
 
@@ -385,7 +382,7 @@ static char * transientCStringFromString(sqInt aString) {
 /*	2.0 supports 64bit code base */
 
 static char * versionString(void) {
-    static char version[]= "2.0";
+    static char version[]= "2.1.3";
 
 	return version;
 }
@@ -395,20 +392,20 @@ static char * versionString(void) {
 
 
 void* XDisplayControlPlugin_exports[][3] = {
-	{"XDisplayControlPlugin", "getModuleName", (void*)getModuleName},
-	{"XDisplayControlPlugin", "primitiveSetDisplayName", (void*)primitiveSetDisplayName},
-	{"XDisplayControlPlugin", "setInterpreter", (void*)setInterpreter},
-	{"XDisplayControlPlugin", "primitiveOpenDisplay", (void*)primitiveOpenDisplay},
-	{"XDisplayControlPlugin", "primitiveCanConnectToDisplay", (void*)primitiveCanConnectToDisplay},
-	{"XDisplayControlPlugin", "primitiveModuleName", (void*)primitiveModuleName},
-	{"XDisplayControlPlugin", "shutdownModule", (void*)shutdownModule},
-	{"XDisplayControlPlugin", "primitiveKillDisplay", (void*)primitiveKillDisplay},
-	{"XDisplayControlPlugin", "primitiveVersionString", (void*)primitiveVersionString},
 	{"XDisplayControlPlugin", "primitiveGetDisplayName", (void*)primitiveGetDisplayName},
+	{"XDisplayControlPlugin", "shutdownModule", (void*)shutdownModule},
+	{"XDisplayControlPlugin", "primitiveSetDisplayName", (void*)primitiveSetDisplayName},
 	{"XDisplayControlPlugin", "primitiveDisconnectDisplay", (void*)primitiveDisconnectDisplay},
 	{"XDisplayControlPlugin", "primitiveFlushDisplay", (void*)primitiveFlushDisplay},
+	{"XDisplayControlPlugin", "setInterpreter", (void*)setInterpreter},
 	{"XDisplayControlPlugin", "initialiseModule", (void*)initialiseModule},
+	{"XDisplayControlPlugin", "primitiveOpenDisplay", (void*)primitiveOpenDisplay},
+	{"XDisplayControlPlugin", "primitiveCanConnectToDisplay", (void*)primitiveCanConnectToDisplay},
+	{"XDisplayControlPlugin", "getModuleName", (void*)getModuleName},
+	{"XDisplayControlPlugin", "primitiveKillDisplay", (void*)primitiveKillDisplay},
+	{"XDisplayControlPlugin", "primitiveModuleName", (void*)primitiveModuleName},
 	{"XDisplayControlPlugin", "primitiveIsConnectedToDisplay", (void*)primitiveIsConnectedToDisplay},
+	{"XDisplayControlPlugin", "primitiveVersionString", (void*)primitiveVersionString},
 	{NULL, NULL, NULL}
 };
 

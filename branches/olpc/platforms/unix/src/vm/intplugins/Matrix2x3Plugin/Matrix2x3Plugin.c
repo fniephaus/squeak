@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:50 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:36 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -70,9 +72,9 @@ static double m23ResultX;
 static double m23ResultY;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"Matrix2x3Plugin 11 October 2006 (i)"
+	"Matrix2x3Plugin 9 May 2008 (i)"
 #else
-	"Matrix2x3Plugin 11 October 2006 (e)"
+	"Matrix2x3Plugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -654,14 +656,14 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
 
 
 void* Matrix2x3Plugin_exports[][3] = {
-	{"Matrix2x3Plugin", "primitiveTransformPoint", (void*)primitiveTransformPoint},
-	{"Matrix2x3Plugin", "primitiveInvertRectInto", (void*)primitiveInvertRectInto},
-	{"Matrix2x3Plugin", "getModuleName", (void*)getModuleName},
 	{"Matrix2x3Plugin", "setInterpreter", (void*)setInterpreter},
-	{"Matrix2x3Plugin", "primitiveInvertPoint", (void*)primitiveInvertPoint},
-	{"Matrix2x3Plugin", "primitiveIsPureTranslation", (void*)primitiveIsPureTranslation},
-	{"Matrix2x3Plugin", "primitiveTransformRectInto", (void*)primitiveTransformRectInto},
 	{"Matrix2x3Plugin", "primitiveIsIdentity", (void*)primitiveIsIdentity},
+	{"Matrix2x3Plugin", "primitiveTransformPoint", (void*)primitiveTransformPoint},
+	{"Matrix2x3Plugin", "primitiveTransformRectInto", (void*)primitiveTransformRectInto},
+	{"Matrix2x3Plugin", "primitiveInvertRectInto", (void*)primitiveInvertRectInto},
+	{"Matrix2x3Plugin", "primitiveInvertPoint", (void*)primitiveInvertPoint},
+	{"Matrix2x3Plugin", "getModuleName", (void*)getModuleName},
+	{"Matrix2x3Plugin", "primitiveIsPureTranslation", (void*)primitiveIsPureTranslation},
 	{"Matrix2x3Plugin", "primitiveComposeMatrix", (void*)primitiveComposeMatrix},
 	{NULL, NULL, NULL}
 };

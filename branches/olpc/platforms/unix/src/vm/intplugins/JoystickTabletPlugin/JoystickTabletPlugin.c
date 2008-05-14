@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:44 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:32 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -58,9 +60,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"JoystickTabletPlugin 11 October 2006 (i)"
+	"JoystickTabletPlugin 9 May 2008 (i)"
 #else
-	"JoystickTabletPlugin 11 October 2006 (e)"
+	"JoystickTabletPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -189,13 +191,13 @@ static sqInt sqAssert(sqInt aBool) {
 
 
 void* JoystickTabletPlugin_exports[][3] = {
-	{"JoystickTabletPlugin", "primitiveGetTabletParameters", (void*)primitiveGetTabletParameters},
-	{"JoystickTabletPlugin", "shutdownModule", (void*)shutdownModule},
-	{"JoystickTabletPlugin", "getModuleName", (void*)getModuleName},
-	{"JoystickTabletPlugin", "primitiveReadJoystick", (void*)primitiveReadJoystick},
-	{"JoystickTabletPlugin", "setInterpreter", (void*)setInterpreter},
-	{"JoystickTabletPlugin", "initialiseModule", (void*)initialiseModule},
 	{"JoystickTabletPlugin", "primitiveReadTablet", (void*)primitiveReadTablet},
+	{"JoystickTabletPlugin", "shutdownModule", (void*)shutdownModule},
+	{"JoystickTabletPlugin", "primitiveReadJoystick", (void*)primitiveReadJoystick},
+	{"JoystickTabletPlugin", "getModuleName", (void*)getModuleName},
+	{"JoystickTabletPlugin", "initialiseModule", (void*)initialiseModule},
+	{"JoystickTabletPlugin", "setInterpreter", (void*)setInterpreter},
+	{"JoystickTabletPlugin", "primitiveGetTabletParameters", (void*)primitiveGetTabletParameters},
 	{NULL, NULL, NULL}
 };
 

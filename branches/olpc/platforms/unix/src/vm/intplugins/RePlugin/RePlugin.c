@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:53 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:38 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -61,9 +63,9 @@ static sqInt rcvrExtraPtrFrom(sqInt aByteArrayOrNilObject);
 static sqInt rcvrMatchFlags(void);
 static int * rcvrMatchSpacePtr(void);
 static sqInt rcvrMatchSpaceSize(void);
-static char * rcvrPatternStrPtr(void);
 static sqInt rcvrPCREBufferFrom(sqInt aByteArray);
 static sqInt rcvrPCREBufferPtr(void);
+static char * rcvrPatternStrPtr(void);
 static void rePluginFree(void *  aPointer);
 static void * rePluginMalloc(size_t  anInteger);
 #pragma export on
@@ -85,9 +87,9 @@ static int lastAlloc = 0;
 static sqInt matchFlags;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"RePlugin 11 October 2006 (i)"
+	"RePlugin 9 May 2008 (i)"
 #else
-	"RePlugin 11 October 2006 (e)"
+	"RePlugin 9 May 2008 (e)"
 #endif
 ;
 static int netMemory = 0;
@@ -388,16 +390,16 @@ static sqInt rcvrMatchSpaceSize(void) {
 	return ((sqInt) (interpreterProxy->byteSizeOf(interpreterProxy->fetchPointerofObject(7, rcvr))) >> 2);
 }
 
-static char * rcvrPatternStrPtr(void) {
-	return ((char *) (interpreterProxy->fetchArrayofObject(0, rcvr)));
-}
-
 static sqInt rcvrPCREBufferFrom(sqInt aByteArray) {
 	interpreterProxy->storePointerofObjectwithValue(2, rcvr, aByteArray);
 }
 
 static sqInt rcvrPCREBufferPtr(void) {
 	return ((int) (interpreterProxy->fetchArrayofObject(2, rcvr)));
+}
+
+static char * rcvrPatternStrPtr(void) {
+	return ((char *) (interpreterProxy->fetchArrayofObject(0, rcvr)));
 }
 
 
@@ -448,15 +450,15 @@ static sqInt sqAssert(sqInt aBool) {
 
 void* RePlugin_exports[][3] = {
 	{"RePlugin", "primPCREExec", (void*)primPCREExec},
-	{"RePlugin", "primNumAllocs", (void*)primNumAllocs},
+	{"RePlugin", "primNetMemory", (void*)primNetMemory},
+	{"RePlugin", "setInterpreter", (void*)setInterpreter},
+	{"RePlugin", "primLastAlloc", (void*)primLastAlloc},
 	{"RePlugin", "primPCRECompile", (void*)primPCRECompile},
 	{"RePlugin", "getModuleName", (void*)getModuleName},
 	{"RePlugin", "primNumFrees", (void*)primNumFrees},
-	{"RePlugin", "setInterpreter", (void*)setInterpreter},
 	{"RePlugin", "primPCREExecfromto", (void*)primPCREExecfromto},
 	{"RePlugin", "primPCRENumSubPatterns", (void*)primPCRENumSubPatterns},
-	{"RePlugin", "primLastAlloc", (void*)primLastAlloc},
-	{"RePlugin", "primNetMemory", (void*)primNetMemory},
+	{"RePlugin", "primNumAllocs", (void*)primNumAllocs},
 	{NULL, NULL, NULL}
 };
 

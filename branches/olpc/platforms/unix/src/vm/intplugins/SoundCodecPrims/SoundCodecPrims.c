@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:55 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:41 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -53,9 +55,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"SoundCodecPrims 11 October 2006 (i)"
+	"SoundCodecPrims 9 May 2008 (i)"
 #else
-	"SoundCodecPrims 11 October 2006 (e)"
+	"SoundCodecPrims 9 May 2008 (e)"
 #endif
 ;
 
@@ -194,9 +196,9 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
 
 void* SoundCodecPrims_exports[][3] = {
 	{"SoundCodecPrims", "primitiveGSMNewState", (void*)primitiveGSMNewState},
-	{"SoundCodecPrims", "primitiveGSMEncode", (void*)primitiveGSMEncode},
 	{"SoundCodecPrims", "getModuleName", (void*)getModuleName},
 	{"SoundCodecPrims", "primitiveGSMDecode", (void*)primitiveGSMDecode},
+	{"SoundCodecPrims", "primitiveGSMEncode", (void*)primitiveGSMEncode},
 	{"SoundCodecPrims", "setInterpreter", (void*)setInterpreter},
 	{NULL, NULL, NULL}
 };

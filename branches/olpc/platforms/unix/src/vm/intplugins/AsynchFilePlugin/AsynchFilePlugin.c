@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:29 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:12 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -63,9 +65,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"AsynchFilePlugin 11 October 2006 (i)"
+	"AsynchFilePlugin 9 May 2008 (i)"
 #else
-	"AsynchFilePlugin 11 October 2006 (e)"
+	"AsynchFilePlugin 9 May 2008 (e)"
 #endif
 ;
 static void * sCOAFfn;
@@ -162,7 +164,7 @@ EXPORT(sqInt) primitiveAsyncFileOpen(void) {
 	/* If the security plugin can be loaded, use it to check for permission.
 	If not, assume it's ok */
 
-	fileNameSize = interpreterProxy->slotSizeOf(((int) fileName) - 4);
+	fileNameSize = interpreterProxy->slotSizeOf(oopForPointer(fileName) - 4);
 	if (sCOAFfn != 0) {
 		okToOpen =  ((sqInt (*) (char *, sqInt, sqInt)) sCOAFfn)(fileName, fileNameSize, writeFlag);
 		if (!(okToOpen)) {
@@ -218,7 +220,7 @@ EXPORT(sqInt) primitiveAsyncFileReadResult(void) {
 
 	/* adjust for zero-origin indexing */
 
-	bufferPtr = ((((int) (interpreterProxy->firstIndexableField(buffer)))) + startIndex) - 1;
+	bufferPtr = ((oopForPointer(interpreterProxy->firstIndexableField(buffer))) + startIndex) - 1;
 	if (!(interpreterProxy->failed())) {
 		r = asyncFileReadResult(f, bufferPtr, count);
 	}
@@ -310,7 +312,7 @@ EXPORT(sqInt) primitiveAsyncFileWriteStart(void) {
 
 	/* adjust for zero-origin indexing */
 
-	bufferPtr = ((((int) (interpreterProxy->firstIndexableField(buffer)))) + startIndex) - 1;
+	bufferPtr = ((oopForPointer(interpreterProxy->firstIndexableField(buffer))) + startIndex) - 1;
 	if (!(interpreterProxy->failed())) {
 		asyncFileWriteStart(f, fPosition, bufferPtr, count);
 	}
@@ -352,17 +354,17 @@ static sqInt sqAssert(sqInt aBool) {
 
 
 void* AsynchFilePlugin_exports[][3] = {
-	{"AsynchFilePlugin", "primitiveAsyncFileOpen", (void*)primitiveAsyncFileOpen},
+	{"AsynchFilePlugin", "primitiveAsyncFileReadStart", (void*)primitiveAsyncFileReadStart},
+	{"AsynchFilePlugin", "primitiveAsyncFileClose", (void*)primitiveAsyncFileClose},
 	{"AsynchFilePlugin", "shutdownModule", (void*)shutdownModule},
-	{"AsynchFilePlugin", "getModuleName", (void*)getModuleName},
-	{"AsynchFilePlugin", "primitiveAsyncFileWriteResult", (void*)primitiveAsyncFileWriteResult},
-	{"AsynchFilePlugin", "setInterpreter", (void*)setInterpreter},
 	{"AsynchFilePlugin", "primitiveAsyncFileReadResult", (void*)primitiveAsyncFileReadResult},
 	{"AsynchFilePlugin", "moduleUnloaded", (void*)moduleUnloaded},
-	{"AsynchFilePlugin", "primitiveAsyncFileClose", (void*)primitiveAsyncFileClose},
+	{"AsynchFilePlugin", "setInterpreter", (void*)setInterpreter},
 	{"AsynchFilePlugin", "initialiseModule", (void*)initialiseModule},
+	{"AsynchFilePlugin", "getModuleName", (void*)getModuleName},
 	{"AsynchFilePlugin", "primitiveAsyncFileWriteStart", (void*)primitiveAsyncFileWriteStart},
-	{"AsynchFilePlugin", "primitiveAsyncFileReadStart", (void*)primitiveAsyncFileReadStart},
+	{"AsynchFilePlugin", "primitiveAsyncFileWriteResult", (void*)primitiveAsyncFileWriteResult},
+	{"AsynchFilePlugin", "primitiveAsyncFileOpen", (void*)primitiveAsyncFileOpen},
 	{NULL, NULL, NULL}
 };
 

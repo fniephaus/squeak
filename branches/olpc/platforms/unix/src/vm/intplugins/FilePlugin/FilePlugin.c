@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:42 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:28 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -88,9 +90,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"FilePlugin 11 October 2006 (i)"
+	"FilePlugin 9 May 2008 (i)"
 #else
-	"FilePlugin 11 October 2006 (e)"
+	"FilePlugin 9 May 2008 (e)"
 #endif
 ;
 static void * sCCPfn;
@@ -849,34 +851,34 @@ EXPORT(sqInt) shutdownModule(void) {
 
 
 void* FilePlugin_exports[][3] = {
-	{"FilePlugin", "primitiveDirectoryDelimitor", (void*)primitiveDirectoryDelimitor},
+	{"FilePlugin", "primitiveFileClose", (void*)primitiveFileClose},
+	{"FilePlugin", "primitiveDirectoryGetMacTypeAndCreator", (void*)primitiveDirectoryGetMacTypeAndCreator},
+	{"FilePlugin", "shutdownModule", (void*)shutdownModule},
+	{"FilePlugin", "primitiveHasFileAccess", (void*)primitiveHasFileAccess},
+	{"FilePlugin", "primitiveFileTruncate", (void*)primitiveFileTruncate},
+	{"FilePlugin", "primitiveDirectoryDelete", (void*)primitiveDirectoryDelete},
+	{"FilePlugin", "setInterpreter", (void*)setInterpreter},
+	{"FilePlugin", "primitiveFileRead", (void*)primitiveFileRead},
+	{"FilePlugin", "fileOpenNamesizewritesecure", (void*)fileOpenNamesizewritesecure},
+	{"FilePlugin", "primitiveFileGetPosition", (void*)primitiveFileGetPosition},
 	{"FilePlugin", "getModuleName", (void*)getModuleName},
 	{"FilePlugin", "primitiveFileDelete", (void*)primitiveFileDelete},
 	{"FilePlugin", "primitiveFileFlush", (void*)primitiveFileFlush},
-	{"FilePlugin", "primitiveDirectorySetMacTypeAndCreator", (void*)primitiveDirectorySetMacTypeAndCreator},
-	{"FilePlugin", "primitiveFileOpen", (void*)primitiveFileOpen},
-	{"FilePlugin", "setMacFileTypeAndCreator", (void*)setMacFileTypeAndCreator},
-	{"FilePlugin", "primitiveFileAtEnd", (void*)primitiveFileAtEnd},
-	{"FilePlugin", "primitiveDirectoryCreate", (void*)primitiveDirectoryCreate},
-	{"FilePlugin", "primitiveFileTruncate", (void*)primitiveFileTruncate},
-	{"FilePlugin", "fileOpenNamesizewritesecure", (void*)fileOpenNamesizewritesecure},
-	{"FilePlugin", "primitiveFileClose", (void*)primitiveFileClose},
-	{"FilePlugin", "primitiveFileRename", (void*)primitiveFileRename},
-	{"FilePlugin", "primitiveHasFileAccess", (void*)primitiveHasFileAccess},
-	{"FilePlugin", "primitiveDirectoryDelete", (void*)primitiveDirectoryDelete},
-	{"FilePlugin", "primitiveFileSetPosition", (void*)primitiveFileSetPosition},
-	{"FilePlugin", "moduleUnloaded", (void*)moduleUnloaded},
-	{"FilePlugin", "primitiveFileGetPosition", (void*)primitiveFileGetPosition},
-	{"FilePlugin", "primitiveFileWrite", (void*)primitiveFileWrite},
-	{"FilePlugin", "primitiveFileSize", (void*)primitiveFileSize},
-	{"FilePlugin", "setInterpreter", (void*)setInterpreter},
-	{"FilePlugin", "getThisSession", (void*)getThisSession},
-	{"FilePlugin", "primitiveDirectoryLookup", (void*)primitiveDirectoryLookup},
-	{"FilePlugin", "primitiveFileRead", (void*)primitiveFileRead},
 	{"FilePlugin", "primitiveDisableFileAccess", (void*)primitiveDisableFileAccess},
-	{"FilePlugin", "shutdownModule", (void*)shutdownModule},
-	{"FilePlugin", "primitiveDirectoryGetMacTypeAndCreator", (void*)primitiveDirectoryGetMacTypeAndCreator},
+	{"FilePlugin", "primitiveFileOpen", (void*)primitiveFileOpen},
+	{"FilePlugin", "primitiveDirectoryDelimitor", (void*)primitiveDirectoryDelimitor},
+	{"FilePlugin", "primitiveDirectorySetMacTypeAndCreator", (void*)primitiveDirectorySetMacTypeAndCreator},
+	{"FilePlugin", "primitiveFileWrite", (void*)primitiveFileWrite},
+	{"FilePlugin", "moduleUnloaded", (void*)moduleUnloaded},
+	{"FilePlugin", "primitiveFileSize", (void*)primitiveFileSize},
+	{"FilePlugin", "primitiveFileAtEnd", (void*)primitiveFileAtEnd},
 	{"FilePlugin", "initialiseModule", (void*)initialiseModule},
+	{"FilePlugin", "primitiveFileRename", (void*)primitiveFileRename},
+	{"FilePlugin", "primitiveFileSetPosition", (void*)primitiveFileSetPosition},
+	{"FilePlugin", "getThisSession", (void*)getThisSession},
+	{"FilePlugin", "setMacFileTypeAndCreator", (void*)setMacFileTypeAndCreator},
+	{"FilePlugin", "primitiveDirectoryCreate", (void*)primitiveDirectoryCreate},
+	{"FilePlugin", "primitiveDirectoryLookup", (void*)primitiveDirectoryLookup},
 	{NULL, NULL, NULL}
 };
 

@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:56 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:42 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -53,9 +55,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"StarSqueakPlugin 11 October 2006 (i)"
+	"StarSqueakPlugin 9 May 2008 (i)"
 #else
-	"StarSqueakPlugin 11 October 2006 (e)"
+	"StarSqueakPlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -312,10 +314,10 @@ EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter) {
 
 void* StarSqueakPlugin_exports[][3] = {
 	{"StarSqueakPlugin", "primitiveMapFromToWidthHeightPatchSizeRgbFlagsShift", (void*)primitiveMapFromToWidthHeightPatchSizeRgbFlagsShift},
-	{"StarSqueakPlugin", "primitiveDiffuseFromToWidthHeightDelta", (void*)primitiveDiffuseFromToWidthHeightDelta},
 	{"StarSqueakPlugin", "getModuleName", (void*)getModuleName},
-	{"StarSqueakPlugin", "primitiveEvaporateRate", (void*)primitiveEvaporateRate},
 	{"StarSqueakPlugin", "setInterpreter", (void*)setInterpreter},
+	{"StarSqueakPlugin", "primitiveDiffuseFromToWidthHeightDelta", (void*)primitiveDiffuseFromToWidthHeightDelta},
+	{"StarSqueakPlugin", "primitiveEvaporateRate", (void*)primitiveEvaporateRate},
 	{NULL, NULL, NULL}
 };
 

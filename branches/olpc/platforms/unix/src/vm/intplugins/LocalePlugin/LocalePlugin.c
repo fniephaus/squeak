@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(17 July 2007 3:33:16 am) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:35 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -67,9 +69,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"LocalePlugin 17 July 2007 (i)"
+	"LocalePlugin 9 May 2008 (i)"
 #else
-	"LocalePlugin 17 July 2007 (e)"
+	"LocalePlugin 9 May 2008 (e)"
 #endif
 ;
 
@@ -341,22 +343,22 @@ static sqInt sqAssert(sqInt aBool) {
 
 
 void* LocalePlugin_exports[][3] = {
-	{"LocalePlugin", "primitiveVMOffsetToUTC", (void*)primitiveVMOffsetToUTC},
+	{"LocalePlugin", "primitiveDaylightSavings", (void*)primitiveDaylightSavings},
+	{"LocalePlugin", "primitiveLanguage", (void*)primitiveLanguage},
+	{"LocalePlugin", "setInterpreter", (void*)setInterpreter},
+	{"LocalePlugin", "primitiveCurrencyNotation", (void*)primitiveCurrencyNotation},
 	{"LocalePlugin", "getModuleName", (void*)getModuleName},
 	{"LocalePlugin", "primitiveShortDateFormat", (void*)primitiveShortDateFormat},
-	{"LocalePlugin", "primitiveDecimalSymbol", (void*)primitiveDecimalSymbol},
-	{"LocalePlugin", "setInterpreter", (void*)setInterpreter},
-	{"LocalePlugin", "primitiveCurrencySymbol", (void*)primitiveCurrencySymbol},
 	{"LocalePlugin", "primitiveDigitGroupingSymbol", (void*)primitiveDigitGroupingSymbol},
-	{"LocalePlugin", "primitiveLongDateFormat", (void*)primitiveLongDateFormat},
-	{"LocalePlugin", "primitiveDaylightSavings", (void*)primitiveDaylightSavings},
-	{"LocalePlugin", "primitiveCurrencyNotation", (void*)primitiveCurrencyNotation},
+	{"LocalePlugin", "primitiveCurrencySymbol", (void*)primitiveCurrencySymbol},
 	{"LocalePlugin", "primitiveTimezoneOffset", (void*)primitiveTimezoneOffset},
-	{"LocalePlugin", "initialiseModule", (void*)initialiseModule},
-	{"LocalePlugin", "primitiveLanguage", (void*)primitiveLanguage},
-	{"LocalePlugin", "primitiveMeasurementMetric", (void*)primitiveMeasurementMetric},
+	{"LocalePlugin", "primitiveLongDateFormat", (void*)primitiveLongDateFormat},
 	{"LocalePlugin", "primitiveCountry", (void*)primitiveCountry},
+	{"LocalePlugin", "primitiveDecimalSymbol", (void*)primitiveDecimalSymbol},
+	{"LocalePlugin", "primitiveMeasurementMetric", (void*)primitiveMeasurementMetric},
+	{"LocalePlugin", "initialiseModule", (void*)initialiseModule},
 	{"LocalePlugin", "primitiveTimeFormat", (void*)primitiveTimeFormat},
+	{"LocalePlugin", "primitiveVMOffsetToUTC", (void*)primitiveVMOffsetToUTC},
 	{NULL, NULL, NULL}
 };
 

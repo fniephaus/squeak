@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:44 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:31 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -55,11 +57,11 @@
 #define FIXn3n072711026 25172
 #define GreenIndex 1
 #define HScaleIndex 2
+#define MCUBlockIndex 4
+#define MCUWidthIndex 8
 #define MaxBits 16
 #define MaxMCUBlocks 128
 #define MaxSample 255
-#define MCUBlockIndex 4
-#define MCUWidthIndex 8
 #define MinComponentSize 11
 #define Pass1Bits 2
 #define Pass1Div 2048
@@ -71,8 +73,8 @@
 
 /*** Function Prototypes ***/
 static sqInt cbColorComponentFrom(sqInt oop);
-static sqInt colorComponentBlocksfrom(int ** blocks, sqInt oop);
 static sqInt colorComponentfrom(int * aColorComponent, sqInt oop);
+static sqInt colorComponentBlocksfrom(int ** blocks, sqInt oop);
 static sqInt colorConvertGrayscaleMCU(void);
 static sqInt colorConvertMCU(void);
 static sqInt crColorComponentFrom(sqInt oop);
@@ -141,9 +143,9 @@ static sqInt jsPosition;
 static sqInt jsReadLimit;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"JPEGReaderPlugin 11 October 2006 (i)"
+	"JPEGReaderPlugin 9 May 2008 (i)"
 #else
-	"JPEGReaderPlugin 11 October 2006 (e)"
+	"JPEGReaderPlugin 9 May 2008 (e)"
 #endif
 ;
 static int *residuals;
@@ -154,6 +156,26 @@ static sqInt ySampleStream;
 
 static sqInt cbColorComponentFrom(sqInt oop) {
 	return (colorComponentfrom(cbComponent, oop)) && (colorComponentBlocksfrom(cbBlocks, oop));
+}
+
+static sqInt colorComponentfrom(int * aColorComponent, sqInt oop) {
+	if ((oop & 1)) {
+		return 0;
+	}
+	if (!(interpreterProxy->isPointers(oop))) {
+		return 0;
+	}
+	if ((interpreterProxy->slotSizeOf(oop)) < MinComponentSize) {
+		return 0;
+	}
+	aColorComponent[CurrentXIndex] = (interpreterProxy->fetchIntegerofObject(CurrentXIndex, oop));
+	aColorComponent[CurrentYIndex] = (interpreterProxy->fetchIntegerofObject(CurrentYIndex, oop));
+	aColorComponent[HScaleIndex] = (interpreterProxy->fetchIntegerofObject(HScaleIndex, oop));
+	aColorComponent[VScaleIndex] = (interpreterProxy->fetchIntegerofObject(VScaleIndex, oop));
+	aColorComponent[BlockWidthIndex] = (interpreterProxy->fetchIntegerofObject(BlockWidthIndex, oop));
+	aColorComponent[MCUWidthIndex] = (interpreterProxy->fetchIntegerofObject(MCUWidthIndex, oop));
+	aColorComponent[PriorDCValueIndex] = (interpreterProxy->fetchIntegerofObject(PriorDCValueIndex, oop));
+	return !(interpreterProxy->failed());
 }
 
 static sqInt colorComponentBlocksfrom(int ** blocks, sqInt oop) {
@@ -195,26 +217,6 @@ static sqInt colorComponentBlocksfrom(int ** blocks, sqInt oop) {
 		}
 		blocks[i] = (interpreterProxy->firstIndexableField(blockOop));
 	}
-	return !(interpreterProxy->failed());
-}
-
-static sqInt colorComponentfrom(int * aColorComponent, sqInt oop) {
-	if ((oop & 1)) {
-		return 0;
-	}
-	if (!(interpreterProxy->isPointers(oop))) {
-		return 0;
-	}
-	if ((interpreterProxy->slotSizeOf(oop)) < MinComponentSize) {
-		return 0;
-	}
-	aColorComponent[CurrentXIndex] = (interpreterProxy->fetchIntegerofObject(CurrentXIndex, oop));
-	aColorComponent[CurrentYIndex] = (interpreterProxy->fetchIntegerofObject(CurrentYIndex, oop));
-	aColorComponent[HScaleIndex] = (interpreterProxy->fetchIntegerofObject(HScaleIndex, oop));
-	aColorComponent[VScaleIndex] = (interpreterProxy->fetchIntegerofObject(VScaleIndex, oop));
-	aColorComponent[BlockWidthIndex] = (interpreterProxy->fetchIntegerofObject(BlockWidthIndex, oop));
-	aColorComponent[MCUWidthIndex] = (interpreterProxy->fetchIntegerofObject(MCUWidthIndex, oop));
-	aColorComponent[PriorDCValueIndex] = (interpreterProxy->fetchIntegerofObject(PriorDCValueIndex, oop));
 	return !(interpreterProxy->failed());
 }
 
@@ -1314,11 +1316,11 @@ static sqInt yColorComponentFrom(sqInt oop) {
 
 void* JPEGReaderPlugin_exports[][3] = {
 	{"JPEGReaderPlugin", "primitiveIdctInt", (void*)primitiveIdctInt},
-	{"JPEGReaderPlugin", "primitiveColorConvertMCU", (void*)primitiveColorConvertMCU},
 	{"JPEGReaderPlugin", "getModuleName", (void*)getModuleName},
 	{"JPEGReaderPlugin", "primitiveDecodeMCU", (void*)primitiveDecodeMCU},
-	{"JPEGReaderPlugin", "primitiveColorConvertGrayscaleMCU", (void*)primitiveColorConvertGrayscaleMCU},
+	{"JPEGReaderPlugin", "primitiveColorConvertMCU", (void*)primitiveColorConvertMCU},
 	{"JPEGReaderPlugin", "setInterpreter", (void*)setInterpreter},
+	{"JPEGReaderPlugin", "primitiveColorConvertGrayscaleMCU", (void*)primitiveColorConvertGrayscaleMCU},
 	{NULL, NULL, NULL}
 };
 

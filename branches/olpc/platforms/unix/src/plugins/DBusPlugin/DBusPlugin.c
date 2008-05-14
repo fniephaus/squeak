@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(5 March 2008 5:54:28 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:47 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -64,8 +66,8 @@ static VirtualMachine * getInterpreter(void);
 EXPORT(const char*) getModuleName(void);
 #pragma export off
 static sqInt halt(void);
-static sqInt handleReadForFDwithDataandFlag(int fd, sqDBusData* data, int flag);
 static sqInt handleflag(int fd, int flag);
+static sqInt handleReadForFDwithDataandFlag(int fd, sqDBusData* data, int flag);
 #pragma export on
 EXPORT(sqInt) initialiseModule(void);
 #pragma export off
@@ -93,9 +95,9 @@ EXPORT(sqInt) primitiveDBusConnectionDispatchStatus(void);
 EXPORT(sqInt) primitiveDBusConnectionPopMessage(void);
 EXPORT(sqInt) primitiveDBusCreateMessageFrom(void);
 EXPORT(sqInt) primitiveDBusInitializeWriteIterator(void);
-EXPORT(sqInt) primitiveDBusIteratorSignature(void);
 EXPORT(sqInt) primitiveDBusIterCloseContainer(void);
 EXPORT(sqInt) primitiveDBusIterOpenContainerContains(void);
+EXPORT(sqInt) primitiveDBusIteratorSignature(void);
 EXPORT(sqInt) primitiveDBusMessageGetDestination(void);
 EXPORT(sqInt) primitiveDBusMessageGetErrorName(void);
 EXPORT(sqInt) primitiveDBusMessageGetInterface(void);
@@ -137,9 +139,9 @@ static DBusMessage* message;
 static DBusMessageIter messageIter[DBUS_MAXIMUM_TYPE_RECURSION_DEPTH];
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DBusPlugin 5 March 2008 (i)"
+	"DBusPlugin 9 May 2008 (i)"
 #else
-	"DBusPlugin 5 March 2008 (e)"
+	"DBusPlugin 9 May 2008 (e)"
 #endif
 ;
 static DBusMessage* writeMessage;
@@ -488,6 +490,10 @@ static sqInt halt(void) {
 	;
 }
 
+static sqInt handleflag(int fd, int flag) {
+	aioHandle(fd, handleReadForFDwithDataandFlag , flag);
+}
+
 
 /*	a handler function which is called when new messages arrived in the dbus queue */
 
@@ -498,10 +504,6 @@ static sqInt handleReadForFDwithDataandFlag(int fd, sqDBusData* data, int flag) 
 	handleflag(fd, flag);
 	semaphore = data->semaphore;
 	interpreterProxy->signalSemaphoreWithIndex(semaphore);
-}
-
-static sqInt handleflag(int fd, int flag) {
-	aioHandle(fd, handleReadForFDwithDataandFlag , flag);
 }
 
 EXPORT(sqInt) initialiseModule(void) {
@@ -524,7 +526,7 @@ static sqInt iterOpenContainercontains(sqInt t, char* s) {
 }
 
 static sqInt msg(char * s) {
-	fprintf(stderr, "%s: %s\n", moduleName, s);
+	fprintf(stderr, "\n%s: %s", moduleName, s);
 }
 
 
@@ -1195,23 +1197,6 @@ EXPORT(sqInt) primitiveDBusInitializeWriteIterator(void) {
 }
 
 
-/*	answer the signature of the current iterator  */
-
-EXPORT(sqInt) primitiveDBusIteratorSignature(void) {
-	char* sig;
-	sqInt strOop;
-
-	sig = dbus_message_iter_get_signature(&messageIter[curIter]);
-	strOop = buildStringOopFromCharP(sig);
-	dbus_free(sig);
-	if (interpreterProxy->failed()) {
-		return null;
-	}
-	interpreterProxy->popthenPush(1, strOop);
-	return null;
-}
-
-
 /*	pops the topmost container from the iterator stack */
 
 EXPORT(sqInt) primitiveDBusIterCloseContainer(void) {
@@ -1292,6 +1277,23 @@ EXPORT(sqInt) primitiveDBusIterOpenContainerContains(void) {
 		return null;
 	}
 	interpreterProxy->popthenPush(3, _return_value);
+	return null;
+}
+
+
+/*	answer the signature of the current iterator  */
+
+EXPORT(sqInt) primitiveDBusIteratorSignature(void) {
+	char* sig;
+	sqInt strOop;
+
+	sig = dbus_message_iter_get_signature(&messageIter[curIter]);
+	strOop = buildStringOopFromCharP(sig);
+	dbus_free(sig);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(1, strOop);
 	return null;
 }
 
@@ -1876,51 +1878,51 @@ static char * stringOopToChar(sqInt oop) {
 
 
 void* DBusPlugin_exports[][3] = {
-	{"DBusPlugin", "primitiveDBusArgumentGetInt16", (void*)primitiveDBusArgumentGetInt16},
-	{"DBusPlugin", "primitiveDBusPopMessageIterator", (void*)primitiveDBusPopMessageIterator},
-	{"DBusPlugin", "primitiveDBusRemoveMatch", (void*)primitiveDBusRemoveMatch},
-	{"DBusPlugin", "getModuleName", (void*)getModuleName},
-	{"DBusPlugin", "primitiveDBusMessageGetSerial", (void*)primitiveDBusMessageGetSerial},
-	{"DBusPlugin", "primitiveDBusCreateMessageFrom", (void*)primitiveDBusCreateMessageFrom},
-	{"DBusPlugin", "primitiveDBusRegisterName", (void*)primitiveDBusRegisterName},
-	{"DBusPlugin", "primitiveDBusArgumentGetObjectPath", (void*)primitiveDBusArgumentGetObjectPath},
-	{"DBusPlugin", "primitiveDBusMessageGetSender", (void*)primitiveDBusMessageGetSender},
-	{"DBusPlugin", "primitiveDBusArgumentGetBool", (void*)primitiveDBusArgumentGetBool},
-	{"DBusPlugin", "primitiveDBusPushMessageIterator", (void*)primitiveDBusPushMessageIterator},
-	{"DBusPlugin", "primitiveDBusInitializeWriteIterator", (void*)primitiveDBusInitializeWriteIterator},
-	{"DBusPlugin", "primitiveDBusArgumentGetByte", (void*)primitiveDBusArgumentGetByte},
-	{"DBusPlugin", "primitiveDBusArgumentGetUInt64", (void*)primitiveDBusArgumentGetUInt64},
-	{"DBusPlugin", "primitiveDBusMessageGetDestination", (void*)primitiveDBusMessageGetDestination},
-	{"DBusPlugin", "primitiveDBusNextIterator", (void*)primitiveDBusNextIterator},
-	{"DBusPlugin", "primitiveDBusConnectionClose", (void*)primitiveDBusConnectionClose},
-	{"DBusPlugin", "primitiveDBusSendMessageTimeout", (void*)primitiveDBusSendMessageTimeout},
-	{"DBusPlugin", "primitiveDBusConnectionDispatchStatus", (void*)primitiveDBusConnectionDispatchStatus},
-	{"DBusPlugin", "primitiveDBusArgumentGetInt32", (void*)primitiveDBusArgumentGetInt32},
-	{"DBusPlugin", "primitiveDBusConnectionPopMessage", (void*)primitiveDBusConnectionPopMessage},
-	{"DBusPlugin", "primitiveDBusArgumentGetType", (void*)primitiveDBusArgumentGetType},
-	{"DBusPlugin", "primitiveDBusArgumentGetUInt16", (void*)primitiveDBusArgumentGetUInt16},
-	{"DBusPlugin", "primitiveDBusIterCloseContainer", (void*)primitiveDBusIterCloseContainer},
-	{"DBusPlugin", "primitiveDBusReleaseName", (void*)primitiveDBusReleaseName},
-	{"DBusPlugin", "setInterpreter", (void*)setInterpreter},
-	{"DBusPlugin", "primitiveDBusIteratorSignature", (void*)primitiveDBusIteratorSignature},
-	{"DBusPlugin", "primitiveDBusArgumentGetString", (void*)primitiveDBusArgumentGetString},
-	{"DBusPlugin", "primitiveDBusMessageHasArguments", (void*)primitiveDBusMessageHasArguments},
-	{"DBusPlugin", "primitiveDBusIterOpenContainerContains", (void*)primitiveDBusIterOpenContainerContains},
-	{"DBusPlugin", "primitiveDBusArgumentGetSignature", (void*)primitiveDBusArgumentGetSignature},
-	{"DBusPlugin", "primitiveDBusMessageGetInterface", (void*)primitiveDBusMessageGetInterface},
-	{"DBusPlugin", "primitiveDBusArgumentGetInt64", (void*)primitiveDBusArgumentGetInt64},
-	{"DBusPlugin", "primitiveDBusAppendBasicArgument", (void*)primitiveDBusAppendBasicArgument},
-	{"DBusPlugin", "primitiveDBusMessageGetErrorName", (void*)primitiveDBusMessageGetErrorName},
 	{"DBusPlugin", "shutdownModule", (void*)shutdownModule},
-	{"DBusPlugin", "primitiveDBusMessageGetReplySerial", (void*)primitiveDBusMessageGetReplySerial},
-	{"DBusPlugin", "primitiveDBusArgumentGetDouble", (void*)primitiveDBusArgumentGetDouble},
+	{"DBusPlugin", "primitiveDBusMessageGetDestination", (void*)primitiveDBusMessageGetDestination},
+	{"DBusPlugin", "primitiveDBusSendMessageTimeout", (void*)primitiveDBusSendMessageTimeout},
 	{"DBusPlugin", "primitiveDBusMessageGetSignature", (void*)primitiveDBusMessageGetSignature},
+	{"DBusPlugin", "setInterpreter", (void*)setInterpreter},
 	{"DBusPlugin", "primitiveDBusMessageGetMember", (void*)primitiveDBusMessageGetMember},
-	{"DBusPlugin", "initialiseModule", (void*)initialiseModule},
-	{"DBusPlugin", "primitiveDBusArgumentGetUInt32", (void*)primitiveDBusArgumentGetUInt32},
-	{"DBusPlugin", "primitiveDBusAddMatch", (void*)primitiveDBusAddMatch},
-	{"DBusPlugin", "primitiveDBusMessageGetPath", (void*)primitiveDBusMessageGetPath},
+	{"DBusPlugin", "primitiveDBusPushMessageIterator", (void*)primitiveDBusPushMessageIterator},
+	{"DBusPlugin", "primitiveDBusConnectionPopMessage", (void*)primitiveDBusConnectionPopMessage},
 	{"DBusPlugin", "primitiveDBusMessageGetNoReply", (void*)primitiveDBusMessageGetNoReply},
+	{"DBusPlugin", "primitiveDBusIterCloseContainer", (void*)primitiveDBusIterCloseContainer},
+	{"DBusPlugin", "primitiveDBusPopMessageIterator", (void*)primitiveDBusPopMessageIterator},
+	{"DBusPlugin", "primitiveDBusConnectionDispatchStatus", (void*)primitiveDBusConnectionDispatchStatus},
+	{"DBusPlugin", "primitiveDBusMessageGetSender", (void*)primitiveDBusMessageGetSender},
+	{"DBusPlugin", "primitiveDBusArgumentGetInt32", (void*)primitiveDBusArgumentGetInt32},
+	{"DBusPlugin", "primitiveDBusAddMatch", (void*)primitiveDBusAddMatch},
+	{"DBusPlugin", "primitiveDBusArgumentGetSignature", (void*)primitiveDBusArgumentGetSignature},
+	{"DBusPlugin", "primitiveDBusArgumentGetType", (void*)primitiveDBusArgumentGetType},
+	{"DBusPlugin", "primitiveDBusArgumentGetByte", (void*)primitiveDBusArgumentGetByte},
+	{"DBusPlugin", "primitiveDBusArgumentGetInt64", (void*)primitiveDBusArgumentGetInt64},
+	{"DBusPlugin", "initialiseModule", (void*)initialiseModule},
+	{"DBusPlugin", "primitiveDBusReleaseName", (void*)primitiveDBusReleaseName},
+	{"DBusPlugin", "primitiveDBusNextIterator", (void*)primitiveDBusNextIterator},
+	{"DBusPlugin", "primitiveDBusRegisterName", (void*)primitiveDBusRegisterName},
+	{"DBusPlugin", "primitiveDBusMessageHasArguments", (void*)primitiveDBusMessageHasArguments},
+	{"DBusPlugin", "primitiveDBusArgumentGetUInt32", (void*)primitiveDBusArgumentGetUInt32},
+	{"DBusPlugin", "primitiveDBusArgumentGetBool", (void*)primitiveDBusArgumentGetBool},
+	{"DBusPlugin", "primitiveDBusMessageGetInterface", (void*)primitiveDBusMessageGetInterface},
+	{"DBusPlugin", "primitiveDBusArgumentGetInt16", (void*)primitiveDBusArgumentGetInt16},
+	{"DBusPlugin", "primitiveDBusMessageGetErrorName", (void*)primitiveDBusMessageGetErrorName},
+	{"DBusPlugin", "getModuleName", (void*)getModuleName},
+	{"DBusPlugin", "primitiveDBusConnectionClose", (void*)primitiveDBusConnectionClose},
+	{"DBusPlugin", "primitiveDBusCreateMessageFrom", (void*)primitiveDBusCreateMessageFrom},
+	{"DBusPlugin", "primitiveDBusIteratorSignature", (void*)primitiveDBusIteratorSignature},
+	{"DBusPlugin", "primitiveDBusArgumentGetDouble", (void*)primitiveDBusArgumentGetDouble},
+	{"DBusPlugin", "primitiveDBusIterOpenContainerContains", (void*)primitiveDBusIterOpenContainerContains},
+	{"DBusPlugin", "primitiveDBusArgumentGetUInt16", (void*)primitiveDBusArgumentGetUInt16},
+	{"DBusPlugin", "primitiveDBusInitializeWriteIterator", (void*)primitiveDBusInitializeWriteIterator},
+	{"DBusPlugin", "primitiveDBusArgumentGetUInt64", (void*)primitiveDBusArgumentGetUInt64},
+	{"DBusPlugin", "primitiveDBusAppendBasicArgument", (void*)primitiveDBusAppendBasicArgument},
+	{"DBusPlugin", "primitiveDBusMessageGetReplySerial", (void*)primitiveDBusMessageGetReplySerial},
+	{"DBusPlugin", "primitiveDBusRemoveMatch", (void*)primitiveDBusRemoveMatch},
+	{"DBusPlugin", "primitiveDBusMessageGetSerial", (void*)primitiveDBusMessageGetSerial},
+	{"DBusPlugin", "primitiveDBusArgumentGetObjectPath", (void*)primitiveDBusArgumentGetObjectPath},
+	{"DBusPlugin", "primitiveDBusArgumentGetString", (void*)primitiveDBusArgumentGetString},
+	{"DBusPlugin", "primitiveDBusMessageGetPath", (void*)primitiveDBusMessageGetPath},
 	{NULL, NULL, NULL}
 };
 

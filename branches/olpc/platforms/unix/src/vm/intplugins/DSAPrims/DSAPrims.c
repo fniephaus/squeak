@@ -1,4 +1,6 @@
-/* Automatically generated from Squeak on an Array(11 October 2006 2:47:41 pm) */
+/* Automatically generated from Squeak on an Array(9 May 2008 11:24:25 am)
+by VMMaker 3.8b6
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -45,8 +47,8 @@ static sqInt msg(char * s);
 EXPORT(sqInt) primitiveBigDivide(void);
 EXPORT(sqInt) primitiveBigMultiply(void);
 EXPORT(sqInt) primitiveExpandBlock(void);
-EXPORT(sqInt) primitiveHashBlock(void);
 EXPORT(sqInt) primitiveHasSecureHashPrimitive(void);
+EXPORT(sqInt) primitiveHashBlock(void);
 EXPORT(sqInt) primitiveHighestNonZeroDigitIndex(void);
 EXPORT(sqInt) setInterpreter(struct VirtualMachine* anInterpreter);
 #pragma export off
@@ -63,9 +65,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DSAPrims 11 October 2006 (i)"
+	"DSAPrims 9 May 2008 (i)"
 #else
-	"DSAPrims 11 October 2006 (e)"
+	"DSAPrims 9 May 2008 (e)"
 #endif
 ;
 static sqInt remainderDigitCount;
@@ -437,6 +439,14 @@ EXPORT(sqInt) primitiveExpandBlock(void) {
 }
 
 
+/*	Answer true if the secure hash primitive is implemented. */
+
+EXPORT(sqInt) primitiveHasSecureHashPrimitive(void) {
+	interpreterProxy->pop(1);
+	interpreterProxy->pushBool(1);
+}
+
+
 /*	Hash a Bitmap of 80 32-bit words (the first argument), using the given state (the second argument). */
 
 EXPORT(sqInt) primitiveHashBlock(void) {
@@ -509,14 +519,6 @@ EXPORT(sqInt) primitiveHashBlock(void) {
 	statePtr[3] = ((statePtr[3]) + d);
 	statePtr[4] = ((statePtr[4]) + e);
 	interpreterProxy->pop(2);
-}
-
-
-/*	Answer true if the secure hash primitive is implemented. */
-
-EXPORT(sqInt) primitiveHasSecureHashPrimitive(void) {
-	interpreterProxy->pop(1);
-	interpreterProxy->pushBool(1);
 }
 
 
@@ -596,14 +598,14 @@ static sqInt subtractDivisorMultipliedByDigitdigitShift(sqInt digit, sqInt digit
 
 
 void* DSAPrims_exports[][3] = {
-	{"DSAPrims", "primitiveBigMultiply", (void*)primitiveBigMultiply},
-	{"DSAPrims", "primitiveBigDivide", (void*)primitiveBigDivide},
-	{"DSAPrims", "getModuleName", (void*)getModuleName},
-	{"DSAPrims", "setInterpreter", (void*)setInterpreter},
-	{"DSAPrims", "primitiveExpandBlock", (void*)primitiveExpandBlock},
-	{"DSAPrims", "primitiveHashBlock", (void*)primitiveHashBlock},
 	{"DSAPrims", "primitiveHighestNonZeroDigitIndex", (void*)primitiveHighestNonZeroDigitIndex},
+	{"DSAPrims", "primitiveHashBlock", (void*)primitiveHashBlock},
+	{"DSAPrims", "primitiveBigMultiply", (void*)primitiveBigMultiply},
 	{"DSAPrims", "primitiveHasSecureHashPrimitive", (void*)primitiveHasSecureHashPrimitive},
+	{"DSAPrims", "getModuleName", (void*)getModuleName},
+	{"DSAPrims", "primitiveExpandBlock", (void*)primitiveExpandBlock},
+	{"DSAPrims", "setInterpreter", (void*)setInterpreter},
+	{"DSAPrims", "primitiveBigDivide", (void*)primitiveBigDivide},
 	{NULL, NULL, NULL}
 };
 

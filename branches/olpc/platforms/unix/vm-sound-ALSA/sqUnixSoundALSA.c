@@ -2,7 +2,7 @@
  *
  * Author: Ian.Piumarta@squeakland.org
  * 
- * Last edited: 2006-12-11 11:34:44 by piumarta on emilia.local
+ * Last edited: 2008-04-21 14:48:26 by piumarta on emilia
  *
  *   Copyright (C) 2006 by Ian Piumarta
  *   All rights reserved.
@@ -35,6 +35,7 @@
 
 
 #define DEVICE_NAME_LEN 128
+
 static char sound_device[DEVICE_NAME_LEN];	/* = "default"; */
 static char sound_playback[DEVICE_NAME_LEN];	/* = "Master"; */
 static char sound_capture[DEVICE_NAME_LEN];	/* = "Capture"; */
@@ -184,7 +185,7 @@ static sqInt sound_AvailableSpace(void)
 #else
   if (output_handle)
     {
-      int count = snd_pcm_avail_update(output_handle);
+      int count= snd_pcm_avail_update(output_handle);
       if (count >= 0)
 	return count;
       fprintf(stderr, "sound_AvailableSpace: snd_pcm_avail_update: %s\n", snd_strerror(count));
@@ -451,7 +452,7 @@ static int mixer_setSwitch(char *name, int captureFlag, int parameter)
       return 0;
     }
 
-  for (chn = 0; chn <= SND_MIXER_SCHN_LAST; chn++)
+  for (chn= 0;  chn <= SND_MIXER_SCHN_LAST;  ++chn)
     {
       if (!(captureFlag ? snd_mixer_selem_has_capture_channel : snd_mixer_selem_has_playback_channel)(mixer_element, chn))
 	continue;
@@ -491,7 +492,7 @@ static int mixer_getSwitch(char *name, int captureFlag, int channel)
     }
 
   if ((captureFlag ? snd_mixer_selem_get_capture_switch : snd_mixer_selem_get_playback_switch)(mixer_element, channel, &ival) < 0)
-    ival = -1;
+    ival= -1;
 
   mixer_close();
   return ival;
@@ -521,30 +522,30 @@ static sqInt sound_SetRecordLevel(sqInt level)
 
 static sqInt sound_SetDevice(sqInt id, char *arg)
 {
-  char *dest = NULL; 
+  char *dest= NULL; 
   if (id == 0)
     {
       if (arg == NULL)
 	{
-	  arg = "default";
+	  arg= "default";
 	}
-      dest = sound_device;
+      dest= sound_device;
     }
   else if (id == 1)
     {
       if (arg == NULL)
 	{
-	  arg = "Master";
+	  arg= "Master";
 	}
-      dest = sound_playback;
+      dest= sound_playback;
     }
   else if (id == 2)
     {
       if (arg == NULL)
 	{
-	  arg = "Capture";
+	  arg= "Capture";
 	}
-      dest = sound_capture;
+      dest= sound_capture;
     }
   
   if (dest)
@@ -615,6 +616,7 @@ SqSoundDefine(ALSA);
 static void sound_parseEnvironment(void)
 {
   char *ev= 0;
+
   sound_SetDevice(0, NULL);
   sound_SetDevice(1, NULL);
   sound_SetDevice(2, NULL);
