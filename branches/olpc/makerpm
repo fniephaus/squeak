@@ -23,15 +23,8 @@ cp /usr/src/redhat/RPMS/i386/squeak-vm-${rpm}.i386.rpm .
 cp /usr/src/redhat/RPMS/i386/squeak-vm-debuginfo-${rpm}.i386.rpm .
 cp /usr/src/redhat/SRPMS/squeak-vm-${rpm}.src.rpm .
 
-echo Now upload using the following commands in cadaver:
-echo
-echo mput \
-    squeak-vm-${rpm}.i386.rpm \
+scp squeak-vm-${rpm}.i386.rpm \
     squeak-vm-debuginfo-${rpm}.i386.rpm \
     squeak-vm-${rpm}.src.rpm \
-    squeak-vm-${rpm}.spec
-
-echo cp squeak-vm-${rpm}.i386.rpm ../yum
-echo
-
-cadaver http://tinlizzie.org/olpc/sugar/rpm
+    squeak-vm-${rpm}.spec \
+    tinlizzie.org:/var/www/olpc/sugar/rpm/
