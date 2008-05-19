@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(9 May 2008 11:24:03 am)
+/* Automatically generated from Squeak on an Array(19 May 2008 3:55:42 pm)
 by VMMaker 3.8b6
  */
 
@@ -12431,13 +12431,11 @@ register struct foo * foo = &fum;
     sqInt successValue6;
     sqInt successValue7;
     sqInt successValue8;
+    sqInt successValue9;
+    sqInt successValue10;
+    sqInt successValue11;
+    sqInt successValue12;
 
-	flag("Dan");
-	if (BytesPerWord == 8) {
-		/* begin pop: */
-		foo->stackPointer -= foo->argumentCount * BytesPerWord;
-		return null;
-	}
 	if (foo->argumentCount == 0) {
 		cursorObj = longAt(foo->stackPointer);
 		maskBitsIndex = null;
@@ -12449,8 +12447,8 @@ register struct foo * foo = &fum;
 	/* begin success: */
 	foo->successFlag = (foo->argumentCount < 2) && foo->successFlag;
 	/* begin success: */
-	successValue7 = (((cursorObj & 1) == 0) && (((((usqInt) (longAt(cursorObj))) >> 8) & 15) <= 4)) && ((lengthOf(cursorObj)) >= 5);
-	foo->successFlag = successValue7 && foo->successFlag;
+	successValue11 = (((cursorObj & 1) == 0) && (((((usqInt) (longAt(cursorObj))) >> 8) & 15) <= 4)) && ((lengthOf(cursorObj)) >= 5);
+	foo->successFlag = successValue11 && foo->successFlag;
 	if (foo->successFlag) {
 		bitsObj = longAt((cursorObj + BaseHeaderSize) + (0 << ShiftForWord));
 		extentX = fetchIntegerofObject(1, cursorObj);
@@ -12459,30 +12457,47 @@ register struct foo * foo = &fum;
 		offsetObj = longAt((cursorObj + BaseHeaderSize) + (4 << ShiftForWord));
 	}
 	/* begin success: */
-	successValue8 = (((offsetObj & 1) == 0) && (((((usqInt) (longAt(offsetObj))) >> 8) & 15) <= 4)) && ((lengthOf(offsetObj)) >= 2);
-	foo->successFlag = successValue8 && foo->successFlag;
+	successValue12 = (((offsetObj & 1) == 0) && (((((usqInt) (longAt(offsetObj))) >> 8) & 15) <= 4)) && ((lengthOf(offsetObj)) >= 2);
+	foo->successFlag = successValue12 && foo->successFlag;
 	if (foo->successFlag) {
 		offsetX = fetchIntegerofObject(0, offsetObj);
 		offsetY = fetchIntegerofObject(1, offsetObj);
-		/* begin success: */
-		successValue = (extentX == 16) && ((extentY == 16) && (depth == 1));
-		foo->successFlag = successValue && foo->successFlag;
-		/* begin success: */
-		successValue1 = (offsetX >= -16) && (offsetX <= 0);
-		foo->successFlag = successValue1 && foo->successFlag;
-		/* begin success: */
-		successValue2 = (offsetY >= -16) && (offsetY <= 0);
-		foo->successFlag = successValue2 && foo->successFlag;
-		/* begin success: */
-		successValue3 = (((bitsObj & 1) == 0) && (((((usqInt) (longAt(bitsObj))) >> 8) & 15) == 6)) && ((lengthOf(bitsObj)) == 16);
-		foo->successFlag = successValue3 && foo->successFlag;
-		cursorBitsIndex = bitsObj + BaseHeaderSize;
-		;
+		if ((foo->argumentCount == 0) && (depth == 32)) {
+			/* begin success: */
+			successValue = (extentX > 0) && (extentY > 0);
+			foo->successFlag = successValue && foo->successFlag;
+			/* begin success: */
+			successValue1 = (offsetX >= (extentX * -1)) && (offsetX <= 0);
+			foo->successFlag = successValue1 && foo->successFlag;
+			/* begin success: */
+			successValue2 = (offsetY >= (extentY * -1)) && (offsetY <= 0);
+			foo->successFlag = successValue2 && foo->successFlag;
+			cursorBitsIndex = bitsObj + BaseHeaderSize;
+			/* begin success: */
+			successValue3 = (((bitsObj & 1) == 0) && (((((usqInt) (longAt(bitsObj))) >> 8) & 15) == 6)) && ((lengthOf(bitsObj)) == (extentX * extentY));
+			foo->successFlag = successValue3 && foo->successFlag;
+			;
+		} else {
+			/* begin success: */
+			successValue4 = (extentX == 16) && ((extentY == 16) && (depth == 1));
+			foo->successFlag = successValue4 && foo->successFlag;
+			/* begin success: */
+			successValue5 = (offsetX >= -16) && (offsetX <= 0);
+			foo->successFlag = successValue5 && foo->successFlag;
+			/* begin success: */
+			successValue6 = (offsetY >= -16) && (offsetY <= 0);
+			foo->successFlag = successValue6 && foo->successFlag;
+			/* begin success: */
+			successValue7 = (((bitsObj & 1) == 0) && (((((usqInt) (longAt(bitsObj))) >> 8) & 15) == 6)) && ((lengthOf(bitsObj)) == 16);
+			foo->successFlag = successValue7 && foo->successFlag;
+			cursorBitsIndex = bitsObj + BaseHeaderSize;
+			;
+		}
 	}
 	if (foo->argumentCount == 1) {
 		/* begin success: */
-		successValue6 = (((maskObj & 1) == 0) && (((((usqInt) (longAt(maskObj))) >> 8) & 15) <= 4)) && ((lengthOf(maskObj)) >= 5);
-		foo->successFlag = successValue6 && foo->successFlag;
+		successValue10 = (((maskObj & 1) == 0) && (((((usqInt) (longAt(maskObj))) >> 8) & 15) <= 4)) && ((lengthOf(maskObj)) >= 5);
+		foo->successFlag = successValue10 && foo->successFlag;
 		if (foo->successFlag) {
 			bitsObj = longAt((maskObj + BaseHeaderSize) + (0 << ShiftForWord));
 			extentX = fetchIntegerofObject(1, maskObj);
@@ -12491,17 +12506,25 @@ register struct foo * foo = &fum;
 		}
 		if (foo->successFlag) {
 			/* begin success: */
-			successValue4 = (extentX == 16) && ((extentY == 16) && (depth == 1));
-			foo->successFlag = successValue4 && foo->successFlag;
+			successValue8 = (extentX == 16) && ((extentY == 16) && (depth == 1));
+			foo->successFlag = successValue8 && foo->successFlag;
 			/* begin success: */
-			successValue5 = (((bitsObj & 1) == 0) && (((((usqInt) (longAt(bitsObj))) >> 8) & 15) == 6)) && ((lengthOf(bitsObj)) == 16);
-			foo->successFlag = successValue5 && foo->successFlag;
+			successValue9 = (((bitsObj & 1) == 0) && (((((usqInt) (longAt(bitsObj))) >> 8) & 15) == 6)) && ((lengthOf(bitsObj)) == 16);
+			foo->successFlag = successValue9 && foo->successFlag;
 			maskBitsIndex = bitsObj + BaseHeaderSize;
 		}
 	}
 	if (foo->successFlag) {
 		if (foo->argumentCount == 0) {
-			ioSetCursor(cursorBitsIndex, offsetX, offsetY);
+			if (depth == 32) {
+				if (!(ioSetCursorARGB(cursorBitsIndex, extentX, extentY, offsetX, offsetY))) {
+					/* begin success: */
+					foo->successFlag = 0 && foo->successFlag;
+					return null;
+				}
+			} else {
+				ioSetCursor(cursorBitsIndex, offsetX, offsetY);
+			}
 		} else {
 			ioSetCursorWithMask(cursorBitsIndex, maskBitsIndex, offsetX, offsetY);
 		}
@@ -22700,10 +22723,10 @@ register struct foo * foo = &fum;
 
 void* vm_exports[][3] = {
 	{"", "primitiveForceTenure", (void*)primitiveForceTenure},
-	{"", "primitiveSetGCSemaphore", (void*)primitiveSetGCSemaphore},
-	{"", "primitiveIsRoot", (void*)primitiveIsRoot},
-	{"", "primitiveRootTableAt", (void*)primitiveRootTableAt},
 	{"", "moduleUnloaded", (void*)moduleUnloaded},
+	{"", "primitiveSetGCSemaphore", (void*)primitiveSetGCSemaphore},
+	{"", "primitiveRootTableAt", (void*)primitiveRootTableAt},
+	{"", "primitiveIsRoot", (void*)primitiveIsRoot},
 	{"", "primitiveDisablePowerManager", (void*)primitiveDisablePowerManager},
 	{"", "primitiveScreenDepth", (void*)primitiveScreenDepth},
 	{"", "primitiveIsYoung", (void*)primitiveIsYoung},
