@@ -11,7 +11,7 @@
 
 #include <gst/gst.h>
 #include <gst/gstobject.h>
-#include <strings.h>
+#include <string.h>
 #include "squeakAudioVideoPipeLineSignalInterface.h"
 #include "sqVirtualMachine.h"
 
@@ -37,7 +37,7 @@ void squeakVideoHandOff (GstElement* object,
 		gpointer user_data)  {
 
 	GST_LOCK(object);
-
+	{
 	SqueakAudioVideoSinkPtr  squeaker = (SqueakAudioVideoSinkPtr) user_data;
 	
 	if (squeaker->width == 0)
@@ -50,8 +50,8 @@ void squeakVideoHandOff (GstElement* object,
 	}
 		
 	if (GST_BUFFER_DATA(buf)) {
+			guint totalBytes = (squeaker->depth == 24 ? 4 : 2)*squeaker->width*squeaker->height;
 		squeaker->frame_ready = TRUE;
-		guint totalBytes = (squeaker->depth == 24 ? 4 : 2)*squeaker->width*squeaker->height;
 		if (totalBytes != squeaker->allocbytes) {
 			if (squeaker->copyToSendToSqueakVideo) 
 				g_free(squeaker->copyToSendToSqueakVideo);
@@ -59,6 +59,7 @@ void squeakVideoHandOff (GstElement* object,
 			squeaker->allocbytes = totalBytes;
 		}
 		memcpy(squeaker->copyToSendToSqueakVideo,GST_BUFFER_DATA(buf),totalBytes);
+	}
 	}
 	GST_UNLOCK(object);
 
@@ -71,7 +72,7 @@ void squeakSrcHandOff (GstElement* object,
 		gpointer user_data)  {
 
 	GST_LOCK(object);
-
+	{
 	SqueakAudioVideoSinkPtr  squeaker = (SqueakAudioVideoSinkPtr) user_data;
 	
 	if (squeaker->frame_ready) {
@@ -83,6 +84,7 @@ void squeakSrcHandOff (GstElement* object,
 			memcpy(GST_BUFFER_DATA(buf),squeaker->copyToSendToSqueakVideo,squeaker->actualbytes);
 		GST_BUFFER_TIMESTAMP(buf) = squeaker->startTime;
 		GST_BUFFER_DURATION(buf) = squeaker->duration;
+	}
 	}
 	GST_UNLOCK(object);
 
