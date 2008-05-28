@@ -31,7 +31,6 @@
  */
 
 #include "sq.h"
-#include "sqMemoryAccess.h"
 #include "sqaio.h"
 #include "sqUnixCharConv.h"
 #include "debug.h"
@@ -45,8 +44,6 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
-#include <sys/types.h>
-#include <sys/param.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -63,17 +60,16 @@
 
 #undef	IMAGE_DUMP				/* define to enable SIGHUP and SIGQUIT handling */
 
-#define IMAGE_NAME_SIZE MAXPATHLEN
-
 #define DefaultHeapSize		  20	     	/* megabytes BEYOND actual image size */
 #define DefaultMmapSize		1024     	/* megabytes of virtual memory */
 
        char  *documentName= 0;			/* name if launced from document */
-       char   shortImageName[MAXPATHLEN+1];	/* image name */
-       char   imageName[MAXPATHLEN+1];		/* full path to image */
 static char   vmName[MAXPATHLEN+1];		/* full path to vm */
        char   vmPath[MAXPATHLEN+1];		/* full path to image directory */
        char  *vmLibDir= VM_LIBDIR;		/* full path to lib directory */
+
+  char shortImageName[MAXPATHLEN+1];	  /* image name */
+  char      imageName[IMAGE_NAME_SIZE+1]; /* full path and name to image */
 
        int    argCnt=		0;	/* global copies for access from plugins */
        char **argVec=		0;
@@ -111,6 +107,9 @@ int inModalLoop= 0;
 
 int sqIgnorePluginErrors	= 0;
 int runInterpreter		= 1;
+
+/* Unix per-interpreter attached state */
+int unixStateId  = 0;
 
 #include "SqDisplay.h"
 #include "SqSound.h"
@@ -268,10 +267,14 @@ static void recordFullPathForVmName(const char *localVmName)
 
 static void recordFullPathForImageName(INTERPRETER_ARG_COMMA const char *localImageName)
 {
+  DECL_INTERP_LOCAL();
+
   struct stat s;
   /* get canonical path to image */
-  if ((stat(localImageName, &s) == -1) || (realpath(localImageName, imageName) == 0))
-    pathCopyAbs(imageName, localImageName, sizeof(imageName));
+  if ((stat(localImageName, &s) == -1)
+      || (realpath(localImageName, INTERP_LOCAL(imageName)) == 0))
+    pathCopyAbs(INTERP_LOCAL(imageName), localImageName, 
+	sizeof(INTERP_LOCAL(imageName)));
 }
 
 
@@ -285,20 +288,24 @@ void ioSetImagePath(INTERPRETER_ARG_COMMA char * imgName)
 
 sqInt imageNameSize(INTERPRETER_ARG)
 {
-  return strlen(imageName);
+  DECL_INTERP_LOCAL();
+
+  return strlen(INTERP_LOCAL(imageName));
 }
 
 sqInt imageNameGetLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt length)
 {
+  DECL_INTERP_LOCAL();
+
   char *sqImageName= pointerForOop(INTERPRETER_PARAM_COMMA sqImageNameIndex);
   int count, i;
 
-  count= strlen(imageName);
+  count= strlen(INTERP_LOCAL(imageName));
   count= (length < count) ? length : count;
 
   /* copy the file name into the Squeak string */
   for (i= 0; i < count; i++)
-    sqImageName[i]= imageName[i];
+    sqImageName[i]= INTERP_LOCAL(imageName)[i];
 
   return count;
 }
@@ -306,6 +313,8 @@ sqInt imageNameGetLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt len
 
 sqInt imageNamePutLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt length)
 {
+  DECL_INTERP_LOCAL();
+
   char *sqImageName= pointerForOop(INTERPRETER_PARAM_COMMA sqImageNameIndex);
   int count, i;
 
@@ -313,18 +322,20 @@ sqInt imageNamePutLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt len
 
   /* copy the file name into a null-terminated C string */
   for (i= 0; i < count; i++)
-    imageName[i]= sqImageName[i];
-  imageName[count]= 0;
+    INTERP_LOCAL(imageName)[i]= sqImageName[i];
+  INTERP_LOCAL(imageName)[count]= 0;
 
-  dpy->winSetName(imageName);
+  dpy->winSetName(INTERP_LOCAL(imageName));
 
   return count;
 }
 
 
-char *getImageName(void)
+char *getImageName(INTERPRETER_ARG)
 {
-  return imageName;
+  DECL_INTERP_LOCAL();
+
+  return INTERP_LOCAL(imageName);
 }
 
 
@@ -486,6 +497,8 @@ sqInt ioBeep(void)				 { return dpy->ioBeep(); }
 
 static void emergencyDump(int quit)
 {
+  DECL_INTERP_LOCAL();
+
   extern sqInt preSnapshot(void);
   extern sqInt postSnapshot(void);
   extern void writeImageFile(sqInt);
@@ -493,15 +506,15 @@ static void emergencyDump(int quit)
   char baseName[MAXPATHLEN];
   char *term;
   int  dataSize, i;
-  strncpy(savedName, imageName, MAXPATHLEN);
-  strncpy(baseName, imageName, MAXPATHLEN);
+  strncpy(savedName, INTERP_LOCAL(imageName), MAXPATHLEN);
+  strncpy(baseName, INTERP_LOCAL(imageName), MAXPATHLEN);
   if ((term= strrchr(baseName, '.')))
     *term= '\0';
   for (i= 0; ++i;)
     {
       struct stat sb;
-      sprintf(imageName, "%s-emergency-dump-%d.image", baseName, i);
-      if (stat(imageName, &sb))
+      sprintf(INTERP_LOCAL(imageName), "%s-emergency-dump-%d.image", baseName, i);
+      if (stat(INTERP_LOCAL(imageName), &sb))
 	break;
     }
   dataSize= preSnapshot();
@@ -510,13 +523,13 @@ static void emergencyDump(int quit)
   fprintf(stderr, "\n");
   printCallStack();
   fprintf(stderr, "\nTo recover valuable content from this image:\n");
-  fprintf(stderr, "    squeak %s\n", imageName);
+  fprintf(stderr, "    squeak %s\n", INTERP_LOCAL(imageName));
   fprintf(stderr, "and then evaluate\n");
   fprintf(stderr, "    Smalltalk processStartUpList: true\n");
   fprintf(stderr, "in a workspace.  DESTROY the dumped image after recovering content!");
 
   if (quit) abort();
-  strncpy(imageName, savedName, sizeof(imageName));
+  strncpy(INTERP_LOCAL(imageName), savedName, sizeof(INTERP_LOCAL(imageName)));
 }
 
 #endif
@@ -526,7 +539,7 @@ sqInt ioProcessEvents(INTERPRETER_ARG)
 #if defined(IMAGE_DUMP)
   if (dumpImageFile)
     {
-      emergencyDump(0);
+      emergencyDump(INTERPRETER_PARAM_COMMA 0);
       dumpImageFile= 0;
     }
 #endif
@@ -960,7 +973,7 @@ static int jitArgs(char *str)
 }
 
 
-static void vm_parseEnvironment(void)
+static void vm_parseEnvironment()
 {
   char *ev= 0;
 
@@ -1314,6 +1327,72 @@ void imgInit(void)
     }
 }
 
+static void sqInitInterpState(INTERPRETER_ARG)
+{
+	DECL_INTERP_LOCAL();
+
+	dprintf(("Initializing Unix attached state\n"));
+	pthread_cond_init(INTERP_LOCAL(wakeUpEvent), 0);
+	pthread_cond_init(INTERP_LOCAL(sleepEvent), 0);
+
+#if 0 FIXME WINDOWS STUFF I HAVN'T YET BOTHERED WITH
+	INTERP_LOCAL(delayTick) = 0;
+	INTERP_LOCAL(timerThread) = CreateThread(NULL,  0, (LPTHREAD_START_ROUTINE) &timerRoutine,
+		(LPVOID) INTERPRETER_PARAM, CREATE_SUSPENDED, NULL);
+
+
+	/* NOTE!!! The timer thread should run at higher than normal priority,
+	to make it not depending too much on interpreter thread load */
+	SetThreadPriority( INTERP_LOCAL(timerThread) , THREAD_PRIORITY_TIME_CRITICAL); 
+
+    SetEvent(INTERP_LOCAL(wakeUpEvent));
+
+	INTERP_LOCAL(keyBufGet) = 0;			/* index of next item of keyBuf to read */
+	INTERP_LOCAL(keyBufPut) = 0;			/* index of next item of keyBuf to write */
+	INTERP_LOCAL(keyBufOverflows) = 0;	/* number of characters dropped */
+	INTERP_LOCAL(inputSemaphoreIndex) = 0;
+	INTERP_LOCAL(eventBufferGet) = 0;
+	INTERP_LOCAL(eventBufferPut) = 0;
+
+	INTERP_LOCAL(eventBuffer) = (struct sqInputEvent*)malloc(MAX_EVENT_BUFFER * sizeof(struct sqInputEvent));
+
+	if (INTERPRETER_PARAM == MAIN_VM)
+	{
+		SetupWindows(INTERPRETER_PARAM);
+    /* if headless running is requested, try to to create an icon
+       in the Win95/NT system tray */
+	    if(fHeadlessImage && (!fRunService || fWindows95))
+		  SetSystemTrayIcon(1);
+	    SetWindowSize(MAIN_VM);
+	    ioSetFullScreen(INTERPRETER_PARAM_COMMA getFullScreenFlag(MAIN_VM));
+	}
+
+//	INTERP_LOCAL(delaySemaphoreTimerId) = 0;
+//	INTERP_LOCAL(processEventsTimerId) = timeSetEvent(0, max(timerRes, 20), processEventsCallback, 
+//		(DWORD)INTERPRETER_PARAM, TIME_PERIODIC | TIME_CALLBACK_FUNCTION | TIME_KILL_SYNCHRONOUS);
+#endif
+}
+
+
+static void sqFinalizeInterpState(INTERPRETER_ARG)
+{
+	DECL_INTERP_LOCAL();
+	CloseHandle(INTERP_LOCAL(wakeUpEvent));
+//	timeKillEvent(INTERP_LOCAL(processEventsTimerId));
+
+//	if (INTERP_LOCAL(delaySemaphoreTimerId) != 0) // kill old one
+//	{
+//		timeKillEvent(INTERP_LOCAL(delaySemaphoreTimerId));
+//	}
+
+	TerminateThread(INTERP_LOCAL(timerThread),0);
+	CloseHandle(INTERP_LOCAL(sleepEvent));
+	CloseHandle(INTERP_LOCAL(timerThread));
+
+	free(INTERP_LOCAL(eventBuffer));
+}
+
+
 #if defined(__GNUC__) && ( defined(i386) || defined(__i386) || defined(__i386__)  \
 			|| defined(i486) || defined(__i486) || defined (__i486__) \
 			|| defined(intel) || defined(x86) || defined(i86pc) )
@@ -1338,6 +1417,8 @@ void imgInit(void)
 
 int main(int argc, char **argv, char **envp)
 {
+  DECL_INTERP_LOCAL();
+
   fldcw(0x12bf);	/* signed infinity, round to nearest, REAL8, disable intrs, disable signals */
   mtfsfi(0);		/* disable signals, IEEE mode, round to nearest */
 
@@ -1404,13 +1485,17 @@ int main(int argc, char **argv, char **envp)
 
 #ifdef DEBUG_IMAGE
   printf("vmName: %s -> %s\n", argv[0], vmName);
-  printf("viName: %s\n", shortImageName);
+  printf("viName: %s\n", INTERP_LOCAL(shortImageName));
   printf("documentName: %s\n", documentName);
 #endif
     
 #ifdef VM_OBJECTIFIED
-	initializeVM();
-	MAIN_VM = newInterpreterInstance();
+  initializeVM();
+  win32stateId = attachStateBufferinitializeFnfinalizeFn(
+      sizeof(struct UnixAttachedState),
+      (AttachedStateFn)sqInitInterpState,
+      (AttachedStateFn)sqFinalizeInterpState);
+  MAIN_VM = newInterpreterInstance();
 #endif
 
   initTimers();
@@ -1474,7 +1559,9 @@ sqInt ioExit(void)
 
 char *ioGetImageName(INTERPRETER_ARG)
 {
-  return imageName;
+  DECL_INTERP_LOCAL();
+
+  return INTERP_LOCAL(imageName);
 };
 
 

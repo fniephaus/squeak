@@ -40,6 +40,18 @@
 #undef sqShrinkMemoryBy
 #undef sqMemoryExtraBytesLeft
 
+/* Both pthread.h and squeak define a "clone" function (pthread.h via
+ * sched.h, and squeak via the generated interp_prototypes.h. Undefining
+ * __USE_MISC stops pthread from defining the function, at least on
+ * linux
+ */
+#ifdef __GLIBC__
+# ifdef __USE_MISC
+#  undef __USE_MISC
+# endif /* __USE_MISC */
+#endif /* __GLIBC__ */
+#include <pthread.h>
+
 #include "sqMemoryAccess.h"
 
 extern sqInt sqAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize);
@@ -48,8 +60,11 @@ extern sqInt sqShrinkMemoryBy(sqInt oldLimit, sqInt delta);
 extern sqInt sqMemoryExtraBytesLeft(sqInt includingSwap);
 
 #include <sys/types.h>
+#include <sys/param.h>
 
 typedef off_t squeakFileOffsetType;
+
+#define IMAGE_NAME_SIZE MAXPATHLEN
 
 #ifndef sqImageFile
 /*XXXXXXXXX EVIL HACK: copy sqImageFile and friends from sq.h XXXXXXX*/
@@ -98,3 +113,44 @@ extern void sqFilenameFromString(char *uxName, sqInt stNameIndex, int sqNameLeng
 #   endif
 # endif
 #endif
+
+/* Per-Interpreter unix vm state */
+extern int unixStateId;
+
+typedef struct UnixAttachedState {
+	pthread_t timerThread;
+
+	pthread_cond_t sleepEvent;
+	pthread_cond_t wakeUpEvent;
+	int delayTick;
+
+	vmEvent ioProcessEventsEvt;
+	vmEvent ioSignalDelayEvent;
+
+	#define KEYBUF_SIZE 64
+	int keyBuf[KEYBUF_SIZE];	/* circular buffer */
+	int keyBufGet;				/* index of next item of keyBuf to read */
+	int keyBufPut;				/* index of next item of keyBuf to write */
+	int keyBufOverflows;		/* number of characters dropped */
+
+	int inputSemaphoreIndex;	/* if non-zero the event semaphore index */
+
+	#define MAX_EVENT_BUFFER 1024
+	struct sqInputEvent * eventBuffer;
+	int eventBufferGet;
+	int eventBufferPut;
+
+
+	char imagePath[IMAGE_NAME_SIZE+1];	  /* full path to image */
+	char windowTitle[IMAGE_NAME_SIZE];      /* window title string */
+
+/* The above is from windows. What follows is from Unix */
+
+  char shortImageName[MAXPATHLEN+1];	  /* image name */
+  char      imageName[IMAGE_NAME_SIZE+1]; /* full path and name to image */
+
+} UnixAttachedState;
+
+#define DECL_INTERP_LOCAL() struct UnixAttachedState * interp_local_state = getAttachedStateBuffer(intr, unixStateId)
+#define INTERP_LOCAL(name) interp_local_state->name
+

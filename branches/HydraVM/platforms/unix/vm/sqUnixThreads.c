@@ -29,19 +29,6 @@
  * Last edited: 2008-03-28 10:05:15 by matthewf
  */
 
-/* Both pthread.h and sq.h define a "clone" function (pthread.h via
- * sched.h, and sq.h via the generated interp_prototypes.h. Undefining
- * __USE_MISC stops pthread from defining the function, at least on
- * linux
- */
-#ifdef __GNUC__
-# include <features.h>
-# ifdef __USE_MISC
-#  undef __USE_MISC
-# endif /* __USE_MISC */
-#endif /* __GNUC__ */
-
-#include <pthread.h>
 #include "sq.h"
 
 /* Squeak Unix thread implementation:
