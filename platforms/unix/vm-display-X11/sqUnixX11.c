@@ -1820,6 +1820,8 @@ static void handleEvent(XEvent *evt)
 
   switch (evt->type)
     {
+    case NoExpose: /* NoExpose is a no-op used to implement display_ioWakeUp */
+      return;
     case MotionNotify:
       noteEventState(evt->xmotion);
       recordMouseEvent();
@@ -2886,16 +2888,18 @@ static sqInt display_ioBeep(void)
 }
 
 
-static sqInt display_ioRelinquishProcessorForMicroseconds(sqInt microSeconds)
+static sqInt display_ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA sqInt microSeconds)
 {
+  unlockInterpreter(INTERPRETER_PARAM);
   aioSleep(handleEvents() ? 0 : microSeconds);
+  lockInterpreter(INTERPRETER_PARAM);
   return 0;
 }
 
 static sqInt display_ioWakeUp(void)
 {
-  /* Send a no-op X event to wake up the sleeping thread. The NoExpose
-   * event is not handled in handleEvents above
+  /* Send a no-op X event to wake up the sleeping thread. The NoExpose event
+   * works nicely for this purpose
    */
   XNoExposeEvent notifyEv;
   notifyEv.type= NoExpose;
