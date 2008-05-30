@@ -4,7 +4,15 @@
  *
  *   Copyright (C) 1996-2008 by Ian Piumarta and other authors/contributors
  *                              listed elsewhere in this file.
+ *
  *   All rights reserved.
+ *
+ *   Copyright (c) 1991-1994 by Xerox Corporation.  All rights reserved.
+ *   Copyright (c) 1996-1999 by Silicon Graphics.  All rights reserved.
+ *   Copyright (c) 1999-2003 by Hewlett-Packard Company. All rights reserved.
+ *
+ *   THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY EXPRESSED
+ *   OR IMPLIED.  ANY USE IS AT YOUR OWN RISK.
  *
  *   This file is part of Unix Squeak.
  *
@@ -26,7 +34,7 @@
  *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *   SOFTWARE.
  *
- * Last edited: 2008-03-28 10:05:15 by matthewf
+ * Last edited: 2008-05-29 10:05:15 by matthewf
  */
 
 #include "sq.h"
@@ -226,11 +234,16 @@ sqInt ioResumeThread(sqInt threadHandle)
 /****************************************************************************/
 /*                      Atomic event queue functions                        */
 /****************************************************************************/
-/*
-   Note to non-windows porters: on x86 architecture, atomic CAS is 'lock cmpxchg'.
-*/
 
-#define AtomicCAS(value_ptr, new_value, comparand) InterlockedCompareExchange(value_ptr, new_value, comparand)
+/* Returns nonzero if the comparison succeeded. */
+inline int AtomicCAS(volatile int *addr, int old, int new_val)
+{ 
+  char result;
+  __asm__ __volatile__("lock; cmpxchgl %3, %0; setz %1"
+                       : "=m"(*addr), "=q"(result)
+                       : "m"(*addr), "r" (new_val), "a"(old) : "memory");
+  return (int) result;
+}
 
 void ioInitEventQueue(struct vmEventQueue * queue)
 {
