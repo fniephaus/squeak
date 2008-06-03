@@ -63,8 +63,8 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
-* Mon May 19 2008 Bert Freudenberg <bert@freudenbergs.de>
-  - 3.10-3olpc3; SVN r.1887
+* Wed Jun 03 2008 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.10-3olpc3; SVN r.1889
   - prefer 24 and 16 bpp over 32 to fix alpha issue in compositing desktops
 * Mon May 19 2008 Bert Freudenberg <bert@freudenbergs.de>
   - 3.10-3olpc2; SVN r.1879
