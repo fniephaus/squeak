@@ -3136,7 +3136,7 @@ void initWindow(char *displayName)
       { 16, DirectColor },
       { 16, StaticColor },
       { 16, PseudoColor },
-      { 32, TrueColor },    /* 32 has problems with alpha in a compositing window manager */
+      { 32, TrueColor },    /* 32 has alpha problems when compositing */
       { 32, DirectColor },
       { 32, StaticColor },
       { 32, PseudoColor },
@@ -3150,28 +3150,38 @@ void initWindow(char *displayName)
     XVisualInfo viz;
     int i;
 
-    for (i= 0; trialVisuals[i][0] != 0; ++i)
-      {
-#       if defined(DEBUG_VISUAL)
-	fprintf(stderr, "Trying %d bit %s.\n", trialVisuals[i][0],
-		debugVisual(trialVisuals[i][1]));
-#       endif
-	if (XMatchVisualInfo(stDisplay, DefaultScreen(stDisplay),
-			     trialVisuals[i][0], trialVisuals[i][1],
-			     &viz) != 0) break;
-      }
-    if (trialVisuals [i][0] == 0)
+    stVisual= DefaultVisual(stDisplay, DefaultScreen(stDisplay));
+    stDepth= DefaultDepth(stDisplay, DefaultScreen(stDisplay));
+
+    if (stDepth == 24 || stDepth == 16)
       {
 #	if defined(DEBUG_VISUAL)
-	fprintf(stderr, "Using default visual.\n");
+	fprintf(stderr, "Using default visual (%d bits).\n", stDepth);
 #	endif
-	stVisual= DefaultVisual(stDisplay, DefaultScreen(stDisplay));
-	stDepth= DefaultDepth(stDisplay, DefaultScreen(stDisplay));
       }
     else
       {
-	stVisual= viz.visual;
-	stDepth= trialVisuals[i][0];
+	for (i= 0; trialVisuals[i][0] != 0; ++i)
+	  {
+#           if defined(DEBUG_VISUAL)
+	    fprintf(stderr, "Trying %d bit %s.\n", trialVisuals[i][0],
+		    debugVisual(trialVisuals[i][1]));
+#           endif
+	    if (XMatchVisualInfo(stDisplay, DefaultScreen(stDisplay),
+				 trialVisuals[i][0], trialVisuals[i][1],
+				 &viz) != 0) break;
+	  }
+	if (trialVisuals [i][0] == 0)
+	  {
+#	    if defined(DEBUG_VISUAL)
+	    fprintf(stderr, "Using default visual (%d bits).\n", stDepth);
+#	    endif
+	  }
+	else
+	  {
+	    stVisual= viz.visual;
+	    stDepth= trialVisuals[i][0];
+	  }
       }
   }
 
