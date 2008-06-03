@@ -58,7 +58,6 @@
 #include "sqMemoryAccess.h"
 
 #include "sqUnixMain.h"
-#include "sqUnixGlobals.h"
 #include "sqUnixCharConv.h"
 #include "sqaio.h"
 
@@ -297,9 +296,8 @@ int inModalLoop= 0, dpyPitch= 0, dpyPixels= 0;
 
 static void xHandler(int fd, void *data, int flags);
 static void npHandler(int fd, void *data, int flags);
-static void handleEvent(XEvent *event);
-static int  handleEvents(void);
-static void waitForCompletions(void);
+static void handleEvent(INTERPRETER_ARG_COMMA XEvent *event);
+static void waitForCompletions(INTERPRETER_ARG);
 static Time getXTimestamp(void);
 static void claimSelection(void);
 
@@ -307,7 +305,7 @@ static void claimSelection(void);
 static void printAtomName(Atom atom);
 #endif
 
-void setWindowSize(void);
+void setWindowSize(INTERPRETER_ARG);
 void getMaskbit(unsigned long ul, int *nmask, int *shift);
 
 void initDownGradingColors(void);
@@ -355,7 +353,7 @@ declareCopyFunction(copyImage32To32Same);
 
 #undef declareCopyFunction
 
-static void  redrawDisplay(int l, int r, int t, int b);
+static void  redrawDisplay(INTERPRETER_ARG_COMMA int l, int r, int t, int b);
 
 /* Selection functions */
 
@@ -368,9 +366,9 @@ typedef struct _SelectionChunk
 } SelectionChunk;
 
 static int   sendSelection(XSelectionRequestEvent *requestEv, int isMultiple);
-static void  getSelection(void);
-static char *getSelectionData(Atom selection, Atom target, size_t *bytes);
-static char *getSelectionFrom(Atom source);
+static void  getSelection(INTERPRETER_ARG);
+static char *getSelectionData(INTERPRETER_ARG_COMMA Atom selection, Atom target, size_t *bytes);
+static char *getSelectionFrom(INTERPRETER_ARG_COMMA Atom source);
 static int   translateCode(KeySym symbolic);
 
 #if defined(USE_XSHM)
@@ -507,13 +505,13 @@ static char *debugVisual(int x)
 #endif
 
 
-static void noteResize(int w, int h)
+static void noteResize(INTERPRETER_ARG_COMMA int w, int h)
 {
   xWidth= w;
   xHeight= h;
 #if defined(USE_XSHM)
   if (asyncUpdate)
-    waitForCompletions();
+    waitForCompletions(INTERPRETER_PARAM);
 #endif
   noteWindowChange();
 }
@@ -781,26 +779,26 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 }
 
 
-static void getSelection(void)
+static void getSelection(INTERPRETER_ARG)
 {
   char *data;
 
   if (usePrimaryFirst)
     {
-      data= getSelectionFrom(XA_PRIMARY);     /* try PRIMARY first */
+      data= getSelectionFrom(INTERPRETER_PARAM_COMMA XA_PRIMARY);     /* try PRIMARY first */
       if (stEmptySelection == data)
-	data= getSelectionFrom(xaClipboard);  /* then try CLIPBOARD (TODO CUT_BUFFER0?) */
+	data= getSelectionFrom(INTERPRETER_PARAM_COMMA xaClipboard);  /* then try CLIPBOARD (TODO CUT_BUFFER0?) */
     }
   else
     {
-      data= getSelectionFrom(xaClipboard);    /* try clipboard first */
+      data= getSelectionFrom(INTERPRETER_PARAM_COMMA xaClipboard);    /* try clipboard first */
       if (stEmptySelection == data)
-	data= getSelectionFrom(XA_PRIMARY);   /* then try PRIMARY */
+	data= getSelectionFrom(INTERPRETER_PARAM_COMMA XA_PRIMARY);   /* then try PRIMARY */
     }
 }
 
 
-static char *getSelectionFrom(Atom source)
+static char *getSelectionFrom(INTERPRETER_ARG_COMMA Atom source)
 {
   char * data= NULL;
   size_t bytes= 0;
@@ -808,7 +806,7 @@ static char *getSelectionFrom(Atom source)
   /* request the selection */
   Atom target= textEncodingUTF8 ? xaUTF8String : XA_STRING;
 
-  data= getSelectionData(source, target, &bytes);
+  data= getSelectionData(INTERPRETER_PARAM_COMMA source, target, &bytes);
 
   if (bytes == 0)
     return stEmptySelection;
@@ -841,7 +839,7 @@ static char *getSelectionFrom(Atom source)
 /* Wait specific event to get property change.
  * Return 1 if success.
  */
-static int waitNotify(XEvent *ev, int (*condition)(XEvent *ev))
+static int waitNotify(INTERPRETER_ARG_COMMA XEvent *ev, int (*condition)(XEvent *ev))
 {
   fd_set  fdMask;
 
@@ -879,7 +877,7 @@ static int waitNotify(XEvent *ev, int (*condition)(XEvent *ev))
       switch (ev->type)
 	{
 	case ConfigureNotify:
-	  noteResize(ev->xconfigure.width, ev->xconfigure.height);
+	  noteResize(INTERPRETER_PARAM_COMMA ev->xconfigure.width, ev->xconfigure.height);
 	  break;
 
         /* this is necessary so that we can supply our own selection when we
@@ -1001,14 +999,14 @@ static size_t getSelectionProperty(SelectionChunk *chunk, Window requestor, Atom
   return size;
 }
 
-static void getSelectionIncr(SelectionChunk *chunk, Window requestor, Atom property)
+static void getSelectionIncr(INTERPRETER_ARG_COMMA SelectionChunk *chunk, Window requestor, Atom property)
 {
   XEvent ev;
   size_t size;
   Atom   actualType;
   do {
     fprintf(stderr, "getSelectionIncr: wait next chunk\n");
-    waitNotify(&ev, waitPropertyNotify);
+    waitNotify(INTERPRETER_PARAM_COMMA &ev, waitPropertyNotify);
     size= getSelectionProperty(chunk, requestor, property, &actualType);
   } while (size > 0);
 }
@@ -1017,7 +1015,7 @@ static void getSelectionIncr(SelectionChunk *chunk, Window requestor, Atom prope
  * or chunk of zero length if unavailable.
  * Caller must free the returned data with destroySelectionChunk().
  */
-static void getSelectionChunk(SelectionChunk *chunk, Atom selection, Atom target)
+static void getSelectionChunk(INTERPRETER_ARG_COMMA SelectionChunk *chunk, Atom selection, Atom target)
 {
   Time	 timestamp= getXTimestamp();
   XEvent evt;
@@ -1029,7 +1027,7 @@ static void getSelectionChunk(SelectionChunk *chunk, Atom selection, Atom target
   XDeleteProperty(stDisplay, stWindow, selectionAtom);
   XConvertSelection(stDisplay, selection, target, selectionAtom, stWindow, timestamp);
 
-  success= waitNotify(&evt, waitSelectionNotify);
+  success= waitNotify(INTERPRETER_PARAM_COMMA &evt, waitSelectionNotify);
   if (success == 0) return;
   requestor= evt.xselection.requestor;
   property= evt.xselection.property;
@@ -1051,7 +1049,7 @@ static void getSelectionChunk(SelectionChunk *chunk, Atom selection, Atom target
     {
       destroySelectionChunk(chunk);
       chunk= newSelectionChunk();
-      getSelectionIncr(chunk, requestor, property);
+      getSelectionIncr(INTERPRETER_PARAM_COMMA chunk, requestor, property);
     }
 }
 
@@ -1059,11 +1057,11 @@ static void getSelectionChunk(SelectionChunk *chunk, Atom selection, Atom target
  * Return NULL if there is no selection data.
  * Caller must free the return data.
  */
-static char *getSelectionData(Atom selection, Atom target, size_t *bytes)
+static char *getSelectionData(INTERPRETER_ARG_COMMA Atom selection, Atom target, size_t *bytes)
 {
   char *data;
   SelectionChunk *chunk= newSelectionChunk();
-  getSelectionChunk(chunk, selection, target);
+  getSelectionChunk(INTERPRETER_PARAM_COMMA chunk, selection, target);
   *bytes= sizeSelectionChunk(chunk);
   data= malloc(*bytes);
   copySelectionChunk(chunk, data);
@@ -1141,10 +1139,10 @@ static void display_clipboardWriteWithType(char *data, size_t ndata, char *typeN
 }
 
 
-static sqInt display_clipboardSize(void)
+static sqInt display_clipboardSize(INTERPRETER_ARG)
 {
   if (stOwnsClipboard) return 0;
-  getSelection();
+  getSelection(INTERPRETER_PARAM);
   return stPrimarySelectionSize;
 }
 
@@ -1180,21 +1178,20 @@ static sqInt display_clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqIn
    version of the code WILL FAIL!  Otherwise it is to be
    preferred.
 */
-static void redrawDisplay(int l, int r, int t, int b)
+static void redrawDisplay(INTERPRETER_ARG_COMMA int l, int r, int t, int b)
 {
-  extern sqInt displayObject(void);
   extern sqInt lengthOf(sqInt);
   extern sqInt fetchPointerofObject(sqInt, sqInt);
 
-  sqInt displayObj= displayObject();
+  sqInt displayObj= displayObject(INTERPRETER_PARAM);
 
   if ((((((unsigned)(oopAt(displayObj))) >> 8) & 15) <= 4)
       && ((lengthOf(displayObj)) >= 4))
     {
       sqInt dispBits= fetchPointerofObject(0, displayObj);
-      sqInt w= fetchIntegerofObject(1, displayObj);
-      sqInt h= fetchIntegerofObject(2, displayObj);
-      sqInt d= fetchIntegerofObject(3, displayObj);
+      sqInt w= fetchIntegerofObject(INTERPRETER_PARAM_COMMA 1, displayObj);
+      sqInt h= fetchIntegerofObject(INTERPRETER_PARAM_COMMA 2, displayObj);
+      sqInt d= fetchIntegerofObject(INTERPRETER_PARAM_COMMA 3, displayObj);
       sqInt dispBitsIndex= dispBits + BaseHeaderSize;
       ioShowDisplay(dispBitsIndex, w, h, d, (sqInt)l, (sqInt)r, (sqInt)t, (sqInt)b);
     }
@@ -1709,11 +1706,11 @@ static int x2sqModifier(int state)
 
 /* wait for pending completion events to arrive */
 
-static void waitForCompletions(void)
+static void waitForCompletions(INTERPRETER_ARG)
 {
 #if defined(USE_XSHM)
   while (completions > 0)
-    handleEvents();
+    handleEvents(INTERPRETER_PARAM);
 #endif
 }
 
@@ -1724,7 +1721,7 @@ static void waitForCompletions(void)
  * CLIPBOARD as a NULL-terminated array of strings, or 0 on error.
  * The caller must free() the returned array.
  */
-static char **display_clipboardGetTypeNames(void)
+static char **display_clipboardGetTypeNames(INTERPRETER_ARG)
 {
   Atom    *targets= NULL;
   size_t   bytes= 0;
@@ -1737,7 +1734,7 @@ static char **display_clipboardGetTypeNames(void)
   else 
     {
       if (stOwnsClipboard) return 0;
-      targets= (Atom *)getSelectionData(xaClipboard, xaTargets, &bytes);
+      targets= (Atom *)getSelectionData(INTERPRETER_PARAM_COMMA xaClipboard, xaTargets, &bytes);
       if (0 == bytes) return 0;
       nTypeNames= bytes / sizeof(Atom);
     }
@@ -1752,7 +1749,7 @@ static char **display_clipboardGetTypeNames(void)
 /* Read the clipboard data associated with the typeName to
  * stPrimarySelection.  Answer the size of the data.
  */
-static sqInt display_clipboardSizeWithType(char *typeName, int nTypeName)
+static sqInt display_clipboardSizeWithType(INTERPRETER_ARG_COMMA char *typeName, int nTypeName)
 {
   size_t 	  bytes;
   Atom   	  type;
@@ -1767,19 +1764,19 @@ static sqInt display_clipboardSizeWithType(char *typeName, int nTypeName)
 
   chunk= newSelectionChunk();
   type= stringToAtom(typeName, nTypeName);
-  getSelectionChunk(chunk, inputSelection, type);
+  getSelectionChunk(INTERPRETER_PARAM_COMMA chunk, inputSelection, type);
   bytes= sizeSelectionChunk(chunk);
 
   allocateSelectionBuffer(bytes);
   copySelectionChunk(chunk, stPrimarySelection);
   destroySelectionChunk(chunk);
-  if (isDnd) dndHandleEvent(DndInFinished, 0);
+  if (isDnd) dndHandleEvent(INTERPRETER_PARAM_COMMA DndInFinished, 0);
 
   return stPrimarySelectionSize;
 }
 
 
-static void handleEvent(XEvent *evt)
+static void handleEvent(INTERPRETER_ARG_COMMA XEvent *evt)
 {
 #if defined(DEBUG_EVENTS)
   switch (evt->type)
@@ -1824,7 +1821,7 @@ static void handleEvent(XEvent *evt)
       return;
     case MotionNotify:
       noteEventState(evt->xmotion);
-      recordMouseEvent();
+      recordMouseEvent(INTERPRETER_PARAM);
       break;
 
     case ButtonPress:
@@ -1833,15 +1830,15 @@ static void handleEvent(XEvent *evt)
 	{
 	case 1: case 2: case 3:
 	  buttonState |= x2sqButton(evt->xbutton.button);
-	  recordMouseEvent();
+	  recordMouseEvent(INTERPRETER_PARAM);
 	  break;
 	case 4: case 5:	/* mouse wheel */
 	  {
 	    int keyCode= evt->xbutton.button + 26;	/* up/down */
 	    int modifiers= modifierState ^ CtrlKeyBit;
-	    recordKeyboardEvent(keyCode, EventKeyDown, modifiers, keyCode);
-	    recordKeyboardEvent(keyCode, EventKeyChar, modifiers, keyCode);
-	    recordKeyboardEvent(keyCode, EventKeyUp,   modifiers, keyCode);
+	    recordKeyboardEvent(INTERPRETER_PARAM_COMMA keyCode, EventKeyDown, modifiers, keyCode);
+	    recordKeyboardEvent(INTERPRETER_PARAM_COMMA keyCode, EventKeyChar, modifiers, keyCode);
+	    recordKeyboardEvent(INTERPRETER_PARAM_COMMA keyCode, EventKeyUp,   modifiers, keyCode);
 	  }
 	  break;
 	default:
@@ -1856,7 +1853,7 @@ static void handleEvent(XEvent *evt)
 	{
 	case 1: case 2: case 3:
 	  buttonState &= ~x2sqButton(evt->xbutton.button);
-	  recordMouseEvent();
+	  recordMouseEvent(INTERPRETER_PARAM);
 	  break;
 	case 4: case 5:	/* mouse wheel */
 	  break;
@@ -1873,11 +1870,11 @@ static void handleEvent(XEvent *evt)
 	int keyCode= x2sqKey(&evt->xkey, &symbolic);
 	int ucs4= xkeysym2ucs4(symbolic);
 	if (keyCode >= 0)
-	  recordKeystroke(keyCode);			/* DEPRECATED */
+	  recordKeystroke(INTERPRETER_PARAM_COMMA keyCode);			/* DEPRECATED */
 	if ((keyCode >= 0) || (ucs4 > 0))
 	  {
-	    recordKeyboardEvent(keyCode, EventKeyDown, modifierState, ucs4);
-	    recordKeyboardEvent(keyCode, EventKeyChar, modifierState, ucs4);
+	    recordKeyboardEvent(INTERPRETER_PARAM_COMMA keyCode, EventKeyDown, modifierState, ucs4);
+	    recordKeyboardEvent(INTERPRETER_PARAM_COMMA keyCode, EventKeyChar, modifierState, ucs4);
 	  }
       }
       break;
@@ -1897,7 +1894,7 @@ static void handleEvent(XEvent *evt)
 	keyCode= x2sqKey(&evt->xkey, &symbolic);
 	ucs4= xkeysym2ucs4(symbolic);
 	if ((keyCode >= 0) || (ucs4 > 0))
-	  recordKeyboardEvent(keyCode, EventKeyUp, modifierState, ucs4);
+	  recordKeyboardEvent(INTERPRETER_PARAM_COMMA keyCode, EventKeyUp, modifierState, ucs4);
       }
       break;
 
@@ -1940,14 +1937,14 @@ static void handleEvent(XEvent *evt)
 	XExposeEvent *ex= &evt->xexpose;
 #      if defined(USE_XSHM)
 	if (asyncUpdate)
-	  waitForCompletions();
+	  waitForCompletions(INTERPRETER_PARAM);
 #      endif
 #      if defined(FULL_UPDATE_ON_EXPOSE)
 	/* ignore it if there are other exposures upstream */
 	if (ex->count == 0)
-	  fullDisplayUpdate();  /* this makes VM call ioShowDisplay */
+	  fullDisplayUpdate(INTERPRETER_PARAM);  /* this makes VM call ioShowDisplay */
 #      else
-	redrawDisplay(ex->x, ex->x + ex->width, ex->y, ex->y + ex->height);
+	redrawDisplay(INTERPRETER_PARAM_COMMA ex->x, ex->x + ex->width, ex->y, ex->y + ex->height);
 #      endif /*!FULL_UPDATE_ON_EXPOSE*/
       }
       break;
@@ -1958,7 +1955,7 @@ static void handleEvent(XEvent *evt)
 	static int previousState= VisibilityFullyObscured;
 	XVisibilityEvent *ex= &evt->xvisibility;
 	if (ex->state < previusState)
-	  fullDisplayUpdate();
+	  fullDisplayUpdate(INTERPRETER_PARAM);
 	previousState= ex->state;
       }
 #  endif
@@ -1969,7 +1966,7 @@ static void handleEvent(XEvent *evt)
 	 set before the first button event). */
       getMousePosition();
       noteWindowChange();
-      fullDisplayUpdate();
+      fullDisplayUpdate(INTERPRETER_PARAM);
       break;
 
     case UnmapNotify:
@@ -1980,7 +1977,7 @@ static void handleEvent(XEvent *evt)
 	    {
 	      /* xxx SelectInput() ??? -- need to filter key events? */
 	      XNextEvent(stDisplay, &ev);
-	      handleEvent(&ev);
+	      handleEvent(INTERPRETER_PARAM_COMMA &ev);
 	    }
 	  while (ev.type != MapNotify);
 	getMousePosition();
@@ -1989,7 +1986,7 @@ static void handleEvent(XEvent *evt)
       break;
 
     case ConfigureNotify:
-      noteResize(evt->xconfigure.width, evt->xconfigure.height);
+      noteResize(INTERPRETER_PARAM_COMMA evt->xconfigure.width, evt->xconfigure.height);
       break;
 
     case MappingNotify:
@@ -1998,7 +1995,7 @@ static void handleEvent(XEvent *evt)
 
     case ClientMessage:
       if (wmProtocolsAtom == evt->xclient.message_type && wmDeleteWindowAtom == evt->xclient.data.l[0])
-	recordWindowEvent(WindowEventClose, 0, 0, 0, 0);
+	recordWindowEvent(INTERPRETER_PARAM_COMMA WindowEventClose, 0, 0, 0, 0);
       break;
 
 #  if defined(USE_XSHM)
@@ -2010,13 +2007,13 @@ static void handleEvent(XEvent *evt)
     }
 
   if (useXdnd)
-    dndHandleEvent(evt->type, evt);
+    dndHandleEvent(INTERPRETER_PARAM_COMMA evt->type, evt);
 
 # undef noteEventState
 }
 
 
-int handleEvents(void)
+int handleEvents(INTERPRETER_ARG)
 {
   if (!isConnectedToXServer || !XPending(stDisplay))
     return !iebEmptyP();
@@ -2025,7 +2022,7 @@ int handleEvents(void)
     {
       XEvent evt;
       XNextEvent(stDisplay, &evt);
-      handleEvent(&evt);
+      handleEvent(INTERPRETER_PARAM_COMMA &evt);
     }
   return 1;
 }
@@ -2033,7 +2030,11 @@ int handleEvents(void)
 
 static void xHandler(int fd, void *data, int flags)
 {
-  handleEvents();	/* XPending() drains display connection input */
+#ifdef INTERPRETER_PARAM
+  handleEvents(data);	/* XPending() drains display connection input */
+#else
+  handleEvents();
+#endif
   aioHandle(stXfd, xHandler, AIO_RX);
 }
 
@@ -2309,7 +2310,7 @@ static int xError(Display *dpy, XErrorEvent *evt)
 }
 
 
-void initWindow(char *displayName)
+void initWindow(INTERPRETER_ARG_COMMA char *displayName)
 {
   XRectangle windowBounds= { 0, 0, 640, 480 };  /* default window bounds */
   int right, bottom;
@@ -2389,7 +2390,7 @@ void initWindow(char *displayName)
     }
   else
     {
-      int savedWindowSize= getSavedWindowSize();
+      int savedWindowSize= getSavedWindowSize(INTERPRETER_PARAM);
       if (savedWindowSize != 0)
 	{
 	  right=  windowBounds.x + ((unsigned)savedWindowSize >> 16);
@@ -2463,11 +2464,11 @@ void initWindow(char *displayName)
 	XGetGeometry(stDisplay, stParent, &root, &s, &s, &w, &h, &u, &u);
 	stWidth= xWidth= w;
 	stHeight= xHeight= h;
-	setSavedWindowSize((w << 16) | h);
+	setSavedWindowSize(INTERPRETER_PARAM_COMMA (w << 16) | h);
       }
     else
       {
-	int s= getSavedWindowSize();
+	int s= getSavedWindowSize(INTERPRETER_PARAM);
 	if (s)
 	  {
 	    stWidth=  s >> 16;
@@ -2605,10 +2606,10 @@ void initWindow(char *displayName)
 }
 
 
-void setWindowSize(void)
+void setWindowSize(INTERPRETER_ARG)
 {
   int width, height, maxWidth, maxHeight;
-  int winSize= getSavedWindowSize();
+  int winSize= getSavedWindowSize(INTERPRETER_PARAM);
 
 #if defined(DEBUG_BROWSER)
   fprintf(stderr, "browserWindow %d\n", browserWindow);
@@ -2651,7 +2652,7 @@ void setWindowSize(void)
   fprintf(stderr, "resize %d %d\n", width, height);
 #endif
 
-  noteResize(stWidth= width, stHeight= height);
+  noteResize(INTERPRETER_PARAM_COMMA stWidth= width, stHeight= height);
 }
 
 
@@ -2891,7 +2892,7 @@ static sqInt display_ioBeep(void)
 static sqInt display_ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA sqInt microSeconds)
 {
   unlockInterpreter(INTERPRETER_PARAM);
-  aioSleep(handleEvents() ? 0 : microSeconds);
+  aioSleep(handleEvents(INTERPRETER_PARAM) ? 0 : microSeconds);
   lockInterpreter(INTERPRETER_PARAM);
   return 0;
 }
@@ -2909,9 +2910,9 @@ static sqInt display_ioWakeUp(void)
   XFlush(stDisplay);
 }
 
-static sqInt display_ioProcessEvents(void)
+static sqInt display_ioProcessEvents(INTERPRETER_ARG)
 {
-  handleEvents();
+  handleEvents(INTERPRETER_PARAM);
   aioPoll(0);
   return 0;
 }
@@ -2933,9 +2934,9 @@ static sqInt display_ioScreenDepth(void)
 
 
 /* returns the size of the Squeak window */
-static sqInt display_ioScreenSize(void)
+static sqInt display_ioScreenSize(INTERPRETER_ARG)
 {
-  int winSize= getSavedWindowSize();
+  int winSize= getSavedWindowSize(INTERPRETER_PARAM);
 
   if (headless || !isConnectedToXServer)
     return winSize ? winSize : ((64 << 16) | 64);
@@ -3092,7 +3093,7 @@ static void overrideRedirect(Display *dpy, Window win, int flag)
 }
 
 
-static sqInt display_ioSetFullScreen(sqInt fullScreen)
+static sqInt display_ioSetFullScreen(INTERPRETER_ARG_COMMA sqInt fullScreen)
 {
   int winX, winY;
   unsigned int winW, winH;
@@ -3115,7 +3116,7 @@ static sqInt display_ioSetFullScreen(sqInt fullScreen)
 	  /* width must be a multiple of sizeof(void *), or X[Shm]PutImage goes gaga */
 	  if ((winW % sizeof(void *)) != 0)
 	    winW= (winW / sizeof(void *)) * sizeof(void *);
-	  setSavedWindowSize((winW << 16) + (winH & 0xFFFF));
+	  setSavedWindowSize(INTERPRETER_PARAM_COMMA (winW << 16) + (winH & 0xFFFF));
 	  savedWindowOrigin= (winX << 16) + (winY & 0xFFFF);
 	  XSynchronize(stDisplay, True);
 	  overrideRedirect(stDisplay, stWindow, True);
@@ -3130,7 +3131,7 @@ static sqInt display_ioSetFullScreen(sqInt fullScreen)
 	  XSetInputFocus(stDisplay, stWindow, RevertToPointerRoot, CurrentTime);
 	  XSynchronize(stDisplay, False);
 	  windowState= WIN_ZOOMED;
-	  fullDisplayUpdate();
+	  fullDisplayUpdate(INTERPRETER_PARAM);
 	}
     }
   else
@@ -3139,7 +3140,7 @@ static sqInt display_ioSetFullScreen(sqInt fullScreen)
       if (savedWindowOrigin != -1)
 	{ /* previous call enabled full-screen mode */
 	  /* get old window size */
-	  int winSize= getSavedWindowSize();
+	  int winSize= getSavedWindowSize(INTERPRETER_PARAM);
 	  winW= (unsigned)winSize >> 16;
 	  winH= winSize & 0xFFFF;
 	  /* minimum size is 64 x 64 */
@@ -3270,7 +3271,7 @@ static XImage *stXCreateImage(Display *display, Visual *visual,
 }
 
 
-static void stXPutImage(Display *display, Window window, GC gc, XImage *image,
+static void stXPutImage(INTERPRETER_ARG_COMMA Display *display, Window window, GC gc, XImage *image,
 			int src_x, int src_y, int dst_x, int dst_y, int w, int h)
 {
 #if defined(USE_XSHM)
@@ -3284,7 +3285,7 @@ static void stXPutImage(Display *display, Window window, GC gc, XImage *image,
   XShmPutImage(display, window, gc, image, src_x, src_y, dst_x, dst_y, w, h, True);
   ++completions;
   if (!asyncUpdate)
-    waitForCompletions();
+    waitForCompletions(INTERPRETER_PARAM);
 #endif
 }
 
@@ -3303,20 +3304,20 @@ static void stXDestroyImage(XImage *image)
 #define bytesPerLineRD(width, depth)	((((width)*(depth)) >> 5) << 2)
 
 
-static sqInt display_ioForceDisplayUpdate(void)
+static sqInt display_ioForceDisplayUpdate(INTERPRETER_ARG)
 {
 #if defined(USE_XSHM)
   if (asyncUpdate && isConnectedToXServer)
     {
       XFlush(stDisplay);
-      waitForCompletions();
+      waitForCompletions(INTERPRETER_PARAM);
     }
 #endif
   return 0;
 }
 
 
-static sqInt display_ioShowDisplay(sqInt dispBitsIndex, sqInt width, sqInt height, sqInt depth,
+static sqInt display_ioShowDisplay(INTERPRETER_ARG_COMMA sqInt dispBitsIndex, sqInt width, sqInt height, sqInt depth,
 				   sqInt affectedL, sqInt affectedR, sqInt affectedT, sqInt affectedB)
 {
   static char *stDisplayBits= 0;	/* last known oop of the VM's Display */
@@ -3366,7 +3367,7 @@ static sqInt display_ioShowDisplay(sqInt dispBitsIndex, sqInt width, sqInt heigh
 # if defined(USE_XSHM)
       if (asyncUpdate)
 	/* wait for pending updates to complete before freeing the XImage */
-	waitForCompletions();
+	waitForCompletions(INTERPRETER_PARAM);
 # endif
       stDisplayBits= dispBits;
       if (stImage)
@@ -3652,7 +3653,8 @@ static sqInt display_ioShowDisplay(sqInt dispBitsIndex, sqInt width, sqInt heigh
 # endif
     }
 
-  stXPutImage(stDisplay, stWindow, stGC, stImage,
+  stXPutImage(INTERPRETER_PARAM_COMMA
+	      stDisplay, stWindow, stGC, stImage,
 	      affectedL, affectedT,	/* src_x, src_y */
 	      affectedL, affectedT,	/* dst_x, dst_y */
 	      affectedR-affectedL,	/* width */
@@ -4521,17 +4523,22 @@ static void display_winSetName(char *imageName)
 /*** display connection ***/
 
 
-int openXDisplay(void)
+int openXDisplay(INTERPRETER_ARG)
 {
+#ifdef INTERPRETER_PARAM
+# define INTERPRETER_OR_ZERO INTERPRETER_PARAM
+#else
+# define INTERPRETER_OR_ZERO 0
+#endif
   /* open the Squeak window. */
   if (!isConnectedToXServer)
     {
       initClipboard();
-      initWindow(displayName);
+      initWindow(INTERPRETER_PARAM_COMMA displayName);
       initPixmap();
       if (!inBrowser())
 	{
-	  setWindowSize();
+	  setWindowSize(INTERPRETER_PARAM);
 	  XMapWindow(stDisplay, stParent);
 	  XMapWindow(stDisplay, stWindow);
 	}
@@ -4546,14 +4553,15 @@ int openXDisplay(void)
 	  fprintf(stderr, "browser: squeak window sent\n");
 #        endif
 	  /* listen for commands */
-	  aioEnable(browserPipes[0], 0, AIO_EXT);
+	  aioEnable(browserPipes[0], INTERPRETER_OR_ZERO, AIO_EXT);
 	  aioHandle(browserPipes[0], npHandler, AIO_RX);
 	}
       isConnectedToXServer= 1;
-      aioEnable(stXfd, 0, AIO_EXT);
+      aioEnable(stXfd, INTERPRETER_OR_ZERO, AIO_EXT);
       aioHandle(stXfd, xHandler, AIO_RX);
     }
   return 0;
+#undef INTERPRETER_OR_ZERO
 }
 
 int forgetXDisplay(void)
@@ -4581,12 +4589,12 @@ int forgetXDisplay(void)
 }
 
 
-int disconnectXDisplay(void)
+int disconnectXDisplay(INTERPRETER_ARG)
 {
   if (isConnectedToXServer)
     {
       XSync(stDisplay, False);
-      handleEvents();
+      handleEvents(INTERPRETER_PARAM);
       XDestroyWindow(stDisplay, stWindow);
       if (browserWindow == 0)
 	XDestroyWindow(stDisplay, stParent);
@@ -4871,22 +4879,22 @@ static void display_winInit(void)
 }
 
 
-static void display_winOpen(void)
+static void display_winOpen(INTERPRETER_ARG)
 {
 #if defined(DEBUG_WINDOW)
-  int sws= getSavedWindowSize();
+  int sws= getSavedWindowSize(INTERPRETER_PARAM);
   fprintf(stderr, "saved window size is %d %d\n", sws >> 16, sws & 0xffff);
 #endif
   if (headless)
     forgetXDisplay();
   else
-    openXDisplay();
+    openXDisplay(INTERPRETER_PARAM);
 }
 
 
-static void display_winExit(void)
+static void display_winExit(INTERPRETER_ARG)
 {
-  disconnectXDisplay();
+  disconnectXDisplay(INTERPRETER_PARAM);
 }
 
 

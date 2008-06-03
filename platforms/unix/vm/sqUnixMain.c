@@ -491,6 +491,34 @@ sqInt ioWakeUp(INTERPRETER_ARG)
   return dpy->ioWakeUp(INTERPRETER_PARAM);
 }
 
+void ioScheduleTimerSemaphoreSignalAt(INTERPRETER_ARG_COMMA int atMilliseconds)
+{
+#if 0 /* The windows implementation */
+	DECL_WIN32_STATE();
+
+	WIN32_STATE(delayTick) = atMilliseconds;
+
+	if (WIN32_STATE(ioSignalDelayEvent).fn != 0) // check if delay signaling is already put in events
+	{
+		WIN32_STATE(ioSignalDelayEvent).fn = dummyHandler;
+	}
+	PulseEvent(WIN32_STATE(sleepEvent)); 
+	// give a chance timerRoutine to sync with delay
+	SwitchToThread();
+#endif
+}
+
+int threadedInterpretFn(void * param)
+{
+  /* Some stuff from main should go here, notably interpret */
+  return 0;
+}
+
+void * ioGetThreadedInterpretFunctionPointer()
+{
+	return (void*)threadedInterpretFn;
+}
+
 sqInt ioBeep(void)				 { return dpy->ioBeep(); }
 
 #if defined(IMAGE_DUMP)
@@ -1332,10 +1360,10 @@ static void sqInitInterpState(INTERPRETER_ARG)
 	DECL_INTERP_LOCAL();
 
 	dprintf(("Initializing Unix attached state\n"));
-	pthread_cond_init(INTERP_LOCAL(wakeUpEvent), 0);
-	pthread_cond_init(INTERP_LOCAL(sleepEvent), 0);
+	pthread_cond_init(&INTERP_LOCAL(wakeUpEvent), 0);
+	pthread_cond_init(&INTERP_LOCAL(sleepEvent), 0);
 
-#if 0 FIXME WINDOWS STUFF I HAVN'T YET BOTHERED WITH
+#if 0 /* FIXME WINDOWS STUFF I HAVN'T YET BOTHERED WITH */
 	INTERP_LOCAL(delayTick) = 0;
 	INTERP_LOCAL(timerThread) = CreateThread(NULL,  0, (LPTHREAD_START_ROUTINE) &timerRoutine,
 		(LPVOID) INTERPRETER_PARAM, CREATE_SUSPENDED, NULL);
@@ -1377,6 +1405,7 @@ static void sqInitInterpState(INTERPRETER_ARG)
 static void sqFinalizeInterpState(INTERPRETER_ARG)
 {
 	DECL_INTERP_LOCAL();
+# if 0 /* FIXME Copied from windows. Not yet translated */
 	CloseHandle(INTERP_LOCAL(wakeUpEvent));
 //	timeKillEvent(INTERP_LOCAL(processEventsTimerId));
 
@@ -1390,6 +1419,7 @@ static void sqFinalizeInterpState(INTERPRETER_ARG)
 	CloseHandle(INTERP_LOCAL(timerThread));
 
 	free(INTERP_LOCAL(eventBuffer));
+#endif
 }
 
 
@@ -1417,8 +1447,6 @@ static void sqFinalizeInterpState(INTERPRETER_ARG)
 
 int main(int argc, char **argv, char **envp)
 {
-  DECL_INTERP_LOCAL();
-
   fldcw(0x12bf);	/* signed infinity, round to nearest, REAL8, disable intrs, disable signals */
   mtfsfi(0);		/* disable signals, IEEE mode, round to nearest */
 
@@ -1491,7 +1519,7 @@ int main(int argc, char **argv, char **envp)
     
 #ifdef VM_OBJECTIFIED
   initializeVM();
-  win32stateId = attachStateBufferinitializeFnfinalizeFn(
+  unixStateId = attachStateBufferinitializeFnfinalizeFn(
       sizeof(struct UnixAttachedState),
       (AttachedStateFn)sqInitInterpState,
       (AttachedStateFn)sqFinalizeInterpState);

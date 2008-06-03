@@ -132,7 +132,7 @@ int display_primitivePluginBrowserReady()
       pushBool(1);
     }
   else
-    primitiveFail();
+    primitiveFail(INTERPRETER_PARAM);
   return 1;
 }
 
@@ -150,23 +150,23 @@ int display_primitivePluginRequestURLStream()
   sqStreamRequest *req;
   int id, url, length, semaIndex;
 
-  if (!inBrowser) return primitiveFail();
+  if (!inBrowser) return primitiveFail(INTERPRETER_PARAM);
 
   DPRINT("VM: primitivePluginRequestURLStream()\n");
 
   for (id=0; id<MAX_REQUESTS; id++) {
     if (!requests[id]) break;
   }
-  if (id >= MAX_REQUESTS) return primitiveFail();
+  if (id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
 
   semaIndex= stackIntegerValue(0);
   url= stackObjectValue(1);
   if (failed()) return 0;
 
-  if (!isBytes(url)) return primitiveFail();
+  if (!isBytes(url)) return primitiveFail(INTERPRETER_PARAM);
 
   req= calloc(1, sizeof(sqStreamRequest));
-  if (!req) return primitiveFail();
+  if (!req) return primitiveFail(INTERPRETER_PARAM);
   req->localName= NULL;
   req->semaIndex= semaIndex;
   req->state= -1;
@@ -192,25 +192,25 @@ int display_primitivePluginRequestURL()
   int target, targetLength;
   int id, semaIndex;
 
-  if (!browserWindow) return primitiveFail();
+  if (!browserWindow) return primitiveFail(INTERPRETER_PARAM);
   for (id=0; id<MAX_REQUESTS; id++) {
     if (!requests[id]) break;
   }
 
-  if (id >= MAX_REQUESTS) return primitiveFail();
+  if (id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
 
   semaIndex= stackIntegerValue(0);
   target= stackObjectValue(1);
   url= stackObjectValue(2);
 
   if (failed()) return 0;
-  if (!isBytes(url) || !isBytes(target)) return primitiveFail();
+  if (!isBytes(url) || !isBytes(target)) return primitiveFail(INTERPRETER_PARAM);
 
   urlLength= byteSizeOf(url);
   targetLength= byteSizeOf(target);
 
   req= calloc(1, sizeof(sqStreamRequest));
-  if(!req) return primitiveFail();
+  if(!req) return primitiveFail(INTERPRETER_PARAM);
   req->localName= NULL;
   req->semaIndex= semaIndex;
   req->state= -1;
@@ -235,12 +235,12 @@ int display_primitivePluginPostURL()
   int data, dataLength;
   int id, semaIndex;
 
-  if (!browserWindow) return primitiveFail();
+  if (!browserWindow) return primitiveFail(INTERPRETER_PARAM);
   for (id=0; id<MAX_REQUESTS; id++) {
     if (!requests[id]) break;
   }
 
-  if (id >= MAX_REQUESTS) return primitiveFail();
+  if (id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
 
   semaIndex= stackIntegerValue(0);
   data= stackObjectValue(1);
@@ -249,14 +249,14 @@ int display_primitivePluginPostURL()
 
   if (failed()) return 0;
   if (target == nilObject()) target= 0;
-  if (!isBytes(url) || !isBytes(data) || !(!target || isBytes(target))) return primitiveFail();
+  if (!isBytes(url) || !isBytes(data) || !(!target || isBytes(target))) return primitiveFail(INTERPRETER_PARAM);
 
   urlLength= byteSizeOf(url);
   targetLength= target ? byteSizeOf(target) : 0;
   dataLength= byteSizeOf(data);
 
   req= calloc(1, sizeof(sqStreamRequest));
-  if(!req) return primitiveFail();
+  if(!req) return primitiveFail(INTERPRETER_PARAM);
   req->localName= NULL;
   req->semaIndex= semaIndex;
   req->state= -1;
@@ -285,10 +285,10 @@ int display_primitivePluginRequestFileHandle()
 
   id= stackIntegerValue(0);
   if (failed()) return 0;
-  if (id < 0 || id >= MAX_REQUESTS) return primitiveFail();
+  if (id < 0 || id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
 
   req= requests[id];
-  if (!req || !req->localName) return primitiveFail();
+  if (!req || !req->localName) return primitiveFail(INTERPRETER_PARAM);
 
   fileOop= nilObject();
 
@@ -300,7 +300,7 @@ int display_primitivePluginRequestFileHandle()
       if (!openFn)
       {
 	DPRINT("VM:   Couldn't load fileOpenName:size:write:secure: from FilePlugin!\n");
-	return primitiveFail();
+	return primitiveFail(INTERPRETER_PARAM);
       }
   
       fileOop= ((sqInt (*)(char *, sqInt, sqInt, sqInt))openFn)
@@ -336,7 +336,7 @@ sqInt display_primitivePluginDestroyRequest()
   int id;
 
   id= stackIntegerValue(0);
-  if (id < 0 || id >= MAX_REQUESTS) return primitiveFail();
+  if (id < 0 || id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
   req= requests[id];
   if (req) {
     if (req->localName) free(req->localName);
@@ -360,9 +360,9 @@ sqInt display_primitivePluginRequestState()
   int id;
 
   id= stackIntegerValue(0);
-  if (id < 0 || id >= MAX_REQUESTS) return primitiveFail();
+  if (id < 0 || id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
   req= requests[id];
-  if (!req) return primitiveFail();
+  if (!req) return primitiveFail(INTERPRETER_PARAM);
   pop(2);
   if (req->state == -1) push(nilObject());
   else pushBool(req->state);
@@ -540,12 +540,12 @@ void browserProcessCommand(void)
 
 #else /* !defined(USE_X11) */
 
-sqInt display_primitivePluginBrowserReady()		{ return primitiveFail(); }
-sqInt display_primitivePluginRequestURLStream()		{ return primitiveFail(); }
-sqInt display_primitivePluginRequestURL()		{ return primitiveFail(); }
-sqInt display_primitivePluginPostURL()			{ return primitiveFail(); }
-sqInt display_primitivePluginRequestFileHandle()	{ return primitiveFail(); }
-sqInt display_primitivePluginDestroyRequest()		{ return primitiveFail(); }
-sqInt display_primitivePluginRequestState()		{ return primitiveFail(); }
+sqInt display_primitivePluginBrowserReady()		{ return primitiveFail(INTERPRETER_PARAM); }
+sqInt display_primitivePluginRequestURLStream()		{ return primitiveFail(INTERPRETER_PARAM); }
+sqInt display_primitivePluginRequestURL()		{ return primitiveFail(INTERPRETER_PARAM); }
+sqInt display_primitivePluginPostURL()			{ return primitiveFail(INTERPRETER_PARAM); }
+sqInt display_primitivePluginRequestFileHandle()	{ return primitiveFail(INTERPRETER_PARAM); }
+sqInt display_primitivePluginDestroyRequest()		{ return primitiveFail(INTERPRETER_PARAM); }
+sqInt display_primitivePluginRequestState()		{ return primitiveFail(INTERPRETER_PARAM); }
 
 #endif

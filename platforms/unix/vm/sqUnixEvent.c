@@ -139,17 +139,17 @@ static sqInt getButtonState(void)
 }
 
 
-static void signalInputEvent(void)
+static void signalInputEvent(INTERPRETER_ARG)
 {
 #ifdef DEBUG_EVENTS
   printf("signalInputEvent\n");
 #endif
   if (inputEventSemaIndex > 0)
-    signalSemaphoreWithIndex(inputEventSemaIndex);
+    signalSemaphoreWithIndex(INTERPRETER_PARAM_COMMA inputEventSemaIndex);
 }
 
 
-static void recordMouseEvent(void)
+static void recordMouseEvent(INTERPRETER_ARG)
 {
   int state= getButtonState();
   sqMouseEvent *evt= allocateMouseEvent();
@@ -159,7 +159,7 @@ static void recordMouseEvent(void)
   evt->modifiers= (state >> 3);
   evt->reserved1=
     evt->windowIndex= 0;
-  signalInputEvent();
+  signalInputEvent(INTERPRETER_PARAM);
 #ifdef DEBUG_EVENTS
   printf("EVENT: mouse (%d,%d)", mousePosition.x, mousePosition.y);
   printModifiers(state >> 3);
@@ -169,7 +169,7 @@ static void recordMouseEvent(void)
 }
 
 
-static void recordKeyboardEvent(int keyCode, int pressCode, int modifiers, int ucs4)
+static void recordKeyboardEvent(INTERPRETER_ARG_COMMA int keyCode, int pressCode, int modifiers, int ucs4)
 {
   sqKeyboardEvent *evt= allocateKeyboardEvent();
   evt->charCode= keyCode;
@@ -178,7 +178,7 @@ static void recordKeyboardEvent(int keyCode, int pressCode, int modifiers, int u
   evt->utf32Code= ucs4;
   evt->reserved1=
     evt->windowIndex= 0;
-  signalInputEvent();
+  signalInputEvent(INTERPRETER_PARAM);
 #ifdef DEBUG_EVENTS
   printf("EVENT: key");
   switch (pressCode)
@@ -195,7 +195,7 @@ static void recordKeyboardEvent(int keyCode, int pressCode, int modifiers, int u
 }
 
 
-static void recordDragEvent(int dragType, int numFiles)
+static void recordDragEvent(INTERPRETER_ARG_COMMA int dragType, int numFiles)
 {
   int state= getButtonState();
   sqDragDropFilesEvent *evt= allocateDragEvent();
@@ -205,7 +205,7 @@ static void recordDragEvent(int dragType, int numFiles)
   evt->modifiers= (state >> 3);
   evt->numFiles= numFiles;
   evt->windowIndex= 0;
-  signalInputEvent();
+  signalInputEvent(INTERPRETER_PARAM);
 #ifdef DEBUG_EVENTS
   printf("EVENT: drag (%d,%d)", mousePosition.x, mousePosition.y);
   printModifiers(state >> 3);
@@ -215,7 +215,7 @@ static void recordDragEvent(int dragType, int numFiles)
 }
 
 
-static void recordWindowEvent(int action, int v1, int v2, int v3, int v4)
+static void recordWindowEvent(INTERPRETER_ARG_COMMA int action, int v1, int v2, int v3, int v4)
 {
   sqWindowEvent *evt= allocateWindowEvent();
   evt->action= action;
@@ -224,7 +224,7 @@ static void recordWindowEvent(int action, int v1, int v2, int v3, int v4)
   evt->value3= v3;
   evt->value4= v4;
   evt->windowIndex= 0;
-  signalInputEvent();
+  signalInputEvent(INTERPRETER_PARAM);
 #ifdef DEBUG_EVENTS
   printf("EVENT: window (%d %d %d %d %d %d) ", action, v1, v2, v3, v4, 0);
   switch (action)
@@ -243,10 +243,10 @@ static void recordWindowEvent(int action, int v1, int v2, int v3, int v4)
 
 /* retrieve the next input event from the queue */
 
-static sqInt display_ioGetNextEvent(sqInputEvent *evt)
+static sqInt display_ioGetNextEvent(INTERPRETER_ARG_COMMA sqInputEvent *evt)
 {
   if (iebEmptyP())
-    ioProcessEvents();
+    ioProcessEvents(INTERPRETER_PARAM);
   if (iebEmptyP())
     return false;
   *evt= inputEventBuffer[iebOut];
@@ -266,7 +266,7 @@ static int keyBufGet= 0;		/* index of next item of keyBuf to read */
 static int keyBufPut= 0;		/* index of next item of keyBuf to write */
 static int keyBufOverflows= 0;		/* number of characters dropped */
 
-static void recordKeystroke(int keyCode)			/* DEPRECATED */
+static void recordKeystroke(INTERPRETER_ARG_COMMA int keyCode)			/* DEPRECATED */
 {
   if (inputEventSemaIndex == 0)
     {
@@ -277,7 +277,7 @@ static void recordKeystroke(int keyCode)			/* DEPRECATED */
       printKey(keyCode);
       printf(" = %d 0x%x\n", keystate, keystate);
 #    endif
-      if (keystate == getInterruptKeycode())
+      if (keystate == getInterruptKeycode(INTERPRETER_PARAM))
 	{
 	  setInterruptPending(true);
 	}
@@ -298,11 +298,11 @@ static void recordKeystroke(int keyCode)			/* DEPRECATED */
 
 
 
-static sqInt display_ioPeekKeystroke(void)			/* DEPRECATED */
+static sqInt display_ioPeekKeystroke(INTERPRETER_ARG)		/* DEPRECATED */
 {
   int keystate;
 
-  ioProcessEvents();  /* process all pending events */
+  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
   if (keyBufGet == keyBufPut)
     return -1;  /* keystroke buffer is empty */
   keystate= keyBuf[keyBufGet];
@@ -310,11 +310,11 @@ static sqInt display_ioPeekKeystroke(void)			/* DEPRECATED */
 }
 
 
-static sqInt display_ioGetKeystroke(void)			/* DEPRECATED */
+static sqInt display_ioGetKeystroke(INTERPRETER_ARG)		/* DEPRECATED */
 {
   int keystate;
 
-  ioProcessEvents();  /* process all pending events */
+  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
   if (keyBufGet == keyBufPut)
     return -1;  /* keystroke buffer is empty */
   keystate= keyBuf[keyBufGet];
@@ -323,16 +323,16 @@ static sqInt display_ioGetKeystroke(void)			/* DEPRECATED */
 }
 
 
-static sqInt display_ioGetButtonState(void)
+static sqInt display_ioGetButtonState(INTERPRETER_ARG)
 {
-  ioProcessEvents();  /* process all pending events */
+  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
   return getButtonState();
 }
 
 
-static sqInt display_ioMousePoint(void)
+static sqInt display_ioMousePoint(INTERPRETER_ARG)
 {
-  ioProcessEvents();  /* process all pending events */
+  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
   /* x is high 16 bits; y is low 16 bits */
   return (mousePosition.x << 16) | (mousePosition.y);
 }
