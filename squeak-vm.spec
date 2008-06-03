@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.10
 %define minor   3
-%define release %{minor}olpc2
+%define release %{minor}olpc3
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -63,6 +63,9 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
+* Mon May 19 2008 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.10-3olpc3; SVN r.1887
+  - prefer 24 and 16 bpp over 32 to fix alpha issue in compositing desktops
 * Mon May 19 2008 Bert Freudenberg <bert@freudenbergs.de>
   - 3.10-3olpc2; SVN r.1879
   - re-add big cursor support
