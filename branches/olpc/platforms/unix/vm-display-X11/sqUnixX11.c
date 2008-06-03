@@ -81,6 +81,7 @@
 #undef	DEBUG_SELECTIONS
 #undef	DEBUG_BROWSER
 #undef	DEBUG_WINDOW
+#undef  DEBUG_VISUAL
 
 #define	USE_XICFONT_OPTION
 #undef	USE_XICFONT_RESOURCE
@@ -547,7 +548,7 @@ static Time getXTimestamp(void)
 }
 
 
-#if 0
+#if defined(DEBUG_VISUAL)
 static char *debugVisual(int x)
 {
   switch (x)
@@ -3127,10 +3128,6 @@ void initWindow(char *displayName)
   {
     /* preferred visuals in order of decreasing priority */
     static int trialVisuals[][2]= {
-      { 32, TrueColor },
-      { 32, DirectColor },
-      { 32, StaticColor },
-      { 32, PseudoColor },
       { 24, TrueColor },
       { 24, DirectColor },
       { 24, StaticColor },
@@ -3139,6 +3136,10 @@ void initWindow(char *displayName)
       { 16, DirectColor },
       { 16, StaticColor },
       { 16, PseudoColor },
+      { 32, TrueColor },    /* 32 has problems with alpha in a compositing window manager */
+      { 32, DirectColor },
+      { 32, StaticColor },
+      { 32, PseudoColor },
       {  8, PseudoColor },
       {  8, DirectColor },
       {  8, TrueColor },
@@ -3151,7 +3152,7 @@ void initWindow(char *displayName)
 
     for (i= 0; trialVisuals[i][0] != 0; ++i)
       {
-#       if 0
+#       if defined(DEBUG_VISUAL)
 	fprintf(stderr, "Trying %d bit %s.\n", trialVisuals[i][0],
 		debugVisual(trialVisuals[i][1]));
 #       endif
@@ -3161,7 +3162,7 @@ void initWindow(char *displayName)
       }
     if (trialVisuals [i][0] == 0)
       {
-#	if 0
+#	if defined(DEBUG_VISUAL)
 	fprintf(stderr, "Using default visual.\n");
 #	endif
 	stVisual= DefaultVisual(stDisplay, DefaultScreen(stDisplay));
