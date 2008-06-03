@@ -21,8 +21,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "FilePlugin.h"
-
 #undef DEBUG
 
 #ifdef DEBUG
@@ -65,26 +63,15 @@ extern Window   stParent;
 extern int      browserPipes[2];
 
 /* from interpret.c */
-sqInt stackObjectValue(sqInt);
-sqInt stackIntegerValue(sqInt);
 sqInt isBytes(sqInt);
 sqInt byteSizeOf(sqInt);
-void *firstIndexableField(sqInt);
-sqInt push(sqInt);
-sqInt pop(sqInt);
-sqInt positive32BitIntegerFor(sqInt);
-sqInt nilObject(void);
-sqInt instantiateClassindexableSize(sqInt, sqInt);
-sqInt classByteArray(void);
-sqInt failed(void);
-sqInt pushBool(sqInt);
 
 /* prototypes */
 
 static void browserReceive(void *buf, size_t count);
 static void browserSend(const void *buf, size_t count);
 static void browserSendInt(int value);
-static void browserReceiveData();
+static void browserReceiveData(INTERPRETER_ARG);
 static void browserGetURLRequest(int id, char* url, int urlSize,
 				char* target, int targetSize);
 static void browserPostURLRequest(int id, char* url, int urlSize, 
@@ -124,12 +111,12 @@ static sqStreamRequest *requests[MAX_REQUESTS];
   has been established. Only necessary if some
   sort of asynchronous communications are used.
 */
-int display_primitivePluginBrowserReady()
+int display_primitivePluginBrowserReady(INTERPRETER_ARG)
 {
   if (inBrowser)
     {
-      pop(1);
-      pushBool(1);
+      pop(INTERPRETER_PARAM_COMMA 1);
+      pushBool(INTERPRETER_PARAM_COMMA 1);
     }
   else
     primitiveFail(INTERPRETER_PARAM);
@@ -145,7 +132,7 @@ int display_primitivePluginBrowserReady()
   stream functions.
   Note: A request id is the index into requests[].
 */
-int display_primitivePluginRequestURLStream()
+int display_primitivePluginRequestURLStream(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int id, url, length, semaIndex;
@@ -159,9 +146,9 @@ int display_primitivePluginRequestURLStream()
   }
   if (id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
 
-  semaIndex= stackIntegerValue(0);
-  url= stackObjectValue(1);
-  if (failed()) return 0;
+  semaIndex= stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+  url= stackObjectValue(INTERPRETER_PARAM_COMMA 1);
+  if (failed(INTERPRETER_PARAM)) return 0;
 
   if (!isBytes(url)) return primitiveFail(INTERPRETER_PARAM);
 
@@ -173,9 +160,9 @@ int display_primitivePluginRequestURLStream()
   requests[id]= req;
 
   length= byteSizeOf(url);
-  browserGetURLRequest(id, firstIndexableField(url), length, NULL, 0);
-  pop(3);
-  push(positive32BitIntegerFor(id));
+  browserGetURLRequest(id, firstIndexableField(INTERPRETER_PARAM_COMMA url), length, NULL, 0);
+  pop(INTERPRETER_PARAM_COMMA 3);
+  push(INTERPRETER_PARAM_COMMA positive32BitIntegerFor(INTERPRETER_PARAM_COMMA id));
   DPRINT("VM:   request id: %i\n", id);
   return 1;
 }
@@ -185,7 +172,7 @@ int display_primitivePluginRequestURLStream()
   primitivePluginRequestURL: url target: target semaIndex: semaIndex
   Request a URL into the given target.
 */
-int display_primitivePluginRequestURL()
+int display_primitivePluginRequestURL(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int url, urlLength;
@@ -199,11 +186,11 @@ int display_primitivePluginRequestURL()
 
   if (id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
 
-  semaIndex= stackIntegerValue(0);
-  target= stackObjectValue(1);
-  url= stackObjectValue(2);
+  semaIndex= stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+  target= stackObjectValue(INTERPRETER_PARAM_COMMA 1);
+  url= stackObjectValue(INTERPRETER_PARAM_COMMA 2);
 
-  if (failed()) return 0;
+  if (failed(INTERPRETER_PARAM)) return 0;
   if (!isBytes(url) || !isBytes(target)) return primitiveFail(INTERPRETER_PARAM);
 
   urlLength= byteSizeOf(url);
@@ -216,9 +203,9 @@ int display_primitivePluginRequestURL()
   req->state= -1;
   requests[id]= req;
 
-  browserGetURLRequest(id, firstIndexableField(url), urlLength, firstIndexableField(target), targetLength);
-  pop(4);
-  push(positive32BitIntegerFor(id));
+  browserGetURLRequest(id, firstIndexableField(INTERPRETER_PARAM_COMMA url), urlLength, firstIndexableField(INTERPRETER_PARAM_COMMA target), targetLength);
+  pop(INTERPRETER_PARAM_COMMA 4);
+  push(INTERPRETER_PARAM_COMMA positive32BitIntegerFor(INTERPRETER_PARAM_COMMA id));
   return 1;
 }
 
@@ -227,7 +214,7 @@ int display_primitivePluginRequestURL()
   primitivePluginPostURL: url target: target data: data semaIndex: semaIndex
   Post data to a URL into the given target.
 */
-int display_primitivePluginPostURL()
+int display_primitivePluginPostURL(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int url, urlLength;
@@ -242,13 +229,13 @@ int display_primitivePluginPostURL()
 
   if (id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
 
-  semaIndex= stackIntegerValue(0);
-  data= stackObjectValue(1);
-  target= stackObjectValue(2);
-  url= stackObjectValue(3);
+  semaIndex= stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+  data= stackObjectValue(INTERPRETER_PARAM_COMMA 1);
+  target= stackObjectValue(INTERPRETER_PARAM_COMMA 2);
+  url= stackObjectValue(INTERPRETER_PARAM_COMMA 3);
 
-  if (failed()) return 0;
-  if (target == nilObject()) target= 0;
+  if (failed(INTERPRETER_PARAM)) return 0;
+  if (target == nilObject(INTERPRETER_PARAM)) target= 0;
   if (!isBytes(url) || !isBytes(data) || !(!target || isBytes(target))) return primitiveFail(INTERPRETER_PARAM);
 
   urlLength= byteSizeOf(url);
@@ -262,11 +249,11 @@ int display_primitivePluginPostURL()
   req->state= -1;
   requests[id]= req;
 
-  browserPostURLRequest(id, firstIndexableField(url), urlLength, 
-			target ? firstIndexableField(target) : NULL, targetLength,
-			firstIndexableField(data), dataLength);
-  pop(4);
-  push(positive32BitIntegerFor(id));
+  browserPostURLRequest(id, firstIndexableField(INTERPRETER_PARAM_COMMA url), urlLength, 
+			target ? firstIndexableField(INTERPRETER_PARAM_COMMA target) : NULL, targetLength,
+			firstIndexableField(INTERPRETER_PARAM_COMMA data), dataLength);
+  pop(INTERPRETER_PARAM_COMMA 4);
+  push(INTERPRETER_PARAM_COMMA positive32BitIntegerFor(INTERPRETER_PARAM_COMMA id));
   return 1;
 }
 
@@ -277,20 +264,20 @@ int display_primitivePluginPostURL()
   data. Note: The file handle must be read-only for
   security reasons.
 */
-int display_primitivePluginRequestFileHandle()
+int display_primitivePluginRequestFileHandle(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int id, fileOop;
   void *openFn;
 
-  id= stackIntegerValue(0);
-  if (failed()) return 0;
+  id= stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
+  if (failed(INTERPRETER_PARAM)) return 0;
   if (id < 0 || id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
 
   req= requests[id];
   if (!req || !req->localName) return primitiveFail(INTERPRETER_PARAM);
 
-  fileOop= nilObject();
+  fileOop= nilObject(INTERPRETER_PARAM);
 
   if (req->localName)
     {
@@ -314,14 +301,14 @@ int display_primitivePluginRequestFileHandle()
 	  DPRINT("VM:   unlink failed: %s\n", strerror(errno));
       }
 
-      if (failed()) 
+      if (failed(INTERPRETER_PARAM)) 
 	{
 	  DPRINT("VM:   file open failed\n");
 	  return 0;
 	}
     }
-  pop(2);
-  push(fileOop);
+  pop(INTERPRETER_PARAM_COMMA 2);
+  push(INTERPRETER_PARAM_COMMA fileOop);
   return 1;
 }
 
@@ -330,12 +317,12 @@ int display_primitivePluginRequestFileHandle()
   primitivePluginDestroyRequest: id
   Destroy a request that has been issued before.
 */
-sqInt display_primitivePluginDestroyRequest()
+sqInt display_primitivePluginDestroyRequest(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int id;
 
-  id= stackIntegerValue(0);
+  id= stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
   if (id < 0 || id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
   req= requests[id];
   if (req) {
@@ -343,7 +330,7 @@ sqInt display_primitivePluginDestroyRequest()
     free(req);
   }
   requests[id]= NULL;
-  pop(1);
+  pop(INTERPRETER_PARAM_COMMA 1);
   return 1;
 }
 
@@ -354,18 +341,18 @@ sqInt display_primitivePluginDestroyRequest()
   Return false if the operation was aborted.
   Return nil if the operation is still in progress.
 */
-sqInt display_primitivePluginRequestState()
+sqInt display_primitivePluginRequestState(INTERPRETER_ARG)
 {
   sqStreamRequest *req;
   int id;
 
-  id= stackIntegerValue(0);
+  id= stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
   if (id < 0 || id >= MAX_REQUESTS) return primitiveFail(INTERPRETER_PARAM);
   req= requests[id];
   if (!req) return primitiveFail(INTERPRETER_PARAM);
-  pop(2);
-  if (req->state == -1) push(nilObject());
-  else pushBool(req->state);
+  pop(INTERPRETER_PARAM_COMMA 2);
+  if (req->state == -1) push(INTERPRETER_PARAM_COMMA nilObject(INTERPRETER_PARAM));
+  else pushBool(INTERPRETER_PARAM_COMMA req->state);
   return 1;
 }
 
@@ -405,7 +392,7 @@ static void browserSendInt(int value)
   Called in response to a CMD_RECEIVE_DATA message.
   Retrieves the data file name and signals the semaphore.
 */
-static void browserReceiveData()
+static void browserReceiveData(INTERPRETER_ARG)
 {
   char *localName= NULL;
   int id, ok;
@@ -432,7 +419,7 @@ static void browserReceiveData()
       req->state= ok;
       DPRINT("VM:  signaling semaphore, state=%i\n", ok);
       /*  synchronizedSignalSemaphoreWithIndex(req->semaIndex);*/
-      signalSemaphoreWithIndex(req->semaIndex);
+      signalSemaphoreWithIndex(INTERPRETER_PARAM_COMMA req->semaIndex);
     }
   }
 }
@@ -503,7 +490,7 @@ static void browserPostURLRequest(int id, char* url, int urlSize,
   browserProcessCommand:
   Handle commands sent by the plugin.
 */
-void browserProcessCommand(void)
+void browserProcessCommand(INTERPRETER_ARG)
 {
   static int firstTime= 1;
   int cmd, n;
@@ -524,7 +511,7 @@ void browserProcessCommand(void)
     {
     case CMD_RECEIVE_DATA:
       /* Data is coming in */
-      browserReceiveData();
+      browserReceiveData(INTERPRETER_PARAM);
       break;
     case CMD_BROWSER_WINDOW:
       /* Parent window has changed () */
