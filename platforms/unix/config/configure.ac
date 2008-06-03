@@ -325,7 +325,9 @@ AC_SUBST_FILE(Makefile_deb)
 # Configure VM modules xxx MAKE INTERNAL WORK
 
 int_modules="vm"
-ext_modules="`cd ${topdir}/platforms/unix; echo vm-*`"
+#ext_modules="`cd ${topdir}/platforms/unix; echo vm-*`"
+# For Hydra, just compile the normal display; no sound, no framebuffer
+ext_modules="vm-display-x11"
 
 AC_SUBST(int_modules)
 AC_SUBST(ext_modules)
