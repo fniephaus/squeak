@@ -654,6 +654,16 @@ static int sendSelection(XSelectionRequestEvent *requestEv, int isMultiple)
 			? requestEv->target 
 			: requestEv->property);
 
+  /* It must be ignored in case of XDnd. XSelectionRequestEvent is
+     used for both clipboard or XDnd. But if XDnd, XSelectionEvent is
+     answered asynchronously after the image prepares data because
+     target (data type) is informed only when SelectionRequest is
+     sent.  dndOutSelectionRequest() signals DragRequest event to the
+     image for that.  Finally, the image calls
+     HandMorph>>primitiveDndOutSend: to send SelectionRequest.
+  */
+   if (xaXdndSelection == requestEv->selection) return 0;
+
   notifyEv.property= targetProperty;
 
 #if defined(DEBUG_SELECTIONS)
