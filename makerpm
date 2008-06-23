@@ -27,4 +27,4 @@ scp squeak-vm-${rpm}.i386.rpm \
     squeak-vm-debuginfo-${rpm}.i386.rpm \
     squeak-vm-${rpm}.src.rpm \
     squeak-vm-${rpm}.spec \
-    tinlizzie.org:/var/www/olpc/sugar/rpm/
+    tinlizzie.org:/var/www/tinlizzie/olpc/sugar/rpm/
