@@ -946,6 +946,10 @@ static char *getSelectionFrom(Atom source)
 	    }
 	  if (strList)
 	    XFreeStringList(strList);
+
+	  /* line conversion from LF to CR */
+	  for (i= 0; stPrimarySelection[i] != '\0'; i++)
+	    if (stPrimarySelection[i] == '\n') stPrimarySelection[i]= '\r';
 	}
       else
 	bytes= ux2sqText(data, bytes, stPrimarySelection, bytes + 1, 1);
