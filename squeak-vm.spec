@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.10
 %define minor   3
-%define release %{minor}olpc4
+%define release %{minor}olpc5
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -63,6 +63,10 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
+* Mon Jul 07 2008 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.10-3olpc5; SVN r. 1899
+  - re-enable new (IPv6) socket primitives (bf)
+  - RomePlugin pango fixes (yo)
 * Mon Jun 23 2008 Bert Freudenberg <bert@freudenbergs.de>
   - 3.10-3olpc4; SVN r. 1895
   - RomePlugin pango fixes (yo)
