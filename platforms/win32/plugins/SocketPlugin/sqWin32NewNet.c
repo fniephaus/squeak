@@ -23,13 +23,6 @@
 #include <stdlib.h>
 #include "SocketPlugin_imports.h"
 
-#ifdef DEBUG
-#define dprintf(what) printf what
-#else
-#define dprintf(what)
-#endif
-
-
 #ifndef NO_NETWORK
 
 #ifndef NO_RCSID
@@ -91,7 +84,8 @@ WSAIoctl(
 #endif
 
 #ifndef NDEBUG
-#define DBG(s) debugCheckWatcherThreads(PSP(s))
+#define DBG(s) 
+// debugCheckWatcherThreads(PSP(s))
 #else
 #define DBG(s)
 #endif
@@ -236,34 +230,33 @@ static sqInt localStateId = 0;
 /*****************************************************************************
  Helpers
  *****************************************************************************/
+static struct timeval zeroTime = { 0, 0 };
+
 static int socketReadable(SOCKET s)
 {
-  struct timeval tv= { 0, 0 };
   fd_set fds;
 
   FD_ZERO(&fds);
   FD_SET(s, &fds);
-  return select(1, &fds, NULL, NULL, &tv) == 1;
+  return select(1, &fds, NULL, NULL, &zeroTime) == 1;
 }
 
 static int socketWritable(SOCKET s)
 {
-  struct timeval tv= { 0, 0 };
   fd_set fds;
 
   FD_ZERO(&fds);
   FD_SET(s, &fds);
-  return select(1, NULL, &fds, NULL, &tv) == 1;
+  return select(1, NULL, &fds, NULL, &zeroTime) == 1;
 }
 
 static int socketError(SOCKET s)
 {
-  struct timeval tv= { 0, 0 };
   fd_set fds;
 
   FD_ZERO(&fds);
   FD_SET(s, &fds);
-  return select(1, NULL, NULL, &fds, &tv) == 1;
+  return select(1, NULL, NULL, &fds, &zeroTime) == 1;
 }
 
 static int removeFromList(PLUGIN_IARG_COMMA privateSocketStruct *pss) {
@@ -450,16 +443,16 @@ static void debugCheckWatcherThreads(privateSocketStruct *pss) {
   if( (state & SOCK_PUBLIC_MASK) == Connected) {
     if(pss->readWatcherOp != WatchData)
       printReason |= 2; /* watching non-data stuff on connected socket */
-    if( (state & SOCK_DATA_READABLE) == pss->readSelect)
+    if( (state & SOCK_DATA_READABLE) && pss->readSelect)
       printReason |= 4; /* watching w/ data or not watching w/o data */
     if(pss->writeWatcherOp != WatchData)
       printReason |= 8; /* watching non-data stuff */
-    if( (state & SOCK_DATA_WRITABLE) == pss->writeSelect)
+    if( (state & SOCK_DATA_WRITABLE) && pss->writeSelect)
       printReason |= 16; /* watching w/ data or not watching w/o data */
   }
 
   if( (state & SOCK_PUBLIC_MASK) == WaitingForConnection) {
-    if(!pss->writeSelect || (pss->writeWatcherOp != WatchConnect))
+    if(!(pss->writeSelect && (pss->writeWatcherOp == WatchConnect)))
       printReason |= 32; /* not watching for connection */
   }
   if( (state & SOCK_PUBLIC_MASK) == ThisEndClosed) {
@@ -498,90 +491,97 @@ static void debugCheckWatcherThreads(privateSocketStruct *pss) {
  after which they can terminate themselves if requested.
  *****************************************************************************
  *****************************************************************************/
+void signalSema(PLUGIN_IARG_COMMA int semaIndex)
+{
+	if (!synchronizedSignalSemaphoreWithIndex(intr, semaIndex))
+	{
+		printf("Unable to signal semaphore: %d !!\n", semaIndex);
+	}
+}
 
 static DWORD WINAPI readWatcherThread(privateSocketStruct *pss)
 {
-  struct timeval tv= { 1000, 0 }; /* Timeout value == 1000 sec */
-  fd_set fds;
-  int n, doWait, sema;
+	struct timeval tv= { 1000, 0 }; /* Timeout value == 1000 sec */
+	fd_set fds;
+	int n, doWait, sema;
 
-  while(1) {
-    doWait = 1;
-    /* Do we have a task to perform?! */
-    if(pss->readWatcherOp) {
-      /* Determine state of the socket */
-      FD_ZERO(&fds);
-      FD_SET(pss->s, &fds);
-      pss->readSelect = 1;
-      n = select(1, &fds, NULL, NULL, &tv);
-      pss->readSelect = 0;
-      /* Note: select will return
-	 0 - if it timed out (unlikely but possible)
-	 1 - if the socket is readable
-	 SOCKET_ERROR - if the socket has been closed
-      */
-      if(n == 1) {
-	/* Guard socket state modification */
-	LOCKSOCKET(pss->mutex, INFINITE);
-	/* Change appropriate socket state */
-	switch(pss->readWatcherOp) {
-	case WatchData:
-	  /* Data may be available */
-	  pss->sockState |= SOCK_DATA_READABLE;
-	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->readSema); // SIGNAL(pss->readSema);
-	  doWait = 1; /* until data has been read */
-	  break;
-	case WatchClose:
-	  /* Pending close has succeeded */
-	  pss->sockState = ThisEndClosed;
-	  pss->readWatcherOp = 0; /* since a close succeeded */
-	  pss->s = 0;
-	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
-	  doWait = 1;
-	  break;
-	case WatchAcceptSingle:
-	  /* Accept a single connection inplace */
-	  inplaceAcceptHandler(pss);
-	  pss->readWatcherOp = WatchData; /* check for incoming data */
-	  pss->writeWatcherOp = WatchData; /* and signal when writable */
-  	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);
-//	  SIGNAL(pss->connSema);
-	  doWait = 0;
-	  break;
-	case WatchAccept:
-	  /* Connection can be accepted */
-	  acceptHandler(pss);
-  	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);//	  SIGNAL(pss->connSema);
-	  doWait = 0; /* only wait for more connections */
-	  break;
+	while(1) {
+		doWait = 1;
+		/* Do we have a task to perform?! */
+		if(pss->readWatcherOp) {
+			/* Determine state of the socket */
+			FD_ZERO(&fds);
+			FD_SET(pss->s, &fds);
+			pss->readSelect = 1;
+			n = select(1, &fds, NULL, NULL, &tv);
+			pss->readSelect = 0;
+			/* Note: select will return
+			0 - if it timed out (unlikely but possible)
+			1 - if the socket is readable
+			SOCKET_ERROR - if the socket has been closed
+			*/
+			if(n == 1) {
+				/* Guard socket state modification */
+				LOCKSOCKET(pss->mutex, INFINITE);
+				/* Change appropriate socket state */
+				switch(pss->readWatcherOp) {
+					case WatchData:
+						/* Data may be available */
+						pss->sockState |= SOCK_DATA_READABLE;
+						signalSema(pss->intr, pss->readSema); // SIGNAL(pss->readSema);
+						doWait = 1; /* until data has been read */
+						break;
+					case WatchClose:
+						/* Pending close has succeeded */
+						pss->sockState = ThisEndClosed;
+						pss->readWatcherOp = 0; /* since a close succeeded */
+						pss->s = 0;
+						signalSema(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+						doWait = 1;
+						break;
+					case WatchAcceptSingle:
+						/* Accept a single connection inplace */
+						inplaceAcceptHandler(pss);
+						pss->readWatcherOp = WatchData; /* check for incoming data */
+						pss->writeWatcherOp = WatchData; /* and signal when writable */
+						signalSema(pss->intr, pss->connSema);
+						//	  SIGNAL(pss->connSema);
+						doWait = 0;
+						break;
+					case WatchAccept:
+						/* Connection can be accepted */
+						acceptHandler(pss);
+						signalSema(pss->intr, pss->connSema);//	  SIGNAL(pss->connSema);
+						doWait = 0; /* only wait for more connections */
+						break;
+				}
+				UNLOCKSOCKET(pss->mutex);
+			} else {
+				if(n == SOCKET_ERROR) {
+					int err = WSAGetLastError();
+					LOCKSOCKET(pss->mutex, INFINITE);
+					pss->sockState = OtherEndClosed;
+					pss->sockError = err;
+					signalSema(pss->intr, pss->connSema);//	  SIGNAL(pss->connSema);
+					UNLOCKSOCKET(pss->mutex);
+				} else {
+					/* select() timed out */
+					doWait = 0; /* continue waiting in select() */
+				}
+			}
+		}
+
+		/* Wait until we have something to do */
+		if(doWait && !pss->closePending)
+		WaitForSingleObject(pss->hReadWatcherEvent, INFINITE);
+
+		/* Check if we need to close the socket */
+		if(pss->closePending) {
+			cleanupSocket(pss);
+			/* And stop running */
+			ExitThread(0);
+		}
 	}
-	UNLOCKSOCKET(pss->mutex);
-      } else {
-	if(n == SOCKET_ERROR) {
-	  int err = WSAGetLastError();
-	  LOCKSOCKET(pss->mutex, INFINITE);
-	  pss->sockState = OtherEndClosed;
-	  pss->sockError = err;
-   	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);//	  SIGNAL(pss->connSema);
-	  UNLOCKSOCKET(pss->mutex);
-	} else {
-	  /* select() timed out */
-	  doWait = 0; /* continue waiting in select() */
-	}
-      }
-    }
-
-    /* Wait until we have something to do */
-    if(doWait && !pss->closePending)
-      WaitForSingleObject(pss->hReadWatcherEvent, INFINITE);
-
-    /* Check if we need to close the socket */
-    if(pss->closePending) {
-      cleanupSocket(pss);
-      /* And stop running */
-      ExitThread(0);
-    }
-  }
 }
 
 static DWORD WINAPI writeWatcherThread(privateSocketStruct *pss)
@@ -614,13 +614,13 @@ static DWORD WINAPI writeWatcherThread(privateSocketStruct *pss)
 	  if(pss->writeWatcherOp == WatchConnect) {
 	    /* asynchronous connect failed */
 	    pss->sockState = Unconnected;
-	  	synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);// SIGNAL(pss->connSema);
+	  	signalSema(pss->intr, pss->connSema);// SIGNAL(pss->connSema);
 	  } else {
 	    /* get socket error */
 	    /* printf("ERROR: %d\n", WSAGetLastError()); */
 	    errSize = sizeof(pss->sockError);
 	    getsockopt(pss->s, SOL_SOCKET, SO_ERROR, (char*)&pss->sockError, &errSize);
-  	    synchronizedSignalSemaphoreWithIndex(pss->intr, pss->writeSema);//  SIGNAL(pss->writeSema);
+  	    signalSema(pss->intr, pss->writeSema);//  SIGNAL(pss->writeSema);
 	  }
 	  pss->writeWatcherOp = 0; /* what else can we do */
 	  doWait = 1; /* until somebody wakes us up */
@@ -633,13 +633,13 @@ static DWORD WINAPI writeWatcherThread(privateSocketStruct *pss)
 	    /* Start read watcher for incoming data */
 	    pss->readWatcherOp = WatchData;
 	    SetEvent(pss->hReadWatcherEvent);
-		synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);//    SIGNAL(pss->connSema);
+		signalSema(pss->intr, pss->connSema);//    SIGNAL(pss->connSema);
 	    /* And fall through since data can be sent */
 	    pss->writeWatcherOp = WatchData;
 	  case WatchData:
 	    /* Data can be sent */
 	    pss->sockState |= SOCK_DATA_WRITABLE;
-	    synchronizedSignalSemaphoreWithIndex(pss->intr, pss->writeSema); // SIGNAL(pss->writeSema);
+	    signalSema(pss->intr, pss->writeSema); // SIGNAL(pss->writeSema);
 	    doWait = 1; /* until data has been written */
 	    break;
 	  }
@@ -651,7 +651,7 @@ static DWORD WINAPI writeWatcherThread(privateSocketStruct *pss)
 	  LOCKSOCKET(pss->mutex, INFINITE);
 	  pss->sockState = OtherEndClosed;
 	  pss->sockError = err;
-      synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+      signalSema(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
 	  UNLOCKSOCKET(pss->mutex);
 	} else {
 	  /* select() timed out */
@@ -859,12 +859,12 @@ void sqSocketCloseConnection(PLUGIN_IARG_COMMA SocketPtr s)
     } else {
       pss->sockState = Unconnected;
       pss->sockError = err;
-	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+	  signalSema(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
     }
   } else {
     pss->s = 0;
     pss->sockState = Unconnected;
-	synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+	signalSema(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
   }
   /* Cleanup any accepted sockets */
   while(pss->accepted) {
@@ -927,7 +927,7 @@ void sqSocketConnectToPort(PLUGIN_IARG_COMMA SocketPtr s, int addr, int port)
     if(err != WSAEWOULDBLOCK) {
       pss->sockState = Unconnected; /* reset */
       pss->sockError = err;
-	  synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema);// SIGNAL(pss->connSema);
+	  signalSema(pss->intr, pss->connSema);// SIGNAL(pss->connSema);
     } else {
       /* Connection in progress => Start write watcher */
       LOCKSOCKET(pss->mutex, INFINITE);
@@ -942,8 +942,8 @@ void sqSocketConnectToPort(PLUGIN_IARG_COMMA SocketPtr s, int addr, int port)
     pss->sockState = Connected | SOCK_DATA_WRITABLE;
     pss->readWatcherOp = WatchData; /* waiting for data */
     SetEvent(pss->hReadWatcherEvent);
-	synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
-	synchronizedSignalSemaphoreWithIndex(pss->intr, pss->writeSema); // SIGNAL(pss->writeSema);
+	signalSema(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+	signalSema(pss->intr, pss->writeSema); // SIGNAL(pss->writeSema);
     UNLOCKSOCKET(pss->mutex);
   }
 }
@@ -1156,7 +1156,7 @@ sqInt sqSocketReceiveDataBufCount(PLUGIN_IARG_COMMA SocketPtr s, char *buf, sqIn
 	  /* UDP doesn't know "other end closed" state */
 	  if(pss->sockType != UDPSocketType) {
 	    pss->sockState = OtherEndClosed;
-		synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+		signalSema(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
 	  }
 	  pss->sockError = err;
 	}
@@ -1238,7 +1238,7 @@ sqInt sqSocketSendDataBufCount(PLUGIN_IARG_COMMA SocketPtr s, char *buf, sqInt b
 	  /* UDP doesn't know "other end closed" state */
 	  if(pss->sockType != UDPSocketType) {
 	    pss->sockState = OtherEndClosed;
-		synchronizedSignalSemaphoreWithIndex(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
+		signalSema(pss->intr, pss->connSema); // SIGNAL(pss->connSema);
 	  }
 	  pss->sockError = err;
 	}
@@ -1906,7 +1906,7 @@ void sqResolverStartNameLookup(PLUGIN_IARG_COMMA char *hostName, int nameSize)
      (strncmp(hostName, LOCAL_STATE(lastName), len) == 0)) {
 	  /* same as last, no point in looking it up */
 
-      synchronizedSignalSemaphoreWithIndex(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex)); // SIGNAL(resolverSemaphoreIndex);
+      signalSema(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex)); // SIGNAL(resolverSemaphoreIndex);
 	  return;
   }
   MoveMemory(LOCAL_STATE(lastName),hostName, len);
@@ -1970,7 +1970,7 @@ DWORD WINAPI sqGetHostByAddr(PLUGIN_IARG)
   else
     LOCAL_STATE(lastError) = WSAGetLastError();
   asyncLookupHandle = 0;
-  synchronizedSignalSemaphoreWithIndex(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex)); // SIGNAL(resolverSemaphoreIndex);
+  signalSema(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex)); // SIGNAL(resolverSemaphoreIndex);
   ExitThread(0);
   return 1;
 }
@@ -1992,7 +1992,7 @@ DWORD WINAPI sqGetHostByName(PLUGIN_IARG)
   else
     LOCAL_STATE(lastError) = WSAGetLastError();
   asyncLookupHandle = 0;
-  synchronizedSignalSemaphoreWithIndex(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex));//  SIGNAL(resolverSemaphoreIndex);
+  signalSema(PLUGIN_IPARAM, LOCAL_STATE(resolverSemaphoreIndex));//  SIGNAL(resolverSemaphoreIndex);
   ExitThread(0);
   return 1;
 }
@@ -2007,8 +2007,6 @@ static void sqInitPluginState(PLUGIN_IARG)
 	LOCAL_STATE(lastError) = 0;
 	LOCAL_STATE(thisNetSession) = 0;
 	LOCAL_STATE(resolverSemaphoreIndex) = 0;
-
-	printf("sqInitPluginState state: %d\n", localStateId);
 }
 
 static void sqFinalizePluginState(PLUGIN_IARG)
@@ -2061,7 +2059,6 @@ int socketInit(void)
 	networkInitialized = 0;
 	localStateId = vmFunction(attachStateBufferinitializeFnfinalizeFn)(sizeof(struct LocalPluginState),
 		(AttachedStateFn)sqInitPluginState,(AttachedStateFn)sqFinalizePluginState);
-	printf("socketInit:  localStateId = %d\n", localStateId);
 	if (localStateId == 0) return 0;
 	return 1;
 }

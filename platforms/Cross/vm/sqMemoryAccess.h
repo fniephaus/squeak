@@ -163,10 +163,13 @@ typedef union { double d; int i[sizeof(double) / sizeof(int)]; } _swapper;
 
 /* This doesn't belong here, but neither do 'self flag: ...'s belong in the image. */
 
-static void inline flag(char *ignored)
-{
-  (void)ignored;
-}
+
+#ifdef _MSC_VER
+static void flag(char *ignored) {}
+#else 
+static inline void flag(char *ignored) {}
+#endif
+
 
 #ifdef VM_OBJECTIFIED
 
@@ -185,7 +188,8 @@ typedef struct vmEvent {
 
 typedef struct vmEventQueue {
 	struct vmEvent * volatile tail;	
-	struct vmEvent head;
+	struct vmEvent * volatile head;
+	void * osSpecific;
 } vmEventQueue;
 
 /* this one used quite often */

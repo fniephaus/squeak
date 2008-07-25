@@ -6,10 +6,10 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id: sqWin32SerialPort.c,v 1.2 2002/05/04 23:20:28 andreasraab Exp $
+*   RCSID:   $Id$
 *
 *   NOTES:
-*
+*		HydraVM - plugin not objectified. Changed only incompatibility bits
 *****************************************************************************/
 #include <windows.h>
 #include "sq.h"
@@ -17,7 +17,7 @@
 #ifndef NO_SERIAL_PORT
 
 #ifndef NO_RCSID
-  static char RCSID[] = "$Id: sqWin32SerialPort.c,v 1.2 2002/05/04 23:20:28 andreasraab Exp $";
+  static char RCSID[] = "$Id$";
 #endif
 
 /* Maximum number of serial ports supported */
@@ -34,7 +34,7 @@ static int isValidComm(int portNum)
   if(portNum <= 0 || portNum > MAX_SERIAL_PORTS || 
      serialPorts[portNum-1] == INVALID_HANDLE_VALUE)
        {
-         success(false);
+         success(MAIN_VM, false);
          return 0;
        }
   return 1;
@@ -48,7 +48,7 @@ int serialPortClose(int portNum)
   /* Allow ports that aren't open to be closed		20nov98 jfb */
   if(portNum <= 0 || portNum > MAX_SERIAL_PORTS)
     { /* port number out of range */
-      success(false);
+      success(MAIN_VM, false);
       return 0;
     }
   if ((port = serialPorts[portNum-1]) != INVALID_HANDLE_VALUE)
@@ -76,12 +76,12 @@ int serialPortOpen(int portNum, int baudRate, int stopBitsType,
 
   if(portNum <= 0 || portNum > MAX_SERIAL_PORTS)
     { /* port number out of range */
-      success(false);
+      success(MAIN_VM, false);
       return 0;
     }
   if(serialPorts[portNum-1] != INVALID_HANDLE_VALUE)
     { /* port already open */
-      success(false);
+      success(MAIN_VM, false);
       return 0;
     }
   wsprintf(name,TEXT("COM%d"),portNum);
@@ -96,7 +96,7 @@ int serialPortOpen(int portNum, int baudRate, int stopBitsType,
   if(port == INVALID_HANDLE_VALUE)
     {
       printLastError(TEXT("OpenComm failed"));
-      success(false);
+      success(MAIN_VM, false);
       return 0;
     }
   /* Flush the driver */
@@ -158,7 +158,7 @@ int serialPortOpen(int portNum, int baudRate, int stopBitsType,
   return 1;
 errExit:
   CloseHandle(port);
-  success(false);
+  success(MAIN_VM, false);
   return 0;
 }
 
@@ -175,7 +175,7 @@ int serialPortReadInto(int portNum, int count, int startPtr)
   if(!ReadFile(serialPorts[portNum-1],(void*)startPtr,count,&cbReallyRead,NULL))
     {
       printLastError(TEXT("ReadComm failed"));
-      success(false);
+      success(MAIN_VM, false);
       return 0;
     }
   return cbReallyRead;
@@ -191,7 +191,7 @@ int serialPortWriteFrom(int portNum, int count, int startPtr)
   if(!WriteFile(serialPorts[portNum-1],(void*)startPtr,count,&cbReallyWritten,NULL))
     {
       printLastError(TEXT("WriteComm failed"));
-      success(false);
+      success(MAIN_VM, false);
       return 0;
     }
   return cbReallyWritten;

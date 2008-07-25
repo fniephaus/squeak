@@ -49,7 +49,7 @@ CC=	gcc
 OFLAGS= -O2
 CFLAGS=	-g -mpentium -mwindows -fomit-frame-pointer -funroll-loops \
 	-fschedule-insns2 $(OFLAGS)
-DEFS=	-DSQUEAK_PLUGIN -DWIN32_FILE_SUPPORT -DNO_SERVICE -DNO_STD_FILE_SUPPORT -DNDEBUG \
+DEFS=	-DSQUEAK_PLUGIN -DWIN32_FILE_SUPPORT -DNO_SERVICE -DNO_STD_FILE_SUPPORT -DDEBUG \
 	-DLSB_FIRST -DVM_NAME=\"$(VM)\" -DX86 $(XDEFS)
 
 #############################################################################

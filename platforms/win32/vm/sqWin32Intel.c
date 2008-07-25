@@ -993,17 +993,8 @@ DWORD WINAPI threadedInterpretFn(void * param)
 	browserPluginInitialiseIfNeeded(); /* don't really think this belongs here */
 
 	lockInterpreter(intr); /* lock interpreter mutex before entering loop */
-	while (1)
-	{
-		interpret(intr);
-//		dprintf(("Handling events %d\n",++xx));
 
-		// give a chance other threads to do something
-		unlockInterpreter(intr);
-//		SwitchToThread();
-		lockInterpreter(intr);
-		handleEvents(intr);
-	}
+	interpretLoop(intr);
 
 	dprintf(("Interpreter %x thread just exited!\n", param));
 }
@@ -1045,6 +1036,8 @@ int ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA int microSeconds)
   DWORD waitResult;
   HANDLE event;
 
+  //dprintf (("idle %d\n", microSeconds));
+
   event = WIN32_STATE(wakeUpEvent);
   ResetEvent(event);
 
@@ -1052,7 +1045,6 @@ int ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA int microSeconds)
   waitResult = MsgWaitForMultipleObjects(1, &event, FALSE,
 			    microSeconds / 1000, QS_ALLINPUT);
   lockInterpreter(INTERPRETER_PARAM);
-
   if (waitResult == WAIT_OBJECT_0 + 1) // return from wait caused by user input
   {
 	ioProcessEvents(INTERPRETER_PARAM); /* keep up with mouse moves etc. */
@@ -1075,40 +1067,28 @@ sqInt ioProcessEventsHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
 		error(INTERPRETER_PARAM_COMMA "This cannot happen.");
 	}
 #endif
-	event->fn = 0; /* event should == &ioProcessEventsEvt in win32 state */
 	ioProcessEvents(INTERPRETER_PARAM);
+	event->fn = 0; /* event should == &ioProcessEventsEvt in win32 state */
 }
 
 
-sqInt ioSignalDelayEventHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
+sqInt ioSignalDelayEventHandler(INTERPRETER_ARG_COMMA struct vmSignalSemaphoreEvent * event)
 {
-#ifdef DEBUG
 	DECL_WIN32_STATE();
-	if (event != &WIN32_STATE(ioSignalDelayEvent))
-	{
-		error(INTERPRETER_PARAM_COMMA "This cannot happen.");
-	}
-#endif
-	event->fn = 0; /* event should == &ioSignalDelayEvent in win32 state */
-	signalTimerSemaphore(INTERPRETER_PARAM);
-}
-
-sqInt dummyHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
-{
-	event->fn = 0; /* event should == &ioSignalDelayEvent in win32 state */
+	if (WIN32_STATE(signalId) == event->semaphoreIndex)
+		signalTimerSemaphore(INTERPRETER_PARAM);
+	reclaimSemaphoreEvent(event);
 }
 
 void ioScheduleTimerSemaphoreSignalAt(INTERPRETER_ARG_COMMA int atMilliseconds)
 {
 	DECL_WIN32_STATE();
 
+	while (WIN32_STATE(delayTick)) { Sleep(1); }
+	WIN32_STATE(signalId)++;
 	WIN32_STATE(delayTick) = atMilliseconds;
 
-	if (WIN32_STATE(ioSignalDelayEvent).fn != 0) // check if delay signaling is already put in events
-	{
-		WIN32_STATE(ioSignalDelayEvent).fn = dummyHandler;
-	}
-	PulseEvent(WIN32_STATE(sleepEvent)); 
+	SetEvent(WIN32_STATE(sleepEvent));
 	// give a chance timerRoutine to sync with delay
 	SwitchToThread();
 }
@@ -1118,16 +1098,15 @@ DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 // This parameter is the milliseconds interval, by which interpreter should unconditionaly interrupt to check
 // for user input 
 
-#define INPUT_CHECK_PERIOD 20
+#define INPUT_CHECK_PERIOD 10
 
 	DWORD currentTick, newTick;
 	DWORD sleepTime;
+	vmSignalSemaphoreEvent * event = 0;
 	int timeLeft = -1;
 
 	DECL_WIN32_STATE();
-//	static int xx = 0;
 	WIN32_STATE(ioProcessEventsEvt).fn = 0;
-	WIN32_STATE(ioSignalDelayEvent).fn = 0;
 
 	currentTick = ioMSecs();
 	sleepTime = INPUT_CHECK_PERIOD;
@@ -1137,6 +1116,11 @@ DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 		if (WIN32_STATE(delayTick))
 		{
 			timeLeft = WIN32_STATE(delayTick);
+			if (!event)
+				event = getUnusedSemaphoreEvent();
+
+			event->semaphoreIndex = WIN32_STATE(signalId);
+			event->header.fn = (eventFnPtr) ioSignalDelayEventHandler;
 			WIN32_STATE(delayTick) = 0;
 			// new delay is set, recalculate time left
 
@@ -1159,17 +1143,9 @@ DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 
 			if (timeLeft <= 0)
 			{
-//				dprintf(("Signaling asap\n"));
 				// signal delay semaphore
-				if (WIN32_STATE(ioSignalDelayEvent).fn == 0)
-				{
-					WIN32_STATE(ioSignalDelayEvent).fn = ioSignalDelayEventHandler;
-					enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioSignalDelayEvent));
-				}
-				else if (WIN32_STATE(ioSignalDelayEvent).fn == dummyHandler)
-				{
-					timeLeft = 1;
-				}
+				enqueueEvent(INTERPRETER_PARAM, (struct vmEvent*)event);
+				event = 0;
 				ioWakeUp(INTERPRETER_PARAM); // make sure we not sleeping
 			}
 		}
@@ -1189,15 +1165,8 @@ DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 			if (timeLeft <= 0)
 			{
 				// signal delay semaphore
-				if (WIN32_STATE(ioSignalDelayEvent).fn == 0)
-				{
-					WIN32_STATE(ioSignalDelayEvent).fn = ioSignalDelayEventHandler;
-					enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioSignalDelayEvent));
-				} 
-				else if (WIN32_STATE(ioSignalDelayEvent).fn == dummyHandler)
-				{
-					timeLeft = 1;
-				}
+				enqueueEvent(INTERPRETER_PARAM, (struct vmEvent*)event);
+				event = 0;
 				ioWakeUp(INTERPRETER_PARAM); // make sure we not sleeping
 			}
 		}
@@ -1207,6 +1176,7 @@ DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 			WIN32_STATE(ioProcessEventsEvt).fn = ioProcessEventsHandler;
 			enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioProcessEventsEvt));
 		}
+
 		if (timeLeft > 0)
 			sleepTime = min(INPUT_CHECK_PERIOD, timeLeft);
 		else
@@ -1220,17 +1190,18 @@ static void sqInitWin32State(INTERPRETER_ARG)
 	DECL_WIN32_STATE();
 
 	dprintf(("Initializing win32 attached state\n"));
+	
 	WIN32_STATE(wakeUpEvent) = CreateEvent(NULL, 1, 0, NULL);
-	WIN32_STATE(sleepEvent) = CreateEvent(NULL, 1, 0, NULL);
+	WIN32_STATE(sleepEvent) = CreateEvent(NULL, FALSE, FALSE, NULL); // this event resets automatically
 	WIN32_STATE(delayTick) = 0;
+	WIN32_STATE(signalId) = 0;
+
 	WIN32_STATE(timerThread) = CreateThread(NULL,  0, (LPTHREAD_START_ROUTINE) &timerRoutine,
 		(LPVOID) INTERPRETER_PARAM, CREATE_SUSPENDED, NULL);
 
 	/* NOTE!!! The timer thread should run at higher than normal priority,
 	to make it not depending too much on interpreter thread load */
 	SetThreadPriority( WIN32_STATE(timerThread) , THREAD_PRIORITY_TIME_CRITICAL); 
-
-    SetEvent(WIN32_STATE(wakeUpEvent));
 
 	WIN32_STATE(keyBufGet) = 0;			/* index of next item of keyBuf to read */
 	WIN32_STATE(keyBufPut) = 0;			/* index of next item of keyBuf to write */

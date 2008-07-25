@@ -262,53 +262,104 @@ sqInt ioResumeThread(sqInt threadHandle)
 /* 
    Note to non-windows porters: on x86 architecture, atomic CAS is 'lock cmpxchg'.
 */
+static HANDLE _hMutex = 0;
 
 #define AtomicCAS(value_ptr, new_value, comparand) InterlockedCompareExchange(value_ptr, new_value, comparand)
 
 void ioInitEventQueue(struct vmEventQueue * queue)
 {
-	queue->head.next = 0;
-	queue->tail = &queue->head;
+//	if (_hMutex == 0 )
+//		 _hMutex = CreateMutex(NULL, 0, NULL);
+
+#if 0
+	queue->_dummy.next = 0;
+	queue->head = &queue->_dummy;
+	queue->tail = &queue->_dummy;
+#endif
+
+	queue->tail = queue->head = 0;
+	queue->osSpecific = (void*) CreateMutex(0,0,0);
+}
+
+void ioDestroyEventQueue (struct vmEventQueue * queue)
+{
+	/* should we check that queue not empty? */
+	queue->tail = queue->head = 0;
+	CloseHandle((HANDLE) queue->osSpecific);
 }
 
 void ioEnqueueEventInto(struct vmEvent * event , struct vmEventQueue * queue)
 {
+#if 0
 	struct vmEvent * tail;
-	struct vmEvent * old_next;
+	struct vmEvent * old_tail;
 	
 	/* add event to tail */
 	event->next = 0;
+	tail = queue->tail;
 	do {
-		tail = queue->tail;
-		old_next = (struct vmEvent *)AtomicCAS(&tail->next, event, 0);
-		if (old_next != 0)
-		{
-			AtomicCAS(&queue->tail, old_next, tail);
-		}
-	} while (old_next != 0);
+		old_tail = (struct vmEvent *)AtomicCAS(&tail->next, event, 0);
+		if (old_tail != 0)
+			tail = old_tail;
+	} while (old_tail != 0);
 	AtomicCAS(&queue->tail, event, tail);
+#endif
+
+	WaitForSingleObject((HANDLE)queue->osSpecific,INFINITE);
+	event->next = 0;
+	if (!queue->head)
+	{
+		queue->head = queue->tail = event;
+		ReleaseMutex((HANDLE)queue->osSpecific);
+		return;
+	}
+	queue->tail->next = event;
+	queue->tail = event;
+	ReleaseMutex((HANDLE)queue->osSpecific);
 }
 
 struct vmEvent * ioDequeueEventFrom(struct vmEventQueue * queue)
 {
+#if 0
 	struct vmEvent * event;
-	struct vmEvent * oldhead;
-	do {
-		event = queue->head.next;
-		if (!event)
-			return 0;
-		oldhead = (struct vmEvent *)AtomicCAS(&queue->head.next, event->next, event);
-	} while (oldhead != event);
-
-	/* To prevent queue damage, when queue tail points to just dequeued event, 
-		we should replace tail with head */
-	if (event->next == 0)
+	struct vmEvent * next;
+	
+loop:
+	event = queue->head;
+	if (!event->next)
 	{
-		/* queue->head.next should be 0, put it as tail */
-		if ( 0 == AtomicCAS(&event->next, &queue->head, 0))
-		{
-			AtomicCAS(&queue->tail, &queue->head, event);
-		}
+		if (event == &queue->_dummy)
+			return 0; // queue is empty
+		AtomicCAS(&event->next, &queue->_dummy, 0);
+		AtomicCAS(&queue->tail, &queue->_dummy, event);
+	}
+
+	while ( event != AtomicCAS(&queue->head, event->next, event)) { event = queue->head; };
+	if (event == &queue->_dummy)
+	{
+		queue->dummy.next = 0;
+		goto loop;
 	}
 	return event;
+#endif
+
+	struct vmEvent * event;
+	WaitForSingleObject((HANDLE)queue->osSpecific,INFINITE);
+	event = queue->head;
+	if (event)
+	{
+		queue->head = event->next;
+		if (!queue->head)
+			queue->tail = 0;
+	}
+	ReleaseMutex((HANDLE)queue->osSpecific);
+	return event;
+}
+
+sqInt ioIsQueueEmpty(struct vmEventQueue * queue)
+{
+#if 0
+	return (queue->head == &queue->_dummy && queue->head->next == 0);
+#endif
+	return queue->head == 0;
 }
