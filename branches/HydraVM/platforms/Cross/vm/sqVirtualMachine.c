@@ -189,9 +189,16 @@ struct VirtualMachine VM = {
 	VM_FN(fetchLong32ofObject),
 	VM_FN(getThisSessionID),
 	VM_FN(ioFilenamefromStringofLengthresolveAliases),
-	VM_FN(vmEndianness)
+	VM_FN(vmEndianness),
 #endif
 
+
+#if VM_PROXY_MINOR > 7
+	VM_FN(callbackEnter),
+	VM_FN(callbackLeave),
+	VM_FN(addGCRoot),
+	VM_FN(removeGCRoot)
+#endif
 };
 
 struct VirtualMachine* sqGetInterpreterProxy(void)

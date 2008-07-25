@@ -9,7 +9,7 @@
    should work with older VMs. */
 #ifndef VM_PROXY_MINOR
 /* Increment the following number if you add functions at the end */
-#define VM_PROXY_MINOR 7
+#define VM_PROXY_MINOR 8
 
 #endif
 
@@ -225,6 +225,37 @@ typedef struct VirtualMachine {
 	sqInt  (*vmEndianness)(void);	
 #endif
 
+
+#if VM_PROXY_MINOR > 7
+  /* New methods for proxy version 1.8 */
+
+  /* callbackEnter: Re-enter the interpreter loop for a callback.
+     Arguments:
+       callbackID: Pointer to a location receiving the callback ID
+                   used in callbackLeave
+     Returns: True if successful, false otherwise */
+  sqInt (*callbackEnter)(sqInt *callbackID);
+
+  /* callbackLeave: Leave the interpreter from a previous callback
+     Arguments:
+       callbackID: The ID of the callback received from callbackEnter()
+     Returns: True if succcessful, false otherwise. */
+  sqInt (*callbackLeave)(sqInt  callbackID);
+
+  /* addGCRoot: Add a variable location to the garbage collector.
+     The contents of the variable location will be updated accordingly.
+     Arguments:
+       varLoc: Pointer to the variable location
+     Returns: True if successful, false otherwise. */
+  sqInt (*addGCRoot)(sqInt *varLoc);
+
+  /* removeGCRoot: Remove a variable location from the garbage collector.
+     Arguments:
+       varLoc: Pointer to the variable location
+     Returns: True if successful, false otherwise.
+  */
+  sqInt (*removeGCRoot)(sqInt *varLoc);
+#endif
 
 } VirtualMachine;
 

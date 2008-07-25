@@ -9,10 +9,10 @@ typedef struct {
 	void		*state;
 } AsyncFile;
 
-int asyncFileClose(AsyncFile *f);
-int asyncFileOpen(AsyncFile *f, int fileNamePtr, int fileNameSize, int writeFlag, int semaIndex);
+int asyncFileClose(PLUGIN_IARG_COMMA  AsyncFile *f);
+int asyncFileOpen(PLUGIN_IARG_COMMA  AsyncFile *f, int fileNamePtr, int fileNameSize, int writeFlag, int semaIndex);
 int asyncFileRecordSize();
-int asyncFileReadResult(AsyncFile *f, int bufferPtr, int bufferSize);
-int asyncFileReadStart(AsyncFile *f, int fPosition, int count);
-int asyncFileWriteResult(AsyncFile *f);
-int asyncFileWriteStart(AsyncFile *f, int fPosition, int bufferPtr, int bufferSize);
+int asyncFileReadResult(PLUGIN_IARG_COMMA AsyncFile *f, int bufferPtr, int bufferSize);
+int asyncFileReadStart(PLUGIN_IARG_COMMA AsyncFile *f, int fPosition, int count);
+int asyncFileWriteResult(PLUGIN_IARG_COMMA AsyncFile *f);
+int asyncFileWriteStart(PLUGIN_IARG_COMMA AsyncFile *f, int fPosition, int bufferPtr, int bufferSize);

@@ -156,6 +156,13 @@ int synchronizedSignalSemaphoreWithIndex(INTERPRETER_ARG_COMMA int semaIndex)
 { int result;
   DECL_WIN32_STATE();
 
+#ifdef DEBUG
+  if (!isValidInterpreterInstance(INTERPRETER_PARAM))
+  {
+	  printf("Invalid interpreter instance!\n");
+	  exit(-1);
+  }
+#endif
   /* wait until we have access */
   /* do our job */
   result = signalSemaphoreWithIndex(INTERPRETER_PARAM_COMMA semaIndex);

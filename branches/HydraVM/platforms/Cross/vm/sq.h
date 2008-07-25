@@ -427,9 +427,10 @@ sqInt ioWakeUp(INTERPRETER_ARG);
 /* we need this to determine initial heap size */
 sqInt ioSqueakImageSize(char* filename);
 
-/* Atomic event queue functions. */
+/* Event queue functions. */
 void ioInitEventQueue(struct vmEventQueue * queue);
+void ioDestroyEventQueue(struct vmEventQueue * queue);
 void ioEnqueueEventInto(struct vmEvent * event , struct vmEventQueue * queue);
 struct vmEvent * ioDequeueEventFrom(struct vmEventQueue * queue);
-
+sqInt ioIsQueueEmpty(struct vmEventQueue * queue);
 

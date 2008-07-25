@@ -74,12 +74,11 @@ extern int win32stateId;
 typedef struct Win32AttachedState {
 	HANDLE wakeUpEvent;
 	HANDLE timerThread;
-
 	HANDLE sleepEvent;
-	DWORD delayTick;
 
+	volatile DWORD delayTick;
 	vmEvent ioProcessEventsEvt;
-	vmEvent ioSignalDelayEvent;
+	volatile int signalId;
 
 	#define KEYBUF_SIZE 64
 	int keyBuf[KEYBUF_SIZE];	/* circular buffer */

@@ -68,11 +68,15 @@
 #define FFIErrorBadExternalFunction 17
 #define FFIErrorInvalidPointer 18
 
+/* init FFI module */
+int initialiseFFIModule(void);
+int shutdownFFIModule(void);
+
 /* Announce a coming FFI call */
-int ffiInitialize(void);
+int ffiInitialize(PLUGIN_IARG);
 
 /* cleanup */
-int ffiCleanup(void);
+int ffiCleanup(PLUGIN_IARG);
 
 /* Allocate/free external memory */
 int ffiAlloc(int byteSize);
@@ -90,8 +94,8 @@ int ffiPushUnsignedInt(PLUGIN_IARG_COMMA int value);
 int ffiPushSignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord);
 int ffiPushUnsignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord);
 /* 64bit integer returns */
-int ffiLongLongResultLow(void);
-int ffiLongLongResultHigh(void);
+int ffiLongLongResultLow(PLUGIN_IARG);
+int ffiLongLongResultHigh(PLUGIN_IARG);
 
 /* special <=32bit loads */
 int ffiPushSignedChar(PLUGIN_IARG_COMMA int value);
@@ -117,16 +121,16 @@ int ffiSupportsCallingConvention(int callType);
 int ffiCanReturn(PLUGIN_IARG_COMMA int* structSpec, int specSize);
 
 /* call the appropriate function w/ the given return type */
-int ffiCallAddressOfWithPointerReturn(int fn, int callType);
-int ffiCallAddressOfWithStructReturn(int fn, int callType, 
+int ffiCallAddressOfWithPointerReturn(PLUGIN_IARG_COMMA int fn, int callType);
+int ffiCallAddressOfWithStructReturn(PLUGIN_IARG_COMMA int fn, int callType, 
 				     int* structSpec, int specSize);
-int ffiCallAddressOfWithReturnType(int fn, int callType, int typeSpec);
+int ffiCallAddressOfWithReturnType(PLUGIN_IARG_COMMA int fn, int callType, int typeSpec);
 
 /* store the structure result of a previous call */
-int ffiStoreStructure(int address, int structSize);
+int ffiStoreStructure(PLUGIN_IARG_COMMA int address, int structSize);
 
 /* return the float value from a previous call */
-double ffiReturnFloatValue(void);
+double ffiReturnFloatValue(PLUGIN_IARG);
 
 
 #endif /* SQ_FFI_H */

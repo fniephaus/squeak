@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id: sqWin32Sound.c,v 1.5 2003/11/02 19:52:40 andreasraab Exp $
+*   RCSID:   $Id$
 *
 *   NOTES:   For now we're supporting both, the DirectSound and the win32
 *            based interface. In the future we'll switch to DSound exclusively.
@@ -27,7 +27,7 @@
 #ifndef NO_SOUND
 
 #ifndef NO_RCSID
-  static char RCSID[]="$Id: sqWin32Sound.c,v 1.5 2003/11/02 19:52:40 andreasraab Exp $";
+  static char RCSID[]="$Id$";
 #endif
 
 /***************************************************************************/
@@ -127,7 +127,7 @@ DWORD WINAPI playCallback( LPVOID ignored ) {
       }
       playBufferAvailable = 1;
       playBufferIndex = ++playBufferIndex & 1;
-      synchronizedSignalSemaphoreWithIndex(playSemaphore);
+      synchronizedSignalSemaphoreWithIndex(MAIN_VM_COMMA playSemaphore);
     }
   }
 }
@@ -138,7 +138,7 @@ DWORD WINAPI recCallback( LPVOID ignored ) {
       if(recTerminate) return 0; /* done playing */
       recBufferAvailable = 1;
       recBufferIndex = ++recBufferIndex & 1;
-      synchronizedSignalSemaphoreWithIndex(recSemaphore);
+      synchronizedSignalSemaphoreWithIndex(MAIN_VM_COMMA recSemaphore);
     }
   }
 }
@@ -745,7 +745,7 @@ waveCallback(HWAVEOUT hWave, UINT uMsg, DWORD dummy, DWORD dwParam1, DWORD dwPar
     }
   if(uMsg == WOM_DONE || uMsg == WIM_DATA)
     { /* a buffer has been completed */
-      synchronizedSignalSemaphoreWithIndex(outSemaIndex);
+      synchronizedSignalSemaphoreWithIndex(MAIN_VM_COMMA outSemaIndex);
     }
 }
 
@@ -1247,7 +1247,7 @@ int win32_snd_RecordSamplesIntoAtLength(int buf, int startSliceIndex, int buffer
   WAVEHDR *recBuf;
 
   if (!hWaveIn) {
-    success(false);
+    success(MAIN_VM_COMMA false);
     return 0;
   }
 
