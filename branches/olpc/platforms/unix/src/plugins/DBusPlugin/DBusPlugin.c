@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(9 May 2008 11:24:47 am)
+/* Automatically generated from Squeak on an Array(25 July 2008 7:35:55 pm)
 by VMMaker 3.8b6
  */
 
@@ -139,9 +139,9 @@ static DBusMessage* message;
 static DBusMessageIter messageIter[DBUS_MAXIMUM_TYPE_RECURSION_DEPTH];
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"DBusPlugin 9 May 2008 (i)"
+	"DBusPlugin 25 July 2008 (i)"
 #else
-	"DBusPlugin 9 May 2008 (e)"
+	"DBusPlugin 25 July 2008 (e)"
 #endif
 ;
 static DBusMessage* writeMessage;
@@ -516,7 +516,13 @@ EXPORT(sqInt) initialiseModule(void) {
 /*	opens a new container and increase writeIterator. arrays, structs, dictionarys and variants are container types in dbus */
 
 static sqInt iterOpenContainercontains(sqInt t, char* s) {
-	if (dbus_message_iter_open_container( &writeMessageIter[curWriteIter], t, s, &writeMessageIter[curWriteIter+1])) {
+	sqInt success;
+
+	success = dbus_message_iter_open_container( &writeMessageIter[curWriteIter], t, s, &writeMessageIter[curWriteIter+1]);
+	if (!(s == null)) {
+		free(s);
+	}
+	if (success) {
 		curWriteIter += 1;
 	} else {
 		msg("Could not create container");
@@ -1222,7 +1228,7 @@ EXPORT(sqInt) primitiveDBusIterCloseContainer(void) {
 /*	push a new container to the iterator stack. s is the signature which describes the content of the container */
 
 EXPORT(sqInt) primitiveDBusIterOpenContainerContains(void) {
-	sqInt openContainer;
+	sqInt isContainer;
 	char* cSig;
 	sqInt t;
 	sqInt s;
@@ -1233,41 +1239,40 @@ EXPORT(sqInt) primitiveDBusIterOpenContainerContains(void) {
 	if (interpreterProxy->failed()) {
 		return null;
 	}
+
+	/* struct and dict entry must not set signature */
+
 	cSig = null;
-	if (!(s == null)) {
-		cSig = stringOopToChar(s);
-		if (cSig == null) {
-			if (interpreterProxy->failed()) {
-				return null;
-			}
-			interpreterProxy->popthenPush(3, 0);
-			return null;
-		}
-	}
-	openContainer = 0;
+	isContainer = 0;
 	if (t == (DBUS_TYPE_ARRAY)) {
-		openContainer = 1;
-		if (s == null) {
+		isContainer = 1;
+		if (!(s == (interpreterProxy->nilObject()))) {
+			cSig = stringOopToChar(s);
+		}
+		if (cSig == null) {
 			msg("To write an array you have to specify the signature of the contained elements");
 			interpreterProxy->primitiveFail();
 			return null;
 		}
 	}
 	if (t == (DBUS_TYPE_VARIANT)) {
-		openContainer = 1;
-		if (s == null) {
+		isContainer = 1;
+		if (!(s == (interpreterProxy->nilObject()))) {
+			cSig = stringOopToChar(s);
+		}
+		if (cSig == null) {
 			msg("To write a variant you have to specify the signature of the contained element");
 			interpreterProxy->primitiveFail();
 			return null;
 		}
 	}
 	if (t == (DBUS_TYPE_STRUCT)) {
-		openContainer = 1;
+		isContainer = 1;
 	}
 	if (t == (DBUS_TYPE_DICT_ENTRY)) {
-		openContainer = 1;
+		isContainer = 1;
 	}
-	if (!(openContainer)) {
+	if (!(isContainer)) {
 		fprintf(stderr, "\n%d is no container type", t);
 		interpreterProxy->primitiveFail();
 		return null;
