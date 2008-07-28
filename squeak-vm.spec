@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.10
 %define minor   3
-%define release %{minor}olpc5
+%define release %{minor}olpc6
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -63,6 +63,9 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
+* Mon Jul 21 2008 Takashi Yamamiya <takashi@vpri.org>
+  - 3.10-olpc6; SVN r. 1901
+  - fix line ending when pasting (tak)
 * Mon Jul 07 2008 Bert Freudenberg <bert@freudenbergs.de>
   - 3.10-3olpc5; SVN r. 1899
   - re-enable new (IPv6) socket primitives (bf)
