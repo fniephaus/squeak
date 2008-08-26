@@ -3784,6 +3784,21 @@ static unsigned char swapBits(unsigned char in)
   return out;
 }
 
+static int fakeBigCursor()
+{
+  static int fake= -1;
+
+  if (fake == -1)
+    { 
+      char *value;
+      value= getenv("SQUEAK_FAKEBIGCURSOR");
+      fake= value && (atoi(value) > 0);
+    }
+
+  return fake;
+}
+
+static sqInt display_ioSetCursorWithMaskBig(sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY);
 
 static sqInt display_ioSetCursorWithMask(sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY)
 {
@@ -3796,6 +3811,9 @@ static sqInt display_ioSetCursorWithMask(sqInt cursorBitsIndex, sqInt cursorMask
 
   if (!isConnectedToXServer)
     return 0;
+
+  if (fakeBigCursor())
+    return display_ioSetCursorWithMaskBig(cursorBitsIndex, cursorMaskIndex, offsetX, offsetY);
 
   if (cursorMaskIndex == null)
     cursorMask= cursorBits;
@@ -3842,6 +3860,54 @@ static sqInt display_ioSetCursorWithMask(sqInt cursorBitsIndex, sqInt cursorMask
 }
 
 
+static sqInt display_ioSetCursorWithMaskBig(sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY)
+{
+  unsigned int *cursorBits= (unsigned int *)pointerForOop(cursorBitsIndex);
+  unsigned int *cursorMask= (unsigned int *)pointerForOop(cursorMaskIndex);
+  unsigned int data[32], mask[32], d, m;	/* cursors are rescaled from 16x16 to 32x32*/
+  int i, j;
+  Cursor cursor;
+  Pixmap dataPixmap, maskPixmap;
+
+  if (!isConnectedToXServer)
+    return 0;
+
+  if (cursorMaskIndex == null)
+    cursorMask= cursorBits;
+
+  for (i= 0; i < 32; i++)
+    {
+      for (j= 0; j < 32; j++)
+	{
+	  d= (d<<1) | ((cursorBits[i/2] >> (16 + j/2)) & 1);
+	  m= (m<<1) | ((cursorMask[i/2] >> (16 + j/2)) & 1);
+	}
+      data[i]= d;
+      mask[i]= m;
+    }
+ 
+  dataPixmap= XCreateBitmapFromData(stDisplay,
+				    DefaultRootWindow(stDisplay),
+				    (char *)data, 32, 32);
+  maskPixmap= XCreateBitmapFromData(stDisplay,
+				    DefaultRootWindow(stDisplay),
+				    (char *)mask, 32, 32);
+  cursor= XCreatePixmapCursor(stDisplay, dataPixmap, maskPixmap,
+			      &stColorBlack, &stColorWhite,
+			      -offsetX*2, -offsetY*2);
+
+  XFreePixmap(stDisplay, dataPixmap);
+  XFreePixmap(stDisplay, maskPixmap);
+
+  if (cursor != None)
+    XDefineCursor(stDisplay, stWindow, cursor);
+
+  XFreeCursor(stDisplay, cursor);
+
+  return 0;
+}
+
+
 #if 0
 sqInt ioSetCursor(sqInt cursorBitsIndex, sqInt offsetX, sqInt offsetY)
 {
@@ -3863,6 +3929,9 @@ static sqInt display_ioSetCursorARGB(sqInt cursorBitsIndex, sqInt extentX, sqInt
   XRenderPictFormat *pictformat;
   Picture picture;
   Cursor cursor;
+
+  if (fakeBigCursor())
+    return 0;
 
   if (!XRenderQueryExtension(stDisplay, &eventbase, &errorbase))
     return 0;
