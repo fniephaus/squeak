@@ -652,16 +652,16 @@ void sqLocGetDecimalSymbolInto(char *str)
 /* TIME AND DATE */
 
 
-/* Answer the offset to (number of minutes WEST of) UTC.
+/* Answer the offset to (number of minutes EAST of) UTC.
  */
 sqInt sqLocGetVMOffsetToUTC(void)
 {
   struct timezone tz;
   gettimeofday(0, &tz);
-  return tz.tz_minuteswest;
+  return -tz.tz_minuteswest;
 }
 
-/* Answer the offset to (number of minutes WEST of) GMT.
+/* Answer the offset to (number of minutes EAST of) GMT.
  */
 sqInt sqLocGetTimezoneOffset(void)
 {
