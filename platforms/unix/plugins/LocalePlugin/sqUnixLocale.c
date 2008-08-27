@@ -656,9 +656,19 @@ void sqLocGetDecimalSymbolInto(char *str)
  */
 sqInt sqLocGetVMOffsetToUTC(void)
 {
-  struct timezone tz;
-  gettimeofday(0, &tz);
-  return -tz.tz_minuteswest;
+  /* match the behavior in convertToSqueakTime() */
+#ifdef HAVE_TM_GMTOFF
+  time_t now= time(0);
+  return localtime(&now)->tm_gmtoff / 60;
+#else
+# ifdef HAVE_TIMEZONE
+  extern long timezone;
+  extern int daylight;
+  return daylight * 60 - timezone / 60;
+# else
+#  error: cannot determine timezone correction
+# endif
+#endif
 }
 
 /* Answer the offset to (number of minutes EAST of) GMT.
