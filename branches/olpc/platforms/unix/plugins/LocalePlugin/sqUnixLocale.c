@@ -652,9 +652,17 @@ void sqLocGetDecimalSymbolInto(char *str)
 /* TIME AND DATE */
 
 
-/* Answer the offset to (number of minutes EAST of) UTC.
+/* Answer the offset between local time and VM time
+  (despite the function name, this is how it is used)
  */
 sqInt sqLocGetVMOffsetToUTC(void)
+{
+  return 0;
+}
+
+/* Answer the offset to (number of minutes EAST of) GMT.
+ */
+sqInt sqLocGetTimezoneOffset(void)
 {
   /* match the behavior in convertToSqueakTime() */
 #ifdef HAVE_TM_GMTOFF
@@ -669,13 +677,6 @@ sqInt sqLocGetVMOffsetToUTC(void)
 #  error: cannot determine timezone correction
 # endif
 #endif
-}
-
-/* Answer the offset to (number of minutes EAST of) GMT.
- */
-sqInt sqLocGetTimezoneOffset(void)
-{
-  return sqLocGetVMOffsetToUTC();
 }
 
 /* Answer true if DST is in use.
