@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.10
 %define minor   3
-%define release %{minor}olpc8
+%define release %{minor}olpc9
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -63,6 +63,9 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
+* Wed Aug 26 2008 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.10-olpc9; SVN r. 1909
+  - fix timezone offset in LocalePlugin to respect TZ variable (bf)
 * Tue Aug 26 2008 Bert Freudenberg <bert@freudenbergs.de>
   - 3.10-olpc8; SVN r. 1907
   - fix sign of timezone offset in LocalePlugin (bf)
