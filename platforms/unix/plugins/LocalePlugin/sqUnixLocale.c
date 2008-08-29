@@ -683,9 +683,8 @@ sqInt sqLocGetTimezoneOffset(void)
  */
 sqInt sqLocDaylightSavings(void)
 {
-  extern int daylight;
-
-  return !!daylight;
+  time_t now= time(0);
+  return localtime(&now)->tm_isdst > 0;
 }
 
 /* Answer the number of characters in the long date format.
