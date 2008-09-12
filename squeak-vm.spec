@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.10
 %define minor   3
-%define release %{minor}olpc9
+%define release %{minor}olpc10
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -63,18 +63,21 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
-* Wed Aug 26 2008 Bert Freudenberg <bert@freudenbergs.de>
-  - 3.10-olpc9; SVN r. 1909
+* Fri Aug 29 2008 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.10-3olpc10; SVN r. 1914
+  - make /dev/std(in|out|err) use stdin, stdout, stderr (bf)
+* Wed Aug 27 2008 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.10-3olpc9; SVN r. 1909
   - fix timezone offset in LocalePlugin to respect TZ variable (bf)
 * Tue Aug 26 2008 Bert Freudenberg <bert@freudenbergs.de>
-  - 3.10-olpc8; SVN r. 1907
+  - 3.10-3olpc8; SVN r. 1907
   - fix sign of timezone offset in LocalePlugin (bf)
   - add SQUEAK_FAKEBIGCURSOR workaround for #8008 (bf)
 * Mon Jul 28 2008 Takashi Yamamiya <takashi@vpri.org>
   - 3.10-3olpc7; SVN r. 1904
   - Fix DBusPlugin openContainer (trac #7624)
 * Mon Jul 21 2008 Takashi Yamamiya <takashi@vpri.org>
-  - 3.10-olpc6; SVN r. 1901
+  - 3.10-3olpc6; SVN r. 1901
   - fix line ending when pasting (tak)
 * Mon Jul 07 2008 Bert Freudenberg <bert@freudenbergs.de>
   - 3.10-3olpc5; SVN r. 1899
