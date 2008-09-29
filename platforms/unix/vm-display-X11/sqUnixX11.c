@@ -2258,7 +2258,7 @@ static int xkeysym2ucs4(KeySym keysym)
     0x20a8, 0x20a9, 0x20aa, 0x20ab, 0x20ac                          /* 0x20a8-0x20af */
   };
 
-  static unsigned short const sqSpecialKey[] = {1, 28, 30, 29, 31, 5, 11, 12, 4};
+  static unsigned short const sqSpecialKey[] = {1, 28, 30, 29, 31, 11, 12, 4, 1};
 
   /* Latin-1 */
   if (   (keysym >= 0x0020 && keysym <= 0x007e)
@@ -2291,7 +2291,11 @@ static int xkeysym2ucs4(KeySym keysym)
 #undef map
 
 #if defined(XF86XK_Start)
-  if (keysym == XF86XK_Start) return ',';
+  if (keysym == XF86XK_Start)                       /* OLPC view source */
+    {
+      modifierState |= CommandKeyBit;
+      return ',';
+    }
 #endif
 
   /* convert to chinese char noe-qwan-doo */
