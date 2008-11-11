@@ -1,7 +1,7 @@
 %define name    squeak-vm
 %define version 3.10
 %define minor   3
-%define release %{minor}olpc10
+%define release %{minor}olpc11
 %define source  Squeak-%{version}-%{minor}
 %define prefix  /usr
 %define exclude FileCopyPlugin SqueakFFIPrims B3DAcceleratorPlugin PseudoTTYPlugin UnixOSProcessPlugin XDisplayControlPlugin
@@ -63,6 +63,9 @@ done
 %{prefix}/share/doc/squeak/
 
 %changelog
+* Mon Sep 29 2008 Bert Freudenberg <bert@freudenbergs.de>
+  - 3.10-3olpc11; SVN r. 1921
+  - fix pgUp/pgDown and view-source key mappings for ucs4 (yo,bf)
 * Fri Aug 29 2008 Bert Freudenberg <bert@freudenbergs.de>
   - 3.10-3olpc10; SVN r. 1914
   - make /dev/std(in|out|err) use stdin, stdout, stderr (bf)
