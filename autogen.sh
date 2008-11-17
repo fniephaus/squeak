@@ -1,7 +1,7 @@
 #!/bin/sh
 
 [ ! -d bld ] && mkdir bld
-(cd bld && CPPFLAGS="-DSUGAR" ../platforms/unix/config/configure --without-gl "$@")
+(cd bld && CPPFLAGS="-DSUGAR -D_FORTIFY_SOURCE=0" ../platforms/unix/config/configure --without-gl "$@")
 
 cat > Makefile <<EOF
 default:
