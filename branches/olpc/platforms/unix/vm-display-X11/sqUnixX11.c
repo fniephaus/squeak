@@ -3944,7 +3944,7 @@ static sqInt display_ioSetCursorARGB(sqInt cursorBitsIndex, sqInt extentX, sqInt
   if (!(major > 0 || minor >= 5))
     return 0;
 
-  image= XCreateImage(stDisplay, DefaultVisual(stDisplay, DefaultScreen(stDisplay)), 32, ZPixmap, 0, (char *)cursorBitsIndex, extentX, extentY, 32, 0);
+  image= XCreateImage(stDisplay, DefaultVisual(stDisplay, DefaultScreen(stDisplay)), 32, ZPixmap, 0, (char *)pointerForOop(cursorBitsIndex), extentX, extentY, 32, 0);
   pixmap= XCreatePixmap (stDisplay, DefaultRootWindow(stDisplay), extentX, extentY, 32);
   gc= XCreateGC(stDisplay, pixmap, 0, 0);
   XPutImage(stDisplay, pixmap, gc, image, 0, 0, 0, 0, extentX, extentY);
