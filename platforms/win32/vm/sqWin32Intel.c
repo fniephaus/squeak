@@ -707,8 +707,8 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
      If this fails the IP is probably wrong */
   TRY {
 #ifndef JITTER
-	  if (intr)
-		byteCode = getCurrentBytecode(intr);
+	  if (interpreterOfCurrentThread())
+		byteCode = getCurrentBytecode _iparam();
 	  else
 		byteCode = -1;
 #else
@@ -730,7 +730,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 					 exp->ExceptionRecord->ExceptionCode,
 					 exp->ExceptionRecord->ExceptionAddress,
                      byteCode,
-                     methodPrimitiveIndex(intr),
+                     methodPrimitiveIndex _iparam(),
                      vmPath,
                      TEXT("crash.dmp"));
   if(!fHeadlessImage)
@@ -783,7 +783,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 	    "Current byte code: %d\n"
 	    "Primitive index: %d\n",
 	    byteCode,
-	    methodPrimitiveIndex(intr));
+	    methodPrimitiveIndex _iparam());
     fflush(f);
     /* print loaded plugins */
     fprintf(f,"\nLoaded plugins:\n");
@@ -805,7 +805,7 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 	  FILE tmpStdout;
 	  tmpStdout = *stdout;
 	  *stdout = *f;
-	  printCallStack(intr);
+	  printCallStack _iparam();
 	  *f = *stdout;
 	  *stdout = tmpStdout;
 	  fprintf(f,"\n");
@@ -854,9 +854,9 @@ extern int inCleanExit;
 
 void __cdecl Cleanup(void)
 { /* not all of these are essential, but they're polite... */
-
+	PInterpreter intr = interpreterOfCurrentThread();
   if(!inCleanExit) {
-    printCallStack(MAIN_VM);
+    printCallStack _iparam();
   }
   ioShutdownAllModules();
 #ifndef NO_PLUGIN_SUPPORT
@@ -962,16 +962,19 @@ LONGLONG counter_freq;
 DWORD WINAPI threadedInterpretFn(void * param)
 {
 	struct Interpreter * intr = (struct Interpreter *) param;
-	DECL_WIN32_STATE();
+	struct Win32AttachedState * win32state;
+	
 	MSG msg;
-//	int xx = 0;
+
+	/* now we can obtain the attached state */
+	win32state = getAttachedStateBufferof(win32stateId, intr);
 
 	/* this will force windows to create message queue for our thread */
 	PeekMessage( &msg, 0, WM_USER,WM_USER, PM_NOREMOVE);
 
 	dprintf(("New interpreter instance %x is about to start!\n", param));
 
-	setInterpreterThread(intr, ioGetCurrentThread());
+	setInterpreterThread _iparams(ioGetCurrentThread());
 
 	dprintf(("Initializing attached states...\n"));
 	/* if this is first interpreter instance we should call initializeAllNewAttachedStates() */
@@ -981,7 +984,7 @@ DWORD WINAPI threadedInterpretFn(void * param)
 	}
 	else
 	{
-		initializeAttachedStates(intr);
+		initializeAttachedStates (intr);
 	}
 	dprintf(("...done\n"));
 
@@ -992,9 +995,9 @@ DWORD WINAPI threadedInterpretFn(void * param)
 
 	browserPluginInitialiseIfNeeded(); /* don't really think this belongs here */
 
-	lockInterpreter(intr); /* lock interpreter mutex before entering loop */
+	lockInterpreter _iparam(); /* lock interpreter mutex before entering loop */
 
-	interpretLoop(intr);
+	interpretLoop _iparam();
 
 	dprintf(("Interpreter %x thread just exited!\n", param));
 }
@@ -1010,26 +1013,32 @@ DWORD millisecondsInterval(LONGLONG counterInterval)
 	return (DWORD) (counterInterval * 1000 / counter_freq);
 }
 
+
+/* IMPORTANT!!! The SQ_CLOCK_MASK should be same as MillisecondClockMask , set in
+   Interpreter class >> initialize */
+
+#define SQ_CLOCK_MASK 0x1FFFFFFF
+
 int ioMSecs()
 {
   LONGLONG res;
   /* Make sure the value fits into Squeak SmallIntegers */
 #ifdef _WIN32_WCE
-  return timeGetTime() & 0x3FFFFFFF;
+  return timeGetTime() & SQ_CLOCK_MASK;
 #else
   if (usePerfCounter)
   {
 	QueryPerformanceCounter((LARGE_INTEGER*)&res);
-	return millisecondsInterval(res) & 0x3FFFFFFF;
+	return millisecondsInterval(res) & SQ_CLOCK_MASK;
   }
   else
-    return GetTickCount() &0x3FFFFFFF;
+    return GetTickCount() & SQ_CLOCK_MASK;
 #endif
 }
 
 
 /* Note: ioRelinquishProcessorForMicroseconds has *micro*seconds  as argument*/
-int ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA int microSeconds)
+int ioRelinquishProcessorForMicroseconds _iargs(int microSeconds)
 {
   /* wake us up if something happens */
   DECL_WIN32_STATE();
@@ -1041,46 +1050,46 @@ int ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA int microSeconds)
   event = WIN32_STATE(wakeUpEvent);
   ResetEvent(event);
 
-  unlockInterpreter(INTERPRETER_PARAM);
+  unlockInterpreter _iparam();
   waitResult = MsgWaitForMultipleObjects(1, &event, FALSE,
 			    microSeconds / 1000, QS_ALLINPUT);
-  lockInterpreter(INTERPRETER_PARAM);
+  lockInterpreter _iparam();
   if (waitResult == WAIT_OBJECT_0 + 1) // return from wait caused by user input
   {
-	ioProcessEvents(INTERPRETER_PARAM); /* keep up with mouse moves etc. */
+	ioProcessEvents _iparam(); /* keep up with mouse moves etc. */
   }
   return microSeconds;
 }
 
-sqInt ioWakeUp(INTERPRETER_ARG)
+sqInt ioWakeUp(PInterpreter intr)
 {
-  DECL_WIN32_STATE();
-  SetEvent(WIN32_STATE(wakeUpEvent));
+	struct Win32AttachedState * win32state = getAttachedStateBufferof(win32stateId, intr);
+	SetEvent(WIN32_STATE(wakeUpEvent));
 };
 
-sqInt ioProcessEventsHandler(INTERPRETER_ARG_COMMA struct vmEvent * event)
+sqInt ioProcessEventsHandler _iargs(struct vmEvent * event)
 {
 #ifdef DEBUG
 	DECL_WIN32_STATE();
 	if (event != &WIN32_STATE(ioProcessEventsEvt))
 	{
-		error(INTERPRETER_PARAM_COMMA "This cannot happen.");
+		error _iparams("This cannot happen.");
 	}
 #endif
-	ioProcessEvents(INTERPRETER_PARAM);
+	ioProcessEvents _iparam();
 	event->fn = 0; /* event should == &ioProcessEventsEvt in win32 state */
 }
 
 
-sqInt ioSignalDelayEventHandler(INTERPRETER_ARG_COMMA struct vmSignalSemaphoreEvent * event)
+sqInt ioSignalDelayEventHandler _iargs(struct vmSignalSemaphoreEvent * event)
 {
 	DECL_WIN32_STATE();
 	if (WIN32_STATE(signalId) == event->semaphoreIndex)
-		signalTimerSemaphore(INTERPRETER_PARAM);
+		signalTimerSemaphore _iparam();
 	reclaimSemaphoreEvent(event);
 }
 
-void ioScheduleTimerSemaphoreSignalAt(INTERPRETER_ARG_COMMA int atMilliseconds)
+void ioScheduleTimerSemaphoreSignalAt _iargs(int atMilliseconds)
 {
 	DECL_WIN32_STATE();
 
@@ -1093,7 +1102,7 @@ void ioScheduleTimerSemaphoreSignalAt(INTERPRETER_ARG_COMMA int atMilliseconds)
 	SwitchToThread();
 }
 
-DWORD WINAPI timerRoutine(INTERPRETER_ARG)
+DWORD WINAPI timerRoutine(PInterpreter intr)
 { 	
 // This parameter is the milliseconds interval, by which interpreter should unconditionaly interrupt to check
 // for user input 
@@ -1104,8 +1113,9 @@ DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 	DWORD sleepTime;
 	vmSignalSemaphoreEvent * event = 0;
 	int timeLeft = -1;
+	
+	DECL_WIN32_STATE2(intr);
 
-	DECL_WIN32_STATE();
 	WIN32_STATE(ioProcessEventsEvt).fn = 0;
 
 	currentTick = ioMSecs();
@@ -1132,9 +1142,10 @@ DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 			//  ^ resuling delay value
 
 			newTick = ioMSecs();
+			//dprintf(("Timeleft: %x %x %x\n", timeLeft, currentTick, newTick));
 			if (newTick < currentTick && timeLeft > currentTick) // counter wrapped
 			{
-				timeLeft = timeLeft - 0x3FFFFFFF - newTick;
+				timeLeft = timeLeft - SQ_CLOCK_MASK - newTick;
 			} else
 			{
 				timeLeft = timeLeft - newTick;
@@ -1144,9 +1155,9 @@ DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 			if (timeLeft <= 0)
 			{
 				// signal delay semaphore
-				enqueueEvent(INTERPRETER_PARAM, (struct vmEvent*)event);
+				enqueueEvent _iparams((struct vmEvent*)event);
 				event = 0;
-				ioWakeUp(INTERPRETER_PARAM); // make sure we not sleeping
+				ioWakeUp(intr); // make sure we not sleeping
 			}
 		}
 		else
@@ -1155,7 +1166,7 @@ DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 			newTick = ioMSecs();
 			if (newTick < currentTick) // counter is wrapped
 			{
-				timeLeft -= (0x3FFFFFFF - currentTick + newTick);
+				timeLeft -= (SQ_CLOCK_MASK - currentTick + newTick);
 			} else
 			{
 				timeLeft -= newTick - currentTick;
@@ -1165,16 +1176,16 @@ DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 			if (timeLeft <= 0)
 			{
 				// signal delay semaphore
-				enqueueEvent(INTERPRETER_PARAM, (struct vmEvent*)event);
+				enqueueEvent _iparams((struct vmEvent*)event);
 				event = 0;
-				ioWakeUp(INTERPRETER_PARAM); // make sure we not sleeping
+				ioWakeUp(intr); // make sure we not sleeping
 			}
 		}
 
 		if (WIN32_STATE(ioProcessEventsEvt).fn == 0)
 		{
 			WIN32_STATE(ioProcessEventsEvt).fn = ioProcessEventsHandler;
-			enqueueEvent(INTERPRETER_PARAM, &WIN32_STATE(ioProcessEventsEvt));
+			enqueueEvent _iparams(&WIN32_STATE(ioProcessEventsEvt));
 		}
 
 		if (timeLeft > 0)
@@ -1185,10 +1196,10 @@ DWORD WINAPI timerRoutine(INTERPRETER_ARG)
 }
 
 
-static void sqInitWin32State(INTERPRETER_ARG)
+static void sqInitWin32State(PInterpreter intr)
 {
-	DECL_WIN32_STATE();
-
+	DECL_WIN32_STATE2(intr);
+	
 	dprintf(("Initializing win32 attached state\n"));
 	
 	WIN32_STATE(wakeUpEvent) = CreateEvent(NULL, 1, 0, NULL);
@@ -1197,7 +1208,7 @@ static void sqInitWin32State(INTERPRETER_ARG)
 	WIN32_STATE(signalId) = 0;
 
 	WIN32_STATE(timerThread) = CreateThread(NULL,  0, (LPTHREAD_START_ROUTINE) &timerRoutine,
-		(LPVOID) INTERPRETER_PARAM, CREATE_SUSPENDED, NULL);
+		(LPVOID) intr, CREATE_SUSPENDED, NULL);
 
 	/* NOTE!!! The timer thread should run at higher than normal priority,
 	to make it not depending too much on interpreter thread load */
@@ -1212,34 +1223,23 @@ static void sqInitWin32State(INTERPRETER_ARG)
 
 	WIN32_STATE(eventBuffer) = (struct sqInputEvent*)malloc(MAX_EVENT_BUFFER * sizeof(struct sqInputEvent));
 
-	if (INTERPRETER_PARAM == MAIN_VM)
+	if (intr == MAIN_VM)
 	{
-		SetupWindows(INTERPRETER_PARAM);
+		SetupWindows _iparam();
     /* if headless running is requested, try to to create an icon
        in the Win95/NT system tray */
 	    if(fHeadlessImage && (!fRunService || fWindows95))
 		  SetSystemTrayIcon(1);
 	    SetWindowSize(MAIN_VM);
-	    ioSetFullScreen(INTERPRETER_PARAM_COMMA getFullScreenFlag(MAIN_VM));
+	    ioSetFullScreen _iparams(getFullScreenFlag(intr));
 	}
-
-//	WIN32_STATE(delaySemaphoreTimerId) = 0;
-//	WIN32_STATE(processEventsTimerId) = timeSetEvent(0, max(timerRes, 20), processEventsCallback, 
-//		(DWORD)INTERPRETER_PARAM, TIME_PERIODIC | TIME_CALLBACK_FUNCTION | TIME_KILL_SYNCHRONOUS);
 }
 
 
-static void sqFinalizeWin32State(INTERPRETER_ARG)
+static void sqFinalizeWin32State(PInterpreter intr)
 {
-	DECL_WIN32_STATE();
+	DECL_WIN32_STATE2(intr);
 	CloseHandle(WIN32_STATE(wakeUpEvent));
-//	timeKillEvent(WIN32_STATE(processEventsTimerId));
-
-//	if (WIN32_STATE(delaySemaphoreTimerId) != 0) // kill old one
-//	{
-//		timeKillEvent(WIN32_STATE(delaySemaphoreTimerId));
-//	}
-
 	TerminateThread(WIN32_STATE(timerThread),0);
 	CloseHandle(WIN32_STATE(sleepEvent));
 	CloseHandle(WIN32_STATE(timerThread));
@@ -1278,7 +1278,7 @@ int sqMain(char *lpCmdLine, int nCmdShow)
 { 
   int virtualMemory;
   TIMECAPS tc;
-
+  PInterpreter intr;
 #ifdef NO_MULTIBLE_INSTANCES    
   HANDLE hMutex;
   hMutex = CreateMutex(NULL, TRUE, VM_NAME); /*more unique value needed here ?!*/
@@ -1438,25 +1438,25 @@ int sqMain(char *lpCmdLine, int nCmdShow)
     win32stateId = attachStateBufferinitializeFnfinalizeFn(sizeof(struct Win32AttachedState),
 	  (AttachedStateFn)sqInitWin32State,(AttachedStateFn)sqFinalizeWin32State);
 
-    MAIN_VM = newInterpreterInstance();
+    MAIN_VM = intr = newInterpreterInstance();
   
 	/* set paths to image */
-	ioSetImagePath(MAIN_VM, startupImageName);
+	ioSetImagePath(intr,startupImageName);
 
     /* read the image file */
     if(!imageFile) {
       imageFile = sqImageFileOpen(startupImageName,"rb");
-      readImageFromFileHeapSizeStartingAt(MAIN_VM_COMMA imageFile, virtualMemory, 0);
+      readImageFromFileHeapSizeStartingAt(intr,imageFile, virtualMemory, 0);
     } else {
-      readImageFromFileHeapSizeStartingAt(MAIN_VM_COMMA imageFile, virtualMemory, sqImageFilePosition(imageFile));
+      readImageFromFileHeapSizeStartingAt(intr,imageFile, virtualMemory, sqImageFilePosition(imageFile));
     }
     sqImageFileClose(imageFile);
 
     if(fHeadlessImage) HideSplashScreen(); /* need to do it manually */
 
     /* run Squeak */
-    ioInitSecurity(((struct Win32AttachedState * )getAttachedStateBuffer(MAIN_VM, win32stateId))->imagePath);
-	threadedInterpretFn((void*)MAIN_VM);
+    ioInitSecurity(((struct Win32AttachedState * )getAttachedStateBufferof(win32stateId, intr))->imagePath);
+	threadedInterpretFn((void*)intr);
 #ifdef _MSC_VER
   } __except(squeakExceptionHandler(GetExceptionInformation())) {
     /* Do nothing */

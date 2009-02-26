@@ -286,7 +286,7 @@ typedef struct ObjVirtualMachine {
 */
 
 extern struct ObjVirtualMachine * _objInterpreterProxy;
-typedef void (*AttachedStateFn)(INTERPRETER_ARG);
+typedef void (*AttachedStateFn) (PInterpreter intr);
 
 #endif
 extern struct VirtualMachine * _interpreterProxy;

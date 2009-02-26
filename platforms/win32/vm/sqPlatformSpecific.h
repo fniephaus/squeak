@@ -47,7 +47,7 @@ size_t sqImageFileWrite(void *ptr, size_t sz, size_t count, sqImageFile h);
 /********************************************************/
 /* external SYNCHRONIZED signaling of semaphores        */
 /********************************************************/
-int synchronizedSignalSemaphoreWithIndex(INTERPRETER_ARG_COMMA int semaIndex);
+int synchronizedSignalSemaphoreWithIndex (PInterpreter intr, int semaIndex);
 
 
 /* pluggable primitive support */
@@ -101,7 +101,8 @@ typedef struct Win32AttachedState {
 
 } Win32AttachedState;
 
-#define DECL_WIN32_STATE() struct Win32AttachedState * win32state = getAttachedStateBuffer(intr, win32stateId)
+#define DECL_WIN32_STATE() struct Win32AttachedState * win32state = getAttachedStateBufferof(win32stateId, _iparam())
+#define DECL_WIN32_STATE2(i) struct Win32AttachedState * win32state = getAttachedStateBufferof(win32stateId, i)
 #define WIN32_STATE(name) win32state->name
 
 

@@ -16,7 +16,7 @@
 #include "SqueakFFIPrims_imports.h"
 #include "sqFFI.h"
 
-#define primitiveFail() vmFunction(primitiveFail)(PLUGIN_IPARAM);
+#define primitiveFail() vmFunction(primitiveFail) _iparam();
 
 #ifdef _MSC_VER
 #define LONGLONG __int64
@@ -48,7 +48,7 @@ typedef struct FFI_State {
 static int ffiStateId;
 
 #define FFI_STATE(name) (pstate->name)
-#define DECLARE_FFI_STATE() FFI_State * pstate = vmFunction(getAttachedStateBuffer)(PLUGIN_IPARAM_COMMA ffiStateId)
+#define DECLARE_FFI_STATE() FFI_State * pstate = vmFunction(getAttachedStateBufferof)(ffiStateId, _iparam())
 
 
 #define ARG_CHECK() if(FFI_STATE(ffiArgIndex) >= FFI_MAX_ARGS) return primitiveFail();
@@ -84,7 +84,7 @@ int shutdownFFIModule(void)
 
 /*  ffiInitialize:
 	Announce that the VM is about to do an external function call. */
-int ffiInitialize(PLUGIN_IARG)
+int ffiInitialize _iarg()
 {
 	DECLARE_FFI_STATE();
 	FFI_STATE(ffiArgIndex) = 0;
@@ -117,63 +117,63 @@ int ffiFree(int ptr)
 /*****************************************************************************/
 /*****************************************************************************/
 
-int ffiPushSignedChar(PLUGIN_IARG_COMMA int value) 
+int ffiPushSignedChar _iargs(int value) 
 { 
 	DECLARE_FFI_STATE();
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushUnsignedChar(PLUGIN_IARG_COMMA int value) 
+int ffiPushUnsignedChar _iargs(int value) 
 { 
 	DECLARE_FFI_STATE();
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushSignedByte(PLUGIN_IARG_COMMA int value) 
+int ffiPushSignedByte _iargs(int value) 
 { 
 	DECLARE_FFI_STATE();
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushUnsignedByte(PLUGIN_IARG_COMMA int value) 
+int ffiPushUnsignedByte _iargs(int value) 
 { 
 	DECLARE_FFI_STATE();
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushSignedShort(PLUGIN_IARG_COMMA int value) 
+int ffiPushSignedShort _iargs(int value) 
 { 
 	DECLARE_FFI_STATE();
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushUnsignedShort(PLUGIN_IARG_COMMA int value) 
+int ffiPushUnsignedShort _iargs(int value) 
 { 
 	DECLARE_FFI_STATE();
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushSignedInt(PLUGIN_IARG_COMMA int value) 
+int ffiPushSignedInt _iargs(int value) 
 { 
 	DECLARE_FFI_STATE();
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushUnsignedInt(PLUGIN_IARG_COMMA int value) 
+int ffiPushUnsignedInt _iargs(int value) 
 { 
 	DECLARE_FFI_STATE();
 	ARG_PUSH(value); 
 	return 1; 
 }
 
-int ffiPushSignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord) 
+int ffiPushSignedLongLong _iargs(int lowWord, int highWord) 
 { 
 	DECLARE_FFI_STATE();
 	ARG_PUSH(lowWord); 
@@ -181,7 +181,7 @@ int ffiPushSignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord)
 	return 1; 
 }
 
-int ffiPushUnsignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord) 
+int ffiPushUnsignedLongLong _iargs(int lowWord, int highWord) 
 { 
 	DECLARE_FFI_STATE();
 	ARG_PUSH(lowWord); 
@@ -189,7 +189,7 @@ int ffiPushUnsignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord)
 	return 1; 
 }
 
-int ffiPushSingleFloat(PLUGIN_IARG_COMMA double value)
+int ffiPushSingleFloat _iargs(double value)
 {
 	DECLARE_FFI_STATE();
 	float floatValue;
@@ -198,7 +198,7 @@ int ffiPushSingleFloat(PLUGIN_IARG_COMMA double value)
 	return 1;
 }
 
-int ffiPushDoubleFloat(PLUGIN_IARG_COMMA double value)
+int ffiPushDoubleFloat _iargs(double value)
 {
 	DECLARE_FFI_STATE();
 	ARG_PUSH(((int*)(&value))[0]);
@@ -206,7 +206,7 @@ int ffiPushDoubleFloat(PLUGIN_IARG_COMMA double value)
 	return 1;
 }
 
-int ffiPushStructureOfLength(PLUGIN_IARG_COMMA int pointer, int* structSpec, int structSize)
+int ffiPushStructureOfLength _iargs(int pointer, int* structSpec, int structSize)
 {
 	DECLARE_FFI_STATE();
 	int nItems, i;
@@ -218,14 +218,14 @@ int ffiPushStructureOfLength(PLUGIN_IARG_COMMA int pointer, int* structSpec, int
 	return 1;
 }
 
-int ffiPushPointer(PLUGIN_IARG_COMMA int pointer)
+int ffiPushPointer _iargs(int pointer)
 {
 	DECLARE_FFI_STATE();
 	ARG_PUSH(pointer);
 	return 1;
 }
 
-int ffiPushStringOfLength(PLUGIN_IARG_COMMA int srcIndex, int length)
+int ffiPushStringOfLength _iargs(int srcIndex, int length)
 {
 	DECLARE_FFI_STATE();
 	char *ptr;
@@ -244,7 +244,7 @@ int ffiPushStringOfLength(PLUGIN_IARG_COMMA int srcIndex, int length)
 
 /*  ffiCanReturn:
 	Return true if the support code can return the given type. */
-int ffiCanReturn(PLUGIN_IARG_COMMA int *structSpec, int specSize)
+int ffiCanReturn _iargs(int *structSpec, int specSize)
 {
 	DECLARE_FFI_STATE();
 	int header = *structSpec;
@@ -252,7 +252,7 @@ int ffiCanReturn(PLUGIN_IARG_COMMA int *structSpec, int specSize)
 	if(header & FFIFlagStructure) {
 		int structSize = header & FFIStructSizeMask;
 		if(structSize > 8) {
-			FFI_STATE(structReturnValue) = malloc(structSize);
+			FFI_STATE(structReturnValue) = (void*)malloc(structSize);
 			if(!FFI_STATE(structReturnValue)) return 0;
 			ARG_PUSH((int)FFI_STATE(structReturnValue));
 		}
@@ -262,7 +262,7 @@ int ffiCanReturn(PLUGIN_IARG_COMMA int *structSpec, int specSize)
 
 /*  ffiReturnFloatValue:
 	Return the value from a previous ffi call with float return type. */
-double ffiReturnFloatValue(PLUGIN_IARG)
+double ffiReturnFloatValue _iarg()
 {
 	DECLARE_FFI_STATE();
 	return FFI_STATE(floatReturnValue);
@@ -270,7 +270,7 @@ double ffiReturnFloatValue(PLUGIN_IARG)
 
 /*  ffiLongLongResultLow:
 	Return the low 32bit from the 64bit result of a call to an external function */
-int ffiLongLongResultLow(PLUGIN_IARG)
+int ffiLongLongResultLow _iarg()
 {
 	DECLARE_FFI_STATE();
 	return FFI_STATE(intReturnValue);
@@ -278,7 +278,7 @@ int ffiLongLongResultLow(PLUGIN_IARG)
 
 /*  ffiLongLongResultHigh:
 	Return the high 32bit from the 64bit result of a call to an external function */
-int ffiLongLongResultHigh(PLUGIN_IARG)
+int ffiLongLongResultHigh _iarg()
 {
 	DECLARE_FFI_STATE();
 	return FFI_STATE(intReturnValue2);
@@ -288,7 +288,7 @@ int ffiLongLongResultHigh(PLUGIN_IARG)
 	Store the structure result of a previous ffi call into the given address.
 	Note: Since the ST allocator always allocates multiples of 32bit we can
 	use the atomic types for storing <= 64bit result structures. */
-int ffiStoreStructure(PLUGIN_IARG_COMMA int address, int structSize)
+int ffiStoreStructure _iargs(int address, int structSize)
 {
 	DECLARE_FFI_STATE();
 	if(structSize <= 4) {
@@ -307,7 +307,7 @@ int ffiStoreStructure(PLUGIN_IARG_COMMA int address, int structSize)
 
 /*  ffiCleanup:
 	Cleanup after a foreign function call has completed. */
-int ffiCleanup(PLUGIN_IARG)
+int ffiCleanup _iarg()
 {
 	DECLARE_FFI_STATE();
 	int i;
@@ -365,18 +365,18 @@ int ffiCallAddress(FFI_State * state, int fn)
 	return state->intReturnValue;
 }
 
-int ffiCallAddressOfWithPointerReturn(PLUGIN_IARG_COMMA int fn, int callType)
+int ffiCallAddressOfWithPointerReturn _iargs(int fn, int callType)
 {
 	DECLARE_FFI_STATE();
 	return ffiCallAddress(pstate,fn);
 }
-int ffiCallAddressOfWithStructReturn(PLUGIN_IARG_COMMA int fn, int callType, int* structSpec, int specSize)
+int ffiCallAddressOfWithStructReturn _iargs(int fn, int callType, int* structSpec, int specSize)
 {
 	DECLARE_FFI_STATE();
 	return ffiCallAddress(pstate,fn);
 }
 
-int ffiCallAddressOfWithReturnType(PLUGIN_IARG_COMMA int fn, int callType, int typeSpec)
+int ffiCallAddressOfWithReturnType _iargs(int fn, int callType, int typeSpec)
 {
 	DECLARE_FFI_STATE();
 	return ffiCallAddress(pstate,fn);

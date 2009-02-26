@@ -73,64 +73,64 @@ int initialiseFFIModule(void);
 int shutdownFFIModule(void);
 
 /* Announce a coming FFI call */
-int ffiInitialize(PLUGIN_IARG);
+int ffiInitialize _iarg();
 
 /* cleanup */
-int ffiCleanup(PLUGIN_IARG);
+int ffiCleanup _iarg();
 
 /* Allocate/free external memory */
 int ffiAlloc(int byteSize);
 int ffiFree(int ptr);
 
 /* general <=32bit integer loads */
-int ffiPushSignedByte(PLUGIN_IARG_COMMA int value);
-int ffiPushUnsignedByte(PLUGIN_IARG_COMMA int value);
-int ffiPushSignedShort(PLUGIN_IARG_COMMA int value);
-int ffiPushUnsignedShort(PLUGIN_IARG_COMMA int value);
-int ffiPushSignedInt(PLUGIN_IARG_COMMA int value);
-int ffiPushUnsignedInt(PLUGIN_IARG_COMMA int value);
+int ffiPushSignedByte _iargs(int value);
+int ffiPushUnsignedByte _iargs(int value);
+int ffiPushSignedShort _iargs(int value);
+int ffiPushUnsignedShort _iargs(int value);
+int ffiPushSignedInt _iargs(int value);
+int ffiPushUnsignedInt _iargs(int value);
 
 /* 64bit integer loads */
-int ffiPushSignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord);
-int ffiPushUnsignedLongLong(PLUGIN_IARG_COMMA int lowWord, int highWord);
+int ffiPushSignedLongLong _iargs(int lowWord, int highWord);
+int ffiPushUnsignedLongLong _iargs(int lowWord, int highWord);
 /* 64bit integer returns */
-int ffiLongLongResultLow(PLUGIN_IARG);
-int ffiLongLongResultHigh(PLUGIN_IARG);
+int ffiLongLongResultLow _iarg();
+int ffiLongLongResultHigh _iarg();
 
 /* special <=32bit loads */
-int ffiPushSignedChar(PLUGIN_IARG_COMMA int value);
-int ffiPushUnsignedChar(PLUGIN_IARG_COMMA int value);
+int ffiPushSignedChar _iargs(int value);
+int ffiPushUnsignedChar _iargs(int value);
 
 /* float loads */
-int ffiPushSingleFloat(PLUGIN_IARG_COMMA double value);
-int ffiPushDoubleFloat(PLUGIN_IARG_COMMA double value);
+int ffiPushSingleFloat _iargs(double value);
+int ffiPushDoubleFloat _iargs(double value);
 
 /* structure loads */
-int ffiPushStructureOfLength(PLUGIN_IARG_COMMA int pointer, int* structSpec, int specSize);
+int ffiPushStructureOfLength _iargs(int pointer, int* structSpec, int specSize);
 
 /* pointer loads */
-int ffiPushPointer(PLUGIN_IARG_COMMA int pointer);
+int ffiPushPointer _iargs(int pointer);
 
 /* string loads */
-int ffiPushStringOfLength(PLUGIN_IARG_COMMA int srcIndex, int length);
+int ffiPushStringOfLength _iargs(int srcIndex, int length);
 
 /* return true if calling convention is supported */
 int ffiSupportsCallingConvention(int callType);
 
 /* return true if these types can be returned */
-int ffiCanReturn(PLUGIN_IARG_COMMA int* structSpec, int specSize);
+int ffiCanReturn _iargs(int* structSpec, int specSize);
 
 /* call the appropriate function w/ the given return type */
-int ffiCallAddressOfWithPointerReturn(PLUGIN_IARG_COMMA int fn, int callType);
-int ffiCallAddressOfWithStructReturn(PLUGIN_IARG_COMMA int fn, int callType, 
+int ffiCallAddressOfWithPointerReturn _iargs(int fn, int callType);
+int ffiCallAddressOfWithStructReturn _iargs(int fn, int callType, 
 				     int* structSpec, int specSize);
-int ffiCallAddressOfWithReturnType(PLUGIN_IARG_COMMA int fn, int callType, int typeSpec);
+int ffiCallAddressOfWithReturnType _iargs(int fn, int callType, int typeSpec);
 
 /* store the structure result of a previous call */
-int ffiStoreStructure(PLUGIN_IARG_COMMA int address, int structSize);
+int ffiStoreStructure _iargs(int address, int structSize);
 
 /* return the float value from a previous call */
-double ffiReturnFloatValue(PLUGIN_IARG);
+double ffiReturnFloatValue _iarg();
 
 
 #endif /* SQ_FFI_H */

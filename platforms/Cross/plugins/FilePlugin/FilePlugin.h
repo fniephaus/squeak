@@ -25,21 +25,21 @@ typedef struct {
 
 /* file i/o */
 
-sqInt   sqFileAtEnd(PLUGIN_IARG_COMMA SQFile *f);
-sqInt   sqFileClose(PLUGIN_IARG_COMMA SQFile *f);
-sqInt   sqFileDeleteNameSize(PLUGIN_IARG_COMMA char* sqFileNameIndex, sqInt sqFileNameSize);
-squeakFileOffsetType sqFileGetPosition(PLUGIN_IARG_COMMA SQFile *f);
+sqInt   sqFileAtEnd _iargs(SQFile *f);
+sqInt   sqFileClose _iargs(SQFile *f);
+sqInt   sqFileDeleteNameSize _iargs(char* sqFileNameIndex, sqInt sqFileNameSize);
+squeakFileOffsetType sqFileGetPosition _iargs(SQFile *f);
 sqInt   sqFileInit(void);
 sqInt   sqFileShutdown(void);
-sqInt   sqFileOpen(PLUGIN_IARG_COMMA SQFile *f, char* sqFileNameIndex, sqInt sqFileNameSize, sqInt writeFlag);
-size_t  sqFileReadIntoAt(PLUGIN_IARG_COMMA SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex);
-sqInt   sqFileRenameOldSizeNewSize(PLUGIN_IARG_COMMA char* oldNameIndex, sqInt oldNameSize, char* newNameIndex, sqInt newNameSize);
-sqInt   sqFileSetPosition(PLUGIN_IARG_COMMA SQFile *f, squeakFileOffsetType position);
-squeakFileOffsetType sqFileSize(PLUGIN_IARG_COMMA SQFile *f);
-sqInt   sqFileValid(PLUGIN_IARG_COMMA SQFile *f);
-size_t  sqFileWriteFromAt(PLUGIN_IARG_COMMA SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex);
-sqInt   sqFileFlush(PLUGIN_IARG_COMMA SQFile *f);
-sqInt   sqFileTruncate(PLUGIN_IARG_COMMA SQFile *f,squeakFileOffsetType offset);
+sqInt   sqFileOpen _iargs(SQFile *f, char* sqFileNameIndex, sqInt sqFileNameSize, sqInt writeFlag);
+size_t  sqFileReadIntoAt _iargs(SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex);
+sqInt   sqFileRenameOldSizeNewSize _iargs(char* oldNameIndex, sqInt oldNameSize, char* newNameIndex, sqInt newNameSize);
+sqInt   sqFileSetPosition _iargs(SQFile *f, squeakFileOffsetType position);
+squeakFileOffsetType sqFileSize _iargs(SQFile *f);
+sqInt   sqFileValid _iargs(SQFile *f);
+size_t  sqFileWriteFromAt _iargs(SQFile *f, size_t count, char* byteArrayIndex, size_t startIndex);
+sqInt   sqFileFlush _iargs(SQFile *f);
+sqInt   sqFileTruncate _iargs(SQFile *f,squeakFileOffsetType offset);
 sqInt   sqFileThisSession(void);
 
 /* directories */

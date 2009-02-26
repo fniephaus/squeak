@@ -126,7 +126,7 @@ void asyncFree(void *ptr) {
   GlobalFree(GlobalHandle(ptr));
 }
 
-int asyncFileAllocateBuffer(PLUGIN_IARG_COMMA AsyncFileState *state, int byteCount) {
+int asyncFileAllocateBuffer _iargs(AsyncFileState *state, int byteCount) {
   /* Allocate a new buffer of the given size if necessary. If the current buffer
      is already allocated and of the desired size, do nothing. */
 
@@ -144,19 +144,19 @@ int asyncFileAllocateBuffer(PLUGIN_IARG_COMMA AsyncFileState *state, int byteCou
   state->bufferPtr = asyncAlloc(byteCount);
   if (state->bufferPtr == NULL) {
     state->bufferSize = 0;
-    return success(PLUGIN_IPARAM_COMMA false);  /* could not allocate a buffer of size count */
+    return success _iparams(false);  /* could not allocate a buffer of size count */
   }
   state->bufferSize = byteCount;
   return 1;
 }
 
-int asyncFileValid(PLUGIN_IARG_COMMA AsyncFile *f) {
+int asyncFileValid _iargs(AsyncFile *f) {
   return (
 	  (f != NULL) &&
 	  (f->sessionID == thisSession) &&
 	  (f->state != NULL) &&
 	  (((AsyncFileState *) f->state)->hFile != INVALID_HANDLE_VALUE) &&
-	  (((AsyncFileState *) f->state)->intr == intr)
+	  (((AsyncFileState *) f->state)->intr == _iparam())
 	  );
 }
 
@@ -164,16 +164,16 @@ int asyncFileValid(PLUGIN_IARG_COMMA AsyncFile *f) {
   Exported Functions
 *****************************************************************************/
 
-int asyncFileClose(PLUGIN_IARG_COMMA AsyncFile *f) {
+int asyncFileClose _iargs(AsyncFile *f) {
   /* Close the given asynchronous file. */
 
   AsyncFileState *state;
 
-  if (!asyncFileValid(PLUGIN_IPARAM_COMMA f)) return 0;  /* already closed */
+  if (!asyncFileValid _iparams(f)) return 0;  /* already closed */
   state = (AsyncFileState*) f->state;
   if(!CloseHandle(state->hFile)) {
     printLastError(TEXT("AsyncFileClose failed"));
-    success(PLUGIN_IPARAM_COMMA false);
+    success _iparams(false);
   }
   state->hFile = INVALID_HANDLE_VALUE;
   SetEvent(state->hEvent);
@@ -190,7 +190,7 @@ int asyncFileClose(PLUGIN_IARG_COMMA AsyncFile *f) {
   return 1;
 }
 
-int asyncFileOpen(PLUGIN_IARG_COMMA AsyncFile *f, int fileNamePtr, int fileNameSize, 
+int asyncFileOpen _iargs(AsyncFile *f, int fileNamePtr, int fileNameSize, 
 		  int writeFlag, int semaIndex) {
   /* Opens the given file using the supplied AsyncFile structure to record
      its state. Fails with no side effects if f is already open. Files are
@@ -204,10 +204,10 @@ int asyncFileOpen(PLUGIN_IARG_COMMA AsyncFile *f, int fileNamePtr, int fileNameS
   DWORD id;
 
   /* don''t open an already open file */
-  if (asyncFileValid(PLUGIN_IPARAM_COMMA f)) return success(PLUGIN_IPARAM_COMMA false);
+  if (asyncFileValid _iparams(f)) return success _iparams(false);
 
   /* copy the file name into a null-terminated C string */
-  if (fileNameSize > 255) return success(PLUGIN_IPARAM_COMMA false);
+  if (fileNameSize > 255) return success _iparams(false);
   for (i = 0; i < fileNameSize; i++) {
     cFileName[i] = *((char *) (fileNamePtr + i));
   }
@@ -225,15 +225,16 @@ int asyncFileOpen(PLUGIN_IARG_COMMA AsyncFile *f, int fileNamePtr, int fileNameS
 	    FILE_ATTRIBUTE_NORMAL,
 	    NULL /* No template */);
   if(hFile == INVALID_HANDLE_VALUE)
-    return success(PLUGIN_IPARAM_COMMA false);
+    return success _iparams(false);
   f->state = (AsyncFileState *) 
     calloc(1,sizeof(AsyncFileState));	/* allocate state record */
   if (f->state == NULL) {
     CloseHandle(hFile);
-    return success(PLUGIN_IPARAM_COMMA false);
+    return success _iparams(false);
   }
   f->sessionID = thisSession;
   state = (AsyncFileState *) f->state;
+  state->intr = _iparam();
   state->hFile = hFile;
   state->writable = writeFlag;
   state->semaIndex = semaIndex;
@@ -251,19 +252,19 @@ int asyncFileOpen(PLUGIN_IARG_COMMA AsyncFile *f, int fileNamePtr, int fileNameS
 		 &id);                    /* return value for thread id */
   if(!state->hThread) {
     printLastError(TEXT("CreateThread() failed"));
-    return success(PLUGIN_IPARAM_COMMA false);
+    return success _iparams(false);
   }
   /* file operations run with high priority */
   if(!SetThreadPriority(state->hThread, THREAD_PRIORITY_HIGHEST))
     printLastError(TEXT("SetThreadPriority() failed"));
   if(!ResumeThread(state->hThread)) {
     printLastError(TEXT("ResumeThread() failed"));
-    return success(PLUGIN_IPARAM_COMMA false);
+    return success _iparams(false);
   }
   return 1;
 }
 
-int asyncFileReadResult(PLUGIN_IARG_COMMA AsyncFile *f, int bufferPtr, int bufferSize) {
+int asyncFileReadResult _iargs(AsyncFile *f, int bufferPtr, int bufferSize) {
   /* Copy up to bufferSize bytes from the buffer of the last read operation
      into the given Squeak buffer, and return the number of bytes copied.
      Negative values indicate:
@@ -276,7 +277,7 @@ int asyncFileReadResult(PLUGIN_IARG_COMMA AsyncFile *f, int bufferPtr, int buffe
   AsyncFileState *state = (AsyncFileState *) f->state;
   int bytesRead;
 
-  if (!asyncFileValid(PLUGIN_IPARAM_COMMA f)) return success(PLUGIN_IPARAM_COMMA false);
+  if (!asyncFileValid _iparams(f)) return success _iparams(false);
   if (state->status == BUSY) return -1;
   if (state->status == LAST_OP_FAILED) return -2;
   
@@ -286,19 +287,19 @@ int asyncFileReadResult(PLUGIN_IARG_COMMA AsyncFile *f, int bufferPtr, int buffe
   return bytesRead;
 }
 
-int asyncFileReadStart(PLUGIN_IARG_COMMA AsyncFile *f, int fPosition, int count) {
+int asyncFileReadStart _iargs(AsyncFile *f, int fPosition, int count) {
   /* Start an asynchronous operation to read count bytes from the given file
      starting at the given file position. The file''s semaphore will be signalled when
      the operation is complete. The client may then use asyncFileReadResult() to
      find out if the operation succeeded and to get the data that was read. */
   AsyncFileState *state = (AsyncFileState *) f->state;
   
-  if (!asyncFileValid(PLUGIN_IPARAM_COMMA f)) return success(PLUGIN_IPARAM_COMMA false);
-  if (state->status == BUSY) return success(PLUGIN_IPARAM_COMMA false);  /* operation in progress */
+  if (!asyncFileValid _iparams(f)) return success _iparams(false);
+  if (state->status == BUSY) return success _iparams(false);  /* operation in progress */
   
   /* allocate a new buffer if necessary */
-  asyncFileAllocateBuffer(PLUGIN_IPARAM_COMMA state, count);
-  if (state->bufferPtr == NULL) return success(PLUGIN_IPARAM_COMMA false);  /* could not allocate buffer */
+  asyncFileAllocateBuffer _iparams(state, count);
+  if (state->bufferPtr == NULL) return success _iparams(false);  /* could not allocate buffer */
 
   state->dwPosition = fPosition;
   state->dwSize = count;
@@ -312,7 +313,7 @@ int asyncFileRecordSize() {
   return sizeof(AsyncFile);
 }
 
-int asyncFileWriteResult(PLUGIN_IARG_COMMA AsyncFile *f) {
+int asyncFileWriteResult _iargs(AsyncFile *f) {
   /* Return the number of bytes copied by the last write operation.
      Negative values indicate:
      -1    -- busy; the last operation has not finished yet
@@ -320,26 +321,26 @@ int asyncFileWriteResult(PLUGIN_IARG_COMMA AsyncFile *f) {
 
   AsyncFileState *state = (AsyncFileState *) f->state;
   
-  if (!asyncFileValid(PLUGIN_IPARAM_COMMA f)) return success(PLUGIN_IPARAM_COMMA false);
+  if (!asyncFileValid _iparams(f)) return success _iparams(false);
   if (state->status == BUSY) return -1;
   if (state->status == LAST_OP_FAILED) return -2;
   return state->bytesTransferred;
 }
 
-int asyncFileWriteStart(PLUGIN_IARG_COMMA AsyncFile *f, int fPosition, int bufferPtr, int bufferSize) {
+int asyncFileWriteStart _iargs(AsyncFile *f, int fPosition, int bufferPtr, int bufferSize) {
   /* Start an asynchronous operation to write bufferSize bytes to the given file
      starting at the given file position. The file''s semaphore will be signalled when
      the operation is complete. The client may then use asyncFileWriteResult() to
      find out if the operation succeeded and how many bytes were actually written. */
   AsyncFileState *state = (AsyncFileState *) f->state;
 
-  if (!asyncFileValid(PLUGIN_IPARAM_COMMA f)) return success(PLUGIN_IPARAM_COMMA false);
-  if (state->status == BUSY) return success(PLUGIN_IPARAM_COMMA false);  /* operation in progress */
-  if (!state->writable) return success(PLUGIN_IPARAM_COMMA false);
+  if (!asyncFileValid _iparams(f)) return success _iparams(false);
+  if (state->status == BUSY) return success _iparams(false);  /* operation in progress */
+  if (!state->writable) return success _iparams(false);
 
   /* allocate a new buffer if necessary */
-  asyncFileAllocateBuffer(PLUGIN_IPARAM_COMMA state, bufferSize);
-  if (state->bufferPtr == NULL) return success(PLUGIN_IPARAM_COMMA false);  /* could not allocate buffer */
+  asyncFileAllocateBuffer _iparams(state, bufferSize);
+  if (state->bufferPtr == NULL) return success _iparams(false);  /* could not allocate buffer */
 
   /* copy the squeak buffer into the file buffer */
   MoveMemory((void*)state->bufferPtr, (void*) bufferPtr, bufferSize);

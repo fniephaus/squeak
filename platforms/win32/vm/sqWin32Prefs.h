@@ -31,6 +31,6 @@
 
 void TrackPrefsMenu(void);
 void CreatePrefsMenu(void);
-void HandlePrefsMenu(int);
+void HandlePrefsMenu _iargs(int);
 
 #endif

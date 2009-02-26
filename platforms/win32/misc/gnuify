@@ -29,7 +29,7 @@ BEGIN {
 }
 
 
-(stage == 0) && /^sqInt interpret\(.*\) \{/ {
+(stage == 0) && /^sqInt interpret _iarg\(.*\) \{/ {
   print "interpret: adding static register assignments" > "/dev/stderr";
   stage= 1;
   print;
@@ -49,15 +49,13 @@ BEGIN {
 (stage == 1) && /^    sqInt currentBytecode;/ {
 # print "    register unsigned char currentBytecode CB_REG;" */
   print "    register sqInt currentBytecode CB_REG;";
-  next;
-}
 
-(stage == 1) && /^$/ {
   print "interpret: adding bytecode dispatch table" > "/dev/stderr";
   print "    BC_JUMP_TABLE;\n";
   print "interpret: rewriting case labels and outer breaks" > "/dev/stderr";
   stage= 2;
   FS="[ 	:]+";
+
   next;
 }
 

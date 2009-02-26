@@ -2,6 +2,6 @@
 
 typedef char sqUUID[16];
 
-int MakeUUID(PLUGIN_IARG_COMMA sqUUID location);
+int MakeUUID _iargs(sqUUID location);
 int sqUUIDInit();
 int sqUUIDShutdown();

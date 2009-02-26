@@ -75,12 +75,12 @@ int joystickShutdown(void)
 /* win32JoystickDebugInfo:
 	Print debugging information for all joysticks.
 */
-EXPORT(int) win32JoystickDebugInfo(INTERPRETER_ARG)
+EXPORT(int) win32JoystickDebugInfo _iarg()
 {
 	int i;
 	JOYCAPS *caps;
 
-	if(methodArgumentCount(INTERPRETER_PARAM) != 0) return primitiveFail(INTERPRETER_PARAM);
+	if(methodArgumentCount _iparam() != 0) return primitiveFail _iparam();
 	warnPrintf(TEXT("<--- Joystick debug information --->\n"));
 	for(i=0; i<numJoySticks; i++) {
 		caps = joySticks + i;
@@ -116,15 +116,15 @@ EXPORT(int) win32JoystickDebugInfo(INTERPRETER_ARG)
 /* win32JoystickDebugPrintRawValues:
 	Print the raw values of a readout of the specified joystick.
 */
-EXPORT(int) win32JoystickDebugPrintRawValues(INTERPRETER_ARG)
+EXPORT(int) win32JoystickDebugPrintRawValues _iarg()
 {
 	int index, err;
 	JOYINFO info;
 
-	if(methodArgumentCount(INTERPRETER_PARAM) != 1) return primitiveFail(INTERPRETER_PARAM);
-	index = stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
-	if(failed(INTERPRETER_PARAM)) return 0;
-	if(index < 1 || index > 2) return primitiveFail(INTERPRETER_PARAM);
+	if(methodArgumentCount _iparam() != 1) return primitiveFail _iparam();
+	index = stackIntegerValue _iparams(0);
+	if(failed _iparam()) return 0;
+	if(index < 1 || index > 2) return primitiveFail _iparam();
 
 	warnPrintf(TEXT("Raw joystick values (%d):\n"), index);
 	err = joyGetPos(index-1, &info);
@@ -145,22 +145,22 @@ EXPORT(int) win32JoystickDebugPrintRawValues(INTERPRETER_ARG)
 		warnPrintf(TEXT("\tZ: %d\n"), info.wZpos);
 		warnPrintf(TEXT("\tButtons: %x\n"), info.wButtons);
 	}
-	pop(INTERPRETER_PARAM_COMMA 1); /* Leave rcvr on stack */
+	pop _iparams(1); /* Leave rcvr on stack */
 	return 1;
 }
 
 /* win32JoystickDebugPrintAlternativeValues:
 	Print the raw values of an alternative readout of the specified joystick.
 */
-EXPORT(int) win32JoystickDebugPrintAlternativeValues(INTERPRETER_ARG)
+EXPORT(int) win32JoystickDebugPrintAlternativeValues _iarg()
 {
 	int index, err;
 	JOYINFOEX info;
 
-	if(methodArgumentCount(INTERPRETER_PARAM) != 1) return primitiveFail(INTERPRETER_PARAM);
-	index = stackIntegerValue(INTERPRETER_PARAM_COMMA 0);
-	if(failed(INTERPRETER_PARAM)) return 0;
-	if(index < 1 || index > 2) return primitiveFail(INTERPRETER_PARAM);
+	if(methodArgumentCount _iparam() != 1) return primitiveFail _iparam();
+	index = stackIntegerValue _iparams(0);
+	if(failed _iparam()) return 0;
+	if(index < 1 || index > 2) return primitiveFail _iparam();
 
 	warnPrintf(TEXT("Alternative joystick values (%d):\n"), index);
 	info.dwSize = sizeof(info);
@@ -187,7 +187,7 @@ EXPORT(int) win32JoystickDebugPrintAlternativeValues(INTERPRETER_ARG)
 		warnPrintf(TEXT("\tButtons: %x\n"), info.dwButtons);
 		warnPrintf(TEXT("\tPOV: %d\n"), info.dwPOV);
 	}
-	pop(INTERPRETER_PARAM_COMMA 1); /* Leave rcvr on stack */
+	pop _iparams(1); /* Leave rcvr on stack */
 	return 1;
 }
 
