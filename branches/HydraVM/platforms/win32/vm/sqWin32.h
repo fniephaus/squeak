@@ -174,7 +174,7 @@ typedef int (*messageHook)(void *, unsigned int, unsigned int, long);
 /********************************************************/
 void SetupFilesAndPath();
 void SetupKeymap();
-//void SetupWindows(INTERPRETER_ARG);
+//void SetupWindows _iarg();
 void SetupPixmaps();
 void SetupPrinter();
 void SetupTimer();

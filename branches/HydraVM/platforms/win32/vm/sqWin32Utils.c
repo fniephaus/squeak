@@ -363,3 +363,4 @@ sqInt ioIsQueueEmpty(struct vmEventQueue * queue)
 #endif
 	return queue->head == 0;
 }
+

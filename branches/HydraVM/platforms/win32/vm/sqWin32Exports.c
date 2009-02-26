@@ -3,17 +3,17 @@
 
 /* Note: Primitives should be in correct format */
 
-int win32JoystickDebugInfo(INTERPRETER_ARG);
-int win32JoystickDebugPrintRawValues(INTERPRETER_ARG);
-int win32JoystickDebugPrintAlternativeValues(INTERPRETER_ARG);
-int win32DebugPrintSocketState(INTERPRETER_ARG);
-int primitivePluginBrowserReady(INTERPRETER_ARG);
-int primitivePluginRequestURLStream(INTERPRETER_ARG);
-int primitivePluginRequestURL(INTERPRETER_ARG);
-int primitivePluginPostURL(INTERPRETER_ARG);
-int primitivePluginRequestFileHandle(INTERPRETER_ARG);
-int primitivePluginDestroyRequest(INTERPRETER_ARG);
-int primitivePluginRequestState(INTERPRETER_ARG);
+int win32JoystickDebugInfo _iarg();
+int win32JoystickDebugPrintRawValues _iarg();
+int win32JoystickDebugPrintAlternativeValues _iarg();
+int win32DebugPrintSocketState _iarg();
+int primitivePluginBrowserReady _iarg();
+int primitivePluginRequestURLStream _iarg();
+int primitivePluginRequestURL _iarg();
+int primitivePluginPostURL _iarg();
+int primitivePluginRequestFileHandle _iarg();
+int primitivePluginDestroyRequest _iarg();
+int primitivePluginRequestState _iarg();
 
 extern void* stWindow;
 extern void* firstMessageHook;

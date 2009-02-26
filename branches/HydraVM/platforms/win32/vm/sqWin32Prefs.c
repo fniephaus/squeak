@@ -13,7 +13,7 @@
 #ifdef NO_PREFERENCES
 void CreatePrefsMenu(void) {}
 void TrackPrefsMenu(void) {}
-void HandlePrefsMenu(int) {}
+void HandlePrefsMenu _iparams(int) {}
 #else
 
 #include <windows.h>
@@ -341,7 +341,7 @@ void TrackPrefsMenu(void) {
   TrackPopupMenu(vmPrefsMenu, TPM_LEFTALIGN, p.x, p.y, 0, stWindow, NULL);
 }
 
-void HandlePrefsMenu(int cmd) {
+void HandlePrefsMenu _iargs(int cmd) {
   switch(cmd) {
   case ID_ABOUT: 
     MessageBox(stWindow,VM_VERSION,
@@ -404,11 +404,11 @@ void HandlePrefsMenu(int cmd) {
 #endif
     break;
   case ID_DBGPRINTSTACK:
-    printCallStack(MAIN_VM);
+    printCallStack _iparam();
     break;
   case ID_PRINTALLSTACKS:
     printf("Printing all processes:\n");
-    printAllStacks(MAIN_VM);
+    printAllStacks _iparam();
     break;
   case ID_PRIORITYBOOST:
     fPriorityBoost = !fPriorityBoost;

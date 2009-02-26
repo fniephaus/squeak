@@ -26,6 +26,8 @@
 
 extern struct Interpreter * mainVM;
 
+extern sqInt tlsKey;  /* global thread local storage key */
+
 /* Main VM */
 # define MAIN_VM mainVM
 # define MAIN_VM_COMMA mainVM,
@@ -161,6 +163,7 @@ sqInt sqGetFilenameFromString(char * aCharBuffer, char * aFilenameString, sqInt 
 
 /* Platform-specific header file may redefine earlier definitions and macros. */
 
+
 #include "sqPlatformSpecific.h"
 #include "sqVirtualMachine.h"
 #include "interp_prototypes.h"
@@ -172,17 +175,17 @@ sqInt ioExit(void);
 sqInt ioForceDisplayUpdate(void);
 sqInt ioFormPrint(sqInt bitsAddr, sqInt width, sqInt height, sqInt depth,
 		  double hScale, double vScale, sqInt landscapeFlag);
-sqInt ioSetFullScreen(INTERPRETER_ARG_COMMA sqInt fullScreen);
-sqInt ioRelinquishProcessorForMicroseconds(INTERPRETER_ARG_COMMA sqInt microSeconds);
-sqInt ioScreenSize(INTERPRETER_ARG);
+sqInt ioSetFullScreen _iargs(sqInt fullScreen);
+sqInt ioRelinquishProcessorForMicroseconds _iargs(sqInt microSeconds);
+sqInt ioScreenSize _iarg();
 sqInt ioScreenDepth(void);
 sqInt ioSeconds(void);
-sqInt ioSetCursor(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, sqInt offsetX, sqInt offsetY);
-sqInt ioSetCursorWithMask(INTERPRETER_ARG_COMMA sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY);
+sqInt ioSetCursor _iargs(sqInt cursorBitsIndex, sqInt offsetX, sqInt offsetY);
+sqInt ioSetCursorWithMask _iargs(sqInt cursorBitsIndex, sqInt cursorMaskIndex, sqInt offsetX, sqInt offsetY);
 sqInt ioShowDisplay(sqInt dispBitsIndex, sqInt width, sqInt height, sqInt depth,
 		    sqInt affectedL, sqInt affectedR, sqInt affectedT, sqInt affectedB);
 sqInt ioHasDisplayDepth(sqInt depth);
-sqInt ioSetDisplayMode(INTERPRETER_ARG_COMMA sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag);
+sqInt ioSetDisplayMode _iargs(sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag);
 
 /* Power management. */
 
@@ -196,14 +199,14 @@ sqInt ioDisablePowerManager(sqInt disableIfNonZero);
    without event support.
 */
 
-sqInt ioGetButtonState(INTERPRETER_ARG);
-sqInt ioGetKeystroke(INTERPRETER_ARG);
-sqInt ioMousePoint(INTERPRETER_ARG);
-sqInt ioPeekKeystroke(INTERPRETER_ARG);
+sqInt ioGetButtonState _iarg();
+sqInt ioGetKeystroke _iarg();
+sqInt ioMousePoint _iarg();
+sqInt ioPeekKeystroke _iarg();
 /* Note: In an event driven architecture, ioProcessEvents is obsolete.
    It can be implemented as a no-op since the image will check for
    events in regular intervals. */
-sqInt ioProcessEvents(INTERPRETER_ARG);
+sqInt ioProcessEvents _iarg();
 
 
 /* User input recording II:
@@ -329,20 +332,23 @@ typedef struct sqWindowEvent
 #define WindowEventPaint	5 /* window area (in value1-4) needs updating. Some platforms do not need to send this, do not rely on it in image */
 #define WindowEventStinks	6 /* this window stinks (just to see if people read this stuff) */
 
+
+char *ioGetWindowLabel _iarg();
 /* Set an asynchronous input semaphore index for events. */
-sqInt ioSetInputSemaphore(INTERPRETER_ARG_COMMA sqInt semaIndex);
+sqInt ioSetInputSemaphore _iargs(sqInt semaIndex);
 
 /* Retrieve the next input event from the OS. */
-sqInt ioGetNextEvent(INTERPRETER_ARG_COMMA sqInputEvent *evt);
+sqInt ioGetNextEvent _iargs(sqInputEvent *evt);
 /* recycle used input event */
 sqInt ioRecycleEvent(sqInputEvent * evt);
 
 /* Image file and VM path names. */
-void ioSetImagePath(INTERPRETER_ARG_COMMA char * imgName);
-char *ioGetImageName(INTERPRETER_ARG);
-sqInt imageNameGetLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt length);
-sqInt imageNamePutLength(INTERPRETER_ARG_COMMA sqInt sqImageNameIndex, sqInt length);
-sqInt imageNameSize(INTERPRETER_ARG);
+void ioSetImagePath (PInterpreter intr, char * imgName);  // explicit interpreter arg
+
+char *ioGetImageName _iarg();
+sqInt imageNameGetLength _iargs(sqInt sqImageNameIndex, sqInt length);
+sqInt imageNamePutLength _iargs(sqInt sqImageNameIndex, sqInt length);
+sqInt imageNameSize _iarg();
 sqInt vmPathSize(void);
 sqInt vmPathGetLength(sqInt sqVMPathIndex, sqInt length);
 
@@ -357,10 +363,10 @@ sqInt clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex);
 sqInt clipboardWriteFromAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex);
 
 /* Profiling. */
-sqInt clearProfile(INTERPRETER_ARG);
-sqInt dumpProfile(INTERPRETER_ARG);
-sqInt startProfiling(INTERPRETER_ARG);
-sqInt stopProfiling(INTERPRETER_ARG);
+sqInt clearProfile _iarg();
+sqInt dumpProfile _iarg();
+sqInt startProfiling _iarg();
+sqInt stopProfiling _iarg();
 
 /* System attributes. */
 sqInt attributeSize(sqInt id);
@@ -421,8 +427,8 @@ sqInt ioGetCurrentThread(void);
 sqInt ioResumeThread(sqInt threadHandle);
 void * ioGetThreadedInterpretFunctionPointer(void);
 
-/* force given interpreter to wake up */
-sqInt ioWakeUp(INTERPRETER_ARG);
+/* force given interpreter to wake up. Note, using interpreter argument explicitly! */
+sqInt ioWakeUp(PInterpreter);
 
 /* we need this to determine initial heap size */
 sqInt ioSqueakImageSize(char* filename);
@@ -433,4 +439,5 @@ void ioDestroyEventQueue(struct vmEventQueue * queue);
 void ioEnqueueEventInto(struct vmEvent * event , struct vmEventQueue * queue);
 struct vmEvent * ioDequeueEventFrom(struct vmEventQueue * queue);
 sqInt ioIsQueueEmpty(struct vmEventQueue * queue);
+
 

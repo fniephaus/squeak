@@ -131,8 +131,8 @@ extern int byteSwapped(int);
 extern int convertToSqueakTime(SYSTEMTIME);
 int recordMouseDown(WPARAM, LPARAM);
 int recordModifierButtons();
-int recordKeystroke(INTERPRETER_ARG_COMMA UINT,WPARAM,LPARAM);
-int recordVirtualKey(INTERPRETER_ARG_COMMA UINT,WPARAM,LPARAM);
+int recordKeystroke _iargs(UINT,WPARAM,LPARAM);
+int recordVirtualKey _iargs(UINT,WPARAM,LPARAM);
 void recordMouse(void);
 void SetSystemTrayIcon(BOOL on);
 
@@ -152,20 +152,23 @@ void HideSplashScreen(void);
          does not use this synchronization when accessing the external
          semaphores. */
 
-int synchronizedSignalSemaphoreWithIndex(INTERPRETER_ARG_COMMA int semaIndex)
+int synchronizedSignalSemaphoreWithIndex (PInterpreter intr, int semaIndex)
 { int result;
-  DECL_WIN32_STATE();
+  DECL_WIN32_STATE2(intr);
 
 #ifdef DEBUG
-  if (!isValidInterpreterInstance(INTERPRETER_PARAM))
+  if (!isValidInterpreterInstance(intr))
   {
-	  printf("Invalid interpreter instance!\n");
+	  dprintf(("Invalid interpreter instance!\n"));
+	  fflush(0);
 	  exit(-1);
   }
 #endif
   /* wait until we have access */
   /* do our job */
-  result = signalSemaphoreWithIndex(INTERPRETER_PARAM_COMMA semaIndex);
+  dprintf(("signalind %d in %x\n", semaIndex, _iparam()));
+
+  result = signalSemaphoreWithIndex _iparams(semaIndex);
   /* wake up interpret() if sleeping */
   SetEvent(WIN32_STATE(wakeUpEvent));
   /* and release access */
@@ -204,7 +207,8 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
                               WPARAM wParam,
                               LPARAM lParam)
 { PAINTSTRUCT ps;
-  struct Win32AttachedState * win32state = getAttachedStateBuffer(MAIN_VM, win32stateId);
+  PInterpreter intr = MAIN_VM;
+  DECL_WIN32_STATE2(intr);
 
   /* Intercept any messages if wanted */
   if(preMessageHook)
@@ -229,9 +233,9 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
     } else {
       buttonState = 64;
       if (zDelta < 0) {
-	recordVirtualKey(MAIN_VM, message,VK_DOWN,lParam);
+	recordVirtualKey _iparams(message,VK_DOWN,lParam);
       } else {
-	recordVirtualKey(MAIN_VM, message,VK_UP,lParam);
+	recordVirtualKey _iparams(message,VK_UP,lParam);
       }
     }
     return 1;
@@ -244,7 +248,7 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
   case WM_COMMAND: {
     int cmd = wParam & 0xFFF0;
     if(cmd >= ID_PREF_FIRST && cmd <= ID_PREF_LAST) {
-      HandlePrefsMenu(cmd);
+      HandlePrefsMenu _iparams(cmd);
       break;
     }
 #if !defined(_WIN32_WCE)
@@ -336,7 +340,7 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
     }
     /* state based stuff */
     recordModifierButtons();
-    if(!recordVirtualKey(MAIN_VM, message,wParam,lParam))
+    if(!recordVirtualKey _iparams(message,wParam,lParam))
       return DefWindowProcW(hwnd,message,wParam,lParam);
     break;
   case WM_KEYUP:
@@ -361,7 +365,7 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
     }
     /* state based stuff */
     recordModifierButtons();
-    recordKeystroke(MAIN_VM, message,wParam,lParam);
+    recordKeystroke _iparams(message,wParam,lParam);
     break;
   case WM_DEADCHAR:
   case WM_SYSDEADCHAR:
@@ -378,7 +382,7 @@ LRESULT CALLBACK MainWndProcW(HWND hwnd,
     if (!IsRectEmpty(&updateRect)) {
       /* force redraw the next time ioShowDisplay() is called */
       updateRightNow = TRUE;
-      fullDisplayUpdate(MAIN_VM);  /* this makes VM call ioShowDisplay */
+      fullDisplayUpdate _iparam();  /* this makes VM call ioShowDisplay */
     }
     break;
   case WM_SIZE:
@@ -650,7 +654,7 @@ void SetupPixmaps(void)
 /****************************************************************************/
 
 /* SetWindowTitle(): Set the main window title */
-void SetWindowTitle(INTERPRETER_ARG) {
+void SetWindowTitle _iarg() {
   DECL_WIN32_STATE();
   char titleString[MAX_PATH+20];
   WCHAR wideTitle[MAX_PATH+20];
@@ -663,20 +667,20 @@ void SetWindowTitle(INTERPRETER_ARG) {
   SetWindowTextW(stWindow, wideTitle);
 }
 
-char *ioGetWindowLabel(INTERPRETER_ARG) {
+char *ioGetWindowLabel _iarg() {
   DECL_WIN32_STATE();
   return WIN32_STATE(windowTitle);
 }
 
-sqInt ioSetWindowLabelOfSize(INTERPRETER_ARG_COMMA void* lblIndex, sqInt sz) {
+sqInt ioSetWindowLabelOfSize _iargs(void* lblIndex, sqInt sz) {
   DECL_WIN32_STATE();
   if(sz > MAX_PATH) sz = MAX_PATH;
   memcpy(WIN32_STATE(windowTitle), (void*)lblIndex, sz);
   WIN32_STATE(windowTitle)[sz] = 0;
-  SetWindowTitle(INTERPRETER_PARAM);
+  SetWindowTitle _iparam();
 }
 
-void SetupWindows(INTERPRETER_ARG)
+void SetupWindows _iarg()
 { WNDCLASS wc;
 
   dprintf (("SetupWindows enter\n"));
@@ -728,7 +732,7 @@ void SetupWindows(INTERPRETER_ARG)
 			      NULL);
   }
   /* associate a window with interpreter instance */
-  SetWindowLongW(stWindow,GWL_USERDATA,(DWORD)INTERPRETER_PARAM);
+  SetWindowLongW(stWindow,GWL_USERDATA,(DWORD)_iparam());
 
   /* Force Unicode WM_CHAR */
   SetWindowLongW(stWindow,GWL_WNDPROC,(DWORD)MainWndProcW);
@@ -765,7 +769,7 @@ void SetupWindows(INTERPRETER_ARG)
 
   /* Modify the system menu for any VM options */
   CreatePrefsMenu();
-  SetWindowTitle(INTERPRETER_PARAM);
+  SetWindowTitle _iparam();
   ShowWindow(stWindow, SW_SHOWNORMAL);
   SetForegroundWindow(stWindow);
 
@@ -778,7 +782,7 @@ void SetupWindows(INTERPRETER_ARG)
   /* direct input needs to be set up on per-window basis */
   SetupDirectInput();
 #endif
-  ioScreenSize(INTERPRETER_PARAM); /* compute new rect initially */
+  ioScreenSize _iparam(); /* compute new rect initially */
 
   dprintf (("SetupWindows return. stWindow = %x \n", stWindow));
 }
@@ -786,7 +790,7 @@ void SetupWindows(INTERPRETER_ARG)
 
 #if !defined(_WIN32_WCE)  /* Unused under WinCE */
 
-void SetWindowSize(INTERPRETER_ARG)
+void SetWindowSize _iarg()
 {
   RECT r;
   RECT workArea;
@@ -796,10 +800,10 @@ void SetWindowSize(INTERPRETER_ARG)
   if(!IsWindow(stWindow)) return; /* might happen if run as NT service */
   if(browserWindow) return; /* Ignored if in browser */
 
-  if (getSavedWindowSize(INTERPRETER_PARAM) != 0)
+  if (getSavedWindowSize _iparam() != 0)
     {
-      width  = (unsigned) getSavedWindowSize(INTERPRETER_PARAM) >> 16;
-      height = getSavedWindowSize(INTERPRETER_PARAM) & 0xFFFF;
+      width  = (unsigned) getSavedWindowSize _iparam() >> 16;
+      height = getSavedWindowSize _iparam() & 0xFFFF;
     }
   else
     {
@@ -1105,16 +1109,16 @@ int recordKeyboardEvent(Win32AttachedState * win32state, MSG *msg) {
   return 1;
 }
 
-int ioSetInputSemaphore(INTERPRETER_ARG_COMMA int semaIndex) {
+int ioSetInputSemaphore _iargs(int semaIndex) {
   DECL_WIN32_STATE();
   WIN32_STATE(inputSemaphoreIndex) = semaIndex;
   return 1;
 }
 
-int ioGetNextEvent(INTERPRETER_ARG_COMMA sqInputEvent *evt) {
+int ioGetNextEvent _iargs(sqInputEvent *evt) {
   DECL_WIN32_STATE();
   if (WIN32_STATE(eventBufferGet) == WIN32_STATE(eventBufferPut)) {
-    ioProcessEvents(INTERPRETER_PARAM);
+    ioProcessEvents _iparam();
   }
   if (WIN32_STATE(eventBufferGet) == WIN32_STATE(eventBufferPut))
     return 1;
@@ -1128,11 +1132,11 @@ int ioGetNextEvent(INTERPRETER_ARG_COMMA sqInputEvent *evt) {
 /*              State based primitive set                                   */
 /****************************************************************************/
 
-int ioGetKeystroke(INTERPRETER_ARG)
+int ioGetKeystroke _iarg()
 {
   DECL_WIN32_STATE();
   int keystate;
-  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
+  ioProcessEvents _iparam();  /* process all pending events */
   if (WIN32_STATE(keyBufGet) == WIN32_STATE(keyBufPut)) return -1;  /* keystroke buffer is empty */
   keystate= WIN32_STATE(keyBuf)[WIN32_STATE(keyBufGet)];
   WIN32_STATE(keyBufGet) = (WIN32_STATE(keyBufGet) + 1) % KEYBUF_SIZE;
@@ -1141,12 +1145,12 @@ int ioGetKeystroke(INTERPRETER_ARG)
   return keystate;
 }
 
-int ioPeekKeystroke(INTERPRETER_ARG)
+int ioPeekKeystroke _iarg()
 {
   DECL_WIN32_STATE();
 
   int keystate;
-  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
+  ioProcessEvents _iparam();  /* process all pending events */
   if (WIN32_STATE(keyBufGet) == WIN32_STATE(keyBufPut)) return -1;  /* keystroke buffer is empty */
   keystate= WIN32_STATE(keyBuf)[WIN32_STATE(keyBufGet)];
   /* set modifer bits in buttonState to reflect the last keystroke peeked at */
@@ -1155,7 +1159,7 @@ int ioPeekKeystroke(INTERPRETER_ARG)
 }
 
 
-void recordKey(INTERPRETER_ARG_COMMA int keystate)
+void recordKey _iargs(int keystate)
 {
   DECL_WIN32_STATE();
   WIN32_STATE(keyBuf)[WIN32_STATE(keyBufPut)]= keystate;
@@ -1167,7 +1171,7 @@ void recordKey(INTERPRETER_ARG_COMMA int keystate)
   }
 }
 
-int recordVirtualKey(INTERPRETER_ARG_COMMA UINT message, WPARAM wParam, LPARAM lParam)
+int recordVirtualKey _iargs(UINT message, WPARAM wParam, LPARAM lParam)
 {
   int keystate = 0;
 
@@ -1176,17 +1180,17 @@ int recordVirtualKey(INTERPRETER_ARG_COMMA UINT message, WPARAM wParam, LPARAM l
     return 1;
   }
   if(wParam == VK_CANCEL) {
-    signalInterruptSemaphore(INTERPRETER_PARAM);
+    signalInterruptSemaphore _iparam();
     return 1;
   }
   keystate = mapVirtualKey(wParam);
   if(keystate == 0) return 0;
   keystate = keystate | ((buttonState >> 3) << 8);
-  recordKey(INTERPRETER_PARAM_COMMA keystate);
+  recordKey _iparams(keystate);
   return 1;
 }
 
-int recordKeystroke(INTERPRETER_ARG_COMMA UINT msg, WPARAM wParam, LPARAM lParam)
+int recordKeystroke _iargs(UINT msg, WPARAM wParam, LPARAM lParam)
 {
   int keystate=0;
 
@@ -1198,13 +1202,13 @@ int recordKeystroke(INTERPRETER_ARG_COMMA UINT msg, WPARAM wParam, LPARAM lParam
   /* add the modifiers */
   keystate = keystate | ((buttonState >> 3) << 8);
   /* check for interrupt key */
-  if(keystate == getInterruptKeycode(INTERPRETER_PARAM))
+  if(keystate == getInterruptKeycode _iparam())
     {
       /* NOTE: Interrupt key is meta, not recorded as key stroke */
-	  signalInterruptSemaphore(INTERPRETER_PARAM);
+	  signalInterruptSemaphore _iparam();
 	  return 1;
     }
-  recordKey(INTERPRETER_PARAM_COMMA keystate);
+  recordKey _iparams(keystate);
   return 1;
 }
 
@@ -1285,7 +1289,7 @@ int recordModifierButtons()
   return 1;
 }
 
-int ioGetButtonState(INTERPRETER_ARG)
+int ioGetButtonState _iarg()
 {
   if(fReduceCPUUsage || (fReduceCPUInBackground && !fHasFocus)) {
     MSG msg;
@@ -1298,11 +1302,11 @@ int ioGetButtonState(INTERPRETER_ARG)
        !PeekMessage(&msg, stWindow, WM_MOUSEFIRST, WM_MOUSELAST, PM_NOREMOVE))
       MsgWaitForMultipleObjects(0,NULL,0,5, QS_MOUSE);
   }
-  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
+  ioProcessEvents _iparam();  /* process all pending events */
   return buttonState;
 }
 
-int ioMousePoint(INTERPRETER_ARG)
+int ioMousePoint _iarg()
 {
   if(fReduceCPUUsage || (fReduceCPUInBackground && !fHasFocus)) {
     MSG msg;
@@ -1315,7 +1319,7 @@ int ioMousePoint(INTERPRETER_ARG)
        !PeekMessage(&msg, stWindow, WM_MOUSEFIRST, WM_MOUSELAST, PM_NOREMOVE))
       MsgWaitForMultipleObjects(0,NULL,0,5, QS_MOUSE);
   }
-  ioProcessEvents(INTERPRETER_PARAM);  /* process all pending events */
+  ioProcessEvents _iparam();  /* process all pending events */
   /* x is high 16 bits; y is low 16 bits */
   return (mousePosition.x << 16) | (mousePosition.y);
 }
@@ -1346,14 +1350,14 @@ int ioMicroMSecs(void)
   return timeGetTime() &0x3FFFFFFF;
 }
 
-int ioProcessEvents(INTERPRETER_ARG)
+int ioProcessEvents _iarg()
 { 
   MSG msg;
   POINT mousePt;
 //  static int xx = 0;
 //  printf ("ioProcessEvents %d\n", ++xx);
 
-  if (INTERPRETER_PARAM != MAIN_VM)  // omit processing events for non-main interpreter
+  if (_iparam() != MAIN_VM)  // omit processing events for non-main interpreter
   { 
 	while(PeekMessage(&msg,NULL,0,0,PM_NOREMOVE)) 
       GetMessage(&msg,NULL,0,0);
@@ -1411,12 +1415,12 @@ int ioProcessEvents(INTERPRETER_ARG)
 }
 
 /* returns the size of the Squeak window */
-int ioScreenSize(INTERPRETER_ARG)
+int ioScreenSize _iarg()
 {
   RECT r;
   int result;
 
-  result = getSavedWindowSize(INTERPRETER_PARAM);
+  result = getSavedWindowSize _iparam();
   if(IsWindow(stWindow) && !IsIconic(stWindow))
   {
 	if(browserWindow && GetParent(stWindow) == browserWindow) 
@@ -1424,7 +1428,7 @@ int ioScreenSize(INTERPRETER_ARG)
 	else 
 		GetClientRect(stWindow,&r);
 	result = MAKELONG(r.bottom,r.right);
-	setSavedWindowSize(INTERPRETER_PARAM, result);
+	setSavedWindowSize _iparams(result);
   }
   /* width is high 16 bits; height is low 16 bits */
 //  dprintf(("ioScreenSize returns %d x %d, stWindow visible = %d \n", result >> 16, result & 0xFFFF, IsWindowVisible(stWindow)));
@@ -1448,7 +1452,7 @@ int ioSeconds(void)
   return convertToSqueakTime(sysTime);
 }
 
-int ioSetCursorWithMask(INTERPRETER_ARG_COMMA int cursorBitsIndex, int cursorMaskIndex, int offsetX, int offsetY)
+int ioSetCursorWithMask _iargs(int cursorBitsIndex, int cursorMaskIndex, int offsetX, int offsetY)
 {
 #if !defined(_WIN32_WCE)
 	/****************************************************/
@@ -1460,7 +1464,7 @@ int ioSetCursorWithMask(INTERPRETER_ARG_COMMA int cursorBitsIndex, int cursorMas
   int i;
 
   /* Suppress using cursor for non-main interpreter */
-  if (INTERPRETER_PARAM != MAIN_VM)
+  if ( _iparam() != MAIN_VM)
 	  return 1;
 
   if(!IsWindow(stWindow)) return 1;
@@ -1491,20 +1495,20 @@ int ioSetCursorWithMask(INTERPRETER_ARG_COMMA int cursorBitsIndex, int cursorMas
       */
       for (i=0; i<16; i++)
         {
-          andMask[i*cx/8+0] = ~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorMaskIndex + (4 * i)) >> 24) & 0xFF;
-          andMask[i*cx/8+1] = ~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorMaskIndex + (4 * i)) >> 16) & 0xFF;
+          andMask[i*cx/8+0] = ~(checkedLongAt _iparams(cursorMaskIndex + (4 * i)) >> 24) & 0xFF;
+          andMask[i*cx/8+1] = ~(checkedLongAt _iparams(cursorMaskIndex + (4 * i)) >> 16) & 0xFF;
         }
       for (i=0; i<16; i++)
         {
-          xorMask[i*cx/8+0] = (~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF) ^ (andMask[i*cx/8+0]);
-          xorMask[i*cx/8+1] = (~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF) ^ (andMask[i*cx/8+1]);
+          xorMask[i*cx/8+0] = (~(checkedLongAt _iparams(cursorBitsIndex + (4 * i)) >> 24) & 0xFF) ^ (andMask[i*cx/8+0]);
+          xorMask[i*cx/8+1] = (~(checkedLongAt _iparams(cursorBitsIndex + (4 * i)) >> 16) & 0xFF) ^ (andMask[i*cx/8+1]);
         }
     }
   else /* Old Cursor: Just make all 1-bits black */
     for (i=0; i<16; i++)
       {
-        andMask[i*cx/8+0] = ~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorBitsIndex + (4 * i)) >> 24) & 0xFF;
-        andMask[i*cx/8+1] = ~(checkedLongAt(INTERPRETER_PARAM_COMMA cursorBitsIndex + (4 * i)) >> 16) & 0xFF;
+        andMask[i*cx/8+0] = ~(checkedLongAt _iparams(cursorBitsIndex + (4 * i)) >> 24) & 0xFF;
+        andMask[i*cx/8+1] = ~(checkedLongAt _iparams(cursorBitsIndex + (4 * i)) >> 16) & 0xFF;
       }
 
   currentCursor = CreateCursor(hInstance,-offsetX,-offsetY,cx,cy,andMask,xorMask);
@@ -1521,13 +1525,13 @@ int ioSetCursorWithMask(INTERPRETER_ARG_COMMA int cursorBitsIndex, int cursorMas
   return 1;
 }
 
-int ioSetCursor(INTERPRETER_ARG_COMMA int cursorBitsIndex, int offsetX, int offsetY)
+int ioSetCursor _iargs(int cursorBitsIndex, int offsetX, int offsetY)
 {
-  return ioSetCursorWithMask(INTERPRETER_PARAM_COMMA cursorBitsIndex, 0, offsetX, offsetY);
+  return ioSetCursorWithMask _iparams(cursorBitsIndex, 0, offsetX, offsetY);
 }
 
 
-int ioSetFullScreen(INTERPRETER_ARG_COMMA int fullScreen)
+int ioSetFullScreen _iargs(int fullScreen)
 { static int wasFullScreen = 0;
 
 dprintf(("ioSetFullScreen %d\n", fullScreen));
@@ -1545,7 +1549,7 @@ dprintf(("ioSetFullScreen , window visible & was not in fullscreen\n"));
 	HWND oldBrowserWindow = browserWindow;
 	browserWindow = NULL;
 	DestroyWindow(stWindow);
-	SetupWindows(INTERPRETER_PARAM);
+	SetupWindows _iparam();
 	/* I'm not exactly sure which one of the following three
 	   does the trick for IE - but using all three works,
 	   so hey, who cares ;-) */
@@ -1561,7 +1565,7 @@ dprintf(("ioSetFullScreen , window visible & was not in fullscreen\n"));
 #else /* !defined(_WIN32_WCE) */
       ShowWindow(stWindow,SW_SHOWNORMAL);
 #endif /* !defined(_WIN32_WCE) */
-      setFullScreenFlag(INTERPRETER_PARAM, 1);
+      setFullScreenFlag _iparams(1);
     }
   else
     {
@@ -1574,11 +1578,11 @@ dprintf(("ioSetFullScreen , window visible & was not in fullscreen\n"));
       if(browserWindow) {
 	/* Jump back into the browser */
 	DestroyWindow(stWindow);
-	SetupWindows(INTERPRETER_PARAM);
+	SetupWindows _iparam();
       }
 #endif /* !defined(_WIN32_WCE) */
       ShowWindow(stWindow,SW_SHOWNORMAL);
-      setFullScreenFlag(INTERPRETER_PARAM, 0);
+      setFullScreenFlag _iparams(0);
     }
   /* get us back in the foreground */
   SetForegroundWindow(stWindow);
@@ -1752,7 +1756,7 @@ int ioHasDisplayDepth(int depth) {
 }
 
 
-int ioSetDisplayMode(INTERPRETER_ARG_COMMA int width, int height, int depth, int fullscreenFlag)
+int ioSetDisplayMode _iargs(int width, int height, int depth, int fullscreenFlag)
 {
 #ifdef _WIN32_WCE
   return 0; /* Not implemented on CE */
@@ -1773,11 +1777,11 @@ int ioSetDisplayMode(INTERPRETER_ARG_COMMA int width, int height, int depth, int
        the main window you'll never get out of it. That's why we
        destroy and recreate the window here.
     */
-    ioSetFullScreen(INTERPRETER_PARAM_COMMA 0); /* Turn off fullscreen */
+    ioSetFullScreen _iparams(0); /* Turn off fullscreen */
     DirectXSetDisplayMode(stWindow, width, height, depth, 0);
     DestroyWindow(stWindow);
     browserWindow = oldBrowserWindow;
-    SetupWindows(INTERPRETER_PARAM);
+    SetupWindows _iparam();
     ShowWindow(stWindow, SW_SHOWNORMAL);
   }
   wasFullscreen = fullscreenFlag;
@@ -1786,7 +1790,7 @@ int ioSetDisplayMode(INTERPRETER_ARG_COMMA int width, int height, int depth, int
     oldBrowserWindow = browserWindow;
     browserWindow = NULL;
     DestroyWindow(stWindow);
-    SetupWindows(INTERPRETER_PARAM);
+    SetupWindows _iparam();
     ShowWindow(stWindow, SW_SHOWNORMAL);
   }
   if(!DirectXSetDisplayMode(stWindow, width, height, depth, fullscreenFlag)) {
@@ -1794,13 +1798,13 @@ int ioSetDisplayMode(INTERPRETER_ARG_COMMA int width, int height, int depth, int
     if(oldBrowserWindow) {
       DestroyWindow(stWindow);
       browserWindow = oldBrowserWindow;
-      SetupWindows(INTERPRETER_PARAM);
+      SetupWindows _iparam();
       ShowWindow(stWindow, SW_SHOWNORMAL);
     }
     return 0;
   }
   /* Note: Only go to full screen if DirectX is used */
-  ioSetFullScreen(INTERPRETER_PARAM_COMMA fullscreenFlag);
+  ioSetFullScreen _iparams(fullscreenFlag);
 #endif
 
   r.left = 0;
@@ -2371,10 +2375,10 @@ int clipboardReadIntoAt(int count, int byteArrayIndex, int startIndex) {
 /*                          Profiling                                       */
 /****************************************************************************/
 #ifndef PROFILE
-int clearProfile(INTERPRETER_ARG) { return 1;}
-int dumpProfile(INTERPRETER_ARG) {return 1;}
-int startProfiling(INTERPRETER_ARG) {return 1;}
-int stopProfiling(INTERPRETER_ARG) {return 1;}
+int clearProfile _iarg() { return 1;}
+int dumpProfile _iarg() {return 1;}
+int startProfiling _iarg() {return 1;}
+int stopProfiling _iarg() {return 1;}
 #endif
 
 /****************************************************************************/
@@ -2401,36 +2405,36 @@ int vmPathGetLength(int sqVMPathIndex, int length)
   return count;
 }
 
-int imageNameSize(INTERPRETER_ARG)
+int imageNameSize _iarg()
 {
   DECL_WIN32_STATE();
   return strlen(WIN32_STATE(imageName));
 }
 
-char *ioGetImageName(INTERPRETER_ARG)
+char *ioGetImageName _iarg()
 {
 	DECL_WIN32_STATE();
 	return WIN32_STATE(imageName);
 };
 
-int imageNameGetLength(INTERPRETER_ARG_COMMA int sqImageNameIndex, int length)
+int imageNameGetLength _iargs(int sqImageNameIndex, int length)
 {
   char *sqImageName= (char *)sqImageNameIndex;
   char * imgName;
   int count, i;
 
-  count= imageNameSize(INTERPRETER_PARAM);
+  count= imageNameSize _iparam();
   count= (length < count) ? length : count;
 
   /* copy the file name into the Squeak string */
-  imgName = ioGetImageName(INTERPRETER_PARAM);
+  imgName = ioGetImageName _iparam();
   for (i= 0; i < count; i++)
     sqImageName[i]= imgName[i];
 
   return count;
 }
 
-int imageNamePutLength(INTERPRETER_ARG_COMMA int sqImageNameIndex, int length)
+int imageNamePutLength _iargs(int sqImageNameIndex, int length)
 {
   char *sqImageName= (char *)sqImageNameIndex;
   char tmpImageName[MAX_PATH+1];
@@ -2466,7 +2470,7 @@ int imageNamePutLength(INTERPRETER_ARG_COMMA int sqImageNameIndex, int length)
           strcat(WIN32_STATE(imageName),tmpImageName);
         }
     }
-  SetWindowTitle(INTERPRETER_PARAM);
+  SetWindowTitle _iparam();
   return 1;
 }
 
@@ -2526,7 +2530,7 @@ char * GetAttributeString(int id) {
 int attributeSize(int id) {
   char *attrValue;
   attrValue = GetAttributeString(id);
-  if(!attrValue) return primitiveFail(MAIN_VM);
+  if(!attrValue) return 0;
   return strlen(attrValue);
 }
 
@@ -2572,7 +2576,7 @@ int getAttributeIntoLength(int id, int byteArrayIndex, int length) {
 	   either requiring the image name to be fully pathed, or
 	   if not, popping up a file open dialog */
 
-void SetupFilesAndPath(INTERPRETER_ARG){ 
+void SetupFilesAndPath _iarg(){ 
   DECL_WIN32_STATE();
   char *tmp;
   lstrcpy(WIN32_STATE(imagePath), WIN32_STATE(imageName));
@@ -2635,9 +2639,9 @@ recurseDown:
   SetCurrentDirectory(oldDir);
 }
 
-void ioSetImagePath(INTERPRETER_ARG_COMMA char * imgName)
+void ioSetImagePath(PInterpreter intr, char * imgName)
 {
-  DECL_WIN32_STATE();
+  struct Win32AttachedState * win32state = getAttachedStateBufferof(win32stateId, intr);
   char *tmp;
   WCHAR tmpName[MAX_PATH];
   WCHAR imageNameW[MAX_PATH];

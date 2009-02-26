@@ -20,6 +20,8 @@
   static char RCSID[] = "$Id$";
 #endif
 
+#define FAIL() { PInterpreter intr = MAIN_VM; success _iparams(false); return 0; }
+
 /* Maximum number of serial ports supported */
 #define MAX_SERIAL_PORTS 16
 
@@ -33,10 +35,7 @@ static int isValidComm(int portNum)
 {
   if(portNum <= 0 || portNum > MAX_SERIAL_PORTS || 
      serialPorts[portNum-1] == INVALID_HANDLE_VALUE)
-       {
-         success(MAIN_VM, false);
-         return 0;
-       }
+		FAIL();
   return 1;
 }  
   
@@ -48,8 +47,7 @@ int serialPortClose(int portNum)
   /* Allow ports that aren't open to be closed		20nov98 jfb */
   if(portNum <= 0 || portNum > MAX_SERIAL_PORTS)
     { /* port number out of range */
-      success(MAIN_VM, false);
-      return 0;
+		FAIL();
     }
   if ((port = serialPorts[portNum-1]) != INVALID_HANDLE_VALUE)
     { PurgeComm( port, PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR |  
@@ -76,13 +74,11 @@ int serialPortOpen(int portNum, int baudRate, int stopBitsType,
 
   if(portNum <= 0 || portNum > MAX_SERIAL_PORTS)
     { /* port number out of range */
-      success(MAIN_VM, false);
-      return 0;
+	  FAIL();
     }
   if(serialPorts[portNum-1] != INVALID_HANDLE_VALUE)
     { /* port already open */
-      success(MAIN_VM, false);
-      return 0;
+      FAIL();
     }
   wsprintf(name,TEXT("COM%d"),portNum);
   port = CreateFile(name,
@@ -96,8 +92,7 @@ int serialPortOpen(int portNum, int baudRate, int stopBitsType,
   if(port == INVALID_HANDLE_VALUE)
     {
       printLastError(TEXT("OpenComm failed"));
-      success(MAIN_VM, false);
-      return 0;
+      FAIL();
     }
   /* Flush the driver */
   PurgeComm( port, PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_RXCLEAR );
@@ -158,8 +153,7 @@ int serialPortOpen(int portNum, int baudRate, int stopBitsType,
   return 1;
 errExit:
   CloseHandle(port);
-  success(MAIN_VM, false);
-  return 0;
+  FAIL();
 }
 
 
@@ -175,8 +169,7 @@ int serialPortReadInto(int portNum, int count, int startPtr)
   if(!ReadFile(serialPorts[portNum-1],(void*)startPtr,count,&cbReallyRead,NULL))
     {
       printLastError(TEXT("ReadComm failed"));
-      success(MAIN_VM, false);
-      return 0;
+      FAIL();
     }
   return cbReallyRead;
 }
@@ -191,8 +184,7 @@ int serialPortWriteFrom(int portNum, int count, int startPtr)
   if(!WriteFile(serialPorts[portNum-1],(void*)startPtr,count,&cbReallyWritten,NULL))
     {
       printLastError(TEXT("WriteComm failed"));
-      success(MAIN_VM, false);
-      return 0;
+      FAIL();
     }
   return cbReallyWritten;
 }

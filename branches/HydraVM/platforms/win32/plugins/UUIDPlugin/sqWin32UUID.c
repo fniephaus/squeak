@@ -22,9 +22,9 @@ int sqUUIDShutdown(void) {
   return 1;
 }
 
-int MakeUUID(PLUGIN_IARG_COMMA char *location) {
+int MakeUUID _iargs(char *location) {
   if(CoCreateGuid((GUID*)location) == S_OK) return 1;
-  vmFunction(primitiveFail)(PLUGIN_IPARAM);
+  vmFunction(primitiveFail) _iparam();
   return 0;
 }
 

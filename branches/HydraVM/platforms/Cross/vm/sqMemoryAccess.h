@@ -176,7 +176,7 @@ static inline void flag(char *ignored) {}
 /* VM events typedefs. We need to define them early, this is the only place where it can be defined */
 
 struct vmEvent;
-typedef sqInt (*eventFnPtr)(struct Interpreter*, struct vmEvent*);
+typedef sqInt (*eventFnPtr) _iargs(struct vmEvent*);
 
 /* Minimum event payload just a function pointer which should be called by event handler
 ** any other payload can be added by ''subclassing'' this struct

@@ -12,48 +12,48 @@ typedef struct
 }  SQSocket, *SocketPtr;
 
 /* networking primitives */
-sqInt sqNetworkInit(PLUGIN_IARG_COMMA sqInt resolverSemaIndex);
+sqInt sqNetworkInit _iargs(sqInt resolverSemaIndex);
 void  sqNetworkShutdown(void);
 
 /* resolver functions */
-void  sqResolverAbort(PLUGIN_IARG);
-void  sqResolverAddrLookupResult(PLUGIN_IARG_COMMA char *nameForAddress, sqInt nameSize);
-sqInt sqResolverAddrLookupResultSize(PLUGIN_IARG);
-sqInt sqResolverError(PLUGIN_IARG);
-sqInt sqResolverLocalAddress(PLUGIN_IARG);
-sqInt sqResolverNameLookupResult(PLUGIN_IARG);
-void  sqResolverStartAddrLookup(PLUGIN_IARG_COMMA sqInt address);
-void  sqResolverStartNameLookup(PLUGIN_IARG_COMMA char *hostName, sqInt nameSize);
-sqInt sqResolverStatus(PLUGIN_IARG);
+void  sqResolverAbort _iarg();
+void  sqResolverAddrLookupResult _iargs(char *nameForAddress, sqInt nameSize);
+sqInt sqResolverAddrLookupResultSize _iarg();
+sqInt sqResolverError _iarg();
+sqInt sqResolverLocalAddress _iarg();
+sqInt sqResolverNameLookupResult _iarg();
+void  sqResolverStartAddrLookup _iargs(sqInt address);
+void  sqResolverStartNameLookup _iargs(char *hostName, sqInt nameSize);
+sqInt sqResolverStatus _iarg();
 
-void sqSocketAbortConnection(PLUGIN_IARG_COMMA SocketPtr s);
-void sqSocketCloseConnection(PLUGIN_IARG_COMMA SocketPtr s);
-sqInt sqSocketConnectionStatus(PLUGIN_IARG_COMMA SocketPtr s);
-void  sqSocketConnectToPort(PLUGIN_IARG_COMMA SocketPtr s, sqInt addr, sqInt port);
-void  sqSocketCreateNetTypeSocketTypeRecvBytesSendBytesSemaID(PLUGIN_IARG_COMMA SocketPtr s, sqInt netType, sqInt socketType, sqInt recvBufSize, sqInt sendBufSize, sqInt semaIndex);
-void  sqSocketCreateNetTypeSocketTypeRecvBytesSendBytesSemaIDReadSemaIDWriteSemaID(PLUGIN_IARG_COMMA SocketPtr s, sqInt netType, sqInt socketType, sqInt recvBufSize, sqInt sendBufSize, sqInt semaIndex, sqInt readSemaIndex, sqInt writeSemaIndex);
-void  sqSocketDestroy(PLUGIN_IARG_COMMA SocketPtr s);
-sqInt sqSocketError(PLUGIN_IARG_COMMA SocketPtr s);
-void  sqSocketListenOnPort(PLUGIN_IARG_COMMA SocketPtr s, sqInt port);
-sqInt sqSocketLocalAddress(PLUGIN_IARG_COMMA SocketPtr s);
-sqInt sqSocketLocalPort(PLUGIN_IARG_COMMA SocketPtr s);
-sqInt sqSocketReceiveDataAvailable(PLUGIN_IARG_COMMA SocketPtr s);
-sqInt sqSocketReceiveDataBufCount(PLUGIN_IARG_COMMA SocketPtr s, char *buf, sqInt bufSize);
-sqInt sqSocketRemoteAddress(PLUGIN_IARG_COMMA SocketPtr s);
-sqInt sqSocketRemotePort(PLUGIN_IARG_COMMA SocketPtr s);
-sqInt sqSocketSendDataBufCount(PLUGIN_IARG_COMMA SocketPtr s, char *buf, sqInt bufSize);
-sqInt sqSocketSendDone(PLUGIN_IARG_COMMA SocketPtr s);
+void sqSocketAbortConnection _iargs(SocketPtr s);
+void sqSocketCloseConnection _iargs(SocketPtr s);
+sqInt sqSocketConnectionStatus _iargs(SocketPtr s);
+void  sqSocketConnectToPort _iargs(SocketPtr s, sqInt addr, sqInt port);
+void  sqSocketCreateNetTypeSocketTypeRecvBytesSendBytesSemaID _iargs(SocketPtr s, sqInt netType, sqInt socketType, sqInt recvBufSize, sqInt sendBufSize, sqInt semaIndex);
+void  sqSocketCreateNetTypeSocketTypeRecvBytesSendBytesSemaIDReadSemaIDWriteSemaID _iargs(SocketPtr s, sqInt netType, sqInt socketType, sqInt recvBufSize, sqInt sendBufSize, sqInt semaIndex, sqInt readSemaIndex, sqInt writeSemaIndex);
+void  sqSocketDestroy _iargs(SocketPtr s);
+sqInt sqSocketError _iargs(SocketPtr s);
+void  sqSocketListenOnPort _iargs(SocketPtr s, sqInt port);
+sqInt sqSocketLocalAddress _iargs(SocketPtr s);
+sqInt sqSocketLocalPort _iargs(SocketPtr s);
+sqInt sqSocketReceiveDataAvailable _iargs(SocketPtr s);
+sqInt sqSocketReceiveDataBufCount _iargs(SocketPtr s, char *buf, sqInt bufSize);
+sqInt sqSocketRemoteAddress _iargs(SocketPtr s);
+sqInt sqSocketRemotePort _iargs(SocketPtr s);
+sqInt sqSocketSendDataBufCount _iargs(SocketPtr s, char *buf, sqInt bufSize);
+sqInt sqSocketSendDone _iargs(SocketPtr s);
 /* ar 7/16/1999: New primitives for accept().  Note: If accept() calls are not supported simply make the calls fail and the old connection style will be used. */
-void  sqSocketListenOnPortBacklogSize(PLUGIN_IARG_COMMA SocketPtr s, sqInt port, sqInt backlogSize);
-void  sqSocketListenOnPortBacklogSizeInterface(PLUGIN_IARG_COMMA SocketPtr s, sqInt port, sqInt backlogSize, sqInt addr);
-void  sqSocketAcceptFromRecvBytesSendBytesSemaID(PLUGIN_IARG_COMMA SocketPtr s, SocketPtr serverSocket, sqInt recvBufSize, sqInt sendBufSize, sqInt semaIndex);
-void  sqSocketAcceptFromRecvBytesSendBytesSemaIDReadSemaIDWriteSemaID(PLUGIN_IARG_COMMA SocketPtr s, SocketPtr serverSocket, sqInt recvBufSize, sqInt sendBufSize, sqInt semaIndex, sqInt readSemaIndex, sqInt writeSemaIndex);
-sqInt sqSocketReceiveUDPDataBufCountaddressportmoreFlag(PLUGIN_IARG_COMMA SocketPtr s, char *buf, sqInt bufSize,  sqInt *address,  sqInt *port, sqInt *moreFlag);
-sqInt sqSockettoHostportSendDataBufCount(PLUGIN_IARG_COMMA SocketPtr s, sqInt address, sqInt port, char *buf, sqInt bufSize);
-sqInt sqSocketSetOptionsoptionNameStartoptionNameSizeoptionValueStartoptionValueSizereturnedValue(PLUGIN_IARG_COMMA SocketPtr s, char *optionName, sqInt optionNameSize, char *optionValue, sqInt optionValueSize, sqInt *result);
-sqInt sqSocketGetOptionsoptionNameStartoptionNameSizereturnedValue(PLUGIN_IARG_COMMA SocketPtr s, char *optionName, sqInt optionNameSize, sqInt *result);
+void  sqSocketListenOnPortBacklogSize _iargs(SocketPtr s, sqInt port, sqInt backlogSize);
+void  sqSocketListenOnPortBacklogSizeInterface _iargs(SocketPtr s, sqInt port, sqInt backlogSize, sqInt addr);
+void  sqSocketAcceptFromRecvBytesSendBytesSemaID _iargs(SocketPtr s, SocketPtr serverSocket, sqInt recvBufSize, sqInt sendBufSize, sqInt semaIndex);
+void  sqSocketAcceptFromRecvBytesSendBytesSemaIDReadSemaIDWriteSemaID _iargs(SocketPtr s, SocketPtr serverSocket, sqInt recvBufSize, sqInt sendBufSize, sqInt semaIndex, sqInt readSemaIndex, sqInt writeSemaIndex);
+sqInt sqSocketReceiveUDPDataBufCountaddressportmoreFlag _iargs(SocketPtr s, char *buf, sqInt bufSize,  sqInt *address,  sqInt *port, sqInt *moreFlag);
+sqInt sqSockettoHostportSendDataBufCount _iargs(SocketPtr s, sqInt address, sqInt port, char *buf, sqInt bufSize);
+sqInt sqSocketSetOptionsoptionNameStartoptionNameSizeoptionValueStartoptionValueSizereturnedValue _iargs(SocketPtr s, char *optionName, sqInt optionNameSize, char *optionValue, sqInt optionValueSize, sqInt *result);
+sqInt sqSocketGetOptionsoptionNameStartoptionNameSizereturnedValue _iargs(SocketPtr s, char *optionName, sqInt optionNameSize, sqInt *result);
 /* tpr 4/12/06 add declarations for two new socket routines */
-void sqSocketBindToPort(PLUGIN_IARG_COMMA SocketPtr s, int addr, int port);
-void sqSocketSetReusable(PLUGIN_IARG_COMMA SocketPtr s);
+void sqSocketBindToPort _iargs(SocketPtr s, int addr, int port);
+void sqSocketSetReusable _iargs(SocketPtr s);
 
 

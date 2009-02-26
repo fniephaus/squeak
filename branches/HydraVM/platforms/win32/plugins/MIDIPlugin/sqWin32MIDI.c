@@ -27,6 +27,7 @@
   static char RCSID[] = "$Id$";
 #endif
 
+#define FAIL() { PInterpreter intr = MAIN_VM; success _iparams(false); return 0; }
 /*** MIDI Parameters (used with sqMIDIParameter function) ***/
 
 #define sqMIDIInstalled				1
@@ -552,7 +553,7 @@ int startSysExCommand(sqMidiPort *port, unsigned char *srcPtr, int count)
   port->sysExLength = n;
   if(port->sysExLength >= MAX_SYSEX_BUFFER) 
     { /* fail if not enough sysex space */
-      success(MAIN_VM, false);
+      FAIL();
       return -1;
     }
   if( (n >= count) || (srcPtr[n] & 0x80) != 0x80)
@@ -589,7 +590,7 @@ int finishSysExCommand(sqMidiPort *port, char *bufferPtr, int count)
   if(port->sysExLength >= MAX_SYSEX_BUFFER)
     {
       port->flags &= ~PENDING_SYSEX;
-      success(MAIN_VM, false);
+      FAIL();
       return -1;
     }
   /* return if the sysex message has not been finished */
@@ -610,7 +611,7 @@ static sqMidiPort* GetPort(int portNum)
 {
   if(portNum > MAX_DEVICES || portNum < 0)
     {
-      success(MAIN_VM, false);
+      FAIL();
       return NULL;
     }
   else
@@ -719,7 +720,7 @@ int sqMIDIGetPortCount(void) {
    there is no port of the given number. */
 int sqMIDIGetPortDirectionality(int portNum) {
   if(portNum < 0 || portNum >= midiInNumDevices+midiOutNumDevices)
-    return success(MAIN_VM, false);
+    FAIL();
   return portNum < midiOutNumDevices ? MIDI_OUT_DEVICE : MIDI_IN_DEVICE;
 }
 
@@ -733,7 +734,7 @@ int sqMIDIGetPortName(int portNum, int namePtr, int length) {
   MIDIINCAPS inCaps;
 
   if(portNum < 0 || portNum >= midiInNumDevices+midiOutNumDevices)
-    return success(MAIN_VM, false);
+    FAIL();
   if(portNum < midiOutNumDevices)
     {
       midiOutGetDevCaps(portNum-1, &outCaps, sizeof(outCaps));
@@ -766,7 +767,7 @@ int sqMIDIOpenPort(int portNum, int readSemaIndex, int interfaceClockRate) {
 
   if(port) return 1; /* already open */
   if(portNum >= midiInNumDevices+midiOutNumDevices)
-    return success(MAIN_VM, false);
+    FAIL();
   if(portNum < midiOutNumDevices)
     { /* output port */
       MIDIOUTCAPS caps;
@@ -774,7 +775,7 @@ int sqMIDIOpenPort(int portNum, int readSemaIndex, int interfaceClockRate) {
 
       midiOutGetDevCaps(portNum-1, &caps, sizeof(caps));
       port = AllocatePort(1); /* Allocate the output port */
-      if(!port) { success(MAIN_VM, false);  return 0;}
+      if(!port) { FAIL();}
       port->flags = MIDI_OUT_DEVICE;
       midiPorts[portNum] = port;
       MoveMemory(port->name, caps.szPname, MAXPNAMELEN * sizeof(TCHAR));
@@ -790,8 +791,7 @@ int sqMIDIOpenPort(int portNum, int readSemaIndex, int interfaceClockRate) {
                   caps.szPname, errorText);
 #endif
           FreePort(portNum);
-          success(MAIN_VM, false);
-          return 0;
+          FAIL();
         }
       port->handle = handle;
     }
@@ -802,7 +802,7 @@ int sqMIDIOpenPort(int portNum, int readSemaIndex, int interfaceClockRate) {
 
       midiInGetDevCaps(portNum - midiOutNumDevices, &caps, sizeof(caps));
       port = AllocatePort(0); /* Allocate the input port */
-      if(!port) { success(MAIN_VM, false);  return 0;}
+      if(!port) { FAIL();}
       port->flags = MIDI_IN_DEVICE;
       port->semaphore = readSemaIndex;
       midiPorts[portNum] = port;
@@ -820,8 +820,7 @@ int sqMIDIOpenPort(int portNum, int readSemaIndex, int interfaceClockRate) {
                   caps.szPname, errorText);
 #endif
           FreePort(portNum);
-          success(MAIN_VM, false);
-          return 0;
+          FAIL();
         }
       port->handle = handle;
       midiInStart(handle);
@@ -859,7 +858,7 @@ int sqMIDIParameter(int whichParameter, int modify, int newValue) {
 		case sqMIDIClockTicksPerSec:   return 1000;
 		case sqMIDIHasInputClock:      return 1;
 		default:
-			return success(MAIN_VM, false);
+			FAIL();
 		}
 	} else {
 		switch(whichParameter) {
@@ -869,7 +868,7 @@ int sqMIDIParameter(int whichParameter, int modify, int newValue) {
 		case sqMIDIHasDurs:
 		case sqMIDICanSetClock:
 		case sqMIDICanUseSemaphore:
-			return success(MAIN_VM, false);
+			FAIL();
 			break;
 		case sqMIDIEchoOn:
       isEchoEnabled = newValue != 0;
@@ -878,7 +877,7 @@ int sqMIDIParameter(int whichParameter, int modify, int newValue) {
       isControllerCaching = newValue != 0;
 			break;
 		case sqMIDIEventsAvailable:
-			return success(MAIN_VM, false);
+			FAIL();
 			break;
 		case sqMIDIFlushDriver:
       for(i=0;i<MAX_DEVICES;i++)
@@ -904,10 +903,10 @@ int sqMIDIParameter(int whichParameter, int modify, int newValue) {
         }
 			break;
 		case sqMIDIClockTicksPerSec:
-			return success(MAIN_VM, false);
+			FAIL();
 			break;
 		default:
-			return success(MAIN_VM, false);
+			FAIL();
 		}
 	}
 	return 1;
@@ -943,9 +942,9 @@ int sqMIDIPortReadInto(int portNum, int count, int bufferPtr) {
   sqMidiPort *port;
 
   /* require at least 1 byte for midi data */
-	if (count < 5) return success(MAIN_VM, false);
+	if (count < 5) FAIL();
   port = GetPort(portNum);
-  if(!port) return success(MAIN_VM, false);
+  if(!port) FAIL();
 
   if(port->inBufferStart == port->inBufferEnd)
 		return 0; /* no data */
@@ -1025,9 +1024,9 @@ int sqMIDIPortWriteFromAt(int portNum, int count, int bufferPtr, int time) {
   timeStamp = timeGetTime() + (DWORD) time;
   /* fetch port */
   port = GetPort(portNum);
-  if(!port) return success(MAIN_VM, false);
+  if(!port) FAIL();
   if(0 == (port->flags & MIDI_OUT_DEVICE))
-    return success(MAIN_VM, false); /* read-only ports fail on write */
+    FAIL(); /* read-only ports fail on write */
 
   /* Check if we're still in a MIDI SysEx message from last time */
   if(port->flags & PENDING_SYSEX)
