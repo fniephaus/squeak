@@ -1,4 +1,4 @@
-/* Automatically generated from Squeak on an Array(9 May 2008 11:24:52 am)
+/* Automatically generated from Squeak on an Array(1 April 2009 2:39:05 pm)
 by VMMaker 3.8b6
  */
 
@@ -58,6 +58,7 @@ EXPORT(sqInt) primitiveSqueakSinkVideo(void);
 EXPORT(sqInt) primitiveSqueakSrc(void);
 EXPORT(sqInt) primitiveSqueakSrcAllocate(void);
 EXPORT(sqInt) primitiveSqueakSrcWithTime(void);
+EXPORT(sqInt) primitivecallbacksignalseenfor(void);
 EXPORT(sqInt) primitivegetinterpreterproxy(void);
 EXPORT(sqInt) primitivegetoop(void);
 EXPORT(sqInt) primitivegobjectclasslistproperties(void);
@@ -142,6 +143,7 @@ EXPORT(sqInt) primitivegstmessageunref(void);
 EXPORT(sqInt) primitivegstobjectunref(void);
 EXPORT(sqInt) primitivegstpadacceptcaps(void);
 EXPORT(sqInt) primitivegstpadgetcaps(void);
+EXPORT(sqInt) primitivegstpadgetparentelement(void);
 EXPORT(sqInt) primitivegstpadlink(void);
 EXPORT(sqInt) primitivegstpadsetactive(void);
 EXPORT(sqInt) primitivegstpadsetcaps(void);
@@ -170,6 +172,7 @@ static sqLong signed64BitValueOfOverride(sqInt oop);
 static sqInt sqAssert(sqInt aBool);
 static sqInt stringFromCString(const char * aCString);
 /*** Variables ***/
+static gboolean callbackForPadHookupElement[128];
 
 #ifdef SQUEAK_BUILTIN_PLUGIN
 extern
@@ -177,9 +180,9 @@ extern
 struct VirtualMachine* interpreterProxy;
 static const char *moduleName =
 #ifdef SQUEAK_BUILTIN_PLUGIN
-	"GStreamerPlugin 9 May 2008 (i)"
+	"GStreamerPlugin 1 April 2009 (i)"
 #else
-	"GStreamerPlugin 9 May 2008 (e)"
+	"GStreamerPlugin 1 April 2009 (e)"
 #endif
 ;
 
@@ -207,6 +210,9 @@ static sqInt cbnewpad(sqInt element, sqInt newPad, sqInt  *data) {
 		gstCapsValue = gst_pad_get_caps (newPad);
 		result =  gst_pad_accept_caps (gstPadValue, gstCapsValue);
 		if (result) {
+			if (i < 128) {
+				callbackForPadHookupElement[i] = 1;
+			}
 			gst_pad_link (newPad, gstPadValue);
 			return null;
 		}
@@ -588,10 +594,10 @@ EXPORT(sqInt) primitiveSqueakSrcAllocate(void) {
 }
 
 EXPORT(sqInt) primitiveSqueakSrcWithTime(void) {
+	GstClockTime  startTimeValue;
 	GstClockTime  durationValue;
 	SqueakAudioVideoSinkPtr  sink;
 	sqInt doesFrameExist;
-	GstClockTime  startTimeValue;
 	sqInt aSqueakSinkObject;
 	sqInt data;
 	sqInt startTime;
@@ -637,6 +643,29 @@ EXPORT(sqInt) primitiveSqueakSrcWithTime(void) {
 		return null;
 	}
 	interpreterProxy->popthenPush(5, _return_value);
+	return null;
+}
+
+EXPORT(sqInt) primitivecallbacksignalseenfor(void) {
+	gboolean  value;
+	sqInt aIndex;
+	sqInt _return_value;
+
+	aIndex = interpreterProxy->stackIntegerValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	value = 0;
+	if ((aIndex < 1) || (aIndex > 127)) {
+		interpreterProxy->primitiveFail();
+		return null;
+	}
+	value = callbackForPadHookupElement[aIndex];
+	_return_value = (value) ? interpreterProxy->trueObject(): interpreterProxy->falseObject();
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(2, _return_value);
 	return null;
 }
 
@@ -1485,9 +1514,9 @@ EXPORT(sqInt) primitivegobjectclasslistpropertyulonglongatIndex(void) {
 	 GParamSpec **  propertyspecs;
 	unsigned long long defaultValue;
 	GParamSpecUInt64 * pstring;
-	unsigned long long minimumValue;
 	unsigned long long ulonglongValue;
 	sqInt defaultValueOop;
+	unsigned long long minimumValue;
 	sqInt ulonglongValueOop;
 	sqInt arrayOop;
 	sqInt minimumValueOop;
@@ -2677,6 +2706,9 @@ EXPORT(sqInt) primitivegstelementgsignalconnect(void) {
 	for (i = 0; i <= (listLength - 1); i += 1) {
 		dataPad = ((sqInt) (data[i]));
 		callBackData[i + 1] = dataPad;
+		if (i < 128) {
+			callbackForPadHookupElement[i + 1] = 0;
+		}
 	}
 	;
 	;
@@ -3489,6 +3521,28 @@ EXPORT(sqInt) primitivegstpadgetcaps(void) {
 	return null;
 }
 
+EXPORT(sqInt) primitivegstpadgetparentelement(void) {
+	GstPad*  gstPadValue;
+	GstElement*  gstEvementValue;
+	sqInt gstPadOop;
+	sqInt _return_value;
+
+	gstPadOop = interpreterProxy->stackValue(0);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	gstEvementValue = 0;
+	gstPadValue = ((GstPad*) (interpreterProxy->positive32BitValueOf(gstPadOop)));
+	;
+	gstEvementValue = gst_pad_get_parent_element (gstPadValue);
+	_return_value = interpreterProxy->positive32BitIntegerFor(gstEvementValue);
+	if (interpreterProxy->failed()) {
+		return null;
+	}
+	interpreterProxy->popthenPush(2, _return_value);
+	return null;
+}
+
 EXPORT(sqInt) primitivegstpadlink(void) {
 	GstPad*  dest;
 	GstPad*  src;
@@ -3885,7 +3939,7 @@ EXPORT(sqInt) primitivegstpipelineuseclock(void) {
 /*	Applications might want to disable/enable the usage of fork() when rebuilding the registry. See gst_registry_fork_is_enabled() for more information.
 On platforms without fork(), this function will have no effect on the return value of gst_registry_fork_is_enabled().
 
-enabled:
+enabled :
 whether rebuilding the registry may fork
  */
 
@@ -3987,11 +4041,11 @@ static sqInt shutdownModule(void) {
 	The object may be either a positive ST integer or a four-byte LargeInteger. */
 
 static sqInt signed32BitValueOfOverride(sqInt oop) {
-	sqInt negative;
 	sqInt value;
-	sqInt sz;
 	sqInt largeClass;
 	unsigned char * where;
+	sqInt negative;
+	sqInt sz;
 
 	if ((oop & 1)) {
 		return (oop >> 1);
@@ -4018,6 +4072,9 @@ static sqInt signed32BitValueOfOverride(sqInt oop) {
 	high bit of the magnitude is not set which is a simple test here. */
 
 	value = (((where[0]) + ((where[1]) << 8)) + ((where[2]) << 16)) + ((where[3]) << 24);
+	if (negative && (value == (1 << 31))) {
+		return value;
+	}
 	if (value < 0) {
 		return interpreterProxy->primitiveFail();
 	}
@@ -4033,6 +4090,7 @@ static sqInt signed32BitValueOfOverride(sqInt oop) {
 
 static sqInt signed64BitIntegerForOverride(sqLong integerValue) {
 	usqInt highWord;
+	sqLong lowestIntegerValue;
 	sqInt largeClass;
 	unsigned char* where;
 	sqInt i;
@@ -4041,6 +4099,18 @@ static sqInt signed64BitIntegerForOverride(sqLong integerValue) {
 	sqInt sz;
 	sqInt intValue;
 
+	lowestIntegerValue = 1;
+	lowestIntegerValue = lowestIntegerValue << 63;
+	if (integerValue == lowestIntegerValue) {
+
+		/* newLargeInteger := self instantiateClass: largeClass indexableSize:  8. */
+
+		largeClass = interpreterProxy->classLargeNegativeInteger();
+		newLargeInteger = interpreterProxy->instantiateClassindexableSize(largeClass, 8);
+		where = interpreterProxy->firstIndexableField(newLargeInteger);
+		where[7] = 128;
+		return newLargeInteger;
+	}
 	if (integerValue < 0) {
 		largeClass = interpreterProxy->classLargeNegativeInteger();
 		magnitude = 0 - integerValue;
@@ -4086,6 +4156,7 @@ static sqInt signed64BitIntegerForOverride(sqLong integerValue) {
 	The object may be either a positive ST integer or a eight-byte LargeInteger. */
 
 static sqLong signed64BitValueOfOverride(sqInt oop) {
+	sqLong lowestIntegerValue;
 	sqLong value;
 	sqInt largeClass;
 	unsigned char * where;
@@ -4116,6 +4187,11 @@ static sqLong signed64BitValueOfOverride(sqInt oop) {
 	where = interpreterProxy->firstIndexableField(oop);
 	for (i = 0; i <= (sz - 1); i += 1) {
 		value += (((sqLong) (where[i]))) << (i * 8);
+	}
+	lowestIntegerValue = 1;
+	lowestIntegerValue = lowestIntegerValue << 63;
+	if (negative && (value == lowestIntegerValue)) {
+		return value;
 	}
 	if (value < 0) {
 		return interpreterProxy->primitiveFail();
@@ -4192,9 +4268,10 @@ void* GStreamerPlugin_exports[][3] = {
 	{"GStreamerPlugin", "primitivegobjectfree", (void*)primitivegobjectfree},
 	{"GStreamerPlugin", "primitivegobjectsetboolon", (void*)primitivegobjectsetboolon},
 	{"GStreamerPlugin", "primitivegstelementlink", (void*)primitivegstelementlink},
+	{"GStreamerPlugin", "primitivegstpadgetparentelement", (void*)primitivegstpadgetparentelement},
 	{"GStreamerPlugin", "primitivegobjectclasslistpropertyboolatIndex", (void*)primitivegobjectclasslistpropertyboolatIndex},
-	{"GStreamerPlugin", "primitivegstsegtrapsetenabled", (void*)primitivegstsegtrapsetenabled},
 	{"GStreamerPlugin", "primitivegstelementgetstate", (void*)primitivegstelementgetstate},
+	{"GStreamerPlugin", "primitivegstsegtrapsetenabled", (void*)primitivegstsegtrapsetenabled},
 	{"GStreamerPlugin", "primitivegstpipelinesetdelay", (void*)primitivegstpipelinesetdelay},
 	{"GStreamerPlugin", "primitivegobjectclasslistpropertyulongatIndex", (void*)primitivegobjectclasslistpropertyulongatIndex},
 	{"GStreamerPlugin", "primitivegobjectsetulonglongon", (void*)primitivegobjectsetulonglongon},
@@ -4235,6 +4312,7 @@ void* GStreamerPlugin_exports[][3] = {
 	{"GStreamerPlugin", "primitivegobjectgetsmalltalkobject", (void*)primitivegobjectgetsmalltalkobject},
 	{"GStreamerPlugin", "primitivegstelementgetrequestpad", (void*)primitivegstelementgetrequestpad},
 	{"GStreamerPlugin", "primitivegstpipelinesetclock", (void*)primitivegstpipelinesetclock},
+	{"GStreamerPlugin", "primitivecallbacksignalseenfor", (void*)primitivecallbacksignalseenfor},
 	{"GStreamerPlugin", "primitivegstpadsetcaps", (void*)primitivegstpadsetcaps},
 	{"GStreamerPlugin", "primitivegobjectsetfloaton", (void*)primitivegobjectsetfloaton},
 	{"GStreamerPlugin", "primitivegstpadgetcaps", (void*)primitivegstpadgetcaps},
