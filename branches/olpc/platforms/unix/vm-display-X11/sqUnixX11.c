@@ -2807,7 +2807,7 @@ static void handleEvent(XEvent *evt)
 
     case ClientMessage:
       if (wmProtocolsAtom == evt->xclient.message_type && wmDeleteWindowAtom == evt->xclient.data.l[0])
-	recordWindowEvent(WindowEventClose, 0, 0, 0, 0);
+	recordWindowEvent(WindowEventClose, 0, 0, 0, 0, 1); /* windowIndex 1 is main window */
       break;
 
 #  if defined(USE_XSHM)
@@ -5735,6 +5735,38 @@ sqInt display_primitivePluginPostURL(void);
 sqInt display_primitivePluginRequestFileHandle(void);
 sqInt display_primitivePluginDestroyRequest(void);
 sqInt display_primitivePluginRequestState(void);
+
+
+/*** host window support ***/
+
+#if (SqDisplayVersionMajor >= 1 && SqDisplayVersionMinor >= 2)
+
+static int display_hostWindowCreate(int w, int h, int x, int y,
+  char *list, int attributeListLength)                                                      { return 0; }
+static int display_hostWindowClose(int index)                                               { return 0; }
+static int display_hostWindowCloseAll(void)                                                 { return 0; }
+static int display_hostWindowShowDisplay(unsigned *dispBitsIndex, int width, int height, int depth,
+  int affectedL, int affectedR, int affectedT, int affectedB, int windowIndex)              { return 0; }
+
+static int display_hostWindowGetSize(int windowIndex)                                       { return -1; }
+static int display_hostWindowSetSize(int windowIndex, int w, int h)                         { return -1; }
+static int display_hostWindowGetPosition(int windowIndex)                                   { return -1; }
+static int display_hostWindowSetPosition(int windowIndex, int x, int y)                     { return -1; }
+
+static int display_hostWindowSetTitle(int windowIndex, char *newTitle, int sizeOfTitle)
+{ 
+  if (windowIndex != 1)
+    return -1;
+
+  XChangeProperty(stDisplay, stParent,
+    XInternAtom(stDisplay, "_NET_WM_NAME", False),
+    XInternAtom(stDisplay, "UTF8_STRING",  False),
+    8, PropModeReplace, newTitle, sizeOfTitle);
+
+  return 0;
+}
+
+#endif
 
 
 static char *display_winSystemName(void)
