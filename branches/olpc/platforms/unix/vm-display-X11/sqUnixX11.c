@@ -5913,6 +5913,10 @@ static int display_parseArgument(int argc, char **argv)
 #  if defined(USE_XSHM)
   else if (!strcmp(arg, "-xshm"))	useXshm= 1;
   else if (!strcmp(arg, "-xasync"))	asyncUpdate= 1;
+#  else
+  else if (!strcmp(arg, "-xshm") ||
+           !strcmp(arg, "-xasync"))
+    fprintf(stderr, "Warning: support for XSHM not compiled in\n");
 #  endif
   else if (!strcmp(arg, "-lazy"))	sleepWhenUnmapped= 1;
   else if (!strcmp(arg, "-notitle"))	noTitle= 1;
