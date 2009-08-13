@@ -74,9 +74,9 @@
 #endif
 
 #if 0
-# define dprintf(ARGS)	printf ARGS
+# define Dprintf(ARGS)	printf ARGS
 #else
-# define dprintf(ARGS)
+# define Dprintf(ARGS)
 #endif
 
 #if defined(FFI_TEST)
@@ -164,7 +164,7 @@ int ffiFree(int ptr)
 
 int ffiPushSignedChar(int value)
 { 
-  dprintf(("ffiPushSignedChar %d\n", value));
+  Dprintf(("ffiPushSignedChar %d\n", value));
   pushGPR(value);
   return 1;
 }
@@ -172,7 +172,7 @@ int ffiPushSignedChar(int value)
 
 int ffiPushUnsignedChar(int value) 
 { 
-  dprintf(("ffiPushUnsignedChar %d\n", value));
+  Dprintf(("ffiPushUnsignedChar %d\n", value));
   pushGPR(value);
   return 1;
 }
@@ -180,7 +180,7 @@ int ffiPushUnsignedChar(int value)
 
 int ffiPushSignedByte(int value) 
 { 
-  dprintf(("ffiPushSignedByte %d\n", value));
+  Dprintf(("ffiPushSignedByte %d\n", value));
   pushGPR(value);
   return 1;
 }
@@ -188,7 +188,7 @@ int ffiPushSignedByte(int value)
 
 int ffiPushUnsignedByte(int value)
 { 
-  dprintf(("ffiPushUnsignedByte %d\n", value));
+  Dprintf(("ffiPushUnsignedByte %d\n", value));
   pushGPR(value);
   return 1;
 }
@@ -196,7 +196,7 @@ int ffiPushUnsignedByte(int value)
 
 int ffiPushSignedShort(int value)
 { 
-  dprintf(("ffiPushSignedShort %d\n", value));
+  Dprintf(("ffiPushSignedShort %d\n", value));
   pushGPR(value); 
   return 1; 
 }
@@ -204,7 +204,7 @@ int ffiPushSignedShort(int value)
 
 int ffiPushUnsignedShort(int value) 
 { 
-  dprintf(("ffiPushUnsignedShort %d\n", value));
+  Dprintf(("ffiPushUnsignedShort %d\n", value));
   pushGPR(value); 
   return 1; 
 }
@@ -212,7 +212,7 @@ int ffiPushUnsignedShort(int value)
 
 int ffiPushSignedInt(int value) 
 { 
-  dprintf(("ffiPushSignedInt %d\n", value));
+  Dprintf(("ffiPushSignedInt %d\n", value));
   pushGPR(value); 
   return 1; 
 }
@@ -220,7 +220,7 @@ int ffiPushSignedInt(int value)
 
 int ffiPushUnsignedInt(int value) 
 { 
-  dprintf(("ffiPushUnsignedInt %d\n", value));
+  Dprintf(("ffiPushUnsignedInt %d\n", value));
   pushGPR(value);
   return 1;
 }
@@ -228,7 +228,7 @@ int ffiPushUnsignedInt(int value)
 
 int ffiPushSignedLongLong(int low, int high)
 {
-  dprintf(("ffiPushSignedLongLong %d %d\n", low, high));
+  Dprintf(("ffiPushSignedLongLong %d %d\n", low, high));
   qalignGPR();
   qalignStack();
   pushGPR(high);
@@ -239,7 +239,7 @@ int ffiPushSignedLongLong(int low, int high)
 
 int ffiPushUnsignedLongLong(int low, int high)
 { 
-  dprintf(("ffiPushUnsignedLongLong %d %d\n", low, high));
+  Dprintf(("ffiPushUnsignedLongLong %d %d\n", low, high));
   qalignGPR();
   qalignStack();
   pushGPR(high);
@@ -250,7 +250,7 @@ int ffiPushUnsignedLongLong(int low, int high)
 
 int ffiPushPointer(int pointer)
 {
-  dprintf(("ffiPushPointer %d\n", pointer));
+  Dprintf(("ffiPushPointer %d\n", pointer));
   pushGPR(pointer);
   return 1;
 }
@@ -265,7 +265,7 @@ int ffiPushPointer(int pointer)
 
 int ffiPushSingleFloat(double value)
 {
-  dprintf(("ffiPushSingleFloat %f\n", (float)value));
+  Dprintf(("ffiPushSingleFloat %f\n", (float)value));
   if (fprCount < FPR_MAX)
     ffiFPRs[fprCount++]= value;
   else
@@ -280,7 +280,7 @@ int ffiPushSingleFloat(double value)
 
 int ffiPushDoubleFloat(double value)
 {
-  dprintf(("ffiPushDoubleFloat %f\n", (float)value));
+  Dprintf(("ffiPushDoubleFloat %f\n", (float)value));
   if (fprCount < FPR_MAX)
     ffiFPRs[fprCount++]= value;
   else
@@ -298,7 +298,7 @@ int ffiPushDoubleFloat(double value)
 int ffiPushStringOfLength(int srcIndex, int length)
 {
   char *ptr;
-  dprintf(("ffiPushStringOfLength %d\n", length));
+  Dprintf(("ffiPushStringOfLength %d\n", length));
   checkGPR();
   ptr= (char *)malloc(length + 1);
   if (!ptr)
@@ -316,7 +316,7 @@ int ffiPushStringOfLength(int srcIndex, int length)
 
 #define pushStruct(type, value)				\
 {							\
-  dprintf(("  ++ "#type"\n"));				\
+  Dprintf(("  ++ "#type"\n"));				\
   if ((structCount + sizeof(type)) > sizeof(structs))	\
     return primitiveFail();				\
   *(type *)(structs + structCount)= value;		\
@@ -327,7 +327,7 @@ int ffiPushStringOfLength(int srcIndex, int length)
 int ffiPushStructureOfLength(int pointer, int *structSpec, int specSize)
 {
   int size= *structSpec & FFIStructSizeMask;
-  dprintf(("ffiPushStructureOfLength %d (%db)\n", specSize, size));
+  Dprintf(("ffiPushStructureOfLength %d (%db)\n", specSize, size));
   salign(16);
   if (structCount + size > sizeof(structs))
     return primitiveFail();

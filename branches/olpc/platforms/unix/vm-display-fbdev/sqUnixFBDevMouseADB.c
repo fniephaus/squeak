@@ -37,7 +37,7 @@
  */
 
 
-static void ms_adb_init(_self) { dprintf("ADB init\n"); }
+static void ms_adb_init(_self) { Dprintf("ADB init\n"); }
 
 
 static void ms_adb_handleEvents(_self)

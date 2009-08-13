@@ -184,7 +184,7 @@ int sqMIDIClosePort(int portNum)
 */
 int sqMIDIGetClock(void)
 {
-  dprintf("sqMIDIGetClock\n");
+  Dprintf("sqMIDIGetClock\n");
   success(false);
   return 0;
 }
@@ -196,7 +196,7 @@ int sqMIDIGetClock(void)
 */
 int sqMIDIGetPortCount(void)
 {
-  dprintf("sqMIDIGetPortCount\n");
+  Dprintf("sqMIDIGetPortCount\n");
   success(true);
   return 1;
 }
@@ -244,7 +244,7 @@ int sqMIDIGetPortName(int portNum, int namePtr, int length)
 */
 int sqMIDIOpenPort(int portNum, int readSemaIndex, int interfaceClockRate)
 {
-  dprintf("sqMIDIOpenPort(%d, %d, %d)\n", portNum, readSemaIndex, interfaceClockRate);
+  Dprintf("sqMIDIOpenPort(%d, %d, %d)\n", portNum, readSemaIndex, interfaceClockRate);
   int type= SND_SEQ_PORT_TYPE_APPLICATION;
 
   switch (portNum)
@@ -406,7 +406,7 @@ int sqMIDIParameter(int whichParameter, int modify, int newValue)
 */
 int sqMIDIPortReadInto(int portNum, int count, int bufferPtr)
 {
-  dprintf("sqMIDIPortRead\n");
+  Dprintf("sqMIDIPortRead\n");
   success(false);
   return 0;
 }
@@ -426,9 +426,9 @@ int sqMIDIPortWriteFromAt(int portNum, int count, int bufferPtr, int time)
       snd_seq_event_t ev;
       unsigned char *bytePtr= (unsigned char *)bufferPtr;
 
-      dprintf("Port %d Write:", portNum);
-      for (i= 0;  i < count;  ++i) dprintf(" %d", (int)bytePtr[i]);
-      dprintf(" at %d\n", time);
+      Dprintf("Port %d Write:", portNum);
+      for (i= 0;  i < count;  ++i) Dprintf(" %d", (int)bytePtr[i]);
+      Dprintf(" at %d\n", time);
       
       snd_seq_ev_clear(&ev);
       snd_seq_ev_set_source(&ev, out_port);
@@ -483,7 +483,7 @@ int sqMIDIParameterGet(int whichParameter)
 
 int midiShutdown(void)
 {
-  dprintf("midiShutdown\n");
+  Dprintf("midiShutdown\n");
   success(false);
   return 0;
 }
@@ -496,12 +496,12 @@ static void performMIDICmd(snd_seq_event_t *ev, int cmdByte, int arg1, int arg2)
   switch (cmd)
     {
     case 128:	/* note off */
-      dprintf("Note off %d, %d\n", ch, arg1);
+      Dprintf("Note off %d, %d\n", ch, arg1);
       snd_seq_ev_set_noteoff(ev, ch, arg1, 0);
       break;
 
     case 144:	/* note on */
-      dprintf("Note on %d, %d, %d\n", ch, arg1, arg2);
+      Dprintf("Note on %d, %d, %d\n", ch, arg1, arg2);
       snd_seq_ev_set_noteon(ev, ch, arg1, arg2);
       break;
 

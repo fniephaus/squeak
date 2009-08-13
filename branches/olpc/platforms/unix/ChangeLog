@@ -745,7 +745,7 @@
 	(GP_REG): Enable for PowerPC.
 
 	* platforms/unix/plugins/PseudoTTYPlugin/sqUnixPseudoTTYPlugin.c
-	(ptyForkAndExec): Add diagnostic dprintf().
+	(ptyForkAndExec): Add diagnostic Dprintf().
 
 	* platforms/unix/config/gnuify: Insert GP_REG for global struct in
 	interpret().  Recognise optional 'foo->' before primitiveIndex for
@@ -1110,7 +1110,7 @@
 
 2002-10-24  Ian Piumarta  <piumarta@emilia.inria.fr>
 
-	* platforms/unix/vm/sqUnixExternalPrims.c: Fix several dprintf()s
+	* platforms/unix/vm/sqUnixExternalPrims.c: Fix several Dprintf()s
 	that failed to specify the stream.
 	(ioFindExternalFunctionIn): If set, prepend VM_DLSYM_PREFIX to
 	lookupName.

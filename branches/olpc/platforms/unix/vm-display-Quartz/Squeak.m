@@ -354,7 +354,7 @@ static char *documentName= 0;
 	  // info (we'd far rather be informed that the current screen's
 	  // depth has changed)
 	}
-      //dprintf(("AppKitDefinedEvent subtype %d\n", [event subtype]));
+      //Dprintf(("AppKitDefinedEvent subtype %d\n", [event subtype]));
       [super sendEvent: event];
       break;
 
@@ -364,7 +364,7 @@ static char *documentName= 0;
       // case NSCursorUpdate: break;
 
     default: // almost always NSSystemDefined
-      //dprintf(("Event type %d subtype %d\n", [event type], [event subtype]));
+      //Dprintf(("Event type %d subtype %d\n", [event type], [event subtype]));
       [super sendEvent: event];
     }
 }

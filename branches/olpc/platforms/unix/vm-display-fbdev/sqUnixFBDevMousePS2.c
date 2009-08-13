@@ -62,7 +62,7 @@
 static void ms_ps2_flush(_self)
 {
   unsigned char buf[32];
-  dprintf("%s: flush\n", self->msName);
+  Dprintf("%s: flush\n", self->msName);
   while (ms_read(self, buf, sizeof(buf), 1, PS2_FLUSH_DELAY))
     ;
 }
@@ -106,15 +106,15 @@ static int ms_ps2_send(_self, unsigned char *command, int len)
 {
   unsigned char buf[1];
   int i;
-  dprintf("%s: send\n", self->msName);
+  Dprintf("%s: send\n", self->msName);
   for (i= 0;  i < len;  ++i)
     {
     resend:
       write(self->fd, command + i, 1);
-      dprintf(">%02x\n", command[i]);
+      Dprintf(">%02x\n", command[i]);
       if (1 != ms_read(self, buf, 1, 1, PS2_SEND_DELAY))
 	{
-	  dprintf("%s: send failed\n", self->msName);
+	  Dprintf("%s: send failed\n", self->msName);
 	  return 0;
 	}
       switch (buf[0])
@@ -126,7 +126,7 @@ static int ms_ps2_send(_self, unsigned char *command, int len)
 	  fprintf(stderr, "%s: error response in send\n", self->msName);
 	  return 0;
 	case PS2_RESEND:
-	  dprintf("%s: resend\n", self->msName);
+	  Dprintf("%s: resend\n", self->msName);
 	  goto resend;
 	default:
 	  fprintf(stderr, "%s: illegal response %02x in send\n", self->msName, buf[0]);
@@ -140,9 +140,9 @@ static int ms_ps2_send(_self, unsigned char *command, int len)
 static void ms_ps2_disable(_self)
 {
   unsigned char command[]= { PS2_DISABLE };
-  dprintf("%s: disable\n", self->msName);
+  Dprintf("%s: disable\n", self->msName);
   write(self->fd, command, 1);
-  dprintf(">%02x\n", command[0]);
+  Dprintf(">%02x\n", command[0]);
   while (1 == ms_read(self, command, 1, 1, PS2_DISABLE_DELAY))
     if (PS2_OK == command[0])
       break;
@@ -152,7 +152,7 @@ static void ms_ps2_disable(_self)
 static int ms_ps2_enable(_self)
 {
   unsigned char command[]= { PS2_ENABLE };
-  dprintf("%s: enable\n", self->msName);
+  Dprintf("%s: enable\n", self->msName);
   return ms_ps2_send(self, command, sizeof(command));
 }
 
@@ -160,12 +160,12 @@ static int ms_ps2_enable(_self)
 static int ms_ps2_reset(_self)
 {
   unsigned char command[]= { PS2_RESET }, buf[2];
-  dprintf("%s: reset\n", self->msName);
+  Dprintf("%s: reset\n", self->msName);
   if (!ms_ps2_send(self, command, sizeof(command)))
     return -1;
   if (2 == ms_read(self, buf, 2, 2, PS2_RESET_DELAY))
     {
-      dprintf("%s: response %02x %02x\n", self->msName, buf[0], buf[1]);
+      Dprintf("%s: response %02x %02x\n", self->msName, buf[0], buf[1]);
       switch (buf[0])
 	{
 	case PS2_SELFTEST_OK:
@@ -175,7 +175,7 @@ static int ms_ps2_reset(_self)
 	  fprintf(stderr, "%s: self-test failed\n", self->msName);
 	  break;
 	default:
-	  dprintf("%s: bad response\n", self->msName);
+	  Dprintf("%s: bad response\n", self->msName);
 	  break;
 	}
     }
@@ -184,7 +184,7 @@ static int ms_ps2_reset(_self)
      up the mouse id immediately in the flush(), so the only harm done
      is a misleading "reset failed" message while debugging.  */
   ms_ps2_flush(self);
-  dprintf("%s: reset failed\n", self->msName);
+  Dprintf("%s: reset failed\n", self->msName);
   return -1;
 }
 
@@ -194,7 +194,7 @@ static void ms_ps2_init(_self)
   int id;
   ms_ps2_disable(self);
   id= ms_ps2_reset(self);
-  dprintf("%s: mouse id %02x\n", self->msName, id);
+  Dprintf("%s: mouse id %02x\n", self->msName, id);
   ms_ps2_enable(self);
 }
 

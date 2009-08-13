@@ -508,7 +508,7 @@ static void fb_initVisual(_self)
   self->size= fb_height(self) * self->fix.line_length;
   self->pitch= self->fix.line_length / self->var.bits_per_pixel * 8;
 
-  dprintf("%s: %dx%dx%d+%x+%x (%dx%d) %s, rgb %d+%d %d+%d %d+%d pitch %d(%d)\n", self->fbName,
+  Dprintf("%s: %dx%dx%d+%x+%x (%dx%d) %s, rgb %d+%d %d+%d %d+%d pitch %d(%d)\n", self->fbName,
 	  self->var.xres, self->var.yres, self->var.bits_per_pixel, self->var.xoffset, self->var.yoffset,
 	  self->var.xres_virtual, self->var.yres_virtual,
 	  visualName(self),
@@ -607,7 +607,7 @@ static void fb_initBuffer(_self)
   assert(self->addr == 0);
   self->addr= (char *)mmap(0, self->size, PROT_READ | PROT_WRITE, MAP_SHARED, self->fd, 0);
   if (self->addr == (char *)MAP_FAILED) fatalError("mmap");
-  dprintf("%s: mapped at %p + %ld\n", self->fbName, self->addr, self->size);
+  Dprintf("%s: mapped at %p + %ld\n", self->fbName, self->addr, self->size);
 }
 
 
@@ -617,7 +617,7 @@ static void fb_freeBuffer(_self)
     {
       munmap(self->addr, self->size);
       self->addr= 0;
-      dprintf("%s: unmapped\n", self->fbName);
+      Dprintf("%s: unmapped\n", self->fbName);
     }
 }
 
@@ -674,7 +674,7 @@ static int fb_open(_self, struct kb *kb, char *fbDev)
 
   self->kb= kb;
 
-  dprintf("using: %s (%d)\n", self->fbName, self->fd);
+  Dprintf("using: %s (%d)\n", self->fbName, self->fd);
 
   fb_initVisual(self);
   fb_initBuffer(self);
@@ -692,7 +692,7 @@ static void fb_close(_self)
   if (self->fd >= 0)
     {
       close(self->fd);
-      dprintf("%s (%d) closed\n", self->fbName, self->fd);
+      Dprintf("%s (%d) closed\n", self->fbName, self->fd);
       self->fd= -1;
     }
   self->kb= 0;
