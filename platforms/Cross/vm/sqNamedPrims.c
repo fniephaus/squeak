@@ -25,9 +25,9 @@ typedef struct {
 #undef DEBUG
 
 #ifdef DEBUG
-#define dprintf(what) printf what
+#define Dprintf(what) printf what
 #else
-#define dprintf(what)
+#define Dprintf(what)
 #endif
 
 typedef struct ModuleEntry {
@@ -98,12 +98,12 @@ static void *findExternalFunctionIn(char *functionName, ModuleEntry *module)
 {
 	void *result;
 
-	dprintf(("Looking (externally) for %s in %s... ", functionName,module->name));
+	Dprintf(("Looking (externally) for %s in %s... ", functionName,module->name));
 	if(module->handle)
 		result = ioFindExternalFunctionIn(functionName, module->handle);
 	else
 		result = NULL;
-	dprintf(("%s\n", result ? "found" : "not found"));
+	Dprintf(("%s\n", result ? "found" : "not found"));
 	return result;
 }
 
@@ -119,7 +119,7 @@ static void *findInternalFunctionIn(char *functionName, char *pluginName)
   int listIndex, index;
   sqExport *exports;
 
-  dprintf(("Looking (internally) for %s in %s ... ", functionName, (pluginName ? pluginName : "<intrinsic>")));
+  Dprintf(("Looking (internally) for %s in %s ... ", functionName, (pluginName ? pluginName : "<intrinsic>")));
 
   /* canonicalize functionName and pluginName to be NULL if not specified */
   if(functionName && !functionName[0]) functionName = NULL;
@@ -142,11 +142,11 @@ static void *findInternalFunctionIn(char *functionName, char *pluginName)
       if(function && strcmp(functionName, function)) continue; /* name mismatch */
 
       /* match */
-      dprintf(("found\n"));
+      Dprintf(("found\n"));
       return exports[index].primitiveAddress;
     }
   }
-  dprintf(("not found\n"));
+  Dprintf(("not found\n"));
   return NULL;
 
 }
@@ -184,35 +184,35 @@ static int callInitializersIn(ModuleEntry *module)
 		/* Check the compiled name of the module */
 		moduleName = ((char* (*) (void))init0)();
 		if(!moduleName) {
-			dprintf(("ERROR: getModuleName() returned NULL\n"));
+			Dprintf(("ERROR: getModuleName() returned NULL\n"));
 			return 0;
 		}
 		if(strncmp(moduleName, module->name, strlen(module->name)) != 0) {
-			dprintf(("ERROR: getModuleName returned %s (expected: %s)\n", moduleName, module->name));
+			Dprintf(("ERROR: getModuleName returned %s (expected: %s)\n", moduleName, module->name));
 			return 0;
 		}
 	} else {
 		/* Note: older plugins may not export the compiled module name */
-		dprintf(("WARNING: getModuleName() not found in %s\n", module->name));
+		Dprintf(("WARNING: getModuleName() not found in %s\n", module->name));
 	}
 	if(!init1) { 
-		dprintf(("ERROR: setInterpreter() not found\n"));
+		Dprintf(("ERROR: setInterpreter() not found\n"));
 		return 0;
 	}
 	/* call setInterpreter */
 	okay = ((sqInt (*) (struct VirtualMachine*))init1)(sqGetInterpreterProxy());
 	if(!okay) {
-		dprintf(("ERROR: setInterpreter() returned false\n"));
+		Dprintf(("ERROR: setInterpreter() returned false\n"));
 		return 0;
 	}
 	if(init2) {
 		okay = ((sqInt (*) (void)) init2)();
 		if(!okay) {
-			dprintf(("ERROR: initialiseModule() returned false\n"));
+			Dprintf(("ERROR: initialiseModule() returned false\n"));
 			return 0;
 		}
 	}
-	dprintf(("SUCCESS: Module %s is now initialized\n", module->name));
+	Dprintf(("SUCCESS: Module %s is now initialized\n", module->name));
 	return 1;
 }
 
@@ -231,7 +231,7 @@ static ModuleEntry *findAndLoadModule(char *pluginName, int ffiLoad)
 	void *handle;
 	ModuleEntry *module;
 
-	dprintf(("Looking for plugin %s\n", (pluginName ? pluginName : "<intrinsic>")));
+	Dprintf(("Looking for plugin %s\n", (pluginName ? pluginName : "<intrinsic>")));
 	/* Try to load the module externally */
 	handle = ioLoadModule(pluginName);
 	if(ffiLoad) {
@@ -296,7 +296,7 @@ void *ioLoadFunctionFrom(char *functionName, char *pluginName)
 	module = findOrLoadModule(pluginName, 0);
 	if(!module) {
 		/* no module */
-		dprintf(("Failed to find %s (module %s was not loaded)\n", functionName, pluginName));
+		Dprintf(("Failed to find %s (module %s was not loaded)\n", functionName, pluginName));
 		return 0;
 	}
 	if(!functionName) {

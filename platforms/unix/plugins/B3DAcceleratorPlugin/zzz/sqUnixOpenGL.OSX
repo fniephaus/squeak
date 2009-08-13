@@ -82,7 +82,7 @@ int glMakeCurrentRenderer(glRenderer *renderer)
   GLboolean ok;
   GLint err;
 
-  //dprintf("glMakeCurrentRenderer(%p)\n", renderer);
+  //Dprintf("glMakeCurrentRenderer(%p)\n", renderer);
 
   if (current == renderer)
     return 1;
@@ -142,12 +142,12 @@ int glCreateRendererFlags(int x, int y, int w, int h, int flags)
   renderer->bufferRect[2] = w;
   renderer->bufferRect[3] = h;
   glMakeCurrentRenderer(renderer);
-  //dprintf("    vendor:     %s\n", glGetString(GL_VENDOR));
-  //dprintf("    renderer:   %s\n", glGetString(GL_RENDERER));
-  //dprintf("    version:    %s\n", glGetString(GL_VERSION));
-  //dprintf("    extensions: %s\n", glGetString(GL_EXTENSIONS));
+  //Dprintf("    vendor:     %s\n", glGetString(GL_VENDOR));
+  //Dprintf("    renderer:   %s\n", glGetString(GL_RENDERER));
+  //Dprintf("    version:    %s\n", glGetString(GL_VERSION));
+  //Dprintf("    extensions: %s\n", glGetString(GL_EXTENSIONS));
   ERROR_CHECK;
-  //dprintf("   renderer created, handle = %d\n", i);
+  //Dprintf("   renderer created, handle = %d\n", i);
   /* setup user context */
   glDisable(GL_LIGHTING);
   glDisable(GL_COLOR_MATERIAL);

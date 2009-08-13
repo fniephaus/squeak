@@ -35,9 +35,9 @@
 #include "sq.h"		/* sqUnixConfig.h */
 
 #if (DEBUG)
-# define dprintf(ARGS) fprintf ARGS
+# define Dprintf(ARGS) fprintf ARGS
 #else
-# define dprintf(ARGS)
+# define Dprintf(ARGS)
 #endif
  
 #if !defined(HAVE_LIBDL) && defined(HAVE_DYLD)
@@ -134,10 +134,10 @@ static void *tryLoading(char *dirName, char *moduleName)
 	int         err;
 	sprintf(libName, "%s%s%s%s", dirName, *prefix, moduleName, *suffix);
 	if ((!(err= stat(libName, &buf))) && S_ISDIR(buf.st_mode))
-	  dprintf((stderr, "ignoring directory: %s\n", libName));
+	  Dprintf((stderr, "ignoring directory: %s\n", libName));
 	else
 	  {
-	    dprintf((stderr, "tryLoading %s\n", libName));
+	    Dprintf((stderr, "tryLoading %s\n", libName));
 	    handle= dlopen(libName, RTLD_NOW | RTLD_GLOBAL);
 	    if (handle == 0)
 	      {
@@ -165,7 +165,7 @@ static void *tryLoadingPath(char *varName, char *pluginName)
   if (path)
     {
       char pbuf[MAXPATHLEN];
-      dprintf((stderr, "try %s=%s\n", varName, path));
+      Dprintf((stderr, "try %s=%s\n", varName, path));
       strncpy(pbuf, path, sizeof(pbuf));
       pbuf[sizeof(pbuf) - 1]= '\0';
       for (path= strtok(pbuf, ":");
@@ -174,7 +174,7 @@ static void *tryLoadingPath(char *varName, char *pluginName)
 	{
 	  char buf[MAXPATHLEN];
 	  sprintf(buf, "%s/", path);
-	  dprintf((stderr, "  path dir = %s\n", buf));
+	  Dprintf((stderr, "  path dir = %s\n", buf));
 	  if ((handle= tryLoading(buf, pluginName)) != 0)
 	    break;
 	}
@@ -197,7 +197,7 @@ void *ioLoadModule(char *pluginName)
 	fprintf(stderr, "ioLoadModule(<intrinsic>): %s\n", dlerror());
       else
 	{
-	  dprintf((stderr, "loaded: <intrinsic>\n"));
+	  Dprintf((stderr, "loaded: <intrinsic>\n"));
 	  return handle;
 	}
     }
@@ -218,7 +218,7 @@ void *ioLoadModule(char *pluginName)
 	      *out++= c;
 	  }
 	*out= '\0';
-	dprintf((stderr, "ioLoadModule plugins = %s\n                path = %s\n",
+	Dprintf((stderr, "ioLoadModule plugins = %s\n                path = %s\n",
 		 squeakPlugins, path));
 	if ((handle= tryLoading("", path)))
 	  return handle;
@@ -310,7 +310,7 @@ void *ioFindExternalFunctionIn(char *lookupName, void *moduleHandle)
 
   fn= dlsym(moduleHandle, buf);
 
-  dprintf((stderr, "ioFindExternalFunctionIn(%s, %d)\n",
+  Dprintf((stderr, "ioFindExternalFunctionIn(%s, %d)\n",
 	   lookupName, moduleHandle));
 
   if ((fn == 0) && (!sqIgnorePluginErrors)
@@ -333,7 +333,7 @@ sqInt ioFreeModule(void *moduleHandle)
 {
   if (dlclose(moduleHandle))
     {
-      dprintf((stderr, "ioFreeModule(%d): %s\n", moduleHandle, dlerror()));
+      Dprintf((stderr, "ioFreeModule(%d): %s\n", moduleHandle, dlerror()));
       return 0;
     }
   return 1;

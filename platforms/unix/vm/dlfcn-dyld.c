@@ -70,7 +70,7 @@ static void dlUndefined(const char *symbol)
 
 static NSModule dlMultiple(NSSymbol s, NSModule oldModule, NSModule newModule)
 {
-  dprintf((stderr, "dyld: %s: %s previously defined in %s, new definition in %s\n",
+  Dprintf((stderr, "dyld: %s: %s previously defined in %s, new definition in %s\n",
 	   NSNameOfSymbol(s), NSNameOfModule(oldModule), NSNameOfModule(newModule)));
   return newModule;
 }
@@ -128,7 +128,7 @@ static void *dlopen(const char *path, int mode)
   if (!handle)
     dlSetError("could not load shared object: %s", path);
 
-  dprintf((stderr, "dlopen: %s => %d\n", path, (int)handle));
+  Dprintf((stderr, "dlopen: %s => %d\n", path, (int)handle));
 
   return handle;
 }
@@ -141,17 +141,17 @@ static void *dlsym(void *handle, const char *symbol)
 
   snprintf(_symbol, sizeof(_symbol), "_%s", symbol);
 
-  dprintf((stderr, "dlsym: looking for %s (%s) in %d\n", symbol, _symbol, (int)handle));
+  Dprintf((stderr, "dlsym: looking for %s (%s) in %d\n", symbol, _symbol, (int)handle));
 
   if (!handle)
     {
-      dprintf((stderr, "dlsym: setting app context for this handle\n"));
+      Dprintf((stderr, "dlsym: setting app context for this handle\n"));
       handle= DL_APP_CONTEXT;
     }
 
   if (DL_APP_CONTEXT == handle)
     {
-      dprintf((stderr, "dlsym: looking in app context\n"));
+      Dprintf((stderr, "dlsym: looking in app context\n"));
       if (NSIsSymbolNameDefined(_symbol))
 	nsSymbol= NSLookupAndBindSymbol(_symbol);
     }
@@ -167,15 +167,15 @@ static void *dlsym(void *handle, const char *symbol)
 		 _symbol,
 		 NSLOOKUPSYMBOLINIMAGE_OPTION_BIND
 		 /*| NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR*/);
-	      dprintf((stderr, "dlsym: bundle (image) lookup returned %p\n", nsSymbol));
+	      Dprintf((stderr, "dlsym: bundle (image) lookup returned %p\n", nsSymbol));
 	    }
 	  else
-	    dprintf((stderr, "dlsym: bundle (image) symbol not defined\n"));
+	    Dprintf((stderr, "dlsym: bundle (image) symbol not defined\n"));
 	}
       else
 	{
 	  nsSymbol= NSLookupSymbolInModule(handle, _symbol);
-	  dprintf((stderr, "dlsym: dylib (module) lookup returned %p\n", nsSymbol));
+	  Dprintf((stderr, "dlsym: dylib (module) lookup returned %p\n", nsSymbol));
 	}
     }
 

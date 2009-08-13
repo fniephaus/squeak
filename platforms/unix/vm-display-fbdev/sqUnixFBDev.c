@@ -68,7 +68,7 @@
 #endif
 
 
-static void dprintf(const char *fmt, ...)
+static void Dprintf(const char *fmt, ...)
 {
 #if (DEBUG)
   va_list ap;
@@ -149,7 +149,7 @@ static void closeFramebuffer(void)
 
 static void enqueueKeyboardEvent(int key, int up, int modifiers)
 {
-  dprintf("KEY %3d %02x %c %s mod %02x\n",
+  Dprintf("KEY %3d %02x %c %s mod %02x\n",
 	  key, key, ((key > 32) && (key < 127)) ? key : ' ',
 	  up ? "UP" : "DOWN", modifiers);
 
@@ -190,7 +190,7 @@ static void enqueueMouseEvent(int b, int dx, int dy)
   buttonState= b;
   mousePosition= fb->cursorPosition;
   if (b)
-    dprintf("mouse %02x at %4d,%4d mod %02x\n",
+    Dprintf("mouse %02x at %4d,%4d mod %02x\n",
 	    b, mousePosition.x, mousePosition.y, modifierState);
   recordMouseEvent();
 }
@@ -275,14 +275,14 @@ static sqInt display_ioShowDisplay(sqInt dispBitsIndex, sqInt width, sqInt heigh
 
 static sqInt display_ioHasDisplayDepth(sqInt i)
 {
-  dprintf("hasDisplayDepth %d (%d) => %d\n", i, fb_depth(fb), (i == fb_depth(fb)));
+  Dprintf("hasDisplayDepth %d (%d) => %d\n", i, fb_depth(fb), (i == fb_depth(fb)));
   return (i == fb_depth(fb));
 }
 
 
 static void openDisplay(void)
 {
-  dprintf("openDisplay\n");
+  Dprintf("openDisplay\n");
   openMouse();
   openKeyboard();
   openFramebuffer();
@@ -294,7 +294,7 @@ static void openDisplay(void)
 
 static void closeDisplay(void)
 {
-  dprintf("closeDisplay\n");
+  Dprintf("closeDisplay\n");
   closeFramebuffer();
   closeKeyboard();
   closeMouse();

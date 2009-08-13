@@ -156,7 +156,7 @@ static void kb_loadKernelKeyMap(_self)
 {
   int map;
 
-  dprintf("loading kernel keymap\n");
+  Dprintf("loading kernel keymap\n");
 
   if (!(self->keyMaps= (unsigned short **)calloc(MAX_NR_KEYMAPS, sizeof(unsigned short *))))
     outOfMemory();
@@ -186,7 +186,7 @@ static void kb_loadKernelKeyMap(_self)
 	}
     }
 
-  dprintf("kernel keymap loaded\n");
+  Dprintf("kernel keymap loaded\n");
 }
 
 
@@ -195,7 +195,7 @@ static void kb_initKeyMap(_self, char *mapfile)
   if (!mapfile)
     kb_loadKernelKeyMap(self);
   else if ((kb_loadKeys(self, mapfile)))
-    dprintf("using keymap '%s'\n", mapfile);
+    Dprintf("using keymap '%s'\n", mapfile);
   else
     fatal("could not load keymap '%s'\n", mapfile);
 }

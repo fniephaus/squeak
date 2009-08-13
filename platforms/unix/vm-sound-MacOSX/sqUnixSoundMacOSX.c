@@ -84,7 +84,7 @@ static inline int max(int i, int j) { return (i > j) ? i : j; }
 
 static void dumpFormat(AudioStreamBasicDescription *fmt); // atend
 
-static void dprintf(const char *fmt, ...)
+static void Dprintf(const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -95,7 +95,7 @@ static void dprintf(const char *fmt, ...)
 #else // !DEBUG
 
 static inline void dumpFormat(AudioStreamBasicDescription *fmt) {}
-static inline void dprintf(const char *fmt, ...) {}
+static inline void Dprintf(const char *fmt, ...) {}
 
 #endif // !DEBUG
 
@@ -488,7 +488,7 @@ static Stream *Stream_new(int dir)
     }
   s->id=	id;
   s->direction= dir;
-  dprintf("stream %p[%d] created for device %ld\n", s, dir, id);
+  Dprintf("stream %p[%d] created for device %ld\n", s, dir, id);
 
   return s;
 }
@@ -500,7 +500,7 @@ static void Stream_delete(Stream *s)
 {
   assert(s && s->buffer);
   Buffer_delete(s->buffer);
-  dprintf("stream %p[%d] deleted\n", s, s->direction);
+  Dprintf("stream %p[%d] deleted\n", s, s->direction);
   free(s);
 }
 
@@ -522,7 +522,7 @@ static int Stream_setFormat(Stream *s, int frameCount, int sampleRate, int stere
 		 "GetProperty", "StreamFormat"))
     return 0;
 
-  dprintf("stream %p[%d] device format:\n", s, s->direction);  dumpFormat(&devFmt);
+  Dprintf("stream %p[%d] device format:\n", s, s->direction);  dumpFormat(&devFmt);
 
   imgFmt.mSampleRate	   = sampleRate;
   imgFmt.mFormatID	   = kAudioFormatLinearPCM;
@@ -533,7 +533,7 @@ static int Stream_setFormat(Stream *s, int frameCount, int sampleRate, int stere
   imgFmt.mChannelsPerFrame = nChannels;
   imgFmt.mBitsPerChannel   = 16;
 
-  dprintf("stream %p[%d] image format:\n", s, s->direction);  dumpFormat(&imgFmt);
+  Dprintf("stream %p[%d] image format:\n", s, s->direction);  dumpFormat(&imgFmt);
 
   if (s->direction) // input
     {
@@ -560,7 +560,7 @@ static int Stream_setFormat(Stream *s, int frameCount, int sampleRate, int stere
 
   s->buffer= Buffer_new((s->direction ? DeviceFrameSize : SqueakFrameSize) * nChannels * frameCount * 2);
 
-  dprintf("stream %p[%d] sound buffer size %d/%d (%d)\n", s, s->direction, s->imgBufSize, s->buffer->size, frameCount);
+  Dprintf("stream %p[%d] sound buffer size %d/%d (%d)\n", s, s->direction, s->imgBufSize, s->buffer->size, frameCount);
 
   return 1;
 }
@@ -572,7 +572,7 @@ static int Stream_startSema(Stream *s, int semaIndex)
 {
   AudioDeviceIOProc ioProc= s->direction ? ioProcInput : ioProcOutput;
 
-  dprintf("stream %p[%d] startSema: %d\n", s, s->direction, semaIndex);
+  Dprintf("stream %p[%d] startSema: %d\n", s, s->direction, semaIndex);
   
   s->semaphore= semaIndex;	// can be zero
   if (checkError(AudioDeviceAddIOProc(s->id, ioProc, (void *)s),
@@ -584,7 +584,7 @@ static int Stream_startSema(Stream *s, int semaIndex)
       AudioDeviceRemoveIOProc(s->id, ioProc);
       return 0;
     }
-  dprintf("stream %p[%d] running\n", s, s->direction);
+  Dprintf("stream %p[%d] running\n", s, s->direction);
   return 1;
 }
 
@@ -598,7 +598,7 @@ static int Stream_stop(Stream *s)
 	     "DeviceStop", s->direction ? "ioProcIn" : "ioProcOut");
   checkError(AudioDeviceRemoveIOProc(s->id, ioProc),
 	     "Remove", s->direction ? "ioProcIn" : "ioProcOut");
-  dprintf("stream %p[%d] stopped\n", s, s->direction);
+  Dprintf("stream %p[%d] stopped\n", s, s->direction);
   return 1;
 }
 
@@ -644,7 +644,7 @@ static sqInt sound_InsertSamplesFromLeadTime(sqInt frameCount, sqInt srcBufPtr, 
 {
   Stream *s= output;
 
-  dprintf("snd_InsertSamples %d From %p LeadTime %d\n", frameCount, srcBufPtr, framesOfLeadTime);
+  Dprintf("snd_InsertSamples %d From %p LeadTime %d\n", frameCount, srcBufPtr, framesOfLeadTime);
 
   if (s)
     {
@@ -759,7 +759,7 @@ static sqInt sound_PlaySilence(void)
 // 
 static sqInt sound_Stop(void)
 {
-  dprintf("snd_Stop\n");
+  Dprintf("snd_Stop\n");
   
   if (output)
     {
@@ -777,7 +777,7 @@ static sqInt sound_Start(sqInt frameCount, sqInt samplesPerSec, sqInt stereo, sq
 {
   Stream *s= 0;
 
-  dprintf("snd_Start frames: %d samplesPerSec: %d stereo: %d semaIndex: %d\n",
+  Dprintf("snd_Start frames: %d samplesPerSec: %d stereo: %d semaIndex: %d\n",
 	   frameCount, samplesPerSec, stereo, semaIndex);
   
   if (output)	// there might be a change of sample rate
@@ -817,7 +817,7 @@ static double sound_GetRecordingSampleRate(void)
 
 static sqInt sound_StopRecording(void)
 {
-  dprintf("snd_StopRecording\n");
+  Dprintf("snd_StopRecording\n");
 
   if (input)
     {
@@ -835,7 +835,7 @@ static sqInt sound_StartRecording(sqInt samplesPerSec, sqInt stereo, sqInt semaI
 {
   Stream *s= 0;
 
-  dprintf("snd_StartRecording rate: %d stereo: %d semaIndex: %d\n",
+  Dprintf("snd_StartRecording rate: %d stereo: %d semaIndex: %d\n",
 	   samplesPerSec, stereo, semaIndex);
   
   if (input)	// there might be a change of sample rate
