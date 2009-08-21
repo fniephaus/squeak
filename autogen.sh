@@ -9,4 +9,7 @@ default:
 
 install:
 	make -C bld install
+
+check:
+	@echo SKIPPED: No tests defined for Squeak VM
 EOF
