@@ -7,3 +7,9 @@
 #ifndef UNIX
 # define UNIX
 #endif
+
+#if LSB_FIRST
+# define VMBIGENDIAN 0
+#else
+# define VMBIGENDIAN 1
+#endif

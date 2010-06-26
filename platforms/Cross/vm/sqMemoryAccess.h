@@ -2,7 +2,7 @@
  * 
  * Author: Ian.Piumarta@squeakland.org
  * 
- * Last edited: 2007-06-10 19:16:03 by piumarta on vps2.piumarta.com
+ * Last edited: 2006-04-06 09:47:39 by piumarta on emilia.local
  */
 
 /* Systematic use of the macros defined in this file within the
@@ -125,48 +125,39 @@
 
 /* platform-dependent float conversion macros */
 /* Note: Second argument must be a variable name, not an expression! */
-/* Note: Floats in image are always in PowerPC word order; change
-   these macros to swap words if necessary. This costs no extra and
-   obviates sometimes having to word-swap floats when reading an image.
-*/
-#if defined(DOUBLE_WORD_ALIGNMENT) || defined(DOUBLE_WORD_ORDER)
+#if defined(DOUBLE_WORD_ALIGNMENT)
 /* this is to allow strict aliasing assumption in the optimizer */
-typedef union { double d; int i[sizeof(double) / sizeof(int)]; } _swapper;
-# ifdef DOUBLE_WORD_ORDER
-/* word-based copy with swapping for non-PowerPC order */
-#   define storeFloatAtPointerfrom(intPointerToFloat, floatVarName) \
-	*((int *)(intPointerToFloat) + 0) = ((_swapper *)(&floatVarName))->i[1]; \
-	*((int *)(intPointerToFloat) + 1) = ((_swapper *)(&floatVarName))->i[0];
-#   define fetchFloatAtPointerinto(intPointerToFloat, floatVarName) \
-	((_swapper *)(&floatVarName))->i[1] = *((int *)(intPointerToFloat) + 0); \
-	((_swapper *)(&floatVarName))->i[0] = *((int *)(intPointerToFloat) + 1);
-# else /*!DOUBLE_WORD_ORDER*/
+typedef union { double d; int i[sizeof(double) / sizeof(int)]; } _aligner;
 /* word-based copy for machines with alignment restrictions */
-#   define storeFloatAtPointerfrom(intPointerToFloat, floatVarName) \
-	*((int *)(intPointerToFloat) + 0) = ((_swapper *)(&floatVarName))->i[0]; \
-	*((int *)(intPointerToFloat) + 1) = ((_swapper *)(&floatVarName))->i[1];
-#   define fetchFloatAtPointerinto(intPointerToFloat, floatVarName) \
-	((_swapper *)(&floatVarName))->i[0] = *((int *)(intPointerToFloat) + 0); \
-	((_swapper *)(&floatVarName))->i[1] = *((int *)(intPointerToFloat) + 1);
-# endif /*!DOUBLE_WORD_ORDER*/
-#else /*!(DOUBLE_WORD_ORDER||DOUBLE_WORD_ALIGNMENT)*/
+# define storeFloatAtPointerfrom(intPointerToFloat, doubleVar) do { \
+	*((int *)(intPointerToFloat) + 0) = ((_aligner *)(&doubleVar))->i[0]; \
+	*((int *)(intPointerToFloat) + 1) = ((_aligner *)(&doubleVar))->i[1]; \
+  } while (0)
+# define fetchFloatAtPointerinto(intPointerToFloat, doubleVar) do { \
+	((_aligner *)(&doubleVar))->i[0] = *((int *)(intPointerToFloat) + 0); \
+	((_aligner *)(&doubleVar))->i[1] = *((int *)(intPointerToFloat) + 1); \
+  } while (0)
+#else /* !DOUBLE_WORD_ALIGNMENT */
 /* for machines that allow doubles to be on any word boundary */
-# define storeFloatAtPointerfrom(i, floatVarName) \
-	*((double *) (i)) = (floatVarName);
-# define fetchFloatAtPointerinto(i, floatVarName) \
-	(floatVarName) = *((double *) (i));
+# define storeFloatAtPointerfrom(i, doubleVar) (*((double *) (i)) = (doubleVar))
+# define fetchFloatAtPointerinto(i, doubleVar) ((doubleVar) = *((double *) (i)))
 #endif
 
-#define storeFloatAtfrom(i, floatVarName)	storeFloatAtPointerfrom(pointerForOop(i), floatVarName)
-#define fetchFloatAtinto(i, floatVarName)	fetchFloatAtPointerinto(pointerForOop(i), floatVarName)
+#define storeFloatAtfrom(i, doubleVar)	storeFloatAtPointerfrom(pointerForOop(i), doubleVar)
+#define fetchFloatAtinto(i, doubleVar)	fetchFloatAtPointerinto(pointerForOop(i), doubleVar)
 
 
 /* This doesn't belong here, but neither do 'self flag: ...'s belong in the image. */
 
-static void inline flag(char *ignored)
-{
-  (void)ignored;
-}
+#ifdef _MSC_VER
+static void flag(char *ignored) {}
+#else 
+static inline void flag(char *ignored) {}
+#endif
 
+/* heap debugging facilities in sqHeapMap.c */
+extern void clearHeapMap(void);
+extern int  heapMapAtWord(void *wordPointer);
+extern void heapMapAtWordPut(void *wordPointer, int bit);
 
 #endif /* __sqMemoryAccess_h */

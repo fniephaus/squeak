@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id$
+*   RCSID:   $Id: sqWin32ExternalPrims.c 1224 2005-06-22 07:31:28Z bernd $
 *
 *   NOTES:
 *     1) Currently, we're looking for DLLs named either sample.dll or sample32.dll
@@ -28,7 +28,7 @@ HANDLE tryLoading(TCHAR *prefix, TCHAR *baseName, TCHAR *postfix)
   h = LoadLibrary(libName);
 #ifndef NDEBUG
   if(h == NULL)
-    printLastError(TEXT("LoadLibrary failed"));
+    vprintLastError(TEXT("LoadLibrary(%s)"), libName);
 #endif
   return h;
 }

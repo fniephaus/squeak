@@ -8,12 +8,12 @@
  *   
  *   This file is part of Unix Squeak.
  * 
- *   Permission is hereby granted, free of charge, to any person obtaining a copy
- *   of this software and associated documentation files (the "Software"), to deal
- *   in the Software without restriction, including without limitation the rights
- *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *   copies of the Software, and to permit persons to whom the Software is
- *   furnished to do so, subject to the following conditions:
+ *   Permission is hereby granted, free of charge, to any person obtaining a
+ *   copy of this software and associated documentation files (the "Software"),
+ *   to deal in the Software without restriction, including without limitation
+ *   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *   and/or sell copies of the Software, and to permit persons to whom the
+ *   Software is furnished to do so, subject to the following conditions:
  * 
  *   The above copyright notice and this permission notice shall be included in
  *   all copies or substantial portions of the Software.
@@ -22,11 +22,9 @@
  *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *   SOFTWARE.
- * 
- * Last edited: 2008-11-10 13:19:29 by piumarta on ubuntu.piumarta.com
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *   DEALINGS IN THE SOFTWARE.
  */
 
 /* Why on earth does this plugin exist at all?  Brain death strikes
@@ -51,23 +49,16 @@ extern struct VirtualMachine  *interpreterProxy;
 extern int		       uxDropFileCount;
 extern char		     **uxDropFileNames;
 
-SQFile *fileValueOf(sqInt objectPointer);
-sqInt 	instantiateClassindexableSize(sqInt classPointer, sqInt size);
-sqInt 	classByteArray(void);
-sqInt 	fileRecordSize(void);
-sqInt 	sqFileOpen(SQFile *f, char *sqFileName, sqInt sqFileNameSize, sqInt writeFlag);
-sqInt 	dndOutStart(char *types, int ntypes);
-sqInt 	dndOutAcceptedType(char *type, int ntype);
-void    dndOutSend(char *bytes, int nbytes);
 
 int dropInit(void)	{ return 1; }
 int dropShutdown(void)	{ return 1; }
 
-char *dropRequestFileName(int dropIndex)	/* in st coordinates */
+char *dropRequestFileName(int dropIndex)	// in st coordinates
 {
   if ((dropIndex > 0) && (dropIndex <= uxDropFileCount))
     {
       assert(uxDropFileNames);
+      dndReceived(uxDropFileNames[dropIndex - 1]);
       return uxDropFileNames[dropIndex - 1];
     }
   return 0;
@@ -78,42 +69,12 @@ int dropRequestFileHandle(int dropIndex)
   char *path= dropRequestFileName(dropIndex);
   if (path)
     {
-      /* you cannot be serious? */
+      // you cannot be serious?
       int handle= instantiateClassindexableSize(classByteArray(), fileRecordSize());
-      sqFileOpen((SQFile *)fileValueOf(handle), path, strlen(path), 0);
+      sqFileOpen((SQFile *)fileValueOf(handle), (int)path, strlen(path), 0);
       return handle;
     }  
   return interpreterProxy->nilObject();
-}
-
-void sqDndOutStart(char *types, int ntypes)
-{
-  /* XDnD supports up to 3 types */
-  if (!dndOutStart(types, ntypes))
-    interpreterProxy->success(false);
-}
-
-int sqDndOutAcceptedType(void)
-{
-  int outData;
-  char *dest;
-  size_t nbuf;
-  char buf[256];
-
-  int result= dndOutAcceptedType(buf, 256);
-  if (result == 0) return interpreterProxy->nilObject();
-
-  nbuf= strlen(buf);
-  outData = interpreterProxy->instantiateClassindexableSize(interpreterProxy->classString(), nbuf);
-  dest = ((char *) (interpreterProxy->firstIndexableField(outData)));
-  memcpy(dest, buf, nbuf);
-
-  return outData;
-}
-
-void sqDndOutSend(char *aByteArray, int nbytes)
-{
-  dndOutSend(aByteArray, nbytes);
 }
 
 int  sqSecFileAccessCallback(void *callback)		 { return 0; }

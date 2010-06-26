@@ -6,11 +6,12 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: Walt Disney Imagineering, Glendale, CA
 *   EMAIL:   andreasr@wdi.disney.com
-*   RCSID:   $Id: sqWin32FFI.c,v 1.2 2002/06/01 11:44:39 andreasraab Exp $
+*   RCSID:   $Id: sqWin32FFI.c 414 2002-06-01 11:44:39Z andreasraab $
 *
 *   NOTES:
 *
 *****************************************************************************/
+#include <windows.h>
 #include "sq.h"
 #include "sqFFI.h"
 
@@ -43,6 +44,40 @@ static void*    structReturnValue;
 
 #define ARG_CHECK() if(ffiArgIndex >= FFI_MAX_ARGS) return primitiveFail();
 #define ARG_PUSH(value) { ARG_CHECK(); ffiArgs[ffiArgIndex++] = value; }
+
+
+/*****************************************************************************/
+/*****************************************************************************/
+static FILE *ffiLogFile = NULL;
+
+int ffiLogFileNameOfLength(void *nameIndex, int nameLength) {
+  char fileName[MAX_PATH];
+  FILE *fp;
+
+  if(nameIndex && nameLength) {
+    if(nameLength >= MAX_PATH) return 0;
+    strncpy(fileName, nameIndex, nameLength);
+    fileName[nameLength] = 0;
+    /* attempt to open the file and if we can't fail */
+    fp = fopen(fileName, "at");
+    if(fp == NULL) return 0;
+    /* close the old log file if needed and use the new one */
+    if(ffiLogFile) fclose(ffiLogFile);
+    ffiLogFile = fp;
+    fprintf(ffiLogFile, "------- Log started -------\n");
+    fflush(fp);
+  } else {
+    if(ffiLogFile) fclose(ffiLogFile);
+    ffiLogFile = NULL;
+  }
+  return 1;
+}
+
+int ffiLogCallOfLength(void *nameIndex, int nameLength) {
+    if(ffiLogFile == NULL) return 0;
+    fprintf(ffiLogFile, "%.*s\n", nameLength, nameIndex);
+    fflush(ffiLogFile);
+}
 
 /*****************************************************************************/
 /*****************************************************************************/
@@ -321,45 +356,45 @@ int ffiCallAddress(int fn)
 	}
 #endif
 #ifdef __GNUC__
-	asm("
-	  movl %%ebp, _oldBP
-	  movl %%esp, _oldSP
-		pushl %%ebx;
-		pushl %%ecx;
-		pushl %%edx;
-		pushl %%edi;
-		pushl %%esi;
-		pushl %%ebp;
+	asm(
+	  "movl %%ebp, _oldBP\n\t"
+	  "movl %%esp, _oldSP\n\t"
+		"pushl %%ebx\n\t"
+		"pushl %%ecx\n\t"
+		"pushl %%edx\n\t"
+		"pushl %%edi\n\t"
+		"pushl %%esi\n\t"
+		"pushl %%ebp\n\t"
 		/* mark the frame */
-		movl %%esp, %%ebp
+		"movl %%esp, %%ebp\n\t"
 		/* alloca() ffiStackIndex size bytes */
-		movl _ffiArgIndex, %%ecx;
-		shll $2, %%ecx;
-		subl %%ecx, %%esp
+		"movl _ffiArgIndex, %%ecx\n\t"
+		"shll $2, %%ecx\n\t"
+		"subl %%ecx, %%esp\n\t"
 		/* copy stack */
-		movl %%esp, %%edi;
-		leal _ffiArgs, %%esi;
-		shrl $2, %%ecx;
-		cld;
-		rep movsl;
+		"movl %%esp, %%edi\n\t"
+		"leal _ffiArgs, %%esi\n\t"
+		"shrl $2, %%ecx\n\t"
+		"cld\n\t"
+		"rep movsl\n\t"
 		/* go calling */
-		call *%%ebx
+		"call *%%ebx\n\t"
 		/* restore frame */
-		movl %%ebp, %%esp
+		"movl %%ebp, %%esp\n\t"
 		/* store the return values */
-		movl %%eax, _intReturnValue
-		movl %%edx, _intReturnValue2
-		fstpl _floatReturnValue
+		"movl %%eax, _intReturnValue\n\t"
+		"movl %%edx, _intReturnValue2\n\t"
+		"fstpl _floatReturnValue\n\t"
 		/* restore register values */
-		popl %%ebp
-		popl %%esi
-		popl %%edi
-		popl %%edx
-		popl %%ecx
-		popl %%ebx
-movl %%ebp, _newBP
-movl %%esp, _newSP
-		": /* no outputs */ : "ebx" (fn) : "eax" /* clobbered registers */);
+		"popl %%ebp\n\t"
+		"popl %%esi\n\t"
+		"popl %%edi\n\t"
+		"popl %%edx\n\t"
+		"popl %%ecx\n\t"
+		"popl %%ebx\n\t"
+"movl %%ebp, _newBP\n\t"
+"movl %%esp, _newSP\n\t"
+		: /* no outputs */ : "ebx" (fn) : "eax" /* clobbered registers */);
 		/* done */
 #endif
 #if 0

@@ -1,16 +1,9 @@
-#if defined(__powerpc__) || defined(PPC) || defined(_POWER) || defined(_IBMR2) || defined(__ppc__)
-#else
 /*
- * Copyright 2008 Cadence Design Systems, Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the ''License''); you may not use this file except in compliance with the License.  You may obtain a copy of the License at  http://www.apache.org/licenses/LICENSE-2.0
- */
-/* 
  *  ia32abicc.c
  *
  * Support for Call-outs and Call-backs from the Plugin.
  *  Written by Eliot Miranda 11/07.
- * Changes by John M McIntosh 12/08.
+ *  Copyright 2007 Cadence Design Systems. All rights reserved.
  *
  */
 
@@ -41,10 +34,7 @@ void *getbaz() { return baz; }
 # include <malloc.h> /* for valloc */
 # include <sys/mman.h> /* for mprotect */
 #endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+
 #include "sqMemoryAccess.h"
 #include "sqVirtualMachine.h"
 #include "ia32abi.h"
@@ -124,17 +114,6 @@ struct VirtualMachine* interpreterProxy;
 #define isSmallInt(oop) ((oop)&1)
 #define intVal(oop) (((long)(oop))>>1)
 
-int figureOutFloatSize(int typeSignatureArray,int index) {
-	int floatSize,objectSize;
-	char *floatSizePointer;
-	sqInt oops = interpreterProxy->stackValue(typeSignatureArray);
-	objectSize = interpreterProxy->stSizeOf(oops);
-	if (index >= objectSize) 
-		return sizeof(double);
-	floatSizePointer = interpreterProxy->firstIndexableField(oops);
-	floatSize = floatSizePointer[index];
-	return floatSize;
-}
 /*
  * Call a foreign function that answers an integral result in %eax (and
  * possibly %edx) according to IA32-ish ABI rules.
@@ -147,7 +126,6 @@ __int64 (*f)(), r;
 long long (*f)(), r;
 #endif
 #include "dabusiness.h"
-#include "dabusinessPostLogic.h"
 }
 
 /*
@@ -157,7 +135,6 @@ long long (*f)(), r;
 sqInt
 callIA32FloatReturn(SIGNATURE) { float (*f)(), r;
 #include "dabusiness.h"
-#include "dabusinessPostLogic.h"
 }
 
 /*
@@ -167,7 +144,6 @@ callIA32FloatReturn(SIGNATURE) { float (*f)(), r;
 sqInt
 callIA32DoubleReturn(SIGNATURE) { double (*f)(), r;
 #include "dabusiness.h"
-#include "dabusinessPostLogic.h"
 }
 
 /*
@@ -205,7 +181,7 @@ thunkEntry(void *thunkp, long *stackp)
 		exit(1);
 	}
 	if (!CheckInVMThread()) {
-		printf("NOT IN VM THREAD!\n");
+		printf("Not in VM thread!\n");
 		perror("Not in VM thread!\n");
 		exit(666);
 	}
@@ -280,6 +256,9 @@ allocateExecutablePage(long *size)
 	void *mem;
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
+#if !defined(MEM_TOP_DOWN)
+# define MEM_TOP_DOWN 0x100000
+#endif
 	if (!pagesize) {
 		SYSTEM_INFO	sysinf;
 
@@ -309,4 +288,3 @@ allocateExecutablePage(long *size)
 #endif
 	return mem;
 }
-#endif

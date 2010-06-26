@@ -6,7 +6,7 @@
 *   AUTHOR:  John Maloney, John McIntosh, and others.
 *   ADDRESS: 
 *   EMAIL:   johnmci@smalltalkconsulting.com
-*   RCSID:   $Id$
+*   RCSID:   $Id: sqMacUIEvents.c 1301 2006-02-04 07:09:08Z johnmci $
 *
 *   NOTES: 
 *  Feb 22nd, 2002, JMM moved code into 10 other files, see sqMacMain.c for comments
@@ -96,7 +96,6 @@ notes: IsUserCancelEventRef
 
 extern int getInterruptKeycode();
 extern int setInterruptPending(int value);
-extern int setInterruptCheckCounter(int value);
 extern int getFullScreenFlag();
 extern struct VirtualMachine* interpreterProxy;
 
@@ -478,7 +477,6 @@ void recordKeystroke(EventRecord *theEvent) {
 	if (keystate == getInterruptKeycode()) {
 		/* Note: interrupt key is "meta"; it not reported as a keystroke */
 		setInterruptPending(true);
-		setInterruptCheckCounter(0);
 	} else {
 		keyBuf[keyBufPut] = keystate;
 		keyBufPut = (keyBufPut + 1) % KEYBUF_SIZE;
@@ -1885,7 +1883,6 @@ void fakeMouseWheelKeyboardEvents(EventMouseWheelAxis wheelMouseDirection,long w
             if (keystate == getInterruptKeycode()) {
                     /* Note: interrupt key is "meta"; it not reported as a keystroke */
                     setInterruptPending(true);
-                    setInterruptCheckCounter(0);
             } else {
                     keyBuf[keyBufPut] = keystate;
                     keyBufPut = (keyBufPut + 1) % KEYBUF_SIZE;
@@ -2214,7 +2211,6 @@ sqKeyboardEvent *enterKeystroke (long type, long cc, long pc, UniChar utf32Code,
 			if (keystate == getInterruptKeycode()) {
 					/* Note: interrupt key is "meta"; it not reported as a keystroke */
 					setInterruptPending(true);
-					setInterruptCheckCounter(0);
 			} else {
 					keyBuf[keyBufPut] = keystate;
 					keyBufPut = (keyBufPut + 1) % KEYBUF_SIZE;

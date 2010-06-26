@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id$
+*   RCSID:   $Id: sqWin32Alloc.c 1394 2006-03-29 02:19:47Z andreas $
 *
 *
 *****************************************************************************/
@@ -14,11 +14,18 @@
 #include "sq.h"
 
 #ifndef NO_VIRTUAL_MEMORY
-/* This will be left on until we find out what's going on these strange laptops */
-#define EXPERIMENTAL
+
+/* For Qwaq Forums: Disallow memory shrinking to avoid crashes
+   due to GC/OpenGL relocation problems within glDrawElements.
+   It appears that in rare circumstances we trigger a full GC
+   which moves the data away from under OGLs feet and if the
+   memory gets released at this point OGL may crash.
+*/
+#define DO_NOT_SHRINK
+
 
 #ifndef NO_RCSID
-  static char RCSID[]="$Id$";
+  static char RCSID[]="$Id: sqWin32Alloc.c 1394 2006-03-29 02:19:47Z andreas $";
 #endif
 
 static LPSTR  pageBase;     /* base address of allocated memory */
@@ -125,6 +132,13 @@ int sqShrinkMemoryBy(int oldLimit, int delta) {
   if(fShowAllocations) {
     warnPrintf("Shrinking by %d...",delta);
   }
+#ifdef DO_NOT_SHRINK
+  {
+    /* Experimental - do not unmap memory and avoid OGL crashes */
+    if(fShowAllocations) warnPrintf(" - ignored\n");
+    return oldLimit;
+  }
+#endif
   delta &= pageBits;
   if(!VirtualFree(pageLimit-delta, delta, MEM_DECOMMIT)) {
     if(fShowAllocations) {
@@ -172,3 +186,29 @@ void sqReleaseMemory(void)
 }
 
 #endif /* NO_VIRTUAL_MEMORY */
+
+#if COGVM
+void
+sqMakeMemoryExecutableFromTo(unsigned long startAddr, unsigned long endAddr)
+{
+	DWORD previous;
+
+	if (VirtualProtect(startAddr,
+						endAddr - startAddr + 1,
+						PAGE_EXECUTE_READWRITE,
+						&previous))
+		perror("VirtualProtect(x,y,PAGE_EXECUTE_READWRITE)");
+}
+
+void
+sqMakeMemoryNotExecutableFromTo(unsigned long startAddr, unsigned long endAddr)
+{
+	DWORD previous;
+
+	if (VirtualProtect(startAddr,
+						endAddr - startAddr + 1,
+						PAGE_READWRITE,
+						&previous))
+		perror("VirtualProtect(x,y,PAGE_EXECUTE_READWRITE)");
+}
+#endif /* COGVM */

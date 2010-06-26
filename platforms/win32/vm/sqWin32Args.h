@@ -18,6 +18,7 @@ extern char imageName[];
 #define ARG_STRING 2
 #define ARG_INT    3
 #define ARG_UINT   4
+#define ARG_STRING_FUNC 5
 
 typedef struct vmArg{
   int   type;

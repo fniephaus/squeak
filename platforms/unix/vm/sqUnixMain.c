@@ -6,12 +6,12 @@
  *   
  *   This file is part of Unix Squeak.
  * 
- *   Permission is hereby granted, free of charge, to any person obtaining a copy
- *   of this software and associated documentation files (the "Software"), to deal
- *   in the Software without restriction, including without limitation the rights
- *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *   copies of the Software, and to permit persons to whom the Software is
- *   furnished to do so, subject to the following conditions:
+ *   Permission is hereby granted, free of charge, to any person obtaining a
+ *   copy of this software and associated documentation files (the "Software"),
+ *   to deal in the Software without restriction, including without limitation
+ *   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *   and/or sell copies of the Software, and to permit persons to whom the
+ *   Software is furnished to do so, subject to the following conditions:
  * 
  *   The above copyright notice and this permission notice shall be included in
  *   all copies or substantial portions of the Software.
@@ -20,14 +20,17 @@
  *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *   SOFTWARE.
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *   DEALINGS IN THE SOFTWARE.
  */
 
 /* Author: Ian Piumarta <ian.piumarta@squeakland.org>
- *
- * Last edited: 2010-04-01 13:43:17 by piumarta on emilia-2.local
+ * Merged with
+ *	http://squeakvm.org/svn/squeak/trunk/platforms/unix/vm/sqUnixMain.c
+ *	Revision: 2148
+ *	Last Changed Rev: 2132
+ * by eliot Wed Jan 20 10:57:26 PST 2010
  */
 
 #include "sq.h"
@@ -73,7 +76,6 @@
        char   imageName[MAXPATHLEN+1];		/* full path to image */
 static char   vmName[MAXPATHLEN+1];		/* full path to vm */
        char   vmPath[MAXPATHLEN+1];		/* full path to image directory */
-       char  *vmLibDir= VM_LIBDIR;		/* full path to lib directory */
 
        int    argCnt=		0;	/* global copies for access from plugins */
        char **argVec=		0;
@@ -88,12 +90,18 @@ static int    extraMemory=	0;
        int    useMmap=		DefaultMmapSize * 1024 * 1024;
 
 static int    useItimer=	1;	/* 0 to disable itimer-based clock */
+static int    installHandlers=	1;	/* 0 to disable sigusr1 & sigsegv handlers */
        int    noEvents=		0;	/* 1 to disable new event handling */
        int    noSoundMixer=	0;	/* 1 to disable writing sound mixer levels */
        char  *squeakPlugins=	0;	/* plugin path */
+       int    runAsSingleInstance=0;
+#if !STACKVM && !COGVM
        int    useJit=		0;	/* use default */
        int    jitProcs=		0;	/* use default */
        int    jitMaxPIC=	0;	/* use default */
+#else
+# define useJit 0
+#endif
        int    withSpy=		0;
 
        int    uxDropFileCount=	0;	/* number of dropped items	*/
@@ -118,9 +126,14 @@ int runInterpreter		= 1;
 struct SqDisplay *dpy= 0;
 struct SqSound   *snd= 0;
 
+extern void dumpPrimTraceLog(void);
 
+
+/*
+ * In the Cog VMs time management is in platforms/unix/vm/sqUnixHeartbeat.c.
+ */
+#if !STACKVM
 /*** timer support ***/
-
 
 #define	LOW_RES_TICK_MSECS	20	/* 1/50 second resolution */
 
@@ -130,6 +143,7 @@ static struct timeval startUpTime;
 static void sigalrm(int signum)
 {
   lowResMSecs+= LOW_RES_TICK_MSECS;
+  forceInterruptCheck();
 }
 
 static void initTimers(void)
@@ -152,7 +166,7 @@ static void initTimers(void)
 #      else
 	sa.sa_flags= 0;	/* assume we already have BSD behaviour */
 #      endif
-#      if defined(__linux__) && !defined(__ia64) && !defined(__alpha__)
+#      if defined(__linux__) && !defined(__ia64) &7 !defined(__alpha__)
 	sa.sa_restorer= 0;
 #      endif
 	sigaction(SIGALRM, &sa, 0);
@@ -177,6 +191,23 @@ sqInt ioLowResMSecs(void)
 sqInt ioMSecs(void)
 {
   struct timeval now;
+  unsigned int nowMSecs;
+
+#if 1 /* HAVE_HIGHRES_COUNTER */
+
+  /* if we have a cheap, high-res counter use that to limit
+     the frequency of calls to gettimeofday to something reasonable. */
+  static unsigned int baseMSecs = 0;      /* msecs when we took base tick */
+  static sqLong baseTicks = 0;/* base tick for adjustment */
+  static sqLong tickDelta = 0;/* ticks / msec */
+  static sqLong nextTick = 0; /* next tick to check gettimeofday */
+
+  sqLong thisTick = ioHighResClock();
+
+  if(thisTick < nextTick) return lowResMSecs;
+
+#endif
+
   gettimeofday(&now, 0);
   if ((now.tv_usec-= startUpTime.tv_usec) < 0)
     {
@@ -184,7 +215,32 @@ sqInt ioMSecs(void)
       now.tv_sec-= 1;
     }
   now.tv_sec-= startUpTime.tv_sec;
-  return lowResMSecs= (now.tv_usec / 1000 + now.tv_sec * 1000);
+  nowMSecs = (now.tv_usec / 1000 + now.tv_sec * 1000);
+
+#if 1 /* HAVE_HIGHRES_COUNTER */
+  {
+    unsigned int msecsDelta;
+    /* Adjust our rdtsc rate every 10...100 msecs as needed.
+       This also covers msecs clock-wraparound. */
+    msecsDelta = nowMSecs - baseMSecs;
+    if(msecsDelta < 0 || msecsDelta > 100) {
+      /* Either we've hit a clock-wraparound or we are being
+	 sampled in intervals larger than 100msecs.
+	 Don't try any fancy adjustments */
+      baseMSecs = nowMSecs;
+      baseTicks = thisTick;
+      nextTick = 0;
+      tickDelta = 0;
+    } else if(msecsDelta >= 10) {
+      /* limit the rate of adjustments to 10msecs */
+      baseMSecs = nowMSecs;
+      tickDelta = (thisTick - baseTicks) / msecsDelta;
+      nextTick = baseTicks = thisTick;
+    }
+    nextTick += tickDelta;
+  }
+#endif
+  return lowResMSecs= nowMSecs;
 }
 
 sqInt ioMicroMSecs(void)
@@ -193,34 +249,14 @@ sqInt ioMicroMSecs(void)
   return ioMSecs();	/* this already to the nearest millisecond */
 }
 
-sqLong ioMicroSeconds(void)
-{
-  struct timeval now;
-  sqLong microSecs;
-  gettimeofday(&now, 0);
-  if ((now.tv_usec -= startUpTime.tv_usec) < 0) {
-    now.tv_usec += 1000000;
-    now.tv_sec -= 1;
-  }
-  now.tv_sec -= startUpTime.tv_sec;
-  microSecs= now.tv_usec;
-  microSecs= microSecs + now.tv_sec * 1000000;
-  return microSecs;
-}
+time_t convertToSqueakTime(time_t unixTime);
 
-/* implementation of ioUtcWithOffset(), defined in config.h to
-/* override default definition in src/vm/interp.h
- */
-sqInt sqUnixUtcWithOffset(sqLong *microSeconds, int *offset)
+/* returns the local wall clock time */
+sqInt ioSeconds(void)
 {
-  struct timeval timeval;
-  if (gettimeofday(&timeval, NULL) == -1) return -1;
-  time_t seconds= timeval.tv_sec;
-  suseconds_t usec= timeval.tv_usec;
-  *microSeconds= seconds * 1000000 + usec;
-  *offset= localtime(&seconds)->tm_gmtoff;
-  return 0;
+  return convertToSqueakTime(time(0));
 }
+#endif /* STACKVM */
 
 time_t convertToSqueakTime(time_t unixTime)
 {
@@ -238,19 +274,13 @@ time_t convertToSqueakTime(time_t unixTime)
   return unixTime + ((52*365UL + 17*366UL) * 24*60*60UL);
 }
 
-/* returns the local wall clock time */
-sqInt ioSeconds(void)
-{
-  return convertToSqueakTime(time(0));
-}
-
 
 /*** VM & Image File Naming ***/
 
 
 /* copy src filename to target, if src is not an absolute filename,
  * prepend the cwd to make target absolute
- */
+  */
 static void pathCopyAbs(char *target, const char *src, size_t targetSize)
 {
   if (src[0] == '/')
@@ -373,14 +403,8 @@ sqInt vmPathGetLength(sqInt sqVMPathIndex, sqInt length)
   return count;
 }
 
-
-/*** Profiling ***/
-
-
-sqInt clearProfile(void) { return 0; }
-sqInt dumpProfile(void) { return 0; }
-sqInt startProfiling(void) { return 0; }
-sqInt stopProfiling(void) { return 0; }
+char* ioGetLogDirectory(void) { return ""; };
+sqInt ioSetLogDirectoryOfSize(void* lblIndex, sqInt sz){ return 1; }
 
 
 /*** power management ***/
@@ -437,6 +461,18 @@ static char *getAttribute(sqInt id)
       case 1006:
 	/* vm build string */
 	return VM_BUILD_STRING;
+#if STACKVM
+      case 1007: { /* interpreter build info */
+	extern char *__interpBuildInfo;
+	return __interpBuildInfo;
+      }
+# if COGVM
+      case 1008: { /* cogit build info */
+	extern char *__cogitBuildInfo;
+	return __cogitBuildInfo;
+      }
+# endif
+#endif
       default:
 	if ((id - 2) < squeakArgCnt)
 	  return squeakArgVec[id - 2];
@@ -483,6 +519,13 @@ sqInt ioFormPrint(sqInt bitsAddr, sqInt width, sqInt height, sqInt depth, double
   return dpy->ioFormPrint(bitsAddr, width, height, depth, hScale, vScale, landscapeFlag);
 }
 
+#if STACKVM
+sqInt ioRelinquishProcessorForMicroseconds(sqInt us)
+{
+  dpy->ioRelinquishProcessorForMicroseconds(us);
+  return 0;
+}
+#else /* STACKVM */
 static int lastInterruptCheck= 0;
 
 sqInt ioRelinquishProcessorForMicroseconds(sqInt us)
@@ -492,11 +535,12 @@ sqInt ioRelinquishProcessorForMicroseconds(sqInt us)
   now= ioLowResMSecs();
   if (now - lastInterruptCheck > (1000/25))	/* avoid thrashing intr checks from 1ms loop in idle proc  */
     {
-      setInterruptCheckCounter(-1000);	/* ensure timely poll for semaphore activity */
+      forceInterruptCheck();	/* ensure timely poll for semaphore activity */
       lastInterruptCheck= now;
     }
   return 0;
 }
+#endif /* STACKVM */
 
 sqInt ioBeep(void)				 { return dpy->ioBeep(); }
 
@@ -527,6 +571,8 @@ static void emergencyDump(int quit)
 
   fprintf(stderr, "\n");
   printCallStack();
+  printf("\nMost recent primitives\n");
+  dumpPrimTraceLog();
   fprintf(stderr, "\nTo recover valuable content from this image:\n");
   fprintf(stderr, "    squeak %s\n", imageName);
   fprintf(stderr, "and then evaluate\n");
@@ -620,11 +666,34 @@ sqInt ioGetKeystroke(void)		{ return dpy->ioGetKeystroke(); }
 sqInt ioGetNextEvent(sqInputEvent *evt)	{ return dpy->ioGetNextEvent(evt); }
 sqInt ioMousePoint(void)		{ return dpy->ioMousePoint(); }
 
+/*** Window labeling ***/
+char* ioGetWindowLabel(void) {return "";}
+
+sqInt ioSetWindowLabelOfSize(void* lbl, sqInt size)
+{ return dpy->hostWindowSetTitle((long)dpy->ioGetWindowHandle(), lbl, size); }
+
+sqInt ioIsWindowObscured(void) {return false;}
+
+/** Misplaced Window-Size stubs, so the VM will link. **/
+sqInt ioGetWindowWidth()
+{ int wh = dpy->hostWindowGetSize((long)dpy->ioGetWindowHandle());
+  return wh >> 16; } 
+
+sqInt ioGetWindowHeight()
+{ int wh = dpy->hostWindowGetSize((long)dpy->ioGetWindowHandle());
+  return (short)wh; } 
+
+void* ioGetWindowHandle(void) { return dpy->ioGetWindowHandle(); }
+
+sqInt ioSetWindowWidthHeight(sqInt w, sqInt h)
+{ return dpy->hostWindowSetSize((long)dpy->ioGetWindowHandle(),w,h); }
+
 /*** Drag and Drop ***/
 
 sqInt dndOutStart(char *types, int ntypes)	{ return dpy->dndOutStart(types, ntypes); }
 sqInt dndOutAcceptedType(char *type, int ntype)	{ return dpy->dndOutAcceptedType(type, ntype); }
 void  dndOutSend(char *bytes, int nbytes)	{        dpy->dndOutSend(bytes, nbytes); }
+void  dndReceived(char *fileName)			{        dpy->dndReceived(fileName); }
 
 /*** OpenGL ***/
 
@@ -669,19 +738,47 @@ static void outOfMemory(void)
   exit(1);
 }
 
+static void sigusr1(int ignore)
+{
+  printf("\nReceived user signal, printing active stack:\n\n");
+  printCallStack();
+  printf("\nReceived user signal, printing all processes:\n\n");
+  printAllStacks();
+  fflush(stdout);
+  fflush(stderr);
+}
+
+/* Print an error message, possibly a stack trace, and exit. */
+/* Disable Intel compiler inlining of error which is used for breakpoints */
+#pragma auto_inline off
+void
+error(char *msg)
+{
+	/* flag prevents recursive error when trying to print a broken stack */
+	static sqInt printingStack = false;
+
+	printf("\n%s\n\n", msg);
+
+	if (ioOSThreadsEqual(ioCurrentOSThread(),getVMThread())) {
+		if (!printingStack) {
+			printingStack = true;
+			printf("\n\nSmalltalk stack dump:\n");
+			printCallStack();
+		}
+	}
+	else
+		printf("\nCan't dump Smalltalk stack. Not in VM thread\n");
+	printf("\nMost recent primitives\n");
+	dumpPrimTraceLog();
+	abort();
+}
+#pragma auto_inline on
 
 static void sigsegv(int ignore)
 {
-  /* error("Segmentation fault"); */
-  static int printingStack= 0;
+#pragma unused(ignore)
 
-  printf("\nSegmentation fault\n\n");
-  if (!printingStack)
-    {
-      printingStack= 1;
-      printCallStack();
-    }
-  abort();
+  error("Segmentation fault");
 }
 
 
@@ -885,7 +982,7 @@ static void loadImplicit(struct SqModule **addr, char *evar, char *type, char *n
   if ((!*addr) && getenv(evar) && !(*addr= queryModule(type, name)))
     {
       fprintf(stderr, "could not find %s driver vm-%s-%s; either:\n", type, type, name);
-      fprintf(stderr, "  - check that %s/vm-%s-%s.so exists, or\n", vmLibDir, type, name);
+      fprintf(stderr, "  - check that %s/vm-%s-%s.so exists, or\n", vmPath, type, name);
       fprintf(stderr, "  - use the '-plugins <path>' option to tell me where it is, or\n");
       fprintf(stderr, "  - remove %s from your environment.\n", evar);
       abort();
@@ -945,6 +1042,7 @@ static int strtobkm(const char *str)
   return value;
 }
 
+#if !STACKVM && !COGVM
 static int jitArgs(char *str)
 {
   char *endptr= str;
@@ -957,6 +1055,7 @@ static int jitArgs(char *str)
     args|= (1 << (strtol(endptr + 1, &endptr, 10) + 8));
   return args;
 }
+#endif /* !STACKVM && !COGVM */
 
 
 # include <locale.h>
@@ -980,9 +1079,11 @@ static void vm_parseEnvironment(void)
   if ((ev= getenv("SQUEAK_PLUGINS")))	squeakPlugins= strdup(ev);
   if ((ev= getenv("SQUEAK_NOEVENTS")))	noEvents= 1;
   if ((ev= getenv("SQUEAK_NOTIMER")))	useItimer= 0;
+#if !STACKVM && !COGVM
   if ((ev= getenv("SQUEAK_JIT")))	useJit= jitArgs(ev);
   if ((ev= getenv("SQUEAK_PROCS")))	jitProcs= atoi(ev);
   if ((ev= getenv("SQUEAK_MAXPIC")))	jitMaxPIC= atoi(ev);
+#endif /* !STACKVM && !COGVM */
   if ((ev= getenv("SQUEAK_ENCODING")))	setEncoding(&sqTextEncoding, ev);
   if ((ev= getenv("SQUEAK_PATHENC")))	setEncoding(&uxPathEncoding, ev);
   if ((ev= getenv("SQUEAK_TEXTENC")))	setEncoding(&uxTextEncoding, ev);
@@ -1045,24 +1146,81 @@ static int vm_parseArgument(int argc, char **argv)
 
   /* vm arguments */
 
-  if      (!strcmp(argv[0], "-help"))		{ usage();				return 1; }
-  else if (!strcmp(argv[0], "-noevents"))	{ noEvents	= 1;			return 1; }
-  else if (!strcmp(argv[0], "-nomixer"))	{ noSoundMixer	= 1;			return 1; }
-  else if (!strcmp(argv[0], "-notimer"))	{ useItimer	= 0;			return 1; }
+  if      (!strcmp(argv[0], "-help"))		{ usage();		return 1; }
+  else if (!strcmp(argv[0], "-noevents"))	{ noEvents	= 1;	return 1; }
+  else if (!strcmp(argv[0], "-nomixer"))	{ noSoundMixer	= 1;	return 1; }
+  else if (!strcmp(argv[0], "-notimer"))	{ useItimer	= 0;	return 1; }
+  else if (!strcmp(argv[0], "-nohandlers"))	{ installHandlers= 0;	return 1; }
+#if !STACKVM && !COGVM
   else if (!strncmp(argv[0],"-jit", 4))		{ useJit	= jitArgs(argv[0]+4);	return 1; }
-  else if (!strcmp(argv[0], "-nojit"))		{ useJit	= 0;			return 1; }
-  else if (!strcmp(argv[0], "-spy"))		{ withSpy	= 1;			return 1; }
-  else if (!strcmp(argv[0], "-version"))	{ versionInfo();			return 1; }
+  else if (!strcmp(argv[0], "-nojit"))		{ useJit	= 0;	return 1; }
+  else if (!strcmp(argv[0], "-spy"))		{ withSpy	= 1;	return 1; }
+#endif /* !STACKVM && !COGVM */
+  else if (!strcmp(argv[0], "-version"))	{ versionInfo();	return 1; }
+  else if (!strcmp(argv[0], "-single"))		{ runAsSingleInstance=1; return 1; }
   /* option requires an argument */
   else if (argc > 1)
     {
-      if      (!strcmp(argv[0], "-procs"))	{ jitProcs=	 atoi(argv[1]);		 return 2; }
+      if (!strcmp(argv[0], "-memory"))	{ extraMemory=	 strtobkm(argv[1]);	 return 2; }
+#if !STACKVM && !COGVM
+      else if (!strcmp(argv[0], "-procs"))	{ jitProcs=	 atoi(argv[1]);		 return 2; }
       else if (!strcmp(argv[0], "-maxpic"))	{ jitMaxPIC=	 atoi(argv[1]);		 return 2; }
-      else if (!strcmp(argv[0], "-memory"))	{ extraMemory=	 strtobkm(argv[1]);	 return 2; }
+#endif /* !STACKVM && !COGVM */
       else if (!strcmp(argv[0], "-mmap"))	{ useMmap=	 strtobkm(argv[1]);	 return 2; }
       else if (!strcmp(argv[0], "-plugins"))	{ squeakPlugins= strdup(argv[1]);	 return 2; }
       else if (!strcmp(argv[0], "-encoding"))	{ setEncoding(&sqTextEncoding, argv[1]); return 2; }
       else if (!strcmp(argv[0], "-pathenc"))	{ setEncoding(&uxPathEncoding, argv[1]); return 2; }
+#if STACKVM
+      else if (!strcmp(argv[0], "-eden")) {
+		extern sqInt desiredEdenBytes;
+		desiredEdenBytes = strtobkm(argv[1]);
+		return 2; }
+      else if (!strcmp(argv[0], "-leakcheck")) { 
+		extern sqInt checkForLeaks;
+		checkForLeaks = atoi(argv[1]);	 
+		return 2; }
+      else if (!strcmp(argv[0], "-stackpages")) {
+		extern sqInt desiredNumStackPages;
+		desiredNumStackPages = atoi(argv[1]);
+		return 2; }
+      else if (!strcmp(argv[0], "-breaksel")) { 
+		extern void setBreakSelector(char *);
+		setBreakSelector(argv[1]);
+		return 2; }
+      else if (!strcmp(argv[0], "-noheartbeat")) { 
+		extern sqInt suppressHeartbeatFlag;
+		suppressHeartbeatFlag = 1;
+		return 1; }
+#endif /* STACKVM */
+#if COGVM
+      else if (!strcmp(argv[0], "-codesize")) { 
+		extern sqInt desiredCogCodeSize;
+		desiredCogCodeSize = strtobkm(argv[1]);	 
+		return 2; }
+# define TLSLEN (sizeof("-sendtrace")-1)
+      else if (!strncmp(argv[0], "-sendtrace", TLSLEN)) { 
+		extern int traceLinkedSends;
+		char *equalsPos = strchr(argv[0],'=');
+
+		if (!equalsPos) {
+			traceLinkedSends = 1;
+			return 1;
+		}
+		if (equalsPos - argv[0] != TLSLEN
+		  || (equalsPos[1] != '-' && !isdigit(equalsPos[1])))
+			return 0;
+
+		traceLinkedSends = atoi(equalsPos + 1);
+		return 1; }
+      else if (!strcmp(argv[0], "-tracestores")) { 
+		extern sqInt traceStores;
+		traceStores = 1;
+		return 1; }
+      else if (!strcmp(argv[0], "-cogmaxlits")) { 
+		extern sqInt maxLiteralCountForCompile;
+		maxLiteralCountForCompile = strtobkm(argv[1]);	 
+		return 2; }
+#endif /* COGVM */
       else if (!strcmp(argv[0], "-textenc"))
 	{
 	  char *buf= (char *)malloc(strlen(argv[1]) + 1);
@@ -1088,21 +1246,35 @@ static void vm_printUsage(void)
   printf("\nCommon <option>s:\n");
   printf("  -encoding <enc>       set the internal character encoding (default: MacRoman)\n");
   printf("  -help                 print this help message, then exit\n");
-/*printf("  -jit                  enable the dynamic compiler (if available)\n");*/
   printf("  -memory <size>[mk]    use fixed heap size (added to image size)\n");
   printf("  -mmap <size>[mk]      limit dynamic heap size (default: %dm)\n", DefaultMmapSize);
+#if STACKVM
+  printf("  -eden <size>[mk]      use given eden size\n");
+  printf("  -stackpages <num>     use given number of stack pages\n");
+#endif
   printf("  -noevents             disable event-driven input support\n");
-  printf("  -notimer              disable interval timer for low-res clock \n");
+  printf("  -nohandlers           disable sigsegv & sigusr1 handlers\n");
   printf("  -pathenc <enc>        set encoding for pathnames (default: UTF-8)\n");
   printf("  -plugins <path>       specify alternative plugin location (see manpage)\n");
   printf("  -textenc <enc>        set encoding for external text (default: UTF-8)\n");
   printf("  -version              print version information, then exit\n");
   printf("  -vm-<sys>-<dev>       use the <dev> driver for <sys> (see below)\n");
+#if COGVM
+  printf("  -codesize <size>[mk]  set machine code memory to bytes\n");
+  printf("  -sendtrace[=num]      enable send tracing (optionally to a specific value)\n");
+  printf("  -tracestores          enable store tracing (assert check stores)\n");
+  printf("  -cogmaxlits <n>       set max number of literals for methods compiled to machine code\n");
+#endif
 #if 1
   printf("Deprecated:\n");
+# if !(STACKVM || COGVM)
+  printf("  -jit                  enable the dynamic compiler (if available)\n");
+# endif
+  printf("  -notimer              disable interval timer for low-res clock \n");
   printf("  -display <dpy>        quivalent to '-vm-display-X11 -display <dpy>'\n");
   printf("  -headless             quivalent to '-vm-display-X11 -headless'\n");
   printf("  -nodisplay            quivalent to '-vm-display-null'\n");
+  printf("  -nomixer              disable modification of mixer settings\n");
   printf("  -nosound              quivalent to '-vm-sound-null'\n");
   printf("  -quartz               quivalent to '-vm-display-Quartz'\n");
 #endif
@@ -1178,11 +1350,9 @@ char *getVersionInfo(int verbose)
   sprintf(info+strlen(info), " XShm");
 #endif
   sprintf(info+strlen(info), " %s %s\n", vm_date, cc_version);
-#if 0
   if (verbose)
     sprintf(info+strlen(info), "Built from: ");
   sprintf(info+strlen(info), "%s\n", interpreterVersion);
-#endif
   if (verbose)
     sprintf(info+strlen(info), "Build host: ");
   sprintf(info+strlen(info), "%s\n", ux_version);
@@ -1284,7 +1454,6 @@ void imgInit(void)
 	  dpy->winImageNotFound();
 	  imageNotFound(shortImageName);
 	}
-#    if 0
       {
 	int fd= open(imageName, O_RDONLY);
 	if (fd < 0) abort();
@@ -1292,7 +1461,6 @@ void imgInit(void)
 	printf("fstat(%d) => %d\n", fd, fstat(fd, &sb));
 #      endif
       }
-#    endif
       recordFullPathForImageName(shortImageName); /* full image path */
       if (extraMemory)
 	useMmap= 0;
@@ -1302,7 +1470,7 @@ void imgInit(void)
       printf("image size %d + heap size %d (useMmap = %d)\n", (int)sb.st_size, extraMemory, useMmap);
 #    endif
       extraMemory += (int)sb.st_size;
-      readImageFromFileHeapSize(f, extraMemory);
+      readImageFromFileHeapSizeStartingAt(f, extraMemory, 0);
       sqImageFileClose(f);
       break;
     }
@@ -1359,8 +1527,6 @@ int main(int argc, char **argv, char **envp)
   if ((squeakArgVec= calloc(argc + 1, sizeof(char *))) == 0)
     outOfMemory();
 
-  signal(SIGSEGV, sigsegv);
-
 #if defined(__alpha__) && defined(__osf__)
   /* disable printing of unaligned access exceptions */
   {
@@ -1376,17 +1542,21 @@ int main(int argc, char **argv, char **envp)
   tzset();	/* should _not_ be necessary! */
 #endif
 
-  recordFullPathForVmName(argv[0]);	/* full vm path */
+  recordFullPathForVmName(argv[0]); /* full vm path */
   squeakPlugins= vmPath;		/* default plugin location is VM directory */
 
+#if !DEBUG
   sqIgnorePluginErrors= 1;
+#endif
   if (!modules)
     modules= &vm_Module;
   vm_Module.parseEnvironment();
   parseArguments(argc, argv);
   if ((!dpy) || (!snd))
     loadModules();
+#if !DEBUG
   sqIgnorePluginErrors= 0;
+#endif
 
 #if defined(DEBUG_MODULES)
   printf("displayModule %p %s\n", displayModule, displayModule->name);
@@ -1403,13 +1573,21 @@ int main(int argc, char **argv, char **envp)
   printf("documentName: %s\n", documentName);
 #endif
 
+#if STACKVM || COGVM
+  ioInitTime();
+  ioInitThreads();
+#else
   initTimers();
+#endif
   aioInit();
   dpy->winInit();
   imgInit();
-  dpy->winOpen();
+  /* If running as a single instance and there are arguments after the image
+   * and any are files then try and drop these on the existing instance.
+   */
+  dpy->winOpen(runAsSingleInstance ? squeakArgCnt : 0, squeakArgVec);
 
-#if defined(HAVE_DLOPEN)
+#if defined(HAVE_LIBDL) && !(STACKVM || COGVM)
   if (useJit)
     {
       /* first try to find an internal dynamic compiler... */
@@ -1432,7 +1610,12 @@ int main(int argc, char **argv, char **envp)
 	printf("could not find j_interpret\n");
       exit(1);
     }
-#endif
+#endif /* defined(HAVE_LIBDL) && !(STACKVM || COGVM) */
+
+  if (installHandlers) {
+	signal(SIGSEGV, sigsegv);
+	signal(SIGUSR1, sigusr1);
+  }
 
 #if defined(IMAGE_DUMP)
   signal(SIGHUP,  sighup);
@@ -1465,7 +1648,7 @@ sqInt ioExit(void)
 /* Copy aFilenameString to aCharBuffer and optionally resolveAlias (or
    symbolic link) to the real path of the target.  Answer 0 if
    successful of -1 to indicate an error.  Assume aCharBuffer is at
-   least MAXPATHLEN bytes long.  Note that MAXSYMLINKS is a lower bound
+   least PATH_MAX bytes long.  Note that MAXSYMLINKS is a lower bound
    on the (potentially unlimited) number of symlinks allowed in a
    path, but calling sysconf() seems like overkill. */
 
@@ -1474,28 +1657,40 @@ sqInt sqGetFilenameFromString(char *aCharBuffer, char *aFilenameString, sqInt fi
   int numLinks= 0;
   struct stat st;
 
-  sq2uxPath(aFilenameString, filenameLength, aCharBuffer, MAXPATHLEN, 1);
+  memcpy(aCharBuffer, aFilenameString, filenameLength);
+  aCharBuffer[filenameLength]= 0;
 
   if (resolveAlias)
     for (;;)	/* aCharBuffer might refer to link or alias */
       {
 	if (!lstat(aCharBuffer, &st) && S_ISLNK(st.st_mode))	/* symlink */
-	  {
+	  { char linkbuf[PATH_MAX+1];
 	    if (++numLinks > MAXSYMLINKS)
 	      return -1;	/* too many levels of indirection */
 
-	    filenameLength= readlink(aCharBuffer, aCharBuffer, MAXPATHLEN);
-	    if ((filenameLength < 0) || (filenameLength >= MAXPATHLEN))
+	    filenameLength= readlink(aCharBuffer, linkbuf, PATH_MAX);
+	    if ((filenameLength < 0) || (filenameLength >= PATH_MAX))
 	      return -1;	/* link unavailable or path too long */
 
-	    aCharBuffer[filenameLength]= 0;
+	    linkbuf[filenameLength]= 0;
+
+	    if (filenameLength > 0 && *linkbuf == '/') /* absolute */
+	      strcpy(aCharBuffer, linkbuf);
+	    else {
+	      char *lastSeparator = strrchr(aCharBuffer,'/');
+	      char *append = lastSeparator ? lastSeparator + 1 : aCharBuffer;
+	      if (append - aCharBuffer + strlen(linkbuf) > PATH_MAX)
+		return -1; /* path too long */
+	      strcpy(append,linkbuf);
+	    }
+
 	    continue;
 	  }
 
 #    if defined(DARWIN)
 	if (isMacAlias(aCharBuffer))
 	  {
-	    if ((++numLinks > MAXSYMLINKS) || !resolveMacAlias(aCharBuffer, aCharBuffer, MAXPATHLEN))
+	    if ((++numLinks > MAXSYMLINKS) || !resolveMacAlias(aCharBuffer, aCharBuffer, PATH_MAX))
 	      return -1;		/* too many levels or bad alias */
 	    continue;
 	  }
@@ -1527,3 +1722,33 @@ sqInt ioGatherEntropy(char *buffer, sqInt bufSize)
 
   return count == bufSize;
 }
+
+
+#if COGVM
+/*
+ * Support code for Cog.
+ * a) Answer whether the C frame pointer is in use, for capture of the C stack
+ *    pointers.
+ */
+# if defined(i386) || defined(__i386) || defined(__i386__)
+/*
+ * Cog has already captured CStackPointer  before calling this routine.  Record
+ * the original value, capture the pointers again and determine if CFramePointer
+ * lies between the two stack pointers and hence is likely in use.  This is
+ * necessary since optimizing C compilers for x86 may use %ebp as a general-
+ * purpose register, in which case it must not be captured.
+ */
+int
+isCFramePointerInUse()
+{
+	extern unsigned long CStackPointer, CFramePointer;
+	extern void (*ceCaptureCStackPointers)(void);
+	unsigned long currentCSP = CStackPointer;
+
+	currentCSP = CStackPointer;
+	ceCaptureCStackPointers();
+	assert(CStackPointer < currentCSP);
+	return CFramePointer >= CStackPointer && CFramePointer <= currentCSP;
+}
+# endif /* defined(i386) || defined(__i386) || defined(__i386__) */
+#endif /* COGVM */

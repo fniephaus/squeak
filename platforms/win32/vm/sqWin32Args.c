@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id$
+*   RCSID:   $Id: sqWin32Args.c 400 2002-05-26 18:52:10Z andreasraab $
 *
 *   NOTES:
 *
@@ -68,14 +68,25 @@ static char *parseStringArg(char *src, char **argPtr)
 static char *parseUnsignedArg(char *src, unsigned *dst)
 { char buf[50];
   char *tmp = buf;
+  unsigned multiplier = 1;
 
   while(*src && *src == ' ') src++; /* skip blanks */
   while(isdigit(*src)) *(tmp++) = *(src++);
-  if(*src && *src != ' ') /* strange chars at end */
-    return NULL;
+  if(*src && *src != ' ') { /* suffix or strange chars at end */
+    switch (*src) {
+    case 'k': case 'K':
+      multiplier = 1024;
+      break;
+    case 'm': case 'M':
+      multiplier = 1024*1024;
+      break;
+	default:
+      return NULL;
+    }
+  }
   if(tmp == buf) /* no numbers found */
     return NULL;
-  *dst = atol(buf);
+  *dst = atol(buf) * multiplier;
   if(*src) *(src++) = 0;
   return src;
 }
@@ -132,11 +143,17 @@ static char* parseVMArgs(char *string, vmArg args[])
           break;
 
         case ARG_STRING:
-          vmOptions[numOptionsVM++] = string;
-          *(char**) arg->value = string;
-          string = parseStringArg(string, (char**) arg->value);
+        case ARG_STRING_FUNC: {
+		  char *theValue;
+          vmOptions[numOptionsVM++] = theValue = string;
+          string = parseStringArg(string, &theValue);
+		  if (arg->type == ARG_STRING)
+            *(char**) arg->value = theValue;
+		  else
+			((void (*)(char *))(arg->value))(theValue);
           if(!string) return NULL;
           break;
+		}
 
         case ARG_INT:
           vmOptions[numOptionsVM++] = string;

@@ -1,10 +1,9 @@
 /* Definitions for "gnuified" interp.c; author: Ian Piumarta (ian.piumarta@inria.fr)
  *
- * last edited: Sun Jun 20 14:56:09 1999 by piumarta (Ian Piumarta) on clotho
+ * December 10th 2008, Eliot Miranda, updated with FP_REG.
  *
  * NOTES:
  *	this file is #included *IN PLACE OF* sq.h
- *	assumes: interp.c has #defined TRANSLATED as "0" or "1"
  */
 
 #include "sq.h"
@@ -51,6 +50,12 @@
     &&_240, &&_241, &&_242, &&_243, &&_244, &&_245, &&_246, &&_247, &&_248, &&_249,\
     &&_250, &&_251, &&_252, &&_253, &&_254, &&_255\
   };
+
+/* Compatibility between the old and the new names of the Gnuification macros */
+#define JUMP_TABLE BC_JUMP_TABLE
+#define CASE(n) BC_CASE(n)
+#define BREAK BC_BREAK
+
 /*  register void **jumpTablePtr JP_REG = jumpTable; */
 
 #define PRIM_TABLE\
@@ -168,6 +173,13 @@
 # define IP_REG asm("a5")
 # define SP_REG asm("a4")
 # define CB_REG asm("d7")
+#endif
+
+#if !defined(FOO_REG)
+# define FOO_REG /* nada */
+#endif
+#if !defined(FP_REG)
+# define FP_REG /* nada */
 #endif
 
 

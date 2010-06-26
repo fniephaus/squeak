@@ -95,7 +95,7 @@ extern Boolean gSqueakHasCursor;
 		bitsPerPixel: 0];
       {
 	unsigned *planes[5];
-	[bitmap getBitmapDataPlanes:(unsigned char **) planes];
+	[bitmap getBitmapDataPlanes: planes];
 	unsigned* src= (unsigned*)cursorBitsIndex;
 	unsigned* dst= planes[0];
 	int i;
@@ -117,10 +117,7 @@ extern Boolean gSqueakHasCursor;
       }
       [cursor set];
 	   // [NSCursor unhide];
-
-  CFRelease(bitmap);
-  CFRelease(image);
-  [pool release];
+      [pool release];
 
   return 1;
 }

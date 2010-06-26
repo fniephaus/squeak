@@ -27,7 +27,7 @@
 
 /* Author: Ian Piumarta <ian.piumarta@squeakland.org>
  *
- * Last edited: 2010-05-11 16:58:09 by piumarta on emilia-2.local
+ * Last edited: 2009-09-02 15:10:16 by piumarta on ubuntu.piumarta.com
  *
  * Support for more intelligent CLIPBOARD selection handling contributed by:
  *	Ned Konz <ned@bike-nomad.com>
@@ -318,6 +318,8 @@ int windowState= WIN_CHANGED;
       windowState= WIN_CHANGED;			\
   }
 
+#define recordKeystroke(ignored) 0
+
 #include "sqUnixEvent.c"
 
 #define SqueakWhite	0
@@ -327,7 +329,6 @@ int sleepWhenUnmapped=	0;
 int noTitle=		0;
 int fullScreen=		0;
 int iconified=		0;
-int closeQuit=		0;
 int withSpy=		0;
 
 
@@ -350,6 +351,9 @@ int inModalLoop= 0, dpyPitch= 0, dpyPixels= 0;
 /* longest we're prepared to wait for the selection owner to convert it (seconds) */
 #define SELECTION_TIMEOUT	3
 
+/* To coordinate default window title with dndLaunchFile */
+static char *defaultWindowLabel = shortImageName;
+static long launchDropTimeoutMsecs = 1000; /* 1 second default launch drop timeout */
 
 
 /*** Functions ***/
@@ -1176,7 +1180,8 @@ static void getSelectionChunk(SelectionChunk *chunk, Atom selection, Atom target
 #    if defined(DEBUG_SELECTIONS)
       fprintf(stderr, "getSelection: xselection.property == None\n");
 #    endif
-      /* if (isConnectedToXServer) XBell(stDisplay, 0); */
+      if (isConnectedToXServer)
+	XBell(stDisplay, 0);
       return;
     }
 
@@ -3121,7 +3126,7 @@ static int xError(Display *dpy, XErrorEvent *evt)
 }
 
 
-void initWindow(char *displayName)
+static void initWindow(char *displayName)
 {
   XRectangle windowBounds= { 0, 0, 640, 480 };  /* default window bounds */
   int right, bottom;
@@ -3303,21 +3308,28 @@ void initWindow(char *displayName)
 #      if defined(SUGAR)
         if (sugarBundleId)
           XChangeProperty(stDisplay, stParent,
-                          XInternAtom(stDisplay, "_SUGAR_BUNDLE_ID", 0), XInternAtom(stDisplay, "STRING", 0), 8,
+                          XInternAtom(stDisplay, "_SUGAR_BUNDLE_ID", 0), XA_STRING, 8,
 			  PropModeReplace, (unsigned char *)sugarBundleId, strlen(sugarBundleId));
 
         if (sugarActivityId)
           XChangeProperty(stDisplay, stParent,
-                          XInternAtom(stDisplay, "_SUGAR_ACTIVITY_ID", 0), XInternAtom(stDisplay, "STRING", 0), 8,
+                          XInternAtom(stDisplay, "_SUGAR_ACTIVITY_ID", 0), XA_STRING, 8,
                           PropModeReplace, (unsigned char *)sugarActivityId, strlen(sugarActivityId));
+#      endif /* defined(SUGAR) */
 
-        {
-	  unsigned long pid= getpid();
-	  XChangeProperty(stDisplay, stParent,
-			  XInternAtom(stDisplay, "_NET_WM_PID", 0), XInternAtom(stDisplay, "CARDINAL", 0), 32,
-			  PropModeReplace, (unsigned char *)&pid, 1);
+        { unsigned long pid = getpid();
+	XChangeProperty(stDisplay, stParent,
+			XInternAtom(stDisplay, "_NET_WM_PID", 0),
+			XA_CARDINAL, 32, PropModeReplace,
+			(unsigned char *)&pid, 1);
 	}
-#      endif
+	/* This is needed for PersonalShare, see sqUnixX11PShare.c */
+	{ Atom normal = XInternAtom(stDisplay, "_NET_WM_WINDOW_TYPE_NORMAL", 0);
+	XChangeProperty(stDisplay, stParent,
+			XInternAtom(stDisplay, "_NET_WM_WINDOW_TYPE", 0),
+			XA_ATOM, 32, PropModeReplace, 
+			(unsigned char *)&normal, 1);
+	}
       }
 
     attributes.event_mask= EVENTMASK;
@@ -3357,7 +3369,7 @@ void initWindow(char *displayName)
     if (browserWindow == 0)
       {
 	XSetClassHint(stDisplay, stParent, classHints);
-	XStoreName(stDisplay, stParent, shortImageName);
+	XStoreName(stDisplay, stParent, defaultWindowLabel);
       }
     XFree((void *)classHints);
   }
@@ -3384,8 +3396,8 @@ void initWindow(char *displayName)
     XFree((void *)wmHints);
   }
 
-  if (!closeQuit) {
-    /* tell the WM that we do not want to be destroyed from the title bar close button */
+  /* tell the WM that we do not want to be destroyed from the title bar close button */
+  {
     wmProtocolsAtom=    XInternAtom(stDisplay, "WM_PROTOCOLS", False);
     wmDeleteWindowAtom= XInternAtom(stDisplay, "WM_DELETE_WINDOW", False);
     XSetWMProtocols(stDisplay, stParent, &wmDeleteWindowAtom, 1);
@@ -3717,7 +3729,7 @@ static sqInt display_ioBeep(void)
 
 static sqInt display_ioRelinquishProcessorForMicroseconds(sqInt microSeconds)
 {
-  aioSleep(handleEvents() ? 0 : microSeconds);
+  aioSleepForUsecs(handleEvents() ? 0 : microSeconds);
   return 0;
 }
 
@@ -5403,7 +5415,7 @@ static void display_winSetName(char *imageName)
 /*** display connection ***/
 
 
-int openXDisplay(void)
+static int openXDisplay(void)
 {
   /* open the Squeak window. */
   if (!isConnectedToXServer)
@@ -5411,13 +5423,7 @@ int openXDisplay(void)
       initClipboard();
       initWindow(displayName);
       initPixmap();
-      if (!inBrowser())
-	{
-	  setWindowSize();
-	  XMapWindow(stDisplay, stParent);
-	  XMapWindow(stDisplay, stWindow);
-	}
-      else /* if in browser we will be reparented and mapped by plugin */
+      if (inBrowser()) /* if so we will be reparented and mapped by plugin */
 	{
 	  /* tell browser our window */
 #        if defined(DEBUG_BROWSER)
@@ -5438,7 +5444,17 @@ int openXDisplay(void)
   return 0;
 }
 
-int forgetXDisplay(void)
+static void
+mapXDisplay(void)
+{
+  if (!inBrowser()) {
+    setWindowSize();
+    XMapWindow(stDisplay, stParent);
+    XMapWindow(stDisplay, stWindow);
+  }
+}
+
+static int forgetXDisplay(void)
 {
   /* Initialise variables related to the X connection, and
      make the existing connection to the X Display invalid
@@ -5549,12 +5565,12 @@ static sqInt display_ioGLcreateRenderer(glRenderer *r, sqInt x, sqInt y, sqInt w
   _renderWindow(r)= 0;
   _renderContext(r)= 0;
 
-  DPRINTF(3, (fp, "---- Creating new renderer ----\r\r"));
+  DPRINTF3D(3, (fp, "---- Creating new renderer ----\r\r"));
 
   /* sanity checks */
   if (w < 0 || h < 0)
     {
-      DPRINTF(1, (fp, "Negative extent (%i@%i)!\r", w, h));
+      DPRINTF3D(1, (fp, "Negative extent (%i@%i)!\r", w, h));
       goto fail;
     }
   /* choose visual and create context */
@@ -5570,20 +5586,20 @@ static sqInt display_ioGLcreateRenderer(glRenderer *r, sqInt x, sqInt y, sqInt w
       }
     if (!visinfo)
       {
-	DPRINTF(1, (fp, "No OpenGL visual found!\r"));
+	DPRINTF3D(1, (fp, "No OpenGL visual found!\r"));
 	goto fail;
       }
-    DPRINTF(3, (fp, "\r#### Selected GLX visual ID 0x%lx ####\r", visinfo->visualid));
+    DPRINTF3D(3, (fp, "\r#### Selected GLX visual ID 0x%lx ####\r", visinfo->visualid));
     if (verboseLevel >= 3)
       printVisual(visinfo);
 
     /* create context */
     if (!(_renderContext(r)= glXCreateContext(stDisplay, visinfo, 0, GL_TRUE)))
       {
-	DPRINTF(1, (fp, "Creating GLX context failed!\r"));
+	DPRINTF3D(1, (fp, "Creating GLX context failed!\r"));
 	goto fail;
       }
-    DPRINTF(3, (fp, "\r#### Created GLX context ####\r"  ));
+    DPRINTF3D(3, (fp, "\r#### Created GLX context ####\r"  ));
 
     /* create window */
     {
@@ -5604,12 +5620,12 @@ static sqInt display_ioGLcreateRenderer(glRenderer *r, sqInt x, sqInt y, sqInt w
 						    visinfo->depth, InputOutput, visinfo->visual, 
 						    valuemask, &attributes)))
 	{
-	  DPRINTF(1, (fp, "Failed to create client window\r"));
+	  DPRINTF3D(1, (fp, "Failed to create client window\r"));
 	  goto fail;
 	}
       XMapWindow(stDisplay, renderWindow(r));
     }
-    DPRINTF(3, (fp, "\r#### Created window ####\r"  ));
+    DPRINTF3D(3, (fp, "\r#### Created window ####\r"  ));
     XFree(visinfo);
     visinfo= 0;
   }
@@ -5617,14 +5633,14 @@ static sqInt display_ioGLcreateRenderer(glRenderer *r, sqInt x, sqInt y, sqInt w
   /* Make the context current */
   if (!glXMakeCurrent(stDisplay, renderWindow(r), renderContext(r)))
     {
-      DPRINTF(1, (fp, "Failed to make context current\r"));
+      DPRINTF3D(1, (fp, "Failed to make context current\r"));
       goto fail;
     }
-  DPRINTF(3, (fp, "\r### Renderer created! ###\r"));
+  DPRINTF3D(3, (fp, "\r### Renderer created! ###\r"));
   return 1;
 
  fail:
-  DPRINTF(1, (fp, "OpenGL initialization failed\r"));
+  DPRINTF3D(1, (fp, "OpenGL initialization failed\r"));
   if (visinfo)
     XFree(visinfo);
   if (renderContext(r))
@@ -5654,7 +5670,7 @@ static sqInt display_ioGLmakeCurrentRenderer(glRenderer *r)
     {
       if (!glXMakeCurrent(stDisplay, renderWindow(r), renderContext(r)))
 	{
-	  DPRINTF(1, (fp, "Failed to make context current\r"));
+	  DPRINTF3D(1, (fp, "Failed to make context current\r"));
 	  return 0;
 	}
     }
@@ -5694,13 +5710,13 @@ static void printVisual(XVisualInfo* visinfo)
       glXGetConfig(stDisplay, visinfo, GLX_DEPTH_SIZE,    &depth);
 
       if (slow != GLX_SLOW_CONFIG)
-        { DPRINTF(3, (fp,"===> OpenGL visual\r")) }
+        { DPRINTF3D(3, (fp,"===> OpenGL visual\r")) }
       else
-        { DPRINTF(3, (fp,"---> slow OpenGL visual\r")) }
+        { DPRINTF3D(3, (fp,"---> slow OpenGL visual\r")) }
 
-      DPRINTF(3, (fp,"rgbaBits = %i+%i+%i+%i\r", red, green, blue, alpha));
-      DPRINTF(3, (fp,"stencilBits = %i\r", stencil));
-      DPRINTF(3, (fp,"depthBits = %i\r", depth));
+      DPRINTF3D(3, (fp,"rgbaBits = %i+%i+%i+%i\r", red, green, blue, alpha));
+      DPRINTF3D(3, (fp,"stencilBits = %i\r", stencil));
+      DPRINTF3D(3, (fp,"depthBits = %i\r", depth));
     }
   glGetError();	/* reset error flag */
 }
@@ -5714,7 +5730,7 @@ static void listVisuals(void)
 
   for (i= 0; i < nvisuals; i++)
     {
-      DPRINTF(3, (fp,"#### Checking pixel format (visual ID 0x%lx)\r", visinfo[i].visualid));
+      DPRINTF3D(3, (fp,"#### Checking pixel format (visual ID 0x%lx)\r", visinfo[i].visualid));
       printVisual(&visinfo[i]);
     }
   XFree(visinfo);
@@ -5747,14 +5763,64 @@ static int display_hostWindowShowDisplay(unsigned *dispBitsIndex, int width, int
 					 int affectedL, int affectedR, int affectedT, int affectedB, int windowIndex)
 											    { return 0; }
 
-static int display_hostWindowGetSize(int windowIndex)                                       { return -1; }
-static int display_hostWindowSetSize(int windowIndex, int w, int h)                         { return -1; }
-static int display_hostWindowGetPosition(int windowIndex)                                   { return -1; }
-static int display_hostWindowSetPosition(int windowIndex, int x, int y)                     { return -1; }
+#define isWindowHandle(winIdx) ((winIdx) >= 65536)
+
+static int display_ioSizeOfNativeWindow(void *windowHandle);
+static int display_hostWindowGetSize(int windowIndex)
+{
+	return isWindowHandle(windowIndex)
+			? display_ioSizeOfNativeWindow((void *)windowIndex)
+			: -1;
+}
+
+/* ioSizeOfWindowSetxy: args are int windowIndex, int w & h for the
+ * width / height to make the window. Return the actual size the OS
+ * produced in (width<<16 | height) format or -1 for failure as above. */
+static int display_hostWindowSetSize(int windowIndex, int w, int h)
+{
+	XWindowAttributes attrs;
+	int real_border_width;
+
+	if (!isWindowHandle(windowIndex)
+	 || !XGetWindowAttributes(stDisplay, (Window)windowIndex, &attrs))
+		return -1;
+
+	/* At least under Gnome a window's border width in its attributes is zero
+	 * but the relative position of the left-hand edge is the actual border
+	 * width.
+	 */
+	real_border_width = attrs.border_width ? attrs.border_width : attrs.x;
+	return XResizeWindow(stDisplay, (Window)windowIndex,
+						 w - 2 * real_border_width,
+						 h - attrs.y - real_border_width)
+		? display_ioSizeOfNativeWindow((void *)windowIndex)
+		: -1;
+}
+
+static int display_ioPositionOfNativeWindow(void *windowHandle);
+static int display_hostWindowGetPosition(int windowIndex)
+{
+	return isWindowHandle(windowIndex)
+			? display_ioPositionOfNativeWindow((void *)windowIndex)
+			: -1;
+}
+
+/* ioPositionOfWindowSetxy: args are int windowIndex, int x & y for the
+ * origin x/y for the window. Return the actual origin the OS
+ * produced in (left<<16 | top) format or -1 for failure, as above */
+static int display_hostWindowSetPosition(int windowIndex, int x, int y)
+{
+	if (!isWindowHandle(windowIndex))
+		return -1;
+	return XMoveWindow(stDisplay, (Window)windowIndex, x, y)
+		? display_ioPositionOfNativeWindow((void *)windowIndex)
+		: -1;
+}
+
 
 static int display_hostWindowSetTitle(int windowIndex, char *newTitle, int sizeOfTitle)
 { 
-  if (windowIndex != 1)
+  if (windowIndex != 1 && windowIndex != stWindow)
     return -1;
 
   XChangeProperty(stDisplay, stParent,
@@ -5765,7 +5831,7 @@ static int display_hostWindowSetTitle(int windowIndex, char *newTitle, int sizeO
   return 0;
 }
 
-#endif
+#endif /* (SqDisplayVersionMajor >= 1 && SqDisplayVersionMinor >= 2) */
 
 
 static char *display_winSystemName(void)
@@ -5796,16 +5862,27 @@ static void display_winInit(void)
 }
 
 
-static void display_winOpen(void)
+static void display_winOpen(int argc, char *dropFiles[])
 {
 #if defined(DEBUG_WINDOW)
   int sws= getSavedWindowSize();
   fprintf(stderr, "saved window size is %d %d\n", sws >> 16, sws & 0xffff);
 #endif
-  if (headless)
+  int i, launched = 0;
+  if (headless) {
     forgetXDisplay();
-  else
-    openXDisplay();
+    return;
+  }
+  openXDisplay();
+
+  for (i = 0; i < argc; i++)
+    if (dndLaunchFile(dropFiles[i]))
+      launched = 1;
+
+  if (launched)
+    exit(0);
+
+  mapXDisplay();
 }
 
 
@@ -5818,6 +5895,117 @@ static void display_winExit(void)
 static int  display_winImageFind(char *buf, int len)	{ return 0; }
 static void display_winImageNotFound(void)		{}
 
+#if SqDisplayVersionMajor >= 1 && SqDisplayVersionMinor >= 3
+
+/* eem Mar 22 2010 - new code to come up to level of Qwaq host window support
+ * on Mac & Win32.
+ * In the following functions "Display" refers to the user area of a window and
+ * "Window" refers to the entire window including border & title bar.
+ */
+static sqInt
+display_ioSetCursorPositionXY(sqInt x, sqInt y)
+{
+	if (!XWarpPointer(stDisplay, None, DefaultRootWindow(stDisplay),
+					  0, 0, 0, 0, x, y))
+		return -1;
+	XFlush(stDisplay);
+	return 0;
+}
+
+/* Return the pixel origin (topleft) of the platform-defined working area
+   for the screen containing the given window. */
+static int
+display_ioPositionOfScreenWorkArea(int windowIndex)
+{
+/* We simply hard-code this.  There's no obvious window-manager independent way
+ * to discover this that doesn't involve creating a window.
+ * We're also not attempting multi-monitor support; attempting to configure a
+ * laptop with a second monitor via ATI's "control center" resulted in no
+ * cursor and no ATI control center once the multi-monitor mode was enabled.
+ */
+#define NominalMenubarHeight 24 /* e.g. Gnome default */
+	return (0 << 16) | NominalMenubarHeight;
+}
+
+/* Return the pixel extent of the platform-defined working area
+   for the screen containing the given window. */
+static int
+display_ioSizeOfScreenWorkArea(int windowIndex)
+{
+	XWindowAttributes attrs;
+
+	if (!XGetWindowAttributes(stDisplay, DefaultRootWindow(stDisplay), &attrs))
+		return -1;
+
+	return (attrs.width << 16) | attrs.height;
+}
+
+void *display_ioGetWindowHandle() { return (void *)stParent; }
+
+static int
+display_ioPositionOfNativeDisplay(void *windowHandle)
+{
+	XWindowAttributes attrs;
+	Window neglected_child;
+	int rootx, rooty;
+
+	if (!XGetWindowAttributes(stDisplay, (Window)windowHandle, &attrs)
+	 || !XTranslateCoordinates(stDisplay, (Window)windowHandle, attrs.root,
+								-attrs.border_width, -attrs.border_width,
+								&rootx, &rooty, &neglected_child))
+		return -1;
+
+	return (rootx << 16) | rooty;
+}
+
+static int
+display_ioSizeOfNativeDisplay(void *windowHandle)
+{
+	XWindowAttributes attrs;
+	int rootx, rooty;
+
+	if (!XGetWindowAttributes(stDisplay, (Window)windowHandle, &attrs))
+		return -1;
+
+	return (attrs.width << 16) | attrs.height;
+}
+
+static int
+display_ioPositionOfNativeWindow(void *windowHandle)
+{
+	XWindowAttributes attrs;
+	Window neglected_child;
+	int rootx, rooty;
+
+	if (!XGetWindowAttributes(stDisplay, (Window)windowHandle, &attrs)
+	 || !XTranslateCoordinates(stDisplay, (Window)windowHandle, attrs.root,
+							   -attrs.border_width, -attrs.border_width,
+							   &rootx, &rooty, &neglected_child))
+		return -1;
+
+	return (rootx - attrs.x << 16) | (rooty - attrs.y);
+}
+
+static int
+display_ioSizeOfNativeWindow(void *windowHandle)
+{
+	XWindowAttributes attrs;
+	int real_border_width;
+
+	if (!XGetWindowAttributes(stDisplay, (Window)windowHandle, &attrs))
+		return -1;
+
+	/* At least under Gnome a window's border width in its attributes is zero
+	 * but the relative position of the left-hand edge is the actual border
+	 * width.
+	 */
+	real_border_width = attrs.border_width ? attrs.border_width : attrs.x;
+	return (attrs.width + 2 * real_border_width << 16)
+		 | (attrs.height + attrs.y + real_border_width);
+}
+#endif /* SqDisplayVersionMajor >= 1 && SqDisplayVersionMinor >= 3 */
+
+
 SqDisplayDefine(X11);
 
 
@@ -5829,7 +6017,6 @@ static void display_printUsage(void)
   printf("\nX11 <option>s:\n");
   printf("  -browserWindow <wid>  run in window <wid>\n");
   printf("  -browserPipes <r> <w> run as Browser plugin using descriptors <r> <w>\n");
-  printf("  -closequit            quit immediately when the main window is closed\n");
   printf("  -cmdmod <n>           map Mod<n> to the Command key\n");
   printf("  -compositioninput     enable overlay window for composed characters\n");
   printf("  -display <dpy>        display on <dpy> (default: $DISPLAY)\n");
@@ -5843,6 +6030,8 @@ static void display_printUsage(void)
   printf("  -mapdelbs             map Delete key onto Backspace\n");
   printf("  -nointl               disable international keyboard support\n");
   printf("  -notitle              disable the Squeak window title bar\n");
+  printf("  -title <t>            use t as the Squeak window title instead of the image name\n");
+  printf("  -ldtoms <n>           launch drop timeout milliseconds\n");
   printf("  -noxdnd               disable X drag-and-drop protocol support\n");
   printf("  -optmod <n>           map Mod<n> to the Option key\n");
 #if defined(SUGAR)
@@ -5892,7 +6081,6 @@ static void display_parseEnvironment(void)
   if (getenv("SQUEAK_NOXDND"))		useXdnd= 0;
   if (getenv("SQUEAK_FULLSCREEN"))	fullScreen= 1;
   if (getenv("SQUEAK_ICONIC"))		iconified= 1;
-  if (getenv("SQUEAK_CLOSEQUIT"))	closeQuit= 1;
   if (getenv("SQUEAK_MAPDELBS"))	mapDelBs= 1;
   if (getenv("SQUEAK_SWAPBTN"))		swapBtn= 1;
   if ((ev= getenv("SQUEAK_OPTMOD")))	optMapIndex= Mod1MapIndex + atoi(ev) - 1;
@@ -5924,7 +6112,6 @@ static int display_parseArgument(int argc, char **argv)
   else if (!strcmp(arg, "-swapbtn"))	swapBtn= 1;
   else if (!strcmp(arg, "-fullscreen"))	fullScreen= 1;
   else if (!strcmp(arg, "-iconic"))	iconified= 1;
-  else if (!strcmp(arg, "-closequit"))	closeQuit= 1;
 #if !defined (INIT_INPUT_WHEN_KEY_PRESSED)
   else if (!strcmp(arg, "-nointl"))	initInput= initInputNone;
 #else
@@ -5985,6 +6172,8 @@ static int display_parseArgument(int argc, char **argv)
 	  sscanf(argv[1], "%d", &verboseLevel);
 	}
 #    endif
+      else if (!strcmp(arg, "-title")) defaultWindowLabel = argv[1];
+      else if (!strcmp(arg, "-ldtoms")) launchDropTimeoutMsecs = atol(argv[1]);
       else
 	n= 0;	/* not recognised */
     }
@@ -5993,10 +6182,7 @@ static int display_parseArgument(int argc, char **argv)
   return n;
 }
 
-static void *display_makeInterface(void)
-{
-  return &display_X11_itf;
-}
+static void *display_makeInterface(void) { return &display_X11_itf; }
 
 #include "SqModule.h"
 

@@ -1,12 +1,8 @@
 /*
- * Copyright 2008 Cadence Design Systems, Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the ''License''); you may not use this file except in compliance with the License.  You may obtain a copy of the License at  http://www.apache.org/licenses/LICENSE-2.0
- */
-/*
  *  platforms/Cross/plugins/IA32ABI/ia32abi.h
  *
  *  Written by Eliot Miranda 11/07.
+ *  Copyright 2007 Cadence Design Systems. All rights reserved.
  *
  * Call foreign functons returning results in either %eax, %edx (Integral)
  * or %f0 (Float, Double).  
@@ -29,9 +25,7 @@
 #define SIGNATURE	sqInt *argVector/* call args on stack or in array */, \
 					int numArgs,	/* arg count of function to call   */ \
 					int funcOffset, /* stack offset of func Alien   */ \
-					int resultOffset,/* stack offset of result Alien */ \
-					int hasTypeArray, /* last parm value is type array of sizes to support floating point arguments for powerpc */ \
-					int typeSignatureArray /* type signature array or nil object, or nil */
+					int resultOffset/* stack offset of result Alien */
 
 extern sqInt callIA32IntegralReturn(SIGNATURE);
 extern sqInt callIA32FloatReturn   (SIGNATURE);
@@ -44,14 +38,14 @@ extern void *allocateExecutablePage(long *pagesize);
  * which contains a type tag and values.  It is designed to be overlaid upon
  * an FFICallbackReturnProxy created at the Smalltalk level to return values.
  */
-typedef  struct {
+typedef struct {
 	long type;
 # define retint32  0
 # define retint64  1
 # define retdouble 2
 # define retstruct 3
 	long _pad; /* so no doubt that valflt64 & valint32 et al are at byte 8 */
-union {
+	union {
 		long valint32;
 		struct { long low, high; } valint64;
 		double valflt64;

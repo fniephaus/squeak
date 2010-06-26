@@ -8,6 +8,9 @@
 /*** Function prototypes ***/
 
 /* InterpreterProxy methodsFor: 'stack access' */
+/* Disable the new checking interface for the moment for simplicity in Cog */
+#define OLD_PRIM_IFC 1
+#if OLD_PRIM_IFC
 sqInt  pop(sqInt nItems);
 sqInt  popthenPush(sqInt nItems, sqInt oop);
 sqInt  push(sqInt object);
@@ -18,11 +21,20 @@ double stackFloatValue(sqInt offset);
 sqInt  stackIntegerValue(sqInt offset);
 sqInt  stackObjectValue(sqInt offset);
 sqInt  stackValue(sqInt offset);
+#else
+sqInt  pluginPop(sqInt nItems);
+sqInt  pluginPopthenPush(sqInt nItems, sqInt oop);
+sqInt  pluginPush(sqInt object);
+sqInt  pluginPushBool(sqInt trueOrFalse);
+sqInt  pluginPushFloat(double f);
+sqInt  pluginPushInteger(sqInt integerValue);
+double pluginStackFloatValue(sqInt offset);
+sqInt  pluginStackIntegerValue(sqInt offset);
+sqInt  pluginStackObjectValue(sqInt offset);
+sqInt  pluginStackValue(sqInt offset);
+#endif /* OLD_PRIM_IFC */
 
 /*** variables ***/
-
-extern sqInt (*compilerHooks[])();
-extern sqInt setCompilerInitialized(sqInt flagValue);
 
 /* InterpreterProxy methodsFor: 'object access' */
 sqInt  argumentCountOf(sqInt methodPointer);
@@ -73,8 +85,10 @@ sqInt isWords(sqInt oop);
 sqInt isWordsOrBytes(sqInt oop);
 sqInt includesBehaviorThatOf(sqInt aClass, sqInt aSuperClass);
 sqInt isArray(sqInt oop);
+#if IMMUTABILITY
 sqInt internalIsMutable(sqInt oop);
 sqInt internalIsImmutable(sqInt oop);
+#endif
 
 /* InterpreterProxy methodsFor: 'converting' */
 sqInt  booleanValueOf(sqInt obj);
@@ -136,6 +150,7 @@ sqInt signalSemaphoreWithIndex(sqInt semaIndex);
 sqInt success(sqInt aBoolean);
 sqInt superclassOf(sqInt classPointer);
 sqInt ioMicroMSecs(void);
+usqLong ioUTCMicroseconds(void);
 sqInt forceInterruptCheck(void);
 sqInt getThisSessionID(void);
 sqInt ioFilenamefromStringofLengthresolveAliases(char* aCharBuffer, char* filenameIndex, sqInt filenameLength, sqInt resolveFlag);
@@ -147,19 +162,27 @@ sqInt copyBits(void);
 sqInt copyBitsFromtoat(sqInt leftX, sqInt rightX, sqInt yValue);
 
 /* InterpreterProxy methodsFor: 'FFI support' */
-sqInt classExternalAddress(void); /* Old Squeak FFI */
+sqInt classExternalAddress(void);
 sqInt classExternalData(void);
 sqInt classExternalFunction(void);
 sqInt classExternalLibrary(void);
 sqInt classExternalStructure(void);
-sqInt classAlien(void); /* Newsqueak FFI */
-sqInt classUnsafeAlien(void); /* Newsqueak FFI */
-sqInt getStackPointer(void);  /* Newsqueak FFI */
-sqInt sendInvokeCallbackStackRegistersJmpbuf(sqInt thunkPtrAsInt, sqInt stackPtrAsInt, sqInt regsPtrAsInt, sqInt jmpBufPtrAsInt); /* Newsqueak FFI */
-sqInt reestablishContextPriorToCallback(sqInt callbackContext); /* Newsqueak FFI */
 sqInt ioLoadModuleOfLength(sqInt moduleNameIndex, sqInt moduleNameLength);
 sqInt ioLoadSymbolOfLengthFromModule(sqInt functionNameIndex, sqInt functionNameLength, sqInt moduleHandle);
 sqInt isInMemory(sqInt address);
+sqInt classAlien(void); /* Alien FFI */
+sqInt classUnsafeAlien(void); /* Alien FFI */
+sqInt getStackPointer(void);  /* Alien FFI */
+#if ALIEN_FFI
+sqInt sendInvokeCallbackStackRegistersJmpbuf(sqInt thunkPtrAsInt, sqInt stackPtrAsInt, sqInt regsPtrAsInt, sqInt jmpBufPtrAsInt); /* Alien FFI */
+sqInt reestablishContextPriorToCallback(sqInt callbackContext); /* Alien FFI */
+#elif VM_PROXY_MINOR > 8
+static sqInt
+dummySendInvokeCallbackStackRegistersJmpbuf(sqInt a, sqInt b, sqInt c, sqInt d)
+{
+	return 0;
+}
+#endif
 
 void *ioLoadFunctionFrom(char *fnName, char *modName);
 
@@ -169,6 +192,14 @@ sqInt callbackEnter(sqInt *callbackID);
 sqInt callbackLeave(sqInt  callbackID);
 sqInt addGCRoot(sqInt *varLoc);
 sqInt removeGCRoot(sqInt *varLoc);
+
+/* Proxy declarations for v1.10 */
+sqInt methodArg(sqInt index);
+sqInt objectArg(sqInt index);
+sqInt integerArg(sqInt index);
+double floatArg(sqInt index);
+void  methodReturnValue(sqInt oop);
+sqInt topRemappableOop(void);
 
 struct VirtualMachine *VM = NULL;
 
@@ -180,10 +211,30 @@ static sqInt minorVersion(void) {
 	return VM_PROXY_MINOR;
 }
 
-static CompilerHook *compilerHookVector(void) {
-  return compilerHooks;
+#if !IMMUTABILITY
+static sqInt isNonIntegerObject(sqInt objectPointer)
+{
+	return !isIntegerObject(objectPointer);
 }
+#endif
 
+#if STACKVM
+void (*setInterruptCheckChain(void (*aFunction)(void)))();
+#else
+void (*setInterruptCheckChain(void (*aFunction)(void)))() { return 0; }
+#endif
+
+#if COGMTVM
+sqInt disownVM(void);
+void  ownVM(sqInt disownVMResult);
+#else
+sqInt disownVM(void) { return 1; }
+void  ownVM(sqInt disownVMResult) {}
+#endif
+
+/* High-priority and synchronous ticker function support. */
+void addHighPriorityTickee(void (*ticker)(void), unsigned periodms);
+void addSynchronousTickee(void (*ticker)(void), unsigned periodms, unsigned roundms);
 
 struct VirtualMachine* sqGetInterpreterProxy(void)
 {
@@ -194,6 +245,7 @@ struct VirtualMachine* sqGetInterpreterProxy(void)
 	VM->minorVersion = minorVersion;
 
 	/* InterpreterProxy methodsFor: 'stack access' */
+#if OLD_PRIM_IFC
 	VM->pop = pop;
 	VM->popthenPush = popthenPush;
 	VM->push = push;
@@ -204,6 +256,18 @@ struct VirtualMachine* sqGetInterpreterProxy(void)
 	VM->stackIntegerValue = stackIntegerValue;
 	VM->stackObjectValue = stackObjectValue;
 	VM->stackValue = stackValue;
+#else
+	VM->pop = pluginPop;
+	VM->popthenPush = pluginPopthenPush;
+	VM->push = pluginPush;
+	VM->pushBool = pluginPushBool;
+	VM->pushFloat = pluginPushFloat;
+	VM->pushInteger = pluginPushInteger;
+	VM->stackFloatValue = pluginStackFloatValue;
+	VM->stackIntegerValue = pluginStackIntegerValue;
+	VM->stackObjectValue = pluginStackObjectValue;
+	VM->stackValue = pluginStackValue;
+#endif
 	
 	/* InterpreterProxy methodsFor: 'object access' */
 	VM->argumentCountOf = argumentCountOf;
@@ -293,8 +357,8 @@ struct VirtualMachine* sqGetInterpreterProxy(void)
 	VM->success = success;
 	VM->superclassOf = superclassOf;
 
-	VM->compilerHookVector= compilerHookVector;
-	VM->setCompilerInitialized= setCompilerInitialized;
+	VM->compilerHookVector= 0;
+	VM->setCompilerInitialized= 0;
 
 #if VM_PROXY_MINOR > 1
 
@@ -340,36 +404,63 @@ struct VirtualMachine* sqGetInterpreterProxy(void)
 #endif
 
 #if VM_PROXY_MINOR > 5
-
 	VM->isArray = isArray;
 	VM->forceInterruptCheck = forceInterruptCheck;
-
 #endif
 
 #if VM_PROXY_MINOR > 6
-
 	VM->fetchLong32ofObject = fetchLong32ofObject;
 	VM->getThisSessionID = getThisSessionID;
 	VM->ioFilenamefromStringofLengthresolveAliases = ioFilenamefromStringofLengthresolveAliases;
 	VM->vmEndianness = vmEndianness;
-
 #endif
 
 #if VM_PROXY_MINOR > 7
-
-	VM->internalIsImmutable = internalIsImmutable;
-	VM->internalIsMutable   = internalIsMutable;
-	VM->primitiveFailFor    = primitiveFailFor;
-	VM->classAlien          = classAlien;
-	VM->getStackPointer     = (sqInt *(*)(void))getStackPointer;
-	VM->sendInvokeCallbackStackRegistersJmpbuf = sendInvokeCallbackStackRegistersJmpbuf;
-	VM->reestablishContextPriorToCallback = reestablishContextPriorToCallback;
-	VM->classUnsafeAlien    = classUnsafeAlien;
 	VM->callbackEnter = callbackEnter;
 	VM->callbackLeave = callbackLeave;
 	VM->addGCRoot = addGCRoot;
 	VM->removeGCRoot = removeGCRoot;
-
 #endif
+
+#if VM_PROXY_MINOR > 8
+	VM->primitiveFailFor    = primitiveFailFor;
+	VM->setInterruptCheckChain = setInterruptCheckChain;
+	VM->classAlien          = classAlien;
+	VM->classUnsafeAlien    = classUnsafeAlien;
+# if ALIEN_FFI
+	VM->sendInvokeCallbackStackRegistersJmpbuf = sendInvokeCallbackStackRegistersJmpbuf;
+	VM->reestablishContextPriorToCallback = reestablishContextPriorToCallback;
+	VM->getStackPointer     = (sqInt *(*)(void))getStackPointer;
+# else
+	VM->sendInvokeCallbackStackRegistersJmpbuf = dummySendInvokeCallbackStackRegistersJmpbuf;
+	VM->reestablishContextPriorToCallback = 0;
+	VM->getStackPointer     = 0;
+# endif
+# if IMMUTABILITY
+	VM->internalIsImmutable = internalIsImmutable;
+	VM->internalIsMutable   = internalIsMutable;
+# else
+	VM->internalIsImmutable = isIntegerObject;
+	VM->internalIsMutable   = isNonIntegerObject;
+# endif
+#endif
+
+#if VM_PROXY_MINOR > 9
+	VM->methodArg = methodArg;
+	VM->objectArg = objectArg;
+	VM->integerArg = integerArg;
+	VM->floatArg = floatArg;
+	VM->methodReturnValue = methodReturnValue;
+	VM->topRemappableOop = topRemappableOop;
+#endif
+
+#if VM_PROXY_MINOR > 10
+	VM->disownVM = disownVM;
+	VM->ownVM = ownVM;
+	VM->addHighPriorityTickee = addHighPriorityTickee;
+	VM->addSynchronousTickee = addSynchronousTickee;
+	VM->utcMicroseconds = ioUTCMicroseconds;
+#endif
+
 	return VM;
 }

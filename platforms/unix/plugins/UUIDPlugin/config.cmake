@@ -1,2 +1,0 @@
-PLUGIN_REQUIRE_INCLUDE(UUID uuid.h /usr/include/uuid)
-PLUGIN_FIND_LIBRARY(UUID uuid)

@@ -6,20 +6,12 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id$
+*   RCSID:   $Id: sqWin32Intel.c 1435 2006-04-11 00:17:05Z andreas $
 *
 *   NOTES:
 *    1) When using this module the virtual machine MUST NOT be compiled
 *       with Unicode support.
 *****************************************************************************/
-/* Windows Vista support 
- * AUTHOR: Korakurider (kr)
- * CHANGE NOTES:
- *   1) new command line option "-lowRights" was introduced
- *      to support IE7/protected mode.
- */
-#define VISTA_SECURITY 1 /* IE7/Vista protected mode support */
-
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,12 +20,16 @@
 #include <ole2.h>
 #include "sq.h"
 #include "sqWin32Args.h"
+#include "sqWin32Backtrace.h"
+#if COGVM
+# include "cogmethod.h"
+# include "cointerp.h"
+#endif
 
 /*** Crash debug -- Imported from Virtual Machine ***/
 int getFullScreenFlag(void);
 int methodPrimitiveIndex(void);
 int getCurrentBytecode(void);
-int printCallStack(void);
 
 extern TCHAR squeakIniName[];
 
@@ -57,12 +53,10 @@ TCHAR consoleBuffer[4096];
 char stderrName[MAX_PATH+1];
 char stdoutName[MAX_PATH+1];
 
-TCHAR *logName = TEXT("");             /* full path and name to log file */
+static  char vmLogDirA[MAX_PATH];
+static WCHAR vmLogDirW[MAX_PATH];
 
-#ifdef VISTA_SECURITY 
-BOOL fLowRights = 0;  /* started as low integiry process, 
-			need to use alternate untrustedUserDirectory */
-#endif /* VISTA_SECURITY */
+TCHAR *logName = TEXT("");             /* full path and name to log file */
 
 /* Service stuff */
 TCHAR  serviceName[MAX_PATH+1];   /* The name of the NT service */
@@ -96,7 +90,8 @@ void SetSystemTrayIcon(BOOL on);
 /****************************************************************************/
 static LPTOP_LEVEL_EXCEPTION_FILTER TopLevelFilter = NULL;
 
-LONG CALLBACK squeakExceptionHandler(LPEXCEPTION_POINTERS exp)
+static LONG CALLBACK
+squeakExceptionHandler(LPEXCEPTION_POINTERS exp)
 {
   DWORD result;
 
@@ -149,7 +144,8 @@ void UninstallExceptionHandler(void)
 /****************************************************************************/
 /*                      Console Window functions                            */
 /****************************************************************************/
-int OutputLogMessage(char *string)
+static int
+OutputLogMessage(char *string)
 { FILE *fp;
 
   if(!*logName) return 1;
@@ -161,7 +157,8 @@ int OutputLogMessage(char *string)
   return 1;
 }
 
-int OutputConsoleString(char *string)
+static int
+OutputConsoleString(char *string)
 { 
   int pos;
 
@@ -187,6 +184,22 @@ int OutputConsoleString(char *string)
     }
   return 1;
 }
+
+// recommend using DPRINTF ifdef'ing to DPRINTF for debug output
+int __cdecl DPRINTF(const char *fmt, ...)
+{ va_list al;
+
+  va_start(al, fmt);
+  wvsprintf(consoleBuffer, fmt, al);
+  OutputDebugString(consoleBuffer);
+  vfprintf(stdout, fmt, al);
+  va_end(al);
+  return 1;
+}
+
+#if !defined(_MSC_VER) && !defined(NODBGPRINT)
+
+// redefining printf doesn't seem like a good idea to me...
 
 int __cdecl printf(const char *fmt, ...)
 { va_list al;
@@ -222,6 +235,8 @@ int __cdecl putchar(int c)
 {
   return printf("%c",c);
 }
+
+#endif /* !defined(_MSC_VER) && !defined(NODBGPRINT) */
 
 /****************************************************************************/
 /*                   Message Processing                                     */
@@ -266,7 +281,8 @@ void SetSystemTrayIcon(BOOL on)
   if(!hShell) hShell = LoadLibrary(TEXT("shell32.dll"));
   if(!hShell) return; /* should not happen */
   /* On WinNT 3.* the following will just return NULL */
-  (FARPROC)ShellNotifyIcon = GetProcAddress(hShell, "Shell_NotifyIconA");
+  ShellNotifyIcon = (FARPROC)GetProcAddress(hShell, "Shell_NotifyIconA");
+
   if(!ShellNotifyIcon) return;  /* ok, we don't have it */
   nid.cbSize = sizeof(nid);
   nid.hWnd   = stWindow;
@@ -329,6 +345,20 @@ char *GetImageOption(int id)
     return NULL;
 }
 
+char *ioGetLogDirectory(void) {
+  return vmLogDirA;
+}
+
+sqInt ioSetLogDirectoryOfSize(void* lblIndex, sqInt sz) {
+  if(sz >= MAX_PATH) return 0;
+  strncpy(vmLogDirA, lblIndex, sz);
+  vmLogDirA[sz] = 0;
+  MultiByteToWideChar(CP_UTF8, 0, vmLogDirA, -1, vmLogDirW, MAX_PATH);
+  return 1;
+}
+
+/* New MinGW defines this, as does MSVC - so who still needs it? */
+#if !defined(VerifyVersionInfo)
 typedef struct _OSVERSIONINFOEX {
   DWORD dwOSVersionInfoSize;
   DWORD dwMajorVersion;
@@ -342,7 +372,10 @@ typedef struct _OSVERSIONINFOEX {
   BYTE wProductType;
   BYTE wReserved;
 } OSVERSIONINFOEX;
+#endif /* !defined(VerifyVersionInfo) */
 
+/* New MinGW defines this, as does MSVC - so who still needs it? */
+#if !defined(EnumDisplayDevices)
 typedef struct _DISPLAY_DEVICE {
   DWORD cb;
   TCHAR DeviceName[32];
@@ -351,6 +384,7 @@ typedef struct _DISPLAY_DEVICE {
   TCHAR DeviceID[128];
   TCHAR DeviceKey[128];
 } DISPLAY_DEVICE, *PDISPLAY_DEVICE;
+#endif /* !defined(EnumDisplayDevices) */
 
 typedef BOOL (CALLBACK *pfnEnumDisplayDevices)(
   LPCTSTR lpDevice,                // device name
@@ -361,6 +395,7 @@ typedef BOOL (CALLBACK *pfnEnumDisplayDevices)(
 char *osInfoString = "";
 char *hwInfoString = "";
 char *gdInfoString = "";
+char *win32VersionName = "";
 
 void gatherSystemInfo(void) {
   OSVERSIONINFOEX osInfo;
@@ -379,6 +414,10 @@ void gatherSystemInfo(void) {
   osInfo.dwOSVersionInfoSize = sizeof(osInfo);
   GetVersionEx((OSVERSIONINFO*)&osInfo);
   GetSystemInfo(&sysInfo);
+
+  /* Set up the win32VersionName */
+  sprintf(tmpString, "%d.%d", osInfo.dwMajorVersion, osInfo.dwMinorVersion);
+  win32VersionName = _strdup(tmpString);
 
   ZeroMemory(&memStat, sizeof(memStat));
   memStat.dwLength = sizeof(memStat);
@@ -475,7 +514,7 @@ void gatherSystemInfo(void) {
     }
   }
 
-  hwInfoString = strdup(tmpString);
+  hwInfoString = _strdup(tmpString);
 
   {
     char owner[256];
@@ -514,8 +553,12 @@ void gatherSystemInfo(void) {
 	    osInfo.dwBuildNumber, osInfo.szCSDVersion,
 	    owner, company,
 	    osInfo.wServicePackMajor, osInfo.wServicePackMinor,
+#if defined(_MSC_VER) && _MSC_VER < 1300
+# define wSuiteMask wReserved[0]
+# define wProductType wReserved[1] & 0xFF
+#endif
 	    osInfo.wSuiteMask, osInfo.wProductType);
-    osInfoString = strdup(tmpString);
+    osInfoString = _strdup(tmpString);
   }
 
   sprintf(tmpString,
@@ -553,7 +596,7 @@ void gatherSystemInfo(void) {
        with \Registry\Machine\ which doesn't work with RegOpenKey below.
        I have no idea why but for now I'll just truncate that part if
        we recognize it... */
-    if(strnicmp(keyName, "\\registry\\machine\\", 18) == 0) {
+    if(_strnicmp(keyName, "\\registry\\machine\\", 18) == 0) {
       memcpy(keyName, keyName+18, strlen(keyName)-17);
     }
 
@@ -666,7 +709,7 @@ void gatherSystemInfo(void) {
       RegCloseKey(hk);
     }
   }
-  gdInfoString = strdup(tmpString);
+  gdInfoString = _strdup(tmpString);
 }
 
 /****************************************************************************/
@@ -697,15 +740,72 @@ void SetupStderr()
 /*                      Release                                             */
 /****************************************************************************/
 
+static void
+dumpStackIfInMainThread(FILE *optionalFile)
+{
+	extern int printCallStack(void);
+
+	if (!optionalFile) {
+		if (ioOSThreadsEqual(ioCurrentOSThread(),getVMThread())) {
+			printf("\n\nSmalltalk stack dump:\n");
+			printCallStack();
+		}
+		else
+			printf("\nCan't dump Smalltalk stack. Not in VM thread\n");
+		return;
+	}
+	if (ioOSThreadsEqual(ioCurrentOSThread(),getVMThread())) {
+		FILE tmpStdout = *stdout;
+		fprintf(optionalFile, "\n\nSmalltalk stack dump:\n");
+		*stdout = *optionalFile;
+		printCallStack();
+		*optionalFile = *stdout;
+		*stdout = tmpStdout;
+		fprintf(optionalFile,"\n");
+	}
+	else
+		fprintf(optionalFile,"\nCan't dump Smalltalk stack. Not in VM thread\n");
+}
+
+static void
+dumpPrimTrace(FILE *optionalFile)
+{
+	extern void dumpPrimTraceLog(void);
+
+	printf("\n\nPrimitive trace:\n");
+	dumpPrimTraceLog();
+	printf("\n");
+
+	if (optionalFile) {
+		FILE tmpStdout = *stdout;
+		*stdout = *optionalFile;
+		dumpPrimTrace(0);
+		*optionalFile = *stdout;
+		*stdout = tmpStdout;
+	}
+}
+
 void
 printCommonCrashDumpInfo(FILE *f) {
+#if STACKVM
+extern char *__interpBuildInfo;
+# if COGVM
+extern char *__cogitBuildInfo;
+# endif
+#endif
 
     fprintf(f,"\n\n%s", hwInfoString);
     fprintf(f,"\n%s", osInfoString);
     fprintf(f,"\n%s", gdInfoString);
 
     /* print VM version information */
-    fprintf(f,"\nVM Version: %s\n", VM_VERSION_INFO);
+    fprintf(f,"\nVM Version: %s\n", VM_VERSION);
+#if STACKVM
+    fprintf(f,"Interpreter Build: %s\n", __interpBuildInfo);
+# if COGVM
+    fprintf(f,"Cogit Build: %s\n", __cogitBuildInfo);
+# endif
+#endif
     fflush(f);
     fprintf(f,"\n"
 	    "Current byte code: %d\n"
@@ -724,19 +824,17 @@ printCommonCrashDumpInfo(FILE *f) {
 	index++;
       }
     }
-	/* print the caller's stack to "crash.dmp" */
-    fprintf(f,"\nThe Smalltalk Stack:\n");
-    {
-	  FILE tmpStdout;
-	  tmpStdout = *stdout;
-	  *stdout = *f;
-	  printCallStack();
-	  *f = *stdout;
-	  *stdout = tmpStdout;
-	  fprintf(f,"\n");
-    }
+
+    printModuleInfo(f);
+	/* print the caller's stack and recently called prims to "crash.dmp" */
+	dumpStackIfInMainThread(f);
+	dumpPrimTrace(f);
+    fclose(f);
 }
 
+/* Print an error message, possibly a stack trace, and exit. */
+/* Disable Intel compiler inlining of error which is used for breakpoints */
+#pragma auto_inline off
 void
 error(char *msg) {
   FILE *f;
@@ -753,13 +851,13 @@ error(char *msg) {
 	   msg,
 	   getCurrentBytecode(),
 	   methodPrimitiveIndex(),
-	   vmPath,
+	   vmLogDirA,
 	   TEXT("crash.dmp"));
   if(!fHeadlessImage)
     MessageBox(stWindow,crashInfo,TEXT("Fatal VM error"),
                  MB_OK | MB_APPLMODAL | MB_ICONSTOP);
 
-  SetCurrentDirectory(vmPath);
+  SetCurrentDirectoryW(vmLogDirW);
   /* print the above information */
   f = fopen("crash.dmp","a");
   if(f){  
@@ -772,49 +870,62 @@ error(char *msg) {
 	fclose(f);
   }
   /* print the caller's stack to stdout */
-  printCallStack();
+  dumpStackIfInMainThread(0);
   exit(-1);
 }
+#pragma auto_inline on
 
-
-void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
-{ TCHAR crashInfo[1024];
+void
+printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
+{ 
+#define MAXFRAMES 64
+  void *callstack[MAXFRAMES];
+  symbolic_pc symbolic_pcs[MAXFRAMES];
+  int i, nframes, inVMThread;
+  TCHAR crashInfo[1024];
   FILE *f;
-  int byteCode;
+  int byteCode = -2;
 
   UninstallExceptionHandler();
-  /* Retrieve current byte code.
+
+  if ((inVMThread = ioOSThreadsEqual(ioCurrentOSThread(),getVMThread())))
+    /* Retrieve current byte code.
      If this fails the IP is probably wrong */
-  TRY {
-#ifndef JITTER
-    byteCode = getCurrentBytecode();
-#else
-    byteCode = -1;
-#endif
-  } EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
-    byteCode = -1;
-  }
+    TRY {
+      byteCode = getCurrentBytecode();
+    } EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
+      byteCode = -1;
+    }
+
 
   TRY {
-  wsprintf(crashInfo,TEXT("Sorry but the VM has crashed.\n\n")
-					 TEXT("Exception code: %08X\n")
-					 TEXT("Exception address: %08X\n")
-                     TEXT("Current byte code: %d\n")
-                     TEXT("Primitive index: %d\n\n")
-                     TEXT("This information will be stored in the file\n")
-                     TEXT("%s%s\n")
-                     TEXT("with a complete stack dump"),
-					 exp->ExceptionRecord->ExceptionCode,
-					 exp->ExceptionRecord->ExceptionAddress,
-                     byteCode,
-                     methodPrimitiveIndex(),
-                     vmPath,
-                     TEXT("crash.dmp"));
+  callstack[0] = (void *)exp->ContextRecord->Eip;
+  nframes = backtrace_from_fp((void*)exp->ContextRecord->Ebp,
+							callstack+1,
+							MAXFRAMES-1);
+  symbolic_backtrace(++nframes, callstack, symbolic_pcs);
+  wsprintf(crashInfo,
+	   TEXT("Sorry but the VM has crashed.\n\n")
+	   TEXT("Exception code: %08X\n")
+	   TEXT("Exception address: %08X\n")
+	   TEXT("Current byte code: %d\n")
+	   TEXT("Primitive index: %d\n\n")
+	   TEXT("Crashed in %s thread\n\n")
+	   TEXT("This information will be stored in the file\n")
+	   TEXT("%s\\%s\n")
+	   TEXT("with a complete stack dump"),
+	   exp->ExceptionRecord->ExceptionCode,
+	   exp->ExceptionRecord->ExceptionAddress,
+	   byteCode,
+	   methodPrimitiveIndex(),
+	   inVMThread ? "the VM" : "some other",
+	   vmLogDirA,
+	   TEXT("crash.dmp"));
   if(!fHeadlessImage)
     MessageBox(stWindow,crashInfo,TEXT("Fatal VM error"),
                  MB_OK | MB_APPLMODAL | MB_ICONSTOP);
 
-  SetCurrentDirectory(vmPath);
+  SetCurrentDirectoryW(vmLogDirW);
   /* print the above information */
   f = fopen("crash.dmp","a");
   if(f){  
@@ -849,14 +960,58 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
 	    exp->ContextRecord->FloatSave.StatusWord,
 	    exp->ContextRecord->FloatSave.TagWord);
 
-	printCommonCrashDumpInfo(f);
-	fclose(f);
+	fprintf(f,
+			"\n\nCrashed in %s thread\nStack backtrace:\n",
+			inVMThread ? "the VM" : "some other");
 
-    /* print the caller's stack twice (to stdout and "crash.dmp")*/
-	printCallStack();
+	if (inVMThread)
+		ifValidWriteBackStackPointers((void *)exp->ContextRecord->Ebp,
+									  (void *)exp->ContextRecord->Esp);
+#if COGVM
+	for (i = 0; i < nframes; ++i) {
+		char *name; int namelen;
+		if (addressCouldBeObj((sqInt)symbolic_pcs[i].fnameOrSelector)) {
+			extern void *firstFixedField(sqInt);
+			name = firstFixedField((sqInt)symbolic_pcs[i].fnameOrSelector);
+			namelen = byteSizeOf((sqInt)symbolic_pcs[i].fnameOrSelector);
+		}
+		else {
+			if (!(name = symbolic_pcs[i].fnameOrSelector))
+				name = "???";
+			namelen = strlen(name);
+		}
+		fprintf(f,
+				"\t[%p] %.*s + %d in %s\n",
+				callstack[i],
+				namelen, name,
+				symbolic_pcs[i].offset,
+				symbolic_pcs[i].mname);
+	}
+#else
+	for (i = 0; i < nframes; ++i)
+		fprintf(f,
+				"\t[%p] %s + %d in %s\n",
+				callstack[i],
+				symbolic_pcs[i].fnameOrSelector
+					? symbolic_pcs[i].fnameOrSelector
+					: "???",
+				symbolic_pcs[i].offset,
+				symbolic_pcs[i].mname);
+#endif
+	if (nframes == MAXFRAMES)
+		fprintf(f, "\t...\n");
+
+	printCommonCrashDumpInfo(f);
+    fclose(f);
   }
+
+  /* print the caller's stack to stdout */
+  dumpStackIfInMainThread(0);
+  /* print recently called prims to stdout */
+  dumpPrimTrace(0);
+
   } EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
-    /* that's to bad ... */
+    /* that's too bad ... */
     if(!fHeadlessImage)
       MessageBox(0,TEXT("The VM has crashed. Sorry."),TEXT("Fatal error:"),
                  MB_OK | MB_APPLMODAL | MB_ICONSTOP);
@@ -865,16 +1020,19 @@ void printCrashDebugInformation(LPEXCEPTION_POINTERS exp)
   }
 }
 
-extern int inCleanExit;
-
 void __cdecl Cleanup(void)
 { /* not all of these are essential, but they're polite... */
 
+extern int inCleanExit; /* from platforms/win32/vm/sqWin32Window.c */
+
+  if(!inCleanExit) {
+    dumpStackIfInMainThread(0);
+  }
   ioShutdownAllModules();
 #ifndef NO_PLUGIN_SUPPORT
   pluginExit();
 #endif
-  ReleaseTimer();
+  ioReleaseTime();
   /* tricky ... we have no systray icon when running
      headfull or when running as service on NT */
   if(fHeadlessImage && (!fRunService || fWindows95))
@@ -882,7 +1040,6 @@ void __cdecl Cleanup(void)
   if(palette) DeleteObject(palette);
   PROFILE_SHOW(ticksForReversal);
   PROFILE_SHOW(ticksForBlitting);
-  /* Show errors only if not in a browser */
   if(*stderrName)
     {
       fclose(stderr);
@@ -961,11 +1118,41 @@ int findEmbeddedImage(void) { return 0; }
 /****************************************************************************/
 /*                        sqMain                                            */
 /****************************************************************************/
+#if STACKVM
+extern sqInt desiredNumStackPages;
+extern sqInt desiredEdenBytes;
+extern sqInt suppressHeartbeatFlag;
+extern sqInt checkForLeaks;
+extern void setBreakSelector(char *);
+#endif /* STACKVM */
+#if COGVM
+extern sqInt desiredCogCodeSize;
+extern int traceLinkedSends;
+extern sqInt traceStores;
+extern unsigned long debugPrimCallStackOffset;
+extern sqInt maxLiteralCountForCompile;
+#endif /* COGVM */
+
 static vmArg args[] = {
   { ARG_STRING, &installServiceName, "-service:" }, /* the name of a service */
   { ARG_FLAG, &fHeadlessImage, "-headless" },       /* do we run headless? */
   { ARG_STRING, &logName, "-log:" },                /* VM log file */
   { ARG_UINT, &dwMemorySize, "-memory:" },          /* megabyte of memory to use */
+#if STACKVM
+  { ARG_UINT, &desiredEdenBytes, "-eden:" },        /* bytes of eden to use */
+  { ARG_UINT, &desiredNumStackPages, "-stackpages:"}, /* n stack pages to use */
+  { ARG_UINT, &checkForLeaks, "-leakcheck:"}, /* leak check on GC */
+  { ARG_FLAG, &suppressHeartbeatFlag, "-noheartbeat"}, /* no heartbeat for dbg */
+  { ARG_STRING_FUNC, setBreakSelector, "-breaksel:"}, /* break-point selector string */
+#endif /* STACKVM */
+#if COGVM
+  { ARG_UINT, &desiredCogCodeSize, "-codesize:"}, /* machine code memory to use */
+  { ARG_FLAG, &traceLinkedSends, "-sendtrace" },  /* trace sends in log */
+  { ARG_INT, &traceLinkedSends, "-trace:" },  /* trace sends in log */
+  { ARG_FLAG, &traceStores, "-tracestores" },     /* assert-check stores */
+  { ARG_UINT, &debugPrimCallStackOffset, "-dpcso:"}, /* debug prim call stack offset */
+  { ARG_UINT, &maxLiteralCountForCompile, "-cogmaxlits:"}, /* max # of literals for a method to be compiled to machine code */
+#endif /* COGVM */
 
   /* NOTE: the following flags are "undocumented" */
   { ARG_INT, &browserWindow, "-browserWindow:"},    /* The web browser window we run in */
@@ -973,10 +1160,6 @@ static vmArg args[] = {
   /* service support on 95 */
   { ARG_FLAG, &fRunService, "-service95" },           /* do we start as service? */
   { ARG_FLAG, &fBroadcastService95, "-broadcast95" }, /* should we notify services of a user logon? */
-#ifdef  VISTA_SECURITY /* IE7/Vista protected mode support */
-  { ARG_FLAG, &fLowRights, "-lowRights" }, /* started with low rights, 
-					use alternate untrustedUserDirectory */
-#endif /* VISTA_SECURITY */
   { ARG_NONE, NULL, NULL }
 };
 
@@ -989,7 +1172,8 @@ static vmArg args[] = {
    In other words, even though the logName may have been set before,
    the command line has to include the -log: switch.
 */
-int sqMain(char *lpCmdLine, int nCmdShow) { 
+int sqMain(char *lpCmdLine, int nCmdShow)
+{ 
   int virtualMemory;
   WCHAR *cmdLineW;
   char *cmdLineA;
@@ -1036,7 +1220,7 @@ int sqMain(char *lpCmdLine, int nCmdShow) {
     }
   }
 
-
+  /* parse command line args */
   if(!parseArguments(cmdLineA, args))
     return printUsage(1);
 
@@ -1087,6 +1271,7 @@ int sqMain(char *lpCmdLine, int nCmdShow) {
   }
 
   SetupFilesAndPath();
+  ioSetLogDirectoryOfSize(vmPath, strlen(vmPath));
 
   /* release resources on exit */
   atexit(Cleanup);
@@ -1107,7 +1292,17 @@ int sqMain(char *lpCmdLine, int nCmdShow) {
   SetupWindows();
   SetupPixmaps();
   SetupService95();
-  SetupTimer();
+  { extern void ioInitTime(void);
+	extern void ioInitThreads(void);
+	ioInitTime();
+	ioInitThreads();
+# if !COGMTVM
+	/* Set the current VM thread.  If the main thread isn't the VM thread then
+	 * when that thread is spawned it can reassign ioVMThread.
+	 */
+	ioVMThread = ioCurrentOSThread();
+# endif
+  }
 
   /* check the interpreter's size assumptions for basic data types */
   if (sizeof(int) != 4) error("This C compiler's integers are not 32 bits.");
@@ -1120,8 +1315,7 @@ int sqMain(char *lpCmdLine, int nCmdShow) {
     if(imageSize == 0) printUsage(2);
   }
 
-  /* allocate the synchronization mutex before anything is going to happen */
-  vmSemaphoreMutex = CreateMutex(NULL, 0, NULL);
+  /* allocate this before anything is going to happen */
   vmWakeUpEvent = CreateEvent(NULL, 1, 0, NULL);
 
 #ifdef NO_VIRTUAL_MEMORY
@@ -1136,12 +1330,14 @@ int sqMain(char *lpCmdLine, int nCmdShow) {
   virtualMemory = imageSize + 0x00400000;
 #endif
 
-#ifndef _MSC_VER
+#if !NO_FIRST_LEVEL_EXCEPTION_HANDLER
+# ifndef _MSC_VER
   /* Install our top-level exception handler */
   InstallExceptionHandler();
-#else
+# else
   __try {
-#endif
+# endif
+#endif /* !NO_FIRST_LEVEL_EXCEPTION_HANDLER */
     /* set the CWD to the image location */
     if(*imageName) {
       char path[MAX_PATH+1], *ptr;
@@ -1177,14 +1373,16 @@ int sqMain(char *lpCmdLine, int nCmdShow) {
     /* run Squeak */
     ioInitSecurity();
     interpret();
-#ifdef _MSC_VER
+#if !NO_FIRST_LEVEL_EXCEPTION_HANDLER
+# ifdef _MSC_VER
   } __except(squeakExceptionHandler(GetExceptionInformation())) {
     /* Do nothing */
   }
-#else
+# else
   /* remove the top-level exception handler */
   UninstallExceptionHandler();
-#endif
+# endif
+#endif /* !NO_FIRST_LEVEL_EXCEPTION_HANDLER */
   return 1;
 }
 
@@ -1203,7 +1401,7 @@ int WINAPI WinMain (HINSTANCE hInst,
   fWindows95 = (GetVersion() & 0x80000000) != 0;
 
   /* fetch us a copy of the command line */
-  initialCmdLine = strdup(lpCmdLine);
+  initialCmdLine = _strdup(lpCmdLine);
 
   /* fetch us the name of the executable */
   {
@@ -1242,6 +1440,8 @@ int WINAPI WinMain (HINSTANCE hInst,
 
 #endif
 
+  SQ_LAUNCH_DROP = RegisterWindowMessage("SQUEAK_LAUNCH_DROP");
+
   /* Special startup stuff for windows 95 */
   if(fWindows95) {
     /* The message we use for notifying services of user logon */
@@ -1252,3 +1452,32 @@ int WINAPI WinMain (HINSTANCE hInst,
   sqMain(lpCmdLine, nCmdShow);
   return 0;
 }
+
+#if COGVM
+/*
+ * Support code for Cog.
+ * a) Answer whether the C frame pointer is in use, for capture of the C stack
+ *    pointers.
+ */
+/*
+ * Cog has already captured CStackPointer  before calling this routine.  Record
+ * the original value, capture the pointers again and determine if CFramePointer
+ * lies between the two stack pointers and hence is likely in use.  This is
+ * necessary since optimizing C compilers for x86 may use %ebp as a general-
+ * purpose register, in which case it must not be captured.
+ */
+int
+isCFramePointerInUse()
+{
+	extern unsigned long CStackPointer, CFramePointer;
+	extern void (*ceCaptureCStackPointers)(void);
+	unsigned long currentCSP = CStackPointer;
+
+	currentCSP = CStackPointer;
+	ceCaptureCStackPointers();
+#if defined(assert)
+	assert(CStackPointer < currentCSP);
+#endif
+	return CFramePointer >= CStackPointer && CFramePointer <= currentCSP;
+}
+#endif /* COGVM */

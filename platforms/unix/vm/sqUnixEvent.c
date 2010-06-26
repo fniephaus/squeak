@@ -28,6 +28,8 @@
 /* Author: Ian Piumarta <ian.piumarta@squeakland.org>
  *
  * Last edited: 2009-08-15 15:39:46 by piumarta on emilia-2.local
+ * Last edited: Tue Jan 19 17:10:19 PST 2010 by eliot, nuke
+ * setInterruptCheckCounter calls.
  *
  * NOTE: this file is included by the window support files that need it.
  */
@@ -53,7 +55,7 @@ int iebOut= 0;	/* next IEB location to read  */
 int buttonState= 0;		/* mouse button state or 0 if not pressed */
 int modifierState= 0;		/* modifier key state or 0 if none pressed */
 
-#if defined(DEBUG_EVENTS)
+#if defined(DEBUG_EVENTS) || defined(DEBUG_KEYBOARD_EVENTS)
 
 #include <ctype.h>
 
@@ -157,7 +159,7 @@ static void recordMouseEvent(void)
   evt->y= mousePosition.y;
   evt->buttons= (state & 0x7);
   evt->modifiers= (state >> 3);
-  evt->reserved1=
+  evt->nrClicks=
     evt->windowIndex= 0;
   signalInputEvent();
 #ifdef DEBUG_EVENTS
@@ -180,7 +182,7 @@ static void recordKeyboardEvent(int keyCode, int pressCode, int modifiers, int u
   evt->reserved1=
     evt->windowIndex= 0;
   signalInputEvent();
-#ifdef DEBUG_EVENTS
+#if defined(DEBUG_EVENTS) || defined(DEBUG_KEYBOARD_EVENTS)
   printf("EVENT: key");
   switch (pressCode)
     {
@@ -256,6 +258,7 @@ static sqInt display_ioGetNextEvent(sqInputEvent *evt)
 }
 
 
+#if !defined(recordKeystroke)
 /*** the following are deprecated and should really go away.  for now
      we keep them for backwards compatibility with ancient images	 ***/
 
@@ -279,10 +282,7 @@ static void recordKeystroke(int keyCode)			/* DEPRECATED */
       printf(" = %d 0x%x\n", keystate, keystate);
 #    endif
       if (keystate == getInterruptKeycode())
-	{
 	  setInterruptPending(true);
-	  setInterruptCheckCounter(0);
-	}
       else
 	{
 	  keyBuf[keyBufPut]= keystate;
@@ -323,6 +323,10 @@ static sqInt display_ioGetKeystroke(void)			/* DEPRECATED */
   keyBufGet= (keyBufGet + 1) % KEYBUF_SIZE;
   return keystate;
 }
+#else
+static sqInt display_ioPeekKeystroke(void) { return 0; }	/* DEPRECATED */
+static sqInt display_ioGetKeystroke(void) { return 0; }	/* DEPRECATED */
+#endif /* !defined(recordKeystroke) */
 
 
 static sqInt display_ioGetButtonState(void)

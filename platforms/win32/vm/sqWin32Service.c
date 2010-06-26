@@ -6,7 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id: sqWin32Service.c,v 1.2 2002/05/04 23:20:28 andreasraab Exp $
+*   RCSID:   $Id: sqWin32Service.c 342 2002-05-04 23:20:28Z andreasraab $
 *
 *
 *   NOTES:   On Win95 the two "magic" entries in the registry are
@@ -21,7 +21,7 @@
 #ifndef NO_SERVICE
 
 #ifndef NO_RCSID
-  static char RCSID[] = "$Id: sqWin32Service.c,v 1.2 2002/05/04 23:20:28 andreasraab Exp $";
+  static char RCSID[] = "$Id: sqWin32Service.c 342 2002-05-04 23:20:28Z andreasraab $";
 #endif
 
 /****************************************************************/
@@ -76,6 +76,28 @@ TCHAR *printCommandLine(int printFor95)
 #endif
       lstrcat(buffer,TEXT(" "));
     }
+#if STACKVM
+  { extern sqInt desiredNumStackPages;
+    extern sqInt desiredEdenBytes;
+   if (desiredEdenBytes) {
+      lstrcat(buffer,TEXT("-eden: "));
+# ifdef UNICODE
+      lstrcat(buffer, _ltow(desiredEdenBytes, lbuf, 10));
+# else
+      lstrcat(buffer, _ltoa(desiredEdenBytes, lbuf, 10));
+# endif
+      lstrcat(buffer,TEXT(" "));
+   }
+   if (desiredNumStackPages) {
+      lstrcat(buffer,TEXT("-stackpages: "));
+# ifdef UNICODE
+      lstrcat(buffer, _ltow(desiredNumStackPages, lbuf, 10));
+# else
+      lstrcat(buffer, _ltoa(desiredNumStackPages, lbuf, 10));
+# endif
+      lstrcat(buffer,TEXT(" "));
+   }
+#endif /* STACKVM */
   if(*logName) /* need -log: "logName" */
     {
       lstrcat(buffer, TEXT("-log: \""));
@@ -575,7 +597,7 @@ void sqServiceMainFunction(DWORD dwArgc, LPTSTR *lpszArgv)
                      0,                       /* default stack size     */
                      (LPTHREAD_START_ROUTINE) &sqThreadMain, /* what to do */
                      NULL,                    /* parameter for thread   */
-                     0,                       /* creation parameter -- create running*/
+                     STACK_SIZE_PARAM_IS_A_RESERVATION, /* creation parameter -- create running*/
                      &id);                    /* return value for thread id */
     if(!threadHandle) goto cleanup;
 

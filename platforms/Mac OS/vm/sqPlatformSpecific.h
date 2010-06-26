@@ -6,7 +6,7 @@
 *   AUTHOR:  John Maloney, John McIntosh, and others.
 *   ADDRESS: 
 *   EMAIL:   johnmci@smalltalkconsulting.com
-*   RCSID:   $Id$
+*   RCSID:   $Id: sqPlatformSpecific.h 1708 2007-06-10 00:40:04Z johnmci $
 *
 *   Jan 22nd 2002, JMM type for squeak file offset
 *   May 5th, 2002, JMM added define for plugin for CW
@@ -40,7 +40,6 @@
 #undef sqImageFileRead
 #undef sqImageFileSeek
 #undef sqImageFileWrite
-#undef sqImageFileStartLocation
 
 #undef sqAllocateMemory
 
@@ -51,7 +50,10 @@
 #undef squeakFileOffsetType
 #define squeakFileOffsetType off_t
 
+#include <unistd.h> /* for declaration of ftruncate */
+
 #undef sqFTruncate
+/* sqFTruncate should return 0 on success, ftruncate does also */
 #define sqFTruncate(f,o) ftruncate(fileno(f), o)
 
 // CARBON
@@ -64,7 +66,6 @@
     #endif 
     #define ftell ftello
     #define fseek fseeko
-	int	 ftruncate(int, off_t);
     typedef FILE *sqImageFile;
 
     #undef sqFilenameFromStringOpen
@@ -77,16 +78,10 @@ squeakFileOffsetType       sqImageFilePosition(sqImageFile f);
 size_t      sqImageFileRead(void *ptr, size_t elementSize, size_t count, sqImageFile f);
 void        sqImageFileSeek(sqImageFile f, squeakFileOffsetType pos);
 sqInt       sqImageFileWrite(void *ptr, size_t elementSize, size_t count, sqImageFile f);
-squeakFileOffsetType       sqImageFileStartLocation(sqInt fileRef, char *filename,squeakFileOffsetType imageSize);
 
-usqInt	    sqAllocateMemoryMac(sqInt desiredHeapSize , sqInt minHeapSize, FILE * f,usqInt headersize);
-#undef allocateMemoryMinimumImageFileHeaderSize
-#define allocateMemoryMinimumImageFileHeaderSize(heapSize, minimumMemory, fileStream, headerSize) \
-	sqAllocateMemoryMac(heapSize, minimumMemory, fileStream, headerSize)
-#undef sqImageFileReadEntireImage
-size_t      sqImageFileReadEntireImage(void *ptr,  size_t elementSize, size_t count, sqImageFile f);
-#define sqImageFileReadEntireImage(memoryAddress, elementSize,  length, fileStream) \
-	sqImageFileReadEntireImage(memoryAddress, elementSize, length, fileStream)
+usqInt	    sqAllocateMemoryMac(sqInt minHeapSize, sqInt *desiredHeapSize);
+
+#define sqAllocateMemory(x,y) sqAllocateMemoryMac(x,&y);
 
 /* override reserveExtraCHeapBytes() macro to reduce Squeak object heap size on Mac */
 #undef reserveExtraCHeapBytes
@@ -96,9 +91,11 @@ size_t      sqImageFileReadEntireImage(void *ptr,  size_t elementSize, size_t co
 #undef ioLowResMSecs
 #undef ioMicroMSecs
 #undef ioMSecs
+#if STACKVM /* In the Cog VMs time management is in sqUnixHeartbeat.c */
+#define ioLowResMSecs ioMSecs /* i.e. use ioMSecs in sqUnixHeartbeat.c */
+#else
 #define ioMSecs ioMicroMSecs
-#undef ioMicroSecondClock
-#define ioMicroSecondClock ioMicroSeconds
+#endif
 
 /* macro to return from interpret() loop in browser plugin VM */
 #define ReturnFromInterpret() return
@@ -116,21 +113,65 @@ void CopyCStringToPascal(const char* src, Str255 dst);
 sqInt sqGrowMemoryBy(sqInt memoryLimit, sqInt delta);
 sqInt sqShrinkMemoryBy(sqInt memoryLimit, sqInt delta);
 sqInt sqMemoryExtraBytesLeft(Boolean flag);
+#if COGVM
+extern void sqMakeMemoryExecutableFromTo(unsigned long, unsigned long);
+extern void sqMakeMemoryNotExecutableFromTo(unsigned long, unsigned long);
 
-    #undef insufficientMemorySpecifiedError
-    #undef insufficientMemoryAvailableError
-    #undef unableToReadImageError
-    #undef browserPluginReturnIfNeeded
-    #undef browserPluginInitialiseIfNeeded
-    #define insufficientMemorySpecifiedError() plugInNotifyUser("The amount of memory specified by the 'memory' EMBED tag is not enough for the installed Squeak image file.")
-    #define insufficientMemoryAvailableError() plugInNotifyUser("There is not enough memory to give Squeak the amount specified by the 'memory' EMBED tag.")
-    #define unableToReadImageError() plugInNotifyUser("Read failed or premature end of image file")
-    #define browserPluginReturnIfNeeded() if (plugInTimeToReturn()) {ReturnFromInterpret();}
-    #define browserPluginInitialiseIfNeeded()
+extern int isCFramePointerInUse(void);
+#endif
+
+/* Thread support for thread-safe signalSemaphoreWithIndex and/or the COGMTVM */
+#if STACKVM
+# define sqLowLevelYield() sched_yield()
+# include <pthread.h>
+# define sqOSThread pthread_t
+/* these are used both in the STACKVM & the COGMTVM */
+# define ioOSThreadsEqual(a,b) pthread_equal(a,b)
+# define ioCurrentOSThread() pthread_self()
+# if COGMTVM
+/* Please read the comment for CogThreadManager in the VMMaker package for
+ * documentation of this API.
+ */
+typedef struct {
+		pthread_cond_t	cond;
+		pthread_mutex_t mutex;
+		int				locked;
+	} sqOSSemaphore;
+#  if !ForCOGMTVMImplementation /* this is a read-only export */
+extern const pthread_key_t tltiIndex;
+#  endif
+#  define ioGetThreadLocalThreadIndex() ((long)pthread_getspecific(tltiIndex))
+#  define ioSetThreadLocalThreadIndex(v) (pthread_setspecific(tltiIndex,(void*)(v)))
+#  define ioOSThreadIsAlive(thread) (pthread_kill(thread,0) == 0)
+#  define ioTransferTimeslice() sched_yield()
+# endif /* COGMTVM */
+#endif /* STACKVM */
+
+#ifdef BROWSERPLUGIN
+# undef insufficientMemorySpecifiedError
+# undef insufficientMemoryAvailableError
+# undef unableToReadImageError
+# undef browserPluginReturnIfNeeded
+# undef browserPluginInitialiseIfNeeded
+# define insufficientMemorySpecifiedError() plugInNotifyUser("The amount of memory specified by the 'memory' EMBED tag is not enough for the installed Squeak image file.")
+# define insufficientMemoryAvailableError() plugInNotifyUser("There is not enough memory to give Squeak the amount specified by the 'memory' EMBED tag.")
+# define unableToReadImageError() plugInNotifyUser("Read failed or premature end of image file")
+# define browserPluginReturnIfNeeded() if (plugInTimeToReturn()) {ReturnFromInterpret();}
+# define browserPluginInitialiseIfNeeded()
+#endif
 
 //exupery
 #define addressOf(x) &x
 
+// From Joshua Gargus, for XCode 3.1
+#ifdef __GNUC__
+# undef EXPORT
+# define EXPORT(returnType) __attribute__((visibility("default"))) returnType
+# define VM_LABEL(foo) asm("\n.globl L" #foo "\nL" #foo ":")
+#endif
+
+#if !defined(VM_LABEL) || COGVM
+# undef VM_LABEL
+# define VM_LABEL(foo) 0
+#endif
 #endif /* macintoshSqueak */
-
-

@@ -1224,3 +1224,10 @@ static pascal void NMResponseProc (NMRecPtr nmReqPtr) {
 }
 
 #endif
+
+/** Stub for win-only primitive. **/
+int snd_SetRecordBufferFrameCount(int frameCount)
+{
+	return 0;
+}
+

@@ -6,7 +6,7 @@
 *   AUTHOR:  John McIntosh, and others.
 *   ADDRESS: 
 *   EMAIL:   johnmci@smalltalkconsulting.com
-*   RCSID:   $Id$
+*   RCSID:   $Id: sqMacDragDrop.c 1708 2007-06-10 00:40:04Z johnmci $
 *
 *   NOTES: See change log below.
 *	1/4/2002   JMM Carbon cleanup

@@ -7,7 +7,7 @@ extern int    uxDropFileCount;
 extern char **uxDropFileNames;
 
 #define SqDisplayVersionMajor	1
-#define SqDisplayVersionMinor	2
+#define SqDisplayVersionMinor	4
 #define SqDisplayVersion	((SqDisplayVersionMajor << 16) | (SqDisplayVersionMinor))
 
 #if (AVOID_OPENGL_H)
@@ -23,7 +23,7 @@ struct SqDisplay
   char  *(*winSystemName)(void);
   /* window startup/shutown */
   void 	 (*winInit)(void);
-  void 	 (*winOpen)(void);
+  void 	 (*winOpen)(int argc, char *dropFiles[]);
   void 	 (*winSetName)(char *title);
   int  	 (*winImageFind)(char *imageName, int size);
   void 	 (*winImageNotFound)(void);
@@ -51,6 +51,7 @@ struct SqDisplay
   sqInt  (*dndOutStart)(char *types, int ntypes);
   sqInt  (*dndOutAcceptedType)(char *type, int ntype);
   void   (*dndOutSend)(char *bytes, int nbytes);
+  sqInt  (*dndReceived)(char *fileName);
   sqInt  (*ioGetButtonState)(void);
   sqInt  (*ioPeekKeystroke)(void);
   sqInt  (*ioGetKeystroke)(void);
@@ -83,6 +84,16 @@ struct SqDisplay
   int    (*hostWindowSetPosition)(int windowIndex, int x, int y);
   int    (*hostWindowSetTitle)(int windowIndex, char * newTitle, int sizeOfTitle);
   int    (*hostWindowCloseAll)(void);
+
+  int    (*ioPositionOfScreenWorkArea)(int windowIndex);
+  int    (*ioSizeOfScreenWorkArea)(int windowIndex);
+  sqInt  (*ioSetCursorPositionXY)(sqInt x, sqInt y);
+
+  void  *(*ioGetWindowHandle)(void);
+  int    (*ioPositionOfNativeDisplay)(void *);
+  int    (*ioSizeOfNativeDisplay)(void *);
+  int    (*ioPositionOfNativeWindow)(void *);
+  int    (*ioSizeOfNativeWindow)(void *);
 };
 
 
@@ -118,6 +129,7 @@ static struct SqDisplay display_##NAME##_itf= {	\
   display_dndOutStart,				\
   display_dndOutAcceptedType,  			\
   display_dndOutSend,				\
+  display_dndReceived,				\
   display_ioGetButtonState,			\
   display_ioPeekKeystroke,			\
   display_ioGetKeystroke,			\
@@ -146,7 +158,15 @@ static struct SqDisplay display_##NAME##_itf= {	\
   display_hostWindowGetPosition,		\
   display_hostWindowSetPosition,		\
   display_hostWindowSetTitle,			\
-  display_hostWindowCloseAll			\
+  display_hostWindowCloseAll,			\
+  display_ioPositionOfScreenWorkArea,	\
+  display_ioSizeOfScreenWorkArea,		\
+  display_ioSetCursorPositionXY,		\
+  display_ioGetWindowHandle,			\
+  display_ioPositionOfNativeDisplay,	\
+  display_ioSizeOfNativeDisplay,	\
+  display_ioPositionOfNativeWindow,	\
+  display_ioSizeOfNativeWindow	\
 }
 
 
