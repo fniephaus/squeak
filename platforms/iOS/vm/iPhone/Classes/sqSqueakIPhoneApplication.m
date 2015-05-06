@@ -44,12 +44,13 @@ usqInt	gMaxHeapSize=32*1024*1024;
 extern sqSqueakAppDelegate *gDelegateApp;
 
 @implementation sqSqueakIPhoneApplication
+
 - (sqSqueakFileDirectoryInterface *) newFileDirectoryInterfaceInstance {
-	return [[sqSqueakIPhoneFileDirectoryInterface alloc] init];
+	return [sqSqueakIPhoneFileDirectoryInterface new];
 }
 
 - (sqSqueakInfoPlistInterface *) newSqSqueakInfoPlistInterfaceCreation {
-	return [[sqSqueakIPhoneInfoPlistInterface alloc] init];
+	return [sqSqueakIPhoneInfoPlistInterface new];
 }
 
 - (void) doMemorySetup {

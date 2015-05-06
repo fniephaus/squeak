@@ -2,9 +2,9 @@
 #define _SqueakVM_H
 
 /* We expect interp.h to define VM_PROXY_MAJOR & VM_PROXY_MINOR appropriately
-   for the VM generated with it.
-   sqMemoryAccess.h includes config.h followed by interp.h */
-#include "sqMemoryAccess.h"
+ * for the VM generated with it.
+ */
+#include "interp.h"
 
 #ifndef VM_PROXY_MAJOR
 /* Increment the following number if you change the order of
@@ -14,8 +14,14 @@
 
 #ifndef VM_PROXY_MINOR
 /* Increment the following number if you add functions at the end */
-# define VM_PROXY_MINOR 12
+# if SPURVM
+#	define VM_PROXY_MINOR 13
+# else
+#	define VM_PROXY_MINOR 12
+# endif
 #endif
+
+#include "sqMemoryAccess.h"
 
 #if VM_PROXY_MINOR > 8
 # define PrimNoErr 0
@@ -115,7 +121,7 @@ typedef struct VirtualMachine {
 	sqInt  (*integerObjectOf)(sqInt value);
 	sqInt  (*integerValueOf)(sqInt oop);
 	sqInt  (*positive32BitIntegerFor)(sqInt integerValue);
-	sqInt  (*positive32BitValueOf)(sqInt oop);
+	usqInt (*positive32BitValueOf)(sqInt oop);
 
 	/* InterpreterProxy methodsFor: 'special objects' */
 
@@ -152,8 +158,8 @@ typedef struct VirtualMachine {
 	sqInt (*byteSwapped)(sqInt w);
 	sqInt (*failed)(void);
 	sqInt (*fullDisplayUpdate)(void);
-	sqInt (*fullGC)(void);
-	sqInt (*incrementalGC)(void);
+	void (*fullGC)(void);
+	void (*incrementalGC)(void);
 	sqInt (*primitiveFail)(void);
 	sqInt (*showDisplayBitsLeftTopRightBottom)(sqInt aForm, sqInt l, sqInt t, sqInt r, sqInt b);
 	sqInt (*signalSemaphoreWithIndex)(sqInt semaIndex);
@@ -216,7 +222,7 @@ typedef struct VirtualMachine {
 #  endif
 
 	sqInt  (*positive64BitIntegerFor)(sqLong integerValue);
-	sqLong (*positive64BitValueOf)(sqInt oop);
+	usqLong(*positive64BitValueOf)(sqInt oop);
 	sqInt  (*signed64BitIntegerFor)(sqLong integerValue);
 	sqLong (*signed64BitValueOf)(sqInt oop);
 
@@ -224,13 +230,13 @@ typedef struct VirtualMachine {
 
 #if VM_PROXY_MINOR > 5
 	sqInt (*isArray)(sqInt oop);
-	sqInt (*forceInterruptCheck)(void);
+	void (*forceInterruptCheck)(void);
 #endif
 
 #if VM_PROXY_MINOR > 6
 	sqInt  (*fetchLong32ofObject)(sqInt fieldFieldIndex, sqInt oop);
 	sqInt  (*getThisSessionID)(void);
-	sqInt	  (*ioFilenamefromStringofLengthresolveAliases)(char* aCharBuffer, char* filenameIndex, sqInt filenameLength, sqInt resolveFlag);
+	sqInt  (*ioFilenamefromStringofLengthresolveAliases)(char* aCharBuffer, char* filenameIndex, sqInt filenameLength, sqInt resolveFlag);
 	sqInt  (*vmEndianness)(void);	
 #endif
 
@@ -274,8 +280,8 @@ typedef struct VirtualMachine {
 	sqInt  (*sendInvokeCallbackStackRegistersJmpbuf)(sqInt thunkPtrAsInt, sqInt stackPtrAsInt, sqInt regsPtrAsInt, sqInt jmpBufPtrAsInt);
 	sqInt  (*reestablishContextPriorToCallback)(sqInt callbackContext);
 	sqInt *(*getStackPointer)(void);
-	sqInt  (*internalIsImmutable)(sqInt oop);
-	sqInt  (*internalIsMutable)(sqInt oop);
+	sqInt  (*isOopImmutable)(sqInt oop);
+	sqInt  (*isOopMutable)(sqInt oop);
 #endif
 
 #if VM_PROXY_MINOR > 9
@@ -294,7 +300,7 @@ typedef struct VirtualMachine {
   void  (*addHighPriorityTickee)(void (*ticker)(void), unsigned periodms);
   void  (*addSynchronousTickee)(void (*ticker)(void), unsigned periodms, unsigned roundms);
   usqLong (*utcMicroseconds)(void);
-  sqInt (*tenuringIncrementalGC)(void);
+  void (*tenuringIncrementalGC)(void);
   sqInt (*isYoung) (sqInt anOop);
   sqInt (*isKindOfClass)(sqInt oop, sqInt aClass);
   sqInt (*primitiveErrorTable)(void);
@@ -315,6 +321,17 @@ typedef struct VirtualMachine {
   void  *(*startOfAlienData)(sqInt);
   usqInt (*sizeOfAlienData)(sqInt);
   sqInt  (*signalNoResume)(sqInt);
+#endif
+
+#if VM_PROXY_MINOR > 12 /* Spur */
+  sqInt (*isImmediate)(sqInt objOop);
+  sqInt (*characterObjectOf)(int charCode);
+  sqInt (*characterValueOf)(sqInt objOop);
+  sqInt (*isCharacterObject)(sqInt objOop);
+  sqInt (*isCharacterValue)(int charCode);
+  sqInt (*isPinned)(sqInt objOop);
+  sqInt (*pinObject)(sqInt objOop);
+  sqInt (*unpinObject)(sqInt objOop);
 #endif
 } VirtualMachine;
 

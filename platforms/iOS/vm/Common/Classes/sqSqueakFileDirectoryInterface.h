@@ -54,18 +54,23 @@ such third-party acknowledgments.
 			  length: (sqInt *) nameLength 
 		creationDate: (sqInt *) creationDate 
 	modificationDate: (sqInt *) modificationDate
-		 isDirectory: (sqInt *) isDirectory 
-		  sizeIfFile: (squeakFileOffsetType *) sizeIfFile;
+		 isDirectory: (sqInt *) isDirectory
+		  sizeIfFile: (squeakFileOffsetType *) sizeIfFile
+    posixPermissions: (sqInt *)posix
+           isSymlink: (sqInt *) isSymlink;
 
-- (sqInt) dir_Lookup: (const char *) pathString 
+- (sqInt) dir_Lookup: (const char *) pathString
 			  length: (sqInt) pathStringLength 
 			   index: (sqInt) index 
 				name: (char *) name
 			  length: (sqInt *) nameLength 
 		creationDate: (sqInt *) creationDate 
 	modificationDate: (sqInt *) modificationDate
-		 isDirectory: (sqInt *) isDirectory 
-		  sizeIfFile: (squeakFileOffsetType *) sizeIfFile;
+		 isDirectory: (sqInt *) isDirectory
+		  sizeIfFile: (squeakFileOffsetType *) sizeIfFile
+    posixPermissions: (sqInt *)posixPermissions
+           isSymlink: (sqInt *) isSymlink;
+
 - (sqInt) dir_Create: (char *) pathString
 			  length: (sqInt) pathStringLength;
 - (sqInt) dir_Delete: (char *) pathString
@@ -80,9 +85,9 @@ such third-party acknowledgments.
 							  fCreator: (char *) fCreator;
 - (NSString *) resolvedAliasFiles: (NSString *) filePath;
 
-@property (nonatomic,strong) NSString* lastPathForDirLookup;
+@property (nonatomic,retain) NSString* lastPathForDirLookup;
 @property (nonatomic,assign) NSInteger lastIndexForDirLookup;
-@property (nonatomic,strong) NSArray * directoryContentsForDirLookup;
+@property (nonatomic,retain) NSArray * directoryContentsForDirLookup;
 
 @end
 

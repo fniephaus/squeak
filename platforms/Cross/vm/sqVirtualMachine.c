@@ -41,7 +41,7 @@ sqInt  fetchPointerofObject(sqInt index, sqInt oop);
  * equivalent but 64 bit valid function is added as           *
  * 'fetchLong32OfObject'                                      */
 sqInt  obsoleteDontUseThisFetchWordofObject(sqInt index, sqInt oop);
-sqInt  fetchLong32ofObject(sqInt index, sqInt oop);
+sqInt  fetchLong32ofObject(sqInt index, sqInt oop); 
 void  *firstFixedField(sqInt oop);
 void  *firstIndexableField(sqInt oop);
 sqInt  literalofMethod(sqInt offset, sqInt methodPointer);
@@ -77,13 +77,11 @@ sqInt isKindOfClass(sqInt oop, sqInt aClass);
 sqInt primitiveErrorTable(void);
 sqInt primitiveFailureCode(void);
 sqInt instanceSizeOf(sqInt aClass);
-sqInt tenuringIncrementalGC(void);
+void tenuringIncrementalGC(void);
 #endif
 sqInt isArray(sqInt oop);
-#if IMMUTABILITY
-sqInt internalIsMutable(sqInt oop);
-sqInt internalIsImmutable(sqInt oop);
-#endif
+sqInt isOopMutable(sqInt oop);
+sqInt isOopImmutable(sqInt oop);
 
 /* InterpreterProxy methodsFor: 'converting' */
 sqInt  booleanValueOf(sqInt obj);
@@ -93,11 +91,11 @@ double floatValueOf(sqInt oop);
 sqInt  integerObjectOf(sqInt value);
 sqInt  integerValueOf(sqInt oop);
 sqInt  positive32BitIntegerFor(sqInt integerValue);
-sqInt  positive32BitValueOf(sqInt oop);
+usqInt  positive32BitValueOf(sqInt oop);
 sqInt  signed32BitIntegerFor(sqInt integerValue);
 sqInt  signed32BitValueOf(sqInt oop);
 sqInt  positive64BitIntegerFor(sqLong integerValue);
-sqLong positive64BitValueOf(sqInt oop);
+usqLong positive64BitValueOf(sqInt oop);
 sqInt  signed64BitIntegerFor(sqLong integerValue);
 sqLong signed64BitValueOf(sqInt oop);
 long  signedMachineIntegerValueOf(sqInt);
@@ -140,8 +138,8 @@ sqInt becomewith(sqInt array1, sqInt array2);
 sqInt byteSwapped(sqInt w);
 sqInt failed(void);
 sqInt fullDisplayUpdate(void);
-sqInt fullGC(void);
-sqInt incrementalGC(void);
+void fullGC(void);
+void incrementalGC(void);
 sqInt primitiveFail(void);
 sqInt primitiveFailFor(sqInt reasonCode);
 sqInt showDisplayBitsLeftTopRightBottom(sqInt aForm, sqInt l, sqInt t, sqInt r, sqInt b);
@@ -150,10 +148,10 @@ sqInt success(sqInt aBoolean);
 sqInt superclassOf(sqInt classPointer);
 sqInt ioMicroMSecs(void);
 usqLong ioUTCMicroseconds(void);
-sqInt forceInterruptCheck(void);
+void forceInterruptCheck(void);
 sqInt getThisSessionID(void);
 sqInt ioFilenamefromStringofLengthresolveAliases(char* aCharBuffer, char* filenameIndex, sqInt filenameLength, sqInt resolveFlag);
-sqInt vmEndianness(void);
+sqInt vmEndianness(void);	
 sqInt getInterruptPending(void);
 
 /* InterpreterProxy methodsFor: 'BitBlt support' */
@@ -172,17 +170,27 @@ sqInt ioLoadSymbolOfLengthFromModule(sqInt functionNameIndex, sqInt functionName
 sqInt isInMemory(sqInt address);
 sqInt classAlien(void); /* Alien FFI */
 sqInt classUnsafeAlien(void); /* Alien FFI */
-sqInt getStackPointer(void);  /* Newsqueak FFI */
+sqInt *getStackPointer(void);  /* Newsqueak FFI */
 void *startOfAlienData(sqInt);
 usqInt sizeOfAlienData(sqInt);
 sqInt signalNoResume(sqInt);
 #if VM_PROXY_MINOR > 8
-sqInt getStackPointer(void);  /* Alien FFI */
+sqInt *getStackPointer(void);  /* Alien FFI */
 sqInt sendInvokeCallbackStackRegistersJmpbuf(sqInt thunkPtrAsInt, sqInt stackPtrAsInt, sqInt regsPtrAsInt, sqInt jmpBufPtrAsInt); /* Alien FFI */
 sqInt reestablishContextPriorToCallback(sqInt callbackContext); /* Alien FFI */
 sqInt sendInvokeCallbackContext(vmccp);
 sqInt returnAsThroughCallbackContext(int, vmccp, sqInt);
 #endif /* VM_PROXY_MINOR > 8 */
+#if VM_PROXY_MINOR > 12 /* Spur */
+sqInt isImmediate(sqInt oop);
+sqInt isCharacterObject(sqInt oop);
+sqInt isCharacterValue(int charCode);
+sqInt characterObjectOf(int charCode);
+sqInt characterValueOf(sqInt oop);
+sqInt isPinned(sqInt objOop);
+sqInt pinObject(sqInt objOop);
+sqInt unpinObject(sqInt objOop);
+#endif
 char *cStringOrNullFor(sqInt);
 
 void *ioLoadFunctionFrom(char *fnName, char *modName);
@@ -193,7 +201,7 @@ void *ioLoadFunctionFrom(char *fnName, char *modName);
 static sqInt
 callbackEnter(sqInt *callbackID) { return 0; }
 static sqInt
-callbackLeave(sqInt *callbackID) { return 0; }
+callbackLeave(sqInt callbackID) { return 0; }
 #else
 sqInt callbackEnter(sqInt *callbackID);
 sqInt callbackLeave(sqInt  callbackID);
@@ -227,30 +235,43 @@ static sqInt isNonIntegerObject(sqInt objectPointer)
 #endif
 
 #if STACKVM
-void (*setInterruptCheckChain(void (*aFunction)(void)))();
+extern void (*setInterruptCheckChain(void (*aFunction)(void)))();
 #else
 void (*setInterruptCheckChain(void (*aFunction)(void)))() { return 0; }
 #endif
 
 #if VM_PROXY_MINOR > 10
-#if COGMTVM
+# if COGMTVM
 sqInt disownVM(sqInt flags);
 sqInt ownVM(sqInt threadIdAndFlags);
-#else
+# else
 sqInt disownVM(sqInt flags) { return 1; }
 sqInt ownVM(sqInt threadIdAndFlags)
 {
 	extern sqInt amInVMThread(void);
 	return amInVMThread() ? 0 : -1;
 }
-#endif
-#endif
+# endif
+#endif /* VM_PROXY_MINOR > 10 */
 extern sqInt isYoung(sqInt);
 
 /* High-priority and synchronous ticker function support. */
 void addHighPriorityTickee(void (*ticker)(void), unsigned periodms);
 void addSynchronousTickee(void (*ticker)(void), unsigned periodms, unsigned roundms);
 
+#if SPURVM /* For now these are here; perhaps they're better in the VM. */
+static sqInt
+interceptFetchIntegerofObject(sqInt fieldIndex, sqInt objectPointer)
+{
+	if (fieldIndex == 0
+	 && isCharacterObject(objectPointer))
+		return characterValueOf(objectPointer);
+
+	return fetchIntegerofObject(fieldIndex, objectPointer);
+}
+#endif
+
+sqInt  fetchIntegerofObject(sqInt fieldIndex, sqInt objectPointer);
 struct VirtualMachine* sqGetInterpreterProxy(void)
 {
 	if(VM) return VM;
@@ -278,7 +299,11 @@ struct VirtualMachine* sqGetInterpreterProxy(void)
 	VM->fetchArrayofObject = fetchArrayofObject;
 	VM->fetchClassOf = fetchClassOf;
 	VM->fetchFloatofObject = fetchFloatofObject;
+#if SPURVM
+	VM->fetchIntegerofObject = interceptFetchIntegerofObject;
+#else
 	VM->fetchIntegerofObject = fetchIntegerofObject;
+#endif
 	VM->fetchPointerofObject = fetchPointerofObject;
 	VM->obsoleteDontUseThisFetchWordofObject = obsoleteDontUseThisFetchWordofObject;
 	VM->firstFixedField = firstFixedField;
@@ -326,7 +351,7 @@ struct VirtualMachine* sqGetInterpreterProxy(void)
 	VM->falseObject = falseObject;
 	VM->nilObject = nilObject;
 	VM->trueObject = trueObject;
-
+	
 	/* InterpreterProxy methodsFor: 'special classes' */
 	VM->classArray = classArray;
 	VM->classBitmap = classBitmap;
@@ -432,13 +457,8 @@ struct VirtualMachine* sqGetInterpreterProxy(void)
 	VM->sendInvokeCallbackStackRegistersJmpbuf = sendInvokeCallbackStackRegistersJmpbuf;
 	VM->reestablishContextPriorToCallback = reestablishContextPriorToCallback;
 	VM->getStackPointer     = (sqInt *(*)(void))getStackPointer;
-# if IMMUTABILITY
-	VM->internalIsImmutable = internalIsImmutable;
-	VM->internalIsMutable   = internalIsMutable;
-# else
-	VM->internalIsImmutable = isIntegerObject;
-	VM->internalIsMutable   = isNonIntegerObject;
-# endif
+	VM->isOopImmutable = isOopImmutable;
+	VM->isOopMutable   = isOopMutable;
 #endif
 
 #if VM_PROXY_MINOR > 9
@@ -478,6 +498,17 @@ struct VirtualMachine* sqGetInterpreterProxy(void)
 	VM->signalNoResume = signalNoResume;
 #endif
 
+#if VM_PROXY_MINOR > 12 /* Spur */
+	VM->isImmediate = isImmediate;
+	VM->characterObjectOf = characterObjectOf;
+	VM->characterValueOf = characterValueOf;
+	VM->isCharacterObject = isCharacterObject;
+	VM->isCharacterValue = isCharacterValue;
+	VM->isPinned = isPinned;
+	VM->pinObject = pinObject;
+	VM->unpinObject = unpinObject;
+#endif
+
 	return VM;
 }
 
@@ -511,11 +542,6 @@ fopen_for_append(char *filename)
 # define fopen_for_append(filename) fopen(filename,"a+")
 #endif
 
-#if defined (ACORN)
-#define fileno(thing) 0
-// just to make it compile - it wont actually work
-#endif
-
 void
 pushOutputFile(char *filenameOrStdioIndex)
 {
@@ -530,7 +556,7 @@ pushOutputFile(char *filenameOrStdioIndex)
 		fprintf(stderr,"output file stack is full.\n");
 		return;
 	}
-	switch ((unsigned)filenameOrStdioIndex) {
+	switch ((unsigned long)filenameOrStdioIndex) {
 	case STDOUT_FILENO: output = stdout; break;
 	case STDERR_FILENO: output = stderr; break;
 	default:
@@ -546,7 +572,7 @@ pushOutputFile(char *filenameOrStdioIndex)
 }
 
 void
-popOutputFile(void)
+popOutputFile()
 {
 	if (stdoutStackIdx < 0) {
 		fprintf(stderr,"output file stack is empty.\n");
@@ -566,3 +592,41 @@ popOutputFile(void)
 	*stdout = stdoutStack[stdoutStackIdx--];
 }
 
+void
+printPhaseTime(int phase)
+{
+	static	int printTimes;
+	static	usqLong lastusecs;
+			usqLong nowusecs, usecs;
+
+	if (phase == 1) {
+		time_t nowt;
+		struct tm nowtm;
+		printTimes = 1;
+		nowt = time(0);
+		nowtm = *localtime(&nowt);
+		printf("started at %s", asctime(&nowtm));
+		lastusecs = ioUTCMicrosecondsNow();
+		return;
+	}
+
+	if (!printTimes) return;
+
+	nowusecs = ioUTCMicrosecondsNow();
+	usecs = nowusecs - lastusecs;
+	lastusecs = nowusecs;
+#define m 1000000ULL
+#define k 1000ULL
+#define ul(v) (unsigned long)(v)
+	if (phase == 2)
+		printf("loaded in %lu.%03lus\n", ul(usecs/m), ul((usecs % m + k/2)/k));
+	if (phase == 3) {
+		printTimes = 0; /* avoid repeated printing if error during exit */
+		if (usecs >= 1ULL<<32)
+			printf("ran for a long time\n");
+		else
+			printf("ran for %lu.%03lus\n", ul(usecs/m), ul((usecs % m + k/2)/k));
+	}
+#undef m
+#undef k
+}

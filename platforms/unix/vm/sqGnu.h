@@ -6,12 +6,12 @@
  *   
  *   This file is part of Unix Squeak.
  * 
- *   Permission is hereby granted, free of charge, to any person obtaining a copy
- *   of this software and associated documentation files (the "Software"), to deal
- *   in the Software without restriction, including without limitation the rights
- *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *   copies of the Software, and to permit persons to whom the Software is
- *   furnished to do so, subject to the following conditions:
+ *   Permission is hereby granted, free of charge, to any person obtaining a
+ *   copy of this software and associated documentation files (the "Software"),
+ *   to deal in the Software without restriction, including without limitation
+ *   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *   and/or sell copies of the Software, and to permit persons to whom the
+ *   Software is furnished to do so, subject to the following conditions:
  * 
  *   The above copyright notice and this permission notice shall be included in
  *   all copies or substantial portions of the Software.
@@ -20,14 +20,15 @@
  *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *   SOFTWARE.
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *   DEALINGS IN THE SOFTWARE.
  */
 
 /* Author: Ian.Piumarta@squeakland.org
  *
- * Last edited: 2006-10-24 11:10:51 by piumarta on emilia.local
+ * December 10th 2008, Eliot Miranda, updated with FP_REG and use of GIV() for
+ *      the global struct.
  *
  * NOTES:
  *	this file is #included IN PLACE OF sq.h
@@ -45,44 +46,9 @@
 # define BREAK		goto *jumpTable[currentBytecode]
 #endif
 
-#if defined(SQ_USE_GLOBAL_STRUCT)
-# define PRIM_DISPATCH	goto *jumpTable[foo->primitiveIndex]
-#else
-# define PRIM_DISPATCH	goto *jumpTable[primitiveIndex]
-#endif
-
-#define JUMP_TABLE \
-  static void *jumpTable[256]= { \
-      &&_0,   &&_1,   &&_2,   &&_3,   &&_4,   &&_5,   &&_6,   &&_7,   &&_8,   &&_9, \
-     &&_10,  &&_11,  &&_12,  &&_13,  &&_14,  &&_15,  &&_16,  &&_17,  &&_18,  &&_19, \
-     &&_20,  &&_21,  &&_22,  &&_23,  &&_24,  &&_25,  &&_26,  &&_27,  &&_28,  &&_29, \
-     &&_30,  &&_31,  &&_32,  &&_33,  &&_34,  &&_35,  &&_36,  &&_37,  &&_38,  &&_39, \
-     &&_40,  &&_41,  &&_42,  &&_43,  &&_44,  &&_45,  &&_46,  &&_47,  &&_48,  &&_49, \
-     &&_50,  &&_51,  &&_52,  &&_53,  &&_54,  &&_55,  &&_56,  &&_57,  &&_58,  &&_59, \
-     &&_60,  &&_61,  &&_62,  &&_63,  &&_64,  &&_65,  &&_66,  &&_67,  &&_68,  &&_69, \
-     &&_70,  &&_71,  &&_72,  &&_73,  &&_74,  &&_75,  &&_76,  &&_77,  &&_78,  &&_79, \
-     &&_80,  &&_81,  &&_82,  &&_83,  &&_84,  &&_85,  &&_86,  &&_87,  &&_88,  &&_89, \
-     &&_90,  &&_91,  &&_92,  &&_93,  &&_94,  &&_95,  &&_96,  &&_97,  &&_98,  &&_99, \
-    &&_100, &&_101, &&_102, &&_103, &&_104, &&_105, &&_106, &&_107, &&_108, &&_109, \
-    &&_110, &&_111, &&_112, &&_113, &&_114, &&_115, &&_116, &&_117, &&_118, &&_119, \
-    &&_120, &&_121, &&_122, &&_123, &&_124, &&_125, &&_126, &&_127, &&_128, &&_129, \
-    &&_130, &&_131, &&_132, &&_133, &&_134, &&_135, &&_136, &&_137, &&_138, &&_139, \
-    &&_140, &&_141, &&_142, &&_143, &&_144, &&_145, &&_146, &&_147, &&_148, &&_149, \
-    &&_150, &&_151, &&_152, &&_153, &&_154, &&_155, &&_156, &&_157, &&_158, &&_159, \
-    &&_160, &&_161, &&_162, &&_163, &&_164, &&_165, &&_166, &&_167, &&_168, &&_169, \
-    &&_170, &&_171, &&_172, &&_173, &&_174, &&_175, &&_176, &&_177, &&_178, &&_179, \
-    &&_180, &&_181, &&_182, &&_183, &&_184, &&_185, &&_186, &&_187, &&_188, &&_189, \
-    &&_190, &&_191, &&_192, &&_193, &&_194, &&_195, &&_196, &&_197, &&_198, &&_199, \
-    &&_200, &&_201, &&_202, &&_203, &&_204, &&_205, &&_206, &&_207, &&_208, &&_209, \
-    &&_210, &&_211, &&_212, &&_213, &&_214, &&_215, &&_216, &&_217, &&_218, &&_219, \
-    &&_220, &&_221, &&_222, &&_223, &&_224, &&_225, &&_226, &&_227, &&_228, &&_229, \
-    &&_230, &&_231, &&_232, &&_233, &&_234, &&_235, &&_236, &&_237, &&_238, &&_239, \
-    &&_240, &&_241, &&_242, &&_243, &&_244, &&_245, &&_246, &&_247, &&_248, &&_249, \
-    &&_250, &&_251, &&_252, &&_253, &&_254, &&_255 \
-  } JUMP_TABLE_PTR
-
-#define PRIM_TABLE \
-  static void *jumpTable[700]= { \
+#if MULTIPLEBYTECODESETS
+# define JUMP_TABLE \
+  static void *jumpTable[512]= { \
       &&_0,   &&_1,   &&_2,   &&_3,   &&_4,   &&_5,   &&_6,   &&_7,   &&_8,   &&_9, \
      &&_10,  &&_11,  &&_12,  &&_13,  &&_14,  &&_15,  &&_16,  &&_17,  &&_18,  &&_19, \
      &&_20,  &&_21,  &&_22,  &&_23,  &&_24,  &&_25,  &&_26,  &&_27,  &&_28,  &&_29, \
@@ -134,30 +100,43 @@
     &&_480, &&_481, &&_482, &&_483, &&_484, &&_485, &&_486, &&_487, &&_488, &&_489, \
     &&_490, &&_491, &&_492, &&_493, &&_494, &&_495, &&_496, &&_497, &&_498, &&_499, \
     &&_500, &&_501, &&_502, &&_503, &&_504, &&_505, &&_506, &&_507, &&_508, &&_509, \
-    &&_510, &&_511, &&_512, &&_513, &&_514, &&_515, &&_516, &&_517, &&_518, &&_519, \
-    &&_520, &&_521, &&_522, &&_523, &&_524, &&_525, &&_526, &&_527, &&_528, &&_529, \
-    &&_530, &&_531, &&_532, &&_533, &&_534, &&_535, &&_536, &&_537, &&_538, &&_539, \
-    &&_540, &&_541, &&_542, &&_543, &&_544, &&_545, &&_546, &&_547, &&_548, &&_549, \
-    &&_550, &&_551, &&_552, &&_553, &&_554, &&_555, &&_556, &&_557, &&_558, &&_559, \
-    &&_560, &&_561, &&_562, &&_563, &&_564, &&_565, &&_566, &&_567, &&_568, &&_569, \
-    &&_570, &&_571, &&_572, &&_573, &&_574, &&_575, &&_576, &&_577, &&_578, &&_579, \
-    &&_580, &&_581, &&_582, &&_583, &&_584, &&_585, &&_586, &&_587, &&_588, &&_589, \
-    &&_590, &&_591, &&_592, &&_593, &&_594, &&_595, &&_596, &&_597, &&_598, &&_599, \
-    &&_600, &&_601, &&_602, &&_603, &&_604, &&_605, &&_606, &&_607, &&_608, &&_609, \
-    &&_610, &&_611, &&_612, &&_613, &&_614, &&_615, &&_616, &&_617, &&_618, &&_619, \
-    &&_620, &&_621, &&_622, &&_623, &&_624, &&_625, &&_626, &&_627, &&_628, &&_629, \
-    &&_630, &&_631, &&_632, &&_633, &&_634, &&_635, &&_636, &&_637, &&_638, &&_639, \
-    &&_640, &&_641, &&_642, &&_643, &&_644, &&_645, &&_646, &&_647, &&_648, &&_649, \
-    &&_650, &&_651, &&_652, &&_653, &&_654, &&_655, &&_656, &&_657, &&_658, &&_659, \
-    &&_660, &&_661, &&_662, &&_663, &&_664, &&_665, &&_666, &&_667, &&_668, &&_669, \
-    &&_670, &&_671, &&_672, &&_673, &&_674, &&_675, &&_676, &&_677, &&_678, &&_679, \
-    &&_680, &&_681, &&_682, &&_683, &&_684, &&_685, &&_686, &&_687, &&_688, &&_689, \
-    &&_690, &&_691, &&_692, &&_693, &&_694, &&_695, &&_696, &&_697, &&_698, &&_699, \
-  }
+    &&_510, &&_511 \
+  } JUMP_TABLE_PTR
+#else /* MULTIPLEBYTECODESETS */
+# define JUMP_TABLE \
+  static void *jumpTable[256]= { \
+      &&_0,   &&_1,   &&_2,   &&_3,   &&_4,   &&_5,   &&_6,   &&_7,   &&_8,   &&_9, \
+     &&_10,  &&_11,  &&_12,  &&_13,  &&_14,  &&_15,  &&_16,  &&_17,  &&_18,  &&_19, \
+     &&_20,  &&_21,  &&_22,  &&_23,  &&_24,  &&_25,  &&_26,  &&_27,  &&_28,  &&_29, \
+     &&_30,  &&_31,  &&_32,  &&_33,  &&_34,  &&_35,  &&_36,  &&_37,  &&_38,  &&_39, \
+     &&_40,  &&_41,  &&_42,  &&_43,  &&_44,  &&_45,  &&_46,  &&_47,  &&_48,  &&_49, \
+     &&_50,  &&_51,  &&_52,  &&_53,  &&_54,  &&_55,  &&_56,  &&_57,  &&_58,  &&_59, \
+     &&_60,  &&_61,  &&_62,  &&_63,  &&_64,  &&_65,  &&_66,  &&_67,  &&_68,  &&_69, \
+     &&_70,  &&_71,  &&_72,  &&_73,  &&_74,  &&_75,  &&_76,  &&_77,  &&_78,  &&_79, \
+     &&_80,  &&_81,  &&_82,  &&_83,  &&_84,  &&_85,  &&_86,  &&_87,  &&_88,  &&_89, \
+     &&_90,  &&_91,  &&_92,  &&_93,  &&_94,  &&_95,  &&_96,  &&_97,  &&_98,  &&_99, \
+    &&_100, &&_101, &&_102, &&_103, &&_104, &&_105, &&_106, &&_107, &&_108, &&_109, \
+    &&_110, &&_111, &&_112, &&_113, &&_114, &&_115, &&_116, &&_117, &&_118, &&_119, \
+    &&_120, &&_121, &&_122, &&_123, &&_124, &&_125, &&_126, &&_127, &&_128, &&_129, \
+    &&_130, &&_131, &&_132, &&_133, &&_134, &&_135, &&_136, &&_137, &&_138, &&_139, \
+    &&_140, &&_141, &&_142, &&_143, &&_144, &&_145, &&_146, &&_147, &&_148, &&_149, \
+    &&_150, &&_151, &&_152, &&_153, &&_154, &&_155, &&_156, &&_157, &&_158, &&_159, \
+    &&_160, &&_161, &&_162, &&_163, &&_164, &&_165, &&_166, &&_167, &&_168, &&_169, \
+    &&_170, &&_171, &&_172, &&_173, &&_174, &&_175, &&_176, &&_177, &&_178, &&_179, \
+    &&_180, &&_181, &&_182, &&_183, &&_184, &&_185, &&_186, &&_187, &&_188, &&_189, \
+    &&_190, &&_191, &&_192, &&_193, &&_194, &&_195, &&_196, &&_197, &&_198, &&_199, \
+    &&_200, &&_201, &&_202, &&_203, &&_204, &&_205, &&_206, &&_207, &&_208, &&_209, \
+    &&_210, &&_211, &&_212, &&_213, &&_214, &&_215, &&_216, &&_217, &&_218, &&_219, \
+    &&_220, &&_221, &&_222, &&_223, &&_224, &&_225, &&_226, &&_227, &&_228, &&_229, \
+    &&_230, &&_231, &&_232, &&_233, &&_234, &&_235, &&_236, &&_237, &&_238, &&_239, \
+    &&_240, &&_241, &&_242, &&_243, &&_244, &&_245, &&_246, &&_247, &&_248, &&_249, \
+    &&_250, &&_251, &&_252, &&_253, &&_254, &&_255 \
+  } JUMP_TABLE_PTR
+#endif /* MULTIPLEBYTECODESETS */
 
   /*
      IP_REG, SP_REG, CB_REG
-        the machine registers in which to place localIP, localSP and
+        the machine registers in which to place localIP, localFP, localSP and
         currentBytecode.  Wins big on register-deficient architectures --
         especially Intel.
   */
@@ -165,58 +144,53 @@
 # define IP_REG __asm__("$16")
 # define SP_REG __asm__("$17")
 # define CB_REG __asm__("$18")
-#endif
-#if defined(__sparc__)
+#elif defined(__sparc__)
 # define IP_REG __asm__("%l0")
 # define SP_REG __asm__("%l1")
 # define CB_REG __asm__("%l2")
-#endif
-#if defined(__alpha__)
+#elif defined(__alpha__)
 # define IP_REG __asm__("$9")
 # define SP_REG __asm__("$10")
 # define CB_REG __asm__("$11")
-#endif
-#if defined(__i386__)
-# if !defined(__MACH__)
-#   define IP_REG __asm__("%esi")
-#   define SP_REG __asm__("%edi")
-#   if ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 95)))
-#     define CB_REG __asm__("%ebx")
-#   endif
+#elif defined(__i386__)
+# define IP_REG __asm__("%esi")
+# define SP_REG __asm__("%edi")
+# if (__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 95))
+#   define CB_REG __asm__("%ebx")
 # else
 #   define CB_REG /* avoid undue register pressure */
 # endif
-#endif
-#if defined(__powerpc__) || defined(PPC) || defined(_POWER) || defined(_IBMR2) || defined(__ppc__)
+#elif defined(__powerpc__) || defined(PPC) || defined(_POWER) || defined(_IBMR2) || defined(__ppc__)
 # define GP_REG __asm__("24")
 # define JP_REG __asm__("25")
 # define IP_REG __asm__("26")
 # define SP_REG __asm__("27")
 # define CB_REG __asm__("28")
-#endif
-#if defined(__hppa__)
+#elif defined(__hppa__)
 # define IP_REG __asm__("%r18")
 # define SP_REG __asm__("%r17")
 # define CB_REG __asm__("%r16")
-#endif
-#if defined(__mc68000__)
+#elif defined(__mc68000__)
 # define IP_REG __asm__("a5")
 # define SP_REG __asm__("a4")
 # define CB_REG __asm__("d7")
 #endif
 
-#ifndef JP_REG
+#if !defined(JP_REG)
 # define JP_REG
 #endif
-#ifndef IP_REG
+#if !defined(IP_REG)
 # define IP_REG
 #endif
-#ifndef SP_REG
+#if !defined(SP_REG)
 # define SP_REG
 #endif
-#ifndef CB_REG
+#if !defined(CB_REG)
 # define CB_REG
 #endif
-#ifndef GP_REG
+#if !defined(GP_REG)
 # define GP_REG
+#endif
+#if !defined(FP_REG)
+# define FP_REG /* nada */
 #endif

@@ -6,7 +6,7 @@
 *   AUTHOR:  John Maloney, John McIntosh, and others.
 *   ADDRESS: 
 *   EMAIL:   johnmci@smalltalkconsulting.com
-*   RCSID:   $Id$
+*   RCSID:   $Id: sqMacSerialPort.c 1708 2007-06-10 00:40:04Z johnmci $
 *
 *   NOTES: 
 *  Feb 22nd, 2002, JMM enable 16 ports for serial, versus four, which was capped at 2?
@@ -87,7 +87,7 @@ EXPORT (int) serialPortOpen(
     return false;
 }
 
-EXPORT (int) serialPortReadInto(int portNum, int count, int bufferPtr) {
+EXPORT (int) serialPortReadInto(int portNum, int count, void *bufferPtr) {
 /* Read up to count bytes from the given serial port into the given byte array.
    Read only up to the number of bytes in the port's input buffer; if fewer bytes
    than count have been received, do not wait for additional data to arrive.
@@ -96,7 +96,7 @@ EXPORT (int) serialPortReadInto(int portNum, int count, int bufferPtr) {
     return false;
 }
 
-EXPORT (int) serialPortWriteFrom(int portNum, int count, int bufferPtr) {
+EXPORT (int) serialPortWriteFrom(int portNum, int count, void *bufferPtr) {
 /* Write count bytes from the given byte array to the given serial port's
    output buffer. Return the number of bytes written. This implementation is
    synchronous: it doesn't return until the data has been sent. However, other

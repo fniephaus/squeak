@@ -10,6 +10,23 @@ AC_ARG_WITH(gl,
   [have_gl="$withval"],
   [have_gl="yes"])
 
+vm_dispx11_objs="sqUnixX11.lo sqUnixMozilla.lo"
+vm_dispx11_bitblt_flags=""
+
+case $host_cpu in
+arm*)
+AC_ARG_ENABLE(fast-bitblt,
+ [  --enable-fast-bitblt enable fast BitBlt optimizations (default=no)],
+ [ if   test "x$enableval" = "xyes" ; then
+      vm_dispx11_objs="sqUnixX11.lo sqUnixMozilla.lo sqUnixX11Arm.lo"
+      vm_dispx11_bitblt_flags="-DENABLE_FAST_BLT"
+   fi
+ ],
+ [])
+;;
+esac
+
+
 ###xxx FIXME (AGAIN): mandrake needs explicit -lpthread
 
 VMLIBS=${LIBS}
@@ -33,19 +50,16 @@ if test "$have_x" = "yes"; then
     AC_DEFINE_UNQUOTED(VM_X11DIR, "${x_libraries}")
     LIBS="${LIBS} -lX11"
     AC_CHECK_LIB(Xext, XShmAttach)
-    if test "$have_gl" = "yes"; then 
-      have_gl=no
-      AC_CHECK_HEADERS(GL/gl.h, [
-        AC_CHECK_HEADERS(GL/glx.h, [
-          have_gl=yes
-          AC_DEFINE(USE_X11_GLX, [1])
-          AC_CHECK_LIB(GL,glIsEnabled)
-        ])
-      ])
-    fi
-    AC_CHECK_HEADERS(X11/extensions/Xrender.h, [
-      AC_CHECK_LIB(Xrender, XRenderQueryVersion)
-    ])
+    if test "$have_gl" = ""; then have_gl="no"; fi
+	if test "$have_gl" = "yes"; then
+		AC_CHECK_HEADERS(GL/gl.h, [
+		  have_gl=yes
+		  AC_DEFINE(USE_X11_GLX, [1])
+		  AC_CHECK_LIB(GL,glIsEnabled)
+		])
+	else
+		AC_DEFINE(USE_X11_GLX, 0)
+	fi
   ],[
     AC_PLUGIN_DISABLE
   ])
@@ -66,3 +80,6 @@ LIBS=${VMLIBS}
 CFLAGS=${VMCFLAGS}
 CPPFLAGS=${VMCPPFLAGS}
 INCLUDES=${VMINCLUDES}
+
+AC_SUBST(VM_DISPX11_OBJS, $vm_dispx11_objs)
+AC_SUBST(VM_DISPX11_BITBLT_FLAGS, $vm_dispx11_bitblt_flags)

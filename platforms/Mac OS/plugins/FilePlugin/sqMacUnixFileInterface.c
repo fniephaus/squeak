@@ -16,38 +16,29 @@
 
 /* sqUnixFile.c -- directory operations for Unix
  * 
- *   Copyright (C) 1996-2004 by Ian Piumarta and other authors/contributorsf
+ *   Copyright (C) 1996-2004 by Ian Piumarta and other authors/contributors
  *                              listed elsewhere in this file.
  *   All rights reserved.
  *   
  *   This file is part of Unix Squeak.
  * 
- *      You are NOT ALLOWED to distribute modified versions of this file
- *      under its original name.  If you modify this file then you MUST
- *      rename it before making your modifications available publicly.
+ *   Permission is hereby granted, free of charge, to any person obtaining a
+ *   copy of this software and associated documentation files (the "Software"),
+ *   to deal in the Software without restriction, including without limitation
+ *   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *   and/or sell copies of the Software, and to permit persons to whom the
+ *   Software is furnished to do so, subject to the following conditions:
  * 
- *   This file is distributed in the hope that it will be useful, but WITHOUT
- *   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- *   FITNESS FOR A PARTICULAR PURPOSE.
- *   
- *   You may use and/or distribute this file ONLY as part of Squeak, under
- *   the terms of the Squeak License as described in `LICENSE' in the base of
- *   this distribution, subject to the following additional restrictions:
+ *   The above copyright notice and this permission notice shall be included in
+ *   all copies or substantial portions of the Software.
  * 
- *   1. The origin of this software must not be misrepresented; you must not
- *      claim that you wrote the original software.  If you use this software
- *      in a product, an acknowledgment to the original author(s) (and any
- *      other contributors mentioned herein) in the product documentation
- *      would be appreciated but is not required.
- * 
- *   2. You must not distribute (or make publicly available by any
- *      means) a modified copy of this file unless you first rename it.
- * 
- *   3. This notice must not be removed or altered in any source distribution.
- * 
- *   Using (or modifying this file for use) in any context other than Squeak
- *   changes these copyright conditions.  Read the file `COPYING' in the
- *   directory `platforms/unix/doc' before proceeding with any such use.
+ *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *   DEALINGS IN THE SOFTWARE.
  */
 
 /* Author: Ian.Piumarta@INRIA.Fr
@@ -125,7 +116,8 @@ static CFURLRef makeFileSystemURLFromString(char *pathString,int length,CFString
 static OSErr getFInfo(char *filename,FSCatalogInfo *catInfo,CFStringEncoding encoding);
 OSStatus SetVMPathFromApplicationDirectory();
 
-sqInt dir_Create(char *pathString, sqInt pathStringLength)
+sqInt
+dir_Create(char *pathString, sqInt pathStringLength)
 {
   /* Create a new directory with the given path. By default, this
      directory is created relative to the cwd. */
@@ -138,7 +130,8 @@ sqInt dir_Create(char *pathString, sqInt pathStringLength)
 }
 
 
-sqInt dir_Delete(char *pathString, sqInt pathStringLength)
+sqInt
+dir_Delete(char *pathString, sqInt pathStringLength)
 {
   /* Delete the existing directory with the given path. */
   char name[DOCUMENT_NAME_SIZE+1];
@@ -153,7 +146,8 @@ sqInt dir_Delete(char *pathString, sqInt pathStringLength)
 }
 
 
-sqInt dir_Delimitor(void)
+sqInt
+dir_Delimitor(void)
 {
   return DELIMITERInt;
 }
@@ -181,7 +175,8 @@ static int maybeOpenDir(char *unixPath)
 }
 
 
-sqInt dir_Lookup(char *pathString, sqInt pathStringLength, sqInt index,
+sqInt
+dir_Lookup(char *pathString, sqInt pathStringLength, sqInt index,
 /* outputs: */  char *name, sqInt *nameLength, sqInt *creationDate, sqInt *modificationDate,
 		sqInt *isDirectory, squeakFileOffsetType *sizeIfFile)
 {
@@ -288,6 +283,75 @@ sqInt dir_Lookup(char *pathString, sqInt pathStringLength, sqInt index,
 
   return ENTRY_FOUND;
 }
+
+sqInt
+dir_EntryLookup(char *pathString, sqInt pathStringLength, char* nameString, sqInt nameStringLength,
+/* outputs: */  char *name, sqInt *nameLength, sqInt *creationDate, sqInt *modificationDate,
+		sqInt *isDirectory, squeakFileOffsetType *sizeIfFile)
+{
+  /* Lookup the given name in the given directory,
+     Set the name, name length, creation date,
+     creation time, directory flag, and file size (if the entry is a file).
+     Return:	0 	if a entry is found at the given index
+     		1	if there is no such entry in the directory
+		2	if the given path has bad syntax or does not reach a directory
+  */
+  
+  char unixPath[DOCUMENT_NAME_SIZE+1];
+  struct stat statBuf;
+
+  /* default return values */
+  *name             = 0;
+  *nameLength       = 0;
+  *creationDate     = 0;
+  *modificationDate = 0;
+  *isDirectory      = false;
+  *sizeIfFile       = 0;
+
+  if ((pathStringLength == 0))
+    strcpy(unixPath, ".");
+  else  {
+	if (!ioFilenamefromStringofLengthresolveAliasesRetry(unixPath, pathString,pathStringLength, true, true))
+		return BAD_PATH;
+	}
+
+  char terminatedName[DOCUMENT_NAME_SIZE+1];
+  strncpy(terminatedName, nameString, nameStringLength);
+  terminatedName[nameStringLength]= '\0';
+  strcat(unixPath, "/");
+  strcat(unixPath, terminatedName);
+  if (stat(unixPath, &statBuf) && lstat(unixPath, &statBuf)) {
+	return NO_MORE_ENTRIES;
+  }
+
+  /* To match the results of dir_Lookup, copy back the file name */
+  *nameLength = ux2sqPath(nameString, nameStringLength, name, 256, 0);
+
+  /* last change time */
+  *creationDate= convertToSqueakTime(statBuf.st_ctime);
+  /* modification time */
+  *modificationDate= convertToSqueakTime(statBuf.st_mtime);
+	{
+		FSRef targetFSRef;
+		Boolean	targetIsFolder,wasAliased;
+		OSErr err;
+		err = getFSRef(unixPath,&targetFSRef,kCFStringEncodingUTF8);
+		if (!err) {
+			FSResolveAliasFileWithMountFlags(&targetFSRef,true,&targetIsFolder,&wasAliased,kResolveAliasFileNoUI);
+			if (wasAliased && targetIsFolder) {
+				*isDirectory= true;
+				return ENTRY_FOUND;
+			}
+		}
+	}
+  if (S_ISDIR(statBuf.st_mode))
+    *isDirectory= true;
+  else
+    *sizeIfFile= statBuf.st_size;
+
+  return ENTRY_FOUND;
+}
+
 
 int wanderDownPath(char *src,int bytes,char *possiblePath, Boolean resolveLastAlias);
 
@@ -450,7 +514,8 @@ OSErr getFInfoViaFSRef(FSRef *theFSRef,	FInfo *finderInfo) {
 	return err;
 	
 }
-int dir_SetMacFileTypeAndCreator(char *filename, sqInt filenameSize, char *fType, char *fCreator) {
+sqInt
+dir_SetMacFileTypeAndCreator(char *filename, sqInt filenameSize, char *fType, char *fCreator) {
 	/* Set the Macintosh type and creator of the given file. */
 	/* Note: On other platforms, this is just a noop. */
 
@@ -479,7 +544,8 @@ int dir_SetMacFileTypeAndCreator(char *filename, sqInt filenameSize, char *fType
     return true;
 }
 
-int dir_GetMacFileTypeAndCreator(char *filename, sqInt filenameSize, char *fType, char *fCreator) {
+sqInt
+dir_GetMacFileTypeAndCreator(char *filename, sqInt filenameSize, char *fType, char *fCreator) {
 	/* Get the Macintosh type and creator of the given file. */
 	/* Note: On other platforms, this is just a noop. */
 
@@ -518,7 +584,6 @@ OSStatus SetVMPathFromApplicationDirectory() {
 	CFStringAppendCString(vmPathString, "/", kCFStringEncodingMacRoman);
 	SetVMPathFromCFString(vmPathString);
 	CFRelease(filePath);
-	CFRelease(vmPathString);
 	
 	return 0;		
 }

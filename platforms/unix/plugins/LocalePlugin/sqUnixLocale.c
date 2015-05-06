@@ -27,7 +27,7 @@
 
 /* Author: Ian.Piumarta@inria.fr
  * 
- * Last edited: 2011-04-28 10:11:02 by piumarta on 192.168.1.11
+ * Last edited: 2008-11-10 13:25:18 by piumarta on ubuntu.piumarta.com
  */
 
 #include "sq.h"
@@ -60,12 +60,6 @@
 
 static const char *localeString= 0;
 static struct lconv *localeConv= 0;
-
-
-static void safestrcpy(char *dst, const char *src)
-{
-  memcpy(dst, src, strlen(src));
-}
 
 
 /*** SUNDRY STUPIDITY ***/
@@ -613,6 +607,16 @@ sqInt sqLocCurrencyNotation(void)
 {
   return localeConv->p_cs_precedes;
 }
+
+/* For Cog do *not* copy the trailing null since the VM checks for attempts to
+ * overwrite the end of an object, and copying the trailing null into a string
+ * does precisely this.
+ */
+#define safestrcpy(str,source) do { \
+	char *src = (source); \
+	int len = strlen(src); \
+	strncpy(str,src,len); \
+} while (0)
 
 /* Store the currency symbol into the given string.
  */

@@ -64,8 +64,16 @@ extern sqSqueakAppDelegate *gDelegateApp;
 @synthesize infoPlistInterfaceLogic;
 @synthesize soundInterfaceLogic;
 @synthesize argsArguments;
+@synthesize commandLineArguments;
+@synthesize noHandlers;
 
 extern sqInt interpret(void);  //This is a VM Callback
+
+- (id) init {
+    [super init];
+    [self setNoHandlers: NO];
+    return self;
+}
 
 - (void) setupFloat {
 }
@@ -74,18 +82,30 @@ extern sqInt interpret(void);  //This is a VM Callback
 	signal(SIGSEGV, sigsegv);
 }
 
+- (void) setInfoPlistInterfaceLogic:(sqSqueakInfoPlistInterface *)anObject {
+    infoPlistInterfaceLogic = anObject;
+}
+
+- (sqSqueakInfoPlistInterface *) infoPlistInterfaceLogic {
+    if (!infoPlistInterfaceLogic) {
+        [self fetchPreferences];
+    }
+    
+    return infoPlistInterfaceLogic;
+}
+
 - (sqSqueakInfoPlistInterface *) newSqSqueakInfoPlistInterfaceCreation {
-	return [[sqSqueakInfoPlistInterface alloc] init];
+	return [sqSqueakInfoPlistInterface new];
 }
 
 - (void) fetchPreferences {
-	infoPlistInterfaceLogic = [self newSqSqueakInfoPlistInterfaceCreation];
+	self.infoPlistInterfaceLogic = [self newSqSqueakInfoPlistInterfaceCreation];
 	[infoPlistInterfaceLogic parseInfoPlist]; 
 	currentVMEncoding = NSUTF8StringEncoding;
 }
 
 - (void) doHeadlessSetup {
-	gSqueakHeadless = false;
+    //gSqueakHeadless = NO;
 }
 
 - (void) doMemorySetup {
@@ -95,6 +115,7 @@ extern sqInt interpret(void);  //This is a VM Callback
 }
 
 - (void) setupMenus {
+//    nothing to do so far since the menu is setup in the MainMenu.nib file
 }
 
 - (void) setupTimers {
@@ -111,74 +132,80 @@ extern sqInt interpret(void);  //This is a VM Callback
 }
 
 - (void) setupEventQueue {
-	eventQueue = [[Queue alloc] init];
+	eventQueue = [Queue new];
+}
+
+- (void) attachToSignals {
+//  Override in subclasses
 }
 
 - (void) setupBrowserLogic {
 }
 
 - (void) setupSoundLogic {
-	soundInterfaceLogic = [[sqSqueakSoundCoreAudio alloc] init];
+	soundInterfaceLogic = [sqSqueakSoundCoreAudio new];
 }
 
 - (sqSqueakFileDirectoryInterface *) newFileDirectoryInterfaceInstance {
-	return [[sqSqueakFileDirectoryInterface alloc] init];
+	return [sqSqueakFileDirectoryInterface new];
 }
 
 - (void) runSqueak {
-    @autoreleasepool {
-	extern BOOL gQuitNowRightNow;
-	gQuitNowRightNow=false;
-
+	NSAutoreleasePool * pool = [NSAutoreleasePool new]; //Needed since this is a worker thread, see comments in NSAutoreleasePool Class Reference about Threads
+	
 	[self setupFloat];  //JMM We have code for intel and powerpc float, but arm? 
 	[self setupErrorRecovery];
-	[self fetchPreferences];
-	
+    
 	fileDirectoryLogic = [self newFileDirectoryInterfaceInstance];
 	[self setVMPathFromApplicationDirectory];
 	if (![self.fileDirectoryLogic setWorkingDirectory]) {
+		[pool drain];
 		return;
 	}
 	
 	[self parseUnixArgs];
-	
+	[self attachToSignals];
+    
 	//JMM here we parse the unixArgs
 	//JMM now we wait for the open document apple events (normally)
-	
-	[self doHeadlessSetup];
-	//JMM after wait normally if headless and no imageName then exit -42
-	
+	   
 	[self doMemorySetup];
 	
-	if ([self ImageNameIsEmpty]) 
-		[self findImageViaBundleOrPreferences];
-	
 	if ([self ImageNameIsEmpty]) {
+		[self findImageViaBundleOrPreferences];
+	}
+
+	if ([self ImageNameIsEmpty]) {
+		[pool drain];
 		return;
 	}
 	
 	if (![self readImageIntoMemory]) {
+		[pool drain];
 		return;
 	}
 	
-	[self setupMenus];
+    // The headless setup is now after the image setup on purpose. This is in order to be
+    // able to select an image with the popup even when running headless
+	[self doHeadlessSetup];
+
+    
+    [self setupMenus];
 	[self setupTimers];
 	[self setupAIO];
 	[self setupBrowserLogic];
 	[self setupSoundLogic];
-	[gDelegateApp makeMainWindow];
-	
-	interpret();
-    [self tearDown];
-    }
-	[NSThread exit];
-}
-
-- (void) tearDown{
     
+    [gDelegateApp makeMainWindow];   	
+    
+	interpret();
+	[pool drain];  //may not return here, could call exit() via quit image
+	[self release];
 }
 
 - (void) MenuBarRestore {
+    //    nothing to do so far since the menu is setup in the MainMenu.nib file
+    
 }
 
 void sqMacMemoryFree(void);
@@ -194,13 +221,14 @@ void sqMacMemoryFree(void);
 }
 
 - (void)dealloc {
-//	[infoPlistInterfaceLogic release];
-//	[soundInterfaceLogic release];
-//	[vmPathStringURL release];
-//	[imageNameURL release];
-//	[fileDirectoryLogic release];
-//	[eventQueue release];
+	[infoPlistInterfaceLogic release];
+	[soundInterfaceLogic release];
+	[vmPathStringURL release];
+	[imageNameURL release];
+	[fileDirectoryLogic release];
+	[eventQueue release];
 	sqMacMemoryFree();
+	[super dealloc];
 }
 
 @end

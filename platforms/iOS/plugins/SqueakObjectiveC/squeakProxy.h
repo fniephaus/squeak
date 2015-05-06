@@ -74,24 +74,24 @@ extern struct VirtualMachine* interpreterProxy;
 @interface SqueakProxy : NSObject
 {
 	sqInt sem;
-	Protocol* __unsafe_unretained protocol;
-	NSInvocation* __weak invocation;
+	Protocol* protocol;
+	NSInvocation* invocation;
 	NSConditionLock* lockForSqueak;
 	NSMutableDictionary *sigs;
 	id	target;
 	sqInt	callbackid;
 	BOOL	isCarbonVM;
 }
-- (instancetype) initWithSemaphore: (sqInt) squeakSem protocolNSString: (NSString *) nameString target: (id) aTarget;
+- (id) initWithSemaphore: (sqInt) squeakSem protocolNSString: (NSString *) nameString target: (id) aTarget;
 - (void) setReturnValue: (void*) pointer;
 - (BOOL) isDataTypeAware;
 - (void) setIsCarbonVM;
 
 @property (nonatomic,assign) sqInt sem;
-@property (nonatomic,unsafe_unretained) Protocol* protocol;
-@property (weak, nonatomic) NSInvocation* invocation;
-@property (nonatomic) NSConditionLock* lockForSqueak;
-@property (nonatomic) NSMutableDictionary *sigs;
-@property (nonatomic,strong) id target;
+@property (nonatomic,assign) Protocol* protocol;
+@property (nonatomic,assign) NSInvocation* invocation;
+@property (nonatomic,assign) NSConditionLock* lockForSqueak;
+@property (nonatomic,assign) NSMutableDictionary *sigs;
+@property (nonatomic,retain) id target;
 @property (nonatomic,assign) sqInt callbackid;
 @end

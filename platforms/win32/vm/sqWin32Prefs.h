@@ -14,7 +14,7 @@
 #define ID_SHOWALLOCATIONS 0x0090
 #define ID_REDUCEBACKGROUNDCPU 0x00A0
 #define ID_1BUTTONMOUSE 0x00B0
-/* #define ID_DIRECTSOUND 0x00C0 */
+#define ID_DIRECTSOUND 0x00C0
 
 #define ID_FILEACCESS 0x00D0
 #define ID_IMAGEWRITE 0x00E0
@@ -26,8 +26,9 @@
 #define ID_USEOPENGL 0x0120
 #define ID_CASEFILES 0x0130
 #define ID_PRINTALLSTACKS 0x0140
+#define ID_DUMPPRIMLOG 0x0150
 
-#define ID_PREF_LAST 0x0140
+#define ID_PREF_LAST 0x0150
 
 void TrackPrefsMenu(void);
 void CreatePrefsMenu(void);

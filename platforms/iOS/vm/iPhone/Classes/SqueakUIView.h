@@ -50,7 +50,6 @@ Some of this code was funded via a grant from the European Smalltalk User Group 
 	}
 	
 	- (void) recordCharEvent:(NSString *) unicodeString;
-    - (void) preDrawThelayers;
 	- (void) drawThelayers;
 	- (void) drawImageUsingClip: (CGRect) clip;
 	@property (nonatomic,assign) void *squeakTheDisplayBits;

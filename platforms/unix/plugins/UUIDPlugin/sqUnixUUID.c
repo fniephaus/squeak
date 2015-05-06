@@ -3,12 +3,12 @@
 #if defined(HAVE_SYS_UUID_H)
 # include <sys/types.h>
 # include <sys/uuid.h>
-#endif
-
-#if defined(HAVE_UUID_UUID_H)
+#elif defined(HAVE_UUID_UUID_H)
 # include <uuid/uuid.h>
 #elif defined(HAVE_UUID_H)
 # include <uuid.h>
+#else
+# error cannot find a uuid.h to include
 #endif
 
 #include "sq.h"
@@ -16,22 +16,17 @@
 
 int MakeUUID(char *location)
 {
-#if defined(HAVE_UUID_CREATE) && !defined(HAVE_UUIDGEN) && !defined(HAVE_UUID_GENERATE)
-  size_t  len= 16;	/* 128 bits */
-  uuid_t *uuid;
-  uuid_create(&uuid);
-  uuid_make(uuid, UUID_MAKE_V1);
-  uuid_export(uuid, UUID_FMT_BIN, (void **)&location, &len);
-  uuid_destroy(uuid);
-#else
   uuid_t uuid;
-#  if defined(HAVE_UUIDGEN)
+
+#if defined(HAVE_UUIDGEN)
   uuidgen(&uuid, 1);
-#  elif defined(HAVE_UUID_GENERATE)
+#elif defined(HAVE_UUID_GENERATE)
   uuid_generate(uuid);
-#  endif
-  memcpy((void *)location, (void *)&uuid, sizeof(uuid));
+#else
+# error "you must define some way of generating a UUID."
 #endif
+
+  memcpy((void *)location, (void *)&uuid, sizeof(uuid));
   return 1;
 }
 

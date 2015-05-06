@@ -6,7 +6,7 @@
 *   AUTHOR:  John McIntosh, and others.
 *   ADDRESS: 
 *   EMAIL:   johnmci@smalltalkconsulting.com
-*   RCSID:   $Id$
+*   RCSID:   $Id: sqMacDirectory.c 1197 2005-05-31 05:51:16Z johnmci $
 *
 *   NOTES: See change log below.
 * 
@@ -29,7 +29,7 @@
 
 #include "sq.h"
 #include "FilePlugin.h"
-#include "sqMacFileLogic.h"
+#include "sqMacUnixFileInterface.h"
 #if TARGET_API_MAC_CARBON
 	#include <Carbon/Carbon.h>
 	#include <unistd.h>

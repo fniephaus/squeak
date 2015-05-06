@@ -85,10 +85,7 @@ sqAllocateMemoryMac(heapSize, minimumMemory, fileStream, headerSize)
 
 #ifdef BUILD_FOR_OSX
 size_t sqImageFileReadEntireImage(void *ptr, size_t elementSize, size_t count, FILE * f);
-#define sqImageFileReadEntireImage(memoryAddress, elementSize,  length, fileStream) \
-sqImageFileReadEntireImage(memoryAddress, elementSize, length, fileStream)
 #else
-#include <dlfcn.h>
 #define sqImageFileReadEntireImage(memoryAddress, elementSize,  length, fileStream) length 
 #endif
 
@@ -120,11 +117,13 @@ int plugInNotifyUser(char *msg);
 
 sqInt ioSetCursorARGB(sqInt cursorBitsIndex, sqInt extentX, sqInt extentY, sqInt offsetX, sqInt offsetY);
 
-#if COGVM
+#if COGVM || defined(HAVE_NATIVEBOOST) 
 extern void sqMakeMemoryExecutableFromTo(unsigned long, unsigned long);
 extern void sqMakeMemoryNotExecutableFromTo(unsigned long, unsigned long);
 
 extern int isCFramePointerInUse(void);
+extern int osCogStackPageHeadroom(void);
+extern void reportMinimumUnusedHeadroom(void);
 #endif
 
 /* Thread support for thread-safe signalSemaphoreWithIndex and/or the COGMTVM */
@@ -140,10 +139,11 @@ extern int isCFramePointerInUse(void);
  * documentation of this API.
  */
 typedef struct {
-	pthread_cond_t	cond;
-	pthread_mutex_t mutex;
-	int				locked;
+    pthread_cond_t	cond;
+    pthread_mutex_t mutex;
+    int				count;
 } sqOSSemaphore;
+#  define ioDestroyOSSemaphore(ptr) 0
 #  if !ForCOGMTVMImplementation /* this is a read-only export */
 extern const pthread_key_t tltiIndex;
 #  endif
@@ -151,6 +151,7 @@ extern const pthread_key_t tltiIndex;
 #  define ioSetThreadLocalThreadIndex(v) (pthread_setspecific(tltiIndex,(void*)(v)))
 #  define ioOSThreadIsAlive(thread) (pthread_kill(thread,0) == 0)
 #  define ioTransferTimeslice() sched_yield()
+#  define ioMilliSleep(ms) usleep((ms) * 1000)
 # endif /* COGMTVM */
 #endif /* STACKVM */
 

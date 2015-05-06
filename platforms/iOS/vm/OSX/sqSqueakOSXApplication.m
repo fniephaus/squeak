@@ -43,7 +43,7 @@
 #import "sqSqueakOSXSoundCoreAudio.h"
 #import "sqSqueakSoundCoreAudioAPI.h"
 
-usqInt	gMaxHeapSize=512*1024*1024;
+usqInt gMaxHeapSize=(512*1024*1024)+(4*1024*1024); //Last part are "eden bytes" needed in the new startup
 
 #if defined(__GNUC__) && ( defined(i386) || defined(__i386) || defined(__i386__)  \
 || defined(i486) || defined(__i486) || defined (__i486__) \
@@ -80,29 +80,32 @@ void mtfsfi(unsigned long long fpscr) {}
 }
 
 - (sqSqueakFileDirectoryInterface *) newFileDirectoryInterfaceInstance {
-	return [[sqSqueakOSXFileDirectoryInterface alloc] init];
+	return [sqSqueakOSXFileDirectoryInterface new];
 }
 
 - (sqSqueakInfoPlistInterface *) newSqSqueakInfoPlistInterfaceCreation {
-	return [[sqSqueakOSXInfoPlistInterface alloc] init];
+	return [sqSqueakOSXInfoPlistInterface new];
 }
 
 - (void) doHeadlessSetup {
 	[super doHeadlessSetup];
-	extern BOOL gSqueakHeadless;
-	if (gSqueakHeadless) 
-		return;
-#warning untested
-	ProcessSerialNumber psn = { 0, kCurrentProcess };
-	ProcessInfoRec info;
-	bzero(&info, sizeof(ProcessInfoRec));
-	info.processInfoLength = sizeof(ProcessInfoRec);
-	GetProcessInformation(&psn,&info);
-	if (info.processMode & modeOnlyBackground) {
-		OSStatus returnCode = TransformProcessType(& psn, kProcessTransformToForegroundApplication);
-#pragma unused(returnCode)
-		SetFrontProcess(&psn);		
-	}
+	extern BOOL gSqueakHeadless;    
+    // Notice that setActivationPolicy: is available in OSX 10.6 and later
+    if ([NSApp respondsToSelector:@selector(setActivationPolicy:)]) {
+        if (gSqueakHeadless) {
+            [NSApp setActivationPolicy:NSApplicationActivationPolicyProhibited];
+        } else {
+            [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+            [NSApp activateIgnoringOtherApps:YES];
+        }
+    } else {
+        if (gSqueakHeadless) {
+            NSLog( @"For OSX older than 10.6 there is no support for headless");
+            [self ioExit];
+        } else {
+                // nothing in particular to do. 
+        }
+    }
 }
 
 - (void) doMemorySetup {
@@ -110,7 +113,7 @@ void mtfsfi(unsigned long long fpscr) {}
 }
 
 - (void) setupSoundLogic {
-	self.soundInterfaceLogic = [[sqSqueakOSXSoundCoreAudio alloc] init];
+	self.soundInterfaceLogic = [sqSqueakOSXSoundCoreAudio new];
  	[(sqSqueakOSXSoundCoreAudio *) self.soundInterfaceLogic soundInitOverride];
 
 	snd_Start(2644, 22050, 1, 0);
@@ -126,9 +129,15 @@ void mtfsfi(unsigned long long fpscr) {}
 	[self parseEnv: [p environment]];
 }
 
+- (void) attachToSignals {
+    if (![self noHandlers]) {
+        attachToSignals();
+    }
+}
+
 - (NSInteger) parseArgument: (NSString *) argData peek: (NSString *) peek {
 	
-	if ([argData isEqualToString: @"--"]) {
+	if ([argData compare: @"--"] == NSOrderedSame) {
 		return 1;
 	}
 
@@ -138,25 +147,30 @@ void mtfsfi(unsigned long long fpscr) {}
 		}
 	NS_HANDLER;
 	NS_ENDHANDLER;
-	
-	if ([argData isEqualToString: @"-help"]) {
+
+	if ([argData compare: @"--help"] == NSOrderedSame) {
 		[self usage];
+		exit(0);
 		return 1;
 	}
-	if ([argData isEqualToString: @"-headless"]) {
+	if ([argData compare: @"--headless"] == NSOrderedSame) {
 		extern BOOL gSqueakHeadless;
-		gSqueakHeadless = YES;
+        gSqueakHeadless = YES;
 		return 1;
 	}
-	if ([argData isEqualToString: @"-memory"]) {
+    if ([argData compare: @"--nohandlers"] == NSOrderedSame){
+        [self setNoHandlers: YES];
+        return 1;
+    }
+	if ([argData compare: @"--memory"] == NSOrderedSame) {
 		gMaxHeapSize = (usqInt) [self strtobkm: [peek UTF8String]];
 		return 2;
 	}
 	return 0;
 }
 
-- (void) parseArgs: (NSArray *) args{
-		  
+- (void) parseArgs: (NSArray *) args {
+	commandLineArguments = [args copyWithZone:null];
 	argsArguments = [[NSMutableArray alloc] initWithCapacity: [args count]];
 	
 	if ([args count] < 2) 
@@ -167,15 +181,21 @@ void mtfsfi(unsigned long long fpscr) {}
 	NSUInteger i,result;
 	BOOL optionsCompleted = NO;
 	for (i=0; i<[revisedArgs count]; i++) {
-		NSString *argData = revisedArgs[i];
-		NSString *peek = (i == ([revisedArgs count] - 1)) ? @"" : revisedArgs[i+1];
-		if ([argData isEqualToString: @"--"]) {
+		NSString *argData = [revisedArgs objectAtIndex:i];
+		NSString *peek = (i == ([revisedArgs count] - 1)) ? @"" : [revisedArgs objectAtIndex:i+1];
+		if ([argData compare: @"--"] == NSOrderedSame) {
 			optionsCompleted = YES;
 			continue;
 		}
-		if (!optionsCompleted && ![[argData substringToIndex: 1] isEqualToString: @"-"]) {
+		if (!optionsCompleted && [[argData substringToIndex: 1] compare: @"-"] != NSOrderedSame) {
 			optionsCompleted = YES;
-			continue;
+			
+			//guessing first parameter as image name
+			if ([argData compare: @"--"] != NSOrderedSame) {
+                [self setImageNamePathIfItWasReadable:argData];
+			} else {
+				continue;
+			}
 		}
 		if (optionsCompleted) {
 			[self.argsArguments addObject: argData];
@@ -183,13 +203,15 @@ void mtfsfi(unsigned long long fpscr) {}
 			result = [self parseArgument: argData peek: peek];
 			if (result == 0)			/* option not recognised */ {
 				fprintf(stderr, "unknown option: %s\n", [argData UTF8String]);
-//				[self usage];
+				[self usage];
+				exit(1);
 			}
 			if (result == 2)
 				i++;
 		}
 		
 	}
+	[revisedArgs release];
 }
 
 - (long long) strtobkm: (const char *) str {
@@ -208,12 +230,11 @@ void mtfsfi(unsigned long long fpscr) {}
 }
 
 - (void) parseEnv: (NSDictionary *) env {
-#warning untested!
-	NSString *imageNameString = env[@"SQUEAK_IMAGE"];
+	NSString *imageNameString = [env objectForKey: @"retain"];
 	if (imageNameString) {
 		[(sqSqueakOSXInfoPlistInterface*) self.infoPlistInterfaceLogic setOverrideSqueakImageName: imageNameString];
 	}
-	NSString *memoryString = env[@"SQUEAK_MEMORY"];
+	NSString *memoryString = [env objectForKey: @"SQUEAK_MEMORY"];
 	if (memoryString) {
 		gMaxHeapSize = (usqInt) [self strtobkm: [memoryString UTF8String]];
 	}
@@ -224,21 +245,21 @@ void mtfsfi(unsigned long long fpscr) {}
 	printf("       [<option>...] -- [<argument>...]\n");
 	[self printUsage];
 	printf("\nNotes:\n");
-	printf("  <imageName> defaults to `Squeak.image'.\n");
+	printf("  <imageName> defaults to `%s'.\n", DEFAULT_IMAGE_NAME);
 	[self printUsageNotes];
-	exit(1);
 }
 
 - (void) printUsage {
 	printf("\nCommon <option>s:\n");
-	printf("  -help                 print this help message, then exit\n");
-	printf("  -memory <size>[mk]    use fixed heap size (added to image size)\n");
-	printf("  -headless             run in headless (no window) mode (default: false)\n");
+	printf("  --help                 print this help message, then exit\n");
+	printf("  --memory <size>[mk]    use fixed heap size (added to image size)\n");
+	printf("  --headless             run in headless (no window) mode (default: false)\n");
+    printf("  --nohandlers           disable sigsegv & sigusr1 handlers\n");
 }
 
 - (void) printUsageNotes
 {
-	printf("  If `-memory' is not specified then the heap will grow dynamically.\n");
+	printf("  If `--memory' is not specified then the heap will grow dynamically.\n");
 	printf("  <argument>s are ignored, but are processed by the Squeak image.\n");
 	printf("  The first <argument> normally names a Squeak `script' to execute.\n");
 	printf("  Precede <arguments> by `--' to use default image.\n");

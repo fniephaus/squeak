@@ -6,23 +6,24 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id$
-*
 *
 *****************************************************************************/
 #include <windows.h>
 #include "sq.h"
 
-#ifndef NO_VIRTUAL_MEMORY
-/* This will be left on until we find out what's going on these strange laptops */
-#define EXPERIMENTAL
+#if !defined(NO_VIRTUAL_MEMORY) && !SPURVM /* Spur uses sqWin32SpurAlloc.c */
 
-#ifndef NO_RCSID
-  static char RCSID[]="$Id$";
-#endif
+/* For Qwaq Forums: Disallow memory shrinking to avoid crashes
+   due to GC/OpenGL relocation problems within glDrawElements.
+   It appears that in rare circumstances we trigger a full GC
+   which moves the data away from under OGLs feet and if the
+   memory gets released at this point OGL may crash.
+*/
+#define DO_NOT_SHRINK
+
 
 static LPSTR  pageBase;     /* base address of allocated memory */
-static DWORD  pageBits;     /* bit mask for the start of a memory page */
+static DWORD  pageMask;     /* bit mask for the start of a memory page */
 static DWORD  pageSize;     /* size of a memory page */
 static DWORD  nowReserved;  /* 'publicly' reserved virtual memory */
 static LPSTR  pageLimit;    /* upper limit of commited pages */
@@ -46,20 +47,20 @@ LONG CALLBACK sqExceptionFilter(LPEXCEPTION_POINTERS exp)
 /************************************************************************/
 /* sqAllocateMemory: Initialize virtual memory                          */
 /************************************************************************/
-void *sqAllocateMemory(int minHeapSize, int desiredHeapSize)
+void *sqAllocateMemory(usqInt minHeapSize, usqInt desiredHeapSize)
 { SYSTEM_INFO sysInfo;
   DWORD initialCommit, commit;
 
   /* determine page boundaries */
   GetSystemInfo(&sysInfo);
   pageSize = sysInfo.dwPageSize;
-  pageBits = ~(pageSize - 1);
+  pageMask = ~(pageSize - 1);
 
   /* round the requested size up to the next page boundary */
-  nowReserved = (desiredHeapSize + pageSize) & pageBits;
+  nowReserved = (desiredHeapSize + pageSize) & pageMask;
 
   /* round the initial commited size up to the next page boundary */
-  initialCommit = (minHeapSize + pageSize) & pageBits;
+  initialCommit = (minHeapSize + pageSize) & pageMask;
 
   /* Here, we only reserve the maximum memory to be used
      It will later be committed during actual access */
@@ -100,7 +101,7 @@ int sqGrowMemoryBy(int oldLimit, int delta) {
   if(fShowAllocations) {
     warnPrintf("Growing memory by %d...", delta);
   }
-  delta = (delta + pageSize) & pageBits;
+  delta = (delta + pageSize) & pageMask;
   if(!VirtualAlloc(pageLimit, delta, MEM_COMMIT, PAGE_READWRITE)) {
     if(fShowAllocations) {
       warnPrintf("failed\n");
@@ -125,7 +126,14 @@ int sqShrinkMemoryBy(int oldLimit, int delta) {
   if(fShowAllocations) {
     warnPrintf("Shrinking by %d...",delta);
   }
-  delta &= pageBits;
+#ifdef DO_NOT_SHRINK
+  {
+    /* Experimental - do not unmap memory and avoid OGL crashes */
+    if(fShowAllocations) warnPrintf(" - ignored\n");
+    return oldLimit;
+  }
+#endif
+  delta &= pageMask;
   if(!VirtualFree(pageLimit-delta, delta, MEM_DECOMMIT)) {
     if(fShowAllocations) {
       warnPrintf("failed\n");
@@ -163,12 +171,32 @@ int sqMemoryExtraBytesLeft(int includingSwap) {
   return bytesLeft;
 }
 
-/************************************************************************/
-/* sqMemReleaseMemory: Release virtual memory                            */
-/************************************************************************/
-void sqReleaseMemory(void)
+#define roundDownToPage(v) ((v)&pageMask)
+#define roundUpToPage(v) (((v)+pageSize-1)&pageMask)
+
+# if COGVM
+void
+sqMakeMemoryExecutableFromTo(unsigned long startAddr, unsigned long endAddr)
 {
-  /* Win32 will do that for us */
+	DWORD previous;
+
+	if (!VirtualProtect((void *)startAddr,
+						endAddr - startAddr + 1,
+						PAGE_EXECUTE_READWRITE,
+						&previous))
+		perror("VirtualProtect(x,y,PAGE_EXECUTE_READWRITE)");
 }
 
-#endif /* NO_VIRTUAL_MEMORY */
+void
+sqMakeMemoryNotExecutableFromTo(unsigned long startAddr, unsigned long endAddr)
+{
+	DWORD previous;
+
+	if (!VirtualProtect((void *)startAddr,
+						endAddr - startAddr + 1,
+						PAGE_READWRITE,
+						&previous))
+		perror("VirtualProtect(x,y,PAGE_EXECUTE_READWRITE)");
+}
+# endif /* COGVM */
+#endif /* !defined(NO_VIRTUAL_MEMORY) && !SPURVM */

@@ -72,3 +72,4 @@ _ffiCallAddressOf:	/* 8=addr, 12=stack, 16=stackSize */
 	popl	%ebp
 	ret
 #endif
+

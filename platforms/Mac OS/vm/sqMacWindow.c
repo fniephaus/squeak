@@ -6,7 +6,7 @@
 *   AUTHOR:  John Maloney, John McIntosh, and others.
 *   ADDRESS: 
 *   EMAIL:   johnmci@smalltalkconsulting.com
-*   RCSID:  $Id$
+*   RCSID:  $Id: sqMacWindow.c 1296 2006-02-02 07:50:50Z johnmci $
 *
 *   NOTES: 
 *  Feb 22nd, 2002, JMM moved code into 10 other files, see sqMacMain.c for comments
@@ -33,7 +33,7 @@
 #include "sq.h"
 #include "sqMacUIConstants.h"
 #include "sqMacWindow.h"
-#include "sqMacFileLogic.h"
+#include "sqMacUnixFileInterface.h"
 #include "sqmacUIEvents.h"
 #include "sqMacUIMenuBar.h"
 #include "sqMacEncoding.h"
@@ -812,7 +812,6 @@ void FreePixmap(void) {
 }
 
 extern Boolean gSqueakWindowHasTitle;
-extern int SetUpCarbonEventForWindowIndex(int index);
 int makeMainWindow(void) {
 	WindowPtr window;
 	char	shortImageName[256];
@@ -948,6 +947,10 @@ int ioScreenSize(void) {
 	return (w << 16) | (h & 0xFFFF);  /* w is high 16 bits; h is low 16 bits */
 }
 #endif
+
+int ioSetCursorARGB(sqInt bitsIndex, sqInt w, sqInt h, sqInt x, sqInt y) {
+  return 0;
+}
 
 int ioSetCursor(int cursorBitsIndex, int offsetX, int offsetY) {
 	/* Old version; forward to new version. */

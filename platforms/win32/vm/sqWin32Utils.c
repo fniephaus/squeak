@@ -6,9 +6,7 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id$
 *
-*   NOTES:
 *****************************************************************************/
 #include <windows.h>
 #include "sq.h"
@@ -185,5 +183,26 @@ void printLastError(TCHAR *prefix)
                 (LPTSTR) &lpMsgBuf, 0, NULL );
   warnPrintf(TEXT("%s (%d) -- %s\n"), prefix, lastError, lpMsgBuf);
   LocalFree( lpMsgBuf );
+}
+#endif
+#ifndef vprintLastError
+void vprintLastError(TCHAR *fmt, ...)
+{ LPVOID lpMsgBuf;
+  DWORD lastError;
+  TCHAR *buf;
+  va_list args;
+
+  buf = (TCHAR*) calloc(sizeof(TCHAR), 4096);
+  va_start(args, fmt);
+  wvsprintf(buf, fmt, args);
+  va_end(args);
+
+  lastError = GetLastError();
+  FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPTSTR) &lpMsgBuf, 0, NULL );
+  warnPrintf(TEXT("%s (%d: %s)\n"), buf, lastError, lpMsgBuf);
+  LocalFree( lpMsgBuf );
+  free(buf);
 }
 #endif

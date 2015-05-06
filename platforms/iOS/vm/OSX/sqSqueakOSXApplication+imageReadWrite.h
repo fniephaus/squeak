@@ -41,5 +41,4 @@
 @interface sqSqueakOSXApplication (imageReadWrite) 
 - (void) attempToOpenImageFromOpenPanel;
 - (BOOL) setImageNamePathIfItWasReadable: (NSString *) filePath;
-- (void) imageNamePut:(const char *) sqImageName;
 @end

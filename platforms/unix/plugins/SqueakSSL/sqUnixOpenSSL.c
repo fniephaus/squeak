@@ -11,6 +11,7 @@ typedef struct sqSSL {
 
 	char *certName;
 	char *peerName;
+	char *serverName;
 
 	SSL_METHOD *method;
 	SSL_CTX *ctx;
@@ -36,8 +37,8 @@ static sqSSL *sslFromHandle(sqInt handle) {
 sqInt sqCopyBioSSL(sqSSL *ssl, BIO *bio, char *dstBuf, sqInt dstLen) {
   int nbytes = BIO_ctrl_pending(bio);
 
-  if(ssl->loglevel) printf("sqCopyBioSSL: %d bytes pending; buffer size %ld\n", 
-	 nbytes, (long)dstLen);
+  if(ssl->loglevel) printf("sqCopyBioSSL: %d bytes pending; buffer size %d\n", 
+	 nbytes, dstLen);
   if(nbytes > dstLen) return -1;
   return BIO_read(bio, dstBuf, dstLen);
 }
@@ -135,6 +136,7 @@ sqInt sqDestroySSL(sqInt handle) {
 
 	if(ssl->certName) free(ssl->certName);
 	if(ssl->peerName) free(ssl->peerName);
+	if(ssl->serverName) free(ssl->serverName);
 
 	free(ssl);
 	handleBuf[handle] = NULL;
@@ -156,7 +158,7 @@ sqInt sqConnectSSL(sqInt handle, char* srcBuf, sqInt srcLen, char *dstBuf, sqInt
 	X509 *cert;
 	sqSSL *ssl = sslFromHandle(handle);
 
-	if(ssl->loglevel) printf("sqConnectSSL: %lx\n", (long)ssl);
+	if(ssl->loglevel) printf("sqConnectSSL: %p\n", ssl);
 
 	/* Verify state of session */
 	if(ssl == NULL || (ssl->state != SQSSL_UNUSED && ssl->state != SQSSL_CONNECTING)) {
@@ -172,7 +174,7 @@ sqInt sqConnectSSL(sqInt handle, char* srcBuf, sqInt srcLen, char *dstBuf, sqInt
 		SSL_set_connect_state(ssl->ssl);
 	}
 
-	if(ssl->loglevel) printf("sqConnectSSL: BIO_write %ld bytes\n", (long)srcLen);
+	if(ssl->loglevel) printf("sqConnectSSL: BIO_write %ld bytes\n", srcLen);
 
 	n = BIO_write(ssl->bioRead, srcBuf, srcLen);
 
@@ -184,6 +186,13 @@ sqInt sqConnectSSL(sqInt handle, char* srcBuf, sqInt srcLen, char *dstBuf, sqInt
 		if(ssl->loglevel) printf("sqConnectSSL: BIO_write failed\n");
 		return SQSSL_GENERIC_ERROR;
 	}
+
+	/* if a server name is provided, use it */
+	if(ssl->serverName) {
+		if(ssl->loglevel) printf("sqSetupSSL: Using server name %s\n", ssl->serverName);
+		SSL_set_tlsext_host_name(ssl->ssl, ssl->serverName);
+	}
+
 	if(ssl->loglevel) printf("sqConnectSSL: SSL_connect\n");
 	result = SSL_connect(ssl->ssl);
 	if(result <= 0) {
@@ -202,7 +211,7 @@ sqInt sqConnectSSL(sqInt handle, char* srcBuf, sqInt srcLen, char *dstBuf, sqInt
 
 	if(ssl->loglevel) printf("sqConnectSSL: SSL_get_peer_certificate\n");
 	cert = SSL_get_peer_certificate(ssl->ssl);
-	if(ssl->loglevel) printf("sqConnectSSL: cert = %lx\n", (long)cert);
+	if(ssl->loglevel) printf("sqConnectSSL: cert = %p\n", cert);
 	/* Fail if no cert received. */
 	if(cert) {
 		X509_NAME_get_text_by_NID(X509_get_subject_name(cert), 
@@ -252,7 +261,7 @@ sqInt sqAcceptSSL(sqInt handle, char* srcBuf, sqInt srcLen, char *dstBuf, sqInt 
 		SSL_set_accept_state(ssl->ssl);
 	}
 
-	if(ssl->loglevel) printf("sqAcceptSSL: BIO_write %ld bytes\n", (long)srcLen);
+	if(ssl->loglevel) printf("sqAcceptSSL: BIO_write %ld bytes\n", srcLen);
 
 	n = BIO_write(ssl->bioRead, srcBuf, srcLen);
 
@@ -286,7 +295,7 @@ sqInt sqAcceptSSL(sqInt handle, char* srcBuf, sqInt srcLen, char *dstBuf, sqInt 
 
 	if(ssl->loglevel) printf("sqAcceptSSL: SSL_get_peer_certificate\n");
 	cert = SSL_get_peer_certificate(ssl->ssl);
-	if(ssl->loglevel) printf("sqAcceptSSL: cert = %lx\n", (long)cert);
+	if(ssl->loglevel) printf("sqAcceptSSL: cert = %p\n", cert);
 
 	if(cert) {
 	  X509_NAME_get_text_by_NID(X509_get_subject_name(cert), 
@@ -322,7 +331,7 @@ sqInt sqEncryptSSL(sqInt handle, char* srcBuf, sqInt srcLen, char *dstBuf, sqInt
 
 	if(ssl == NULL || ssl->state != SQSSL_CONNECTED) return SQSSL_INVALID_STATE;
 
-	if(ssl->loglevel) printf("sqEncryptSSL: Encrypting %ld bytes\n", (long)srcLen);
+	if(ssl->loglevel) printf("sqEncryptSSL: Encrypting %ld bytes\n", srcLen);
 
 	nbytes = SSL_write(ssl->ssl, srcBuf, srcLen);
 	if(nbytes != srcLen) return SQSSL_GENERIC_ERROR;
@@ -370,6 +379,7 @@ char* sqGetStringPropertySSL(sqInt handle, int propID) {
 	switch(propID) {
 		case SQSSL_PROP_PEERNAME:  return ssl->peerName;
 		case SQSSL_PROP_CERTNAME:  return ssl->certName;
+		case SQSSL_PROP_SERVERNAME: return ssl->serverName;
 		default:
 			if(ssl->loglevel) printf("sqGetStringPropertySSL: Unknown property ID %d\n", propID);
 			return NULL;
@@ -392,14 +402,22 @@ sqInt sqSetStringPropertySSL(sqInt handle, int propID, char *propName, sqInt pro
 	if(ssl == NULL) return 0;
 
 	if(propLen) {
-	  property = calloc(1, propLen+1);
-	  memcpy(property, propName, propLen);
+		property = malloc(propLen + 1);
+		memcpy(property, propName, propLen);
+		property[propLen] = '\0';
 	};
 
 	if(ssl->loglevel) printf("sqSetStringPropertySSL(%d): %s\n", propID, property);
 
 	switch(propID) {
-		case SQSSL_PROP_CERTNAME: ssl->certName = property; break;
+		case SQSSL_PROP_CERTNAME:
+			if (ssl->certName) free(ssl->certName);
+			ssl->certName = property;
+			break;
+		case SQSSL_PROP_SERVERNAME:
+			if (ssl->serverName) free(ssl->serverName);
+			ssl->serverName = property;
+			break;
 		default: 
 			if(property) free(property);
 			if(ssl->loglevel) printf("sqSetStringPropertySSL: Unknown property ID %d\n", propID);
@@ -424,7 +442,7 @@ sqInt sqGetIntPropertySSL(sqInt handle, sqInt propID) {
 		case SQSSL_PROP_VERSION: return 1;
 		case SQSSL_PROP_LOGLEVEL: return ssl->loglevel;
 		default:
-			if(ssl->loglevel) printf("sqGetIntPropertySSL: Unknown property ID %ld\n", (long)propID);
+			if(ssl->loglevel) printf("sqGetIntPropertySSL: Unknown property ID %d\n", propID);
 			return 0;
 	}
 	return 0;
@@ -444,7 +462,7 @@ sqInt sqSetIntPropertySSL(sqInt handle, sqInt propID, sqInt propValue) {
 	switch(propID) {
 		case SQSSL_PROP_LOGLEVEL: ssl->loglevel = propValue; break;
 		default:
-			if(ssl->loglevel) printf("sqSetIntPropertySSL: Unknown property ID %ld\n", (long)propID);
+			if(ssl->loglevel) printf("sqSetIntPropertySSL: Unknown property ID %d\n", propID);
 			return 0;
 	}
 	return 1;

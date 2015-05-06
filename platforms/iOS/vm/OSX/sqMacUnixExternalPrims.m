@@ -83,7 +83,8 @@ void *ioLoadModuleRaw(char *pluginName);
  *  moduleName and suffix.  Answer the new module entry, or 0 if the shared
  *  library could not be loaded.
  */
-static void *tryLoadingInternals(NSString *libNameString) {	
+static void *
+tryLoadingInternals(NSString *libNameString) {	
 	struct stat buf;
 	int         err;
 	void        *handle = NULL;
@@ -105,19 +106,20 @@ static void *tryLoadingInternals(NSString *libNameString) {
 	return NULL;
 }
 
-static void *tryLoading(NSString *dirNameString, char *moduleName)
+static void *
+tryLoading(NSString *dirNameString, char *moduleName)
 {
 	void        *handle= NULL;
 	NSString    *libName;
 	
-	libName = [dirNameString stringByAppendingPathComponent: @(moduleName)];
+	libName = [dirNameString stringByAppendingPathComponent: [NSString stringWithUTF8String: moduleName]];
 	libName = [libName stringByAppendingPathExtension: @"bundle/Contents/MacOS/"];
-	libName = [libName stringByAppendingPathComponent: @(moduleName)];
+	libName = [libName stringByAppendingPathComponent: [NSString stringWithUTF8String: moduleName]];
 	handle = tryLoadingInternals(libName);
 	if (handle) 
 		return handle;
 	
-	libName = [dirNameString stringByAppendingPathComponent: @(moduleName)];
+	libName = [dirNameString stringByAppendingPathComponent: [NSString stringWithUTF8String: moduleName]];
 	handle = tryLoadingInternals(libName);
 	if (handle) 
 		return handle;
@@ -131,9 +133,9 @@ static void *tryLoading(NSString *dirNameString, char *moduleName)
 
 	for (prefix= prefixes;  *prefix;  ++prefix)
 		for (suffix= suffixes;  *suffix;  ++suffix)		{
-			libName = [dirNameString stringByAppendingPathComponent: @(*prefix)];
-			libName = [libName stringByAppendingString: @(moduleName)];
-			libName = [libName stringByAppendingPathExtension: @(*suffix)];
+			libName = [dirNameString stringByAppendingPathComponent: [NSString stringWithUTF8String: *prefix]];
+			libName = [libName stringByAppendingString: [NSString stringWithUTF8String: moduleName]];
+			libName = [libName stringByAppendingPathExtension: [NSString stringWithUTF8String: *suffix]];
 
 			handle = tryLoadingInternals(libName);
 			if (handle) 
@@ -146,14 +148,16 @@ static void *tryLoading(NSString *dirNameString, char *moduleName)
 /*  Find and load the named module.  Answer 0 if not found (do NOT fail
  *  the primitive!).
  */
-void *ioLoadModule(char *pluginName) {
-	@autoreleasepool {
-		void* result = ioLoadModuleRaw(pluginName);
-		return result;
-	}
+void *
+ioLoadModule(char *pluginName) {
+	NSAutoreleasePool * pool = [NSAutoreleasePool new];
+	void* result = ioLoadModuleRaw(pluginName);
+	[pool drain];
+	return result;
 }
 	
-void *ioLoadModuleRaw(char *pluginName)
+void *
+ioLoadModuleRaw(char *pluginName)
 {
 	void *handle= null;
 
@@ -169,7 +173,8 @@ void *ioLoadModuleRaw(char *pluginName)
     }
 	
 	/* first, look in the "<Squeak VM directory>Plugins" directory for the library */
-	NSString *pluginDirPath = [[gDelegateApp.squeakApplication.vmPathStringURL path] stringByAppendingPathComponent: @"Plugins/"];
+	NSString *pluginDirPath = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent: @"Contents/MacOS/Plugins"];
+	// [[gDelegateApp.squeakApplication.vmPathStringURL path] stringByAppendingPathComponent: @"Plugins/"];
 	NSString *vmDirPath = [[NSBundle mainBundle] resourcePath];
 
 	if (((sqSqueakOSXInfoPlistInterface*) gDelegateApp.squeakApplication.infoPlistInterfaceLogic).SqueakPluginsBuiltInOrLocalOnly) {
@@ -201,13 +206,14 @@ void *ioLoadModuleRaw(char *pluginName)
 		char workingData[PATH_MAX+1];
 		size_t pluginNameLength;
 		NSString *path,*path2;
-		
+
 		if (!systemFolder) {
 			struct FSRef frameworksFolderRef;
 			OSErr err = FSFindFolder(kSystemDomain, kFrameworksFolderType, false, &frameworksFolderRef);
 #pragma unused(err)
-			NSURL *myURLRef = (NSURL *) CFBridgingRelease(CFURLCreateFromFSRef(kCFAllocatorDefault, &frameworksFolderRef));
-			systemFolder = [myURLRef path];
+			NSURL *myURLRef = (NSURL *) CFURLCreateFromFSRef(kCFAllocatorDefault, &frameworksFolderRef);
+			systemFolder = [[myURLRef path] retain];
+			CFRelease(myURLRef);
 		}
 		
 		pluginNameLength = strlen(pluginName);
@@ -217,19 +223,19 @@ void *ioLoadModuleRaw(char *pluginName)
 			if (strcmp(workingData,".framework") == 0) {
 				strncpy(workingData,pluginName,pluginNameLength-10);
 				workingData[pluginNameLength-10] = 0x00;
-				path = [vmDirPath stringByAppendingPathComponent: @(pluginName)];
+				path = [vmDirPath stringByAppendingPathComponent: [NSString stringWithUTF8String: pluginName]];
 				if (((sqSqueakOSXInfoPlistInterface*) gDelegateApp.squeakApplication.infoPlistInterfaceLogic).SqueakPluginsBuiltInOrLocalOnly) {
-					path2 = [path stringByAppendingPathComponent: @(workingData)];
+					path2 = [path stringByAppendingPathComponent: [NSString stringWithUTF8String: workingData]];
 					if ((handle = tryLoadingInternals(path2)))
 						return handle;
 				} else {
 					if ((handle= tryLoading(path, workingData)))
 						return handle;
 				}
-				path = [pluginDirPath stringByAppendingPathComponent: @(pluginName)];
+				path = [pluginDirPath stringByAppendingPathComponent: [NSString stringWithUTF8String: pluginName]];
 
 				if (((sqSqueakOSXInfoPlistInterface*) gDelegateApp.squeakApplication.infoPlistInterfaceLogic).SqueakPluginsBuiltInOrLocalOnly) {
-					path2 = [path stringByAppendingPathComponent: @(workingData)];
+					path2 = [path stringByAppendingPathComponent: [NSString stringWithUTF8String: workingData]];
 					if ((handle = tryLoadingInternals(path2)))
 						return handle;
 				} else {
@@ -237,9 +243,9 @@ void *ioLoadModuleRaw(char *pluginName)
 						return handle;
 				}
 
-				path = [systemFolder stringByAppendingPathComponent: @(pluginName)];
+				path = [systemFolder stringByAppendingPathComponent: [NSString stringWithUTF8String: pluginName]];
 				if (((sqSqueakOSXInfoPlistInterface*) gDelegateApp.squeakApplication.infoPlistInterfaceLogic).SqueakPluginsBuiltInOrLocalOnly) {
-					path2 = [path stringByAppendingPathComponent: @(workingData)];
+					path2 = [path stringByAppendingPathComponent: [NSString stringWithUTF8String: workingData]];
 					if ((handle = tryLoadingInternals(path2)))
 						return handle;
 				} else {
@@ -253,13 +259,13 @@ void *ioLoadModuleRaw(char *pluginName)
 			return NULL;
 		
 		for (framework= frameworks;  *framework;  ++framework) {
-			path = [[systemFolder stringByAppendingPathComponent: @(*framework)]
-					stringByAppendingPathComponent: @(pluginName)];
+			path = [[systemFolder stringByAppendingPathComponent: [NSString stringWithUTF8String: *framework]]
+					stringByAppendingPathComponent: [NSString stringWithUTF8String: pluginName]];
 			if ((handle= tryLoading(path, pluginName)))
 				return handle;
 			
-			path = [systemFolder stringByAppendingPathComponent: @(*framework)];
-			path = [path stringByAppendingPathComponent: @(pluginName)];
+			path = [systemFolder stringByAppendingPathComponent: [NSString stringWithUTF8String: *framework]];
+			path = [path stringByAppendingPathComponent: [NSString stringWithUTF8String: pluginName]];
 			path = [path stringByAppendingPathExtension: @"framework"];
 			
 			if ((handle= tryLoading(path, pluginName)))
@@ -274,11 +280,18 @@ void *ioLoadModuleRaw(char *pluginName)
 /*  Find a function in a loaded module.  Answer 0 if not found (do NOT
  *  fail the primitive!).
  */
-void *ioFindExternalFunctionIn(char *lookupName, void *moduleHandle)
+#if SPURVM
+void *
+ioFindExternalFunctionInAccessorDepthInto(char *lookupName, void *moduleHandle,
+											sqInt *accessorDepthPtr)
+#else
+void *
+ioFindExternalFunctionIn(char *lookupName, void *moduleHandle)
+#endif
 {
   char buf[NAME_MAX+1];
- 
-  snprintf(buf, sizeof(buf), "%s", lookupName);
+
+  snprintf(buf, sizeof(buf), "%s", lookupName); 
   void *fn = dlsym(moduleHandle, buf);
 
   dprintf((stderr, "ioFindExternalFunctionIn(%s, %ld)\n",lookupName, (long) moduleHandle));
@@ -292,13 +305,29 @@ void *ioFindExternalFunctionIn(char *lookupName, void *moduleHandle)
     fprintf(stderr, "ioFindExternalFunctionIn(%s, %p):\n  %s\n",lookupName, moduleHandle, why);
 	}
 
+#if SPURVM
+  if (fn && accessorDepthPtr) {
+	signed char *accessorDepthVarPtr;
+	snprintf(buf+strlen(buf), sizeof(buf), "AccessorDepth");
+	accessorDepthVarPtr = dlsym(moduleHandle, buf);
+	/* The Slang machinery assumes accessor depth defaults to -1, which
+	 * means "no accessor depth".  It saves space not outputting -1 depths.
+	 */
+	*accessorDepthPtr = accessorDepthVarPtr
+							? *accessorDepthVarPtr
+							: -1;
+  }
+#endif /* SPURVM */
+
   return fn;
 }
+
 
 /*  Free the module with the associated handle.  Answer 0 on error (do
  *  NOT fail the primitive!).
 */
-sqInt ioFreeModule(void *moduleHandle)
+sqInt 
+ioFreeModule(void *moduleHandle)
 {
   int results = dlclose(moduleHandle);
 	

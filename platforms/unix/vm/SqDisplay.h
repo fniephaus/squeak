@@ -7,7 +7,7 @@ extern int    uxDropFileCount;
 extern char **uxDropFileNames;
 
 #define SqDisplayVersionMajor	1
-#define SqDisplayVersionMinor	2
+#define SqDisplayVersionMinor	5
 #define SqDisplayVersion	((SqDisplayVersionMajor << 16) | (SqDisplayVersionMinor))
 
 #if (AVOID_OPENGL_H)
@@ -23,9 +23,9 @@ struct SqDisplay
   char  *(*winSystemName)(void);
   /* window startup/shutown */
   void 	 (*winInit)(void);
-  void 	 (*winOpen)(void);
+  void 	 (*winOpen)(int argc, char *dropFiles[]);
   void 	 (*winSetName)(char *title);
-  int  	 (*winImageFind)(char *imageName, int size);
+  long   (*winImageFind)(char *imageName, int size);
   void 	 (*winImageNotFound)(void);
   void 	 (*winExit)(void);
   /* display primitives */
@@ -51,6 +51,7 @@ struct SqDisplay
   sqInt  (*dndOutStart)(char *types, int ntypes);
   sqInt  (*dndOutAcceptedType)(char *type, int ntype);
   void   (*dndOutSend)(char *bytes, int nbytes);
+  sqInt  (*dndReceived)(char *fileName);
   sqInt  (*ioGetButtonState)(void);
   sqInt  (*ioPeekKeystroke)(void);
   sqInt  (*ioGetKeystroke)(void);
@@ -74,15 +75,25 @@ struct SqDisplay
   sqInt  (*primitivePluginDestroyRequest)(void);
   sqInt  (*primitivePluginRequestState)(void);
   /* host window support */
-  int    (*hostWindowClose)(int index);
-  int    (*hostWindowCreate)(int w, int h, int x, int y, char * list, int attributeListLength);
-  int    (*hostWindowShowDisplay)(unsigned* dispBitsIndex, int width, int height, int depth, int affectedL, int affectedR, int affectedT, int affectedB, int windowIndex);
-  int    (*hostWindowGetSize)(int windowIndex);
-  int    (*hostWindowSetSize)(int windowIndex, int w, int h);
-  int    (*hostWindowGetPosition)(int windowIndex);
-  int    (*hostWindowSetPosition)(int windowIndex, int x, int y);
-  int    (*hostWindowSetTitle)(int windowIndex, char * newTitle, int sizeOfTitle);
-  int    (*hostWindowCloseAll)(void);
+  long    (*hostWindowClose)(long index);
+  long    (*hostWindowCreate)(long w, long h, long x, long y, char * list, long attributeListLength);
+  long    (*hostWindowShowDisplay)(unsigned* dispBitsIndex, long width, long height, long depth, long affectedL, long affectedR, long affectedT, long affectedB, long windowIndex);
+  long    (*hostWindowGetSize)(long windowIndex);
+  long    (*hostWindowSetSize)(long windowIndex, long w, long h);
+  long    (*hostWindowGetPosition)(long windowIndex);
+  long    (*hostWindowSetPosition)(long windowIndex, long x, long y);
+  long    (*hostWindowSetTitle)(long windowIndex, char * newTitle, long sizeOfTitle);
+  long    (*hostWindowCloseAll)(void);
+
+  long    (*ioPositionOfScreenWorkArea)(long windowIndex);
+  long    (*ioSizeOfScreenWorkArea)(long windowIndex);
+  long    (*ioSetCursorPositionXY)(long x, long y);
+
+  void   *(*ioGetWindowHandle)(void);
+  long    (*ioPositionOfNativeDisplay)(void *);
+  long    (*ioSizeOfNativeDisplay)(void *);
+  long    (*ioPositionOfNativeWindow)(void *);
+  long    (*ioSizeOfNativeWindow)(void *);
 };
 
 
@@ -118,6 +129,7 @@ static struct SqDisplay display_##NAME##_itf= {	\
   display_dndOutStart,				\
   display_dndOutAcceptedType,  			\
   display_dndOutSend,				\
+  display_dndReceived,				\
   display_ioGetButtonState,			\
   display_ioPeekKeystroke,			\
   display_ioGetKeystroke,			\
@@ -146,7 +158,15 @@ static struct SqDisplay display_##NAME##_itf= {	\
   display_hostWindowGetPosition,		\
   display_hostWindowSetPosition,		\
   display_hostWindowSetTitle,			\
-  display_hostWindowCloseAll			\
+  display_hostWindowCloseAll,			\
+  display_ioPositionOfScreenWorkArea,	\
+  display_ioSizeOfScreenWorkArea,		\
+  display_ioSetCursorPositionXY,		\
+  display_ioGetWindowHandle,			\
+  display_ioPositionOfNativeDisplay,	\
+  display_ioSizeOfNativeDisplay,	\
+  display_ioPositionOfNativeWindow,	\
+  display_ioSizeOfNativeWindow	\
 }
 
 

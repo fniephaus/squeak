@@ -468,7 +468,7 @@ int ioMicroMSecs(void) {
 	return (microTicks.lo / 1000) + (microTicks.hi * 4294967);
 }
 
-int ioMSecs(void) {
+sqInt ioMSecs(void) {
 	/* return a time in milliseconds for use in Delays and Time millisecondClockValue */
 	/* Note: This was once a macro based on clock(); it now uses the microsecond clock for
 	   greater resolution. See the comment in ioMicroMSecs(). */
@@ -879,13 +879,6 @@ dir_SetMacFileTypeAndCreator(char *filename, int filenameSize,
   char *fType, char *fCreator)												DO_NOTHING
 int dir_Delete(char *pathString, int pathStringLength)						STUBBED_OUT
 
-/*** Profiling Stubs ***/
-
-int clearProfile(void)														STUBBED_OUT
-int dumpProfile(void)														STUBBED_OUT
-int startProfiling(void)													STUBBED_OUT
-int stopProfiling(void)														STUBBED_OUT
-
 /*** External Primitive Support (No-ops) ***/
 
 int ioLoadModule(char *pluginName) { return 0; }
@@ -941,7 +934,7 @@ void main(void) {
 		printf("Aborting...\n");
 		ioExit();
 	}
-	readImageFromFileHeapSize(f, availableMemory);
+	readImageFromFileHeapSizeStartingAt(f, availableMemory, 0);
 	sqImageFileClose(f);
 
 	/* run Squeak */

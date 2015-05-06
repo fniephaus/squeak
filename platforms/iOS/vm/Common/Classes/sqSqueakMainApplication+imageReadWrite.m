@@ -38,22 +38,49 @@
 
 #import "sqSqueakMainApplication+imageReadWrite.h"
 #import "sqMacV2Memory.h"
+#ifdef SPURVM
+#  include <sys/stat.h>
+#endif
 
 @implementation sqSqueakMainApplication (imageReadWrite) 
 - (void) findImageViaBundleOrPreferences {
 }
 
 - (BOOL) readImageIntoMemory {
-			@autoreleasepool {
+	NSAutoreleasePool * pool = [NSAutoreleasePool new];
 	const char * characterPathForImage = (const char *) [[NSFileManager defaultManager] fileSystemRepresentationWithPath: [self.imageNameURL path]];
 	sqImageFile f;
+
+ 
 	if (!characterPathForImage)  {
+		[pool drain];
 		return NO;
 	}
+
 	f = sqImageFileOpen(characterPathForImage, "rb");
-	readImageFromFileHeapSizeStartingAt(f, sqGetAvailableMemory(), (squeakFileOffsetType) 0);  //This is a VM Callback
+	if (f == 0) {
+		fprintf(stderr, "Failed to open image named %s", characterPathForImage);
+		exit(-1);
+	}
+
+#ifdef SPURVM
+    extern sqInt highBit(usqInt);
+    usqInt memory = 0;
+    {
+        struct stat sb;
+        stat(characterPathForImage, &sb);
+
+        off_t size = (long)sb.st_size;
+        size = 1 << highBit(size-1);
+        size = size + size / 4;
+        memory =  size + size / 4;
+    }
+#else
+    usqInt memory = sqGetAvailableMemory();
+#endif
+	readImageFromFileHeapSizeStartingAt(f, memory, (squeakFileOffsetType) 0);  //This is a VM Callback
 	sqImageFileClose(f);
+	[pool drain];
 	return YES;
-            }
 }
 @end

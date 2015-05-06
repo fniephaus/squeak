@@ -42,7 +42,6 @@
 #import "sqMacV2Browser.h"
 #import "sqSqueakOSXInfoPlistInterface.h"
 #import "keyBoardStrokeDetails.h"
-#import "sqSqueakOSXNSView.h"
 #import "sqMacHostWindow.h"
 
 extern struct	VirtualMachine* interpreterProxy;
@@ -107,14 +106,25 @@ static int buttonState=0;
 
 @implementation sqSqueakOSXApplication (events) 
 
-- (void) pumpRunLoop {
-	[super pumpRunLoop];
-	
-	 NSEvent *event;
-	 while ((event = [NSApp nextEventMatchingMask: NSAnyEventMask untilDate: nil inMode: NSEventTrackingRunLoopMode dequeue: YES]))
-		 [NSApp sendEvent: event];
-	
-	
+- (void) pumpRunLoopEventSendAndSignal:(BOOL)signal {
+    NSEvent *event;
+    
+    while ((event = [NSApp
+                        nextEventMatchingMask:NSAnyEventMask
+                        untilDate:nil 
+                        inMode:NSEventTrackingRunLoopMode 
+                        dequeue:YES])) {
+
+        [NSApp sendEvent: event];
+        if (signal) {
+            interpreterProxy->signalSemaphoreWithIndex(gDelegateApp.squeakApplication.inputSemaphoreIndex);
+        }
+    }
+}
+
+- (void) pumpRunLoop {	
+    [super pumpRunLoop]; 
+    [self pumpRunLoopEventSendAndSignal:NO];
 	/* 
 	 http://www.cocoabuilder.com/archive/cocoa/228473-receiving-user-events-from-within-an-nstimer-callback.html
 	 The reason you have to do this and can't just run the runloop is
@@ -136,8 +146,8 @@ static int buttonState=0;
 }
 
 - (void ) processAsOldEventOrComplexEvent: (id) event placeIn: (sqInputEvent *) evt {
-	if ([event[0] intValue] == 1) {
-		[(NSData *)event[1] getBytes: evt length: sizeof(sqInputEvent)];
+	if ([[event objectAtIndex: 0] intValue] == 1) {
+		[(NSData *)[event objectAtIndex: 1] getBytes: evt length: sizeof(sqInputEvent)];
 		if (evt->type == EventTypeKeyboard) {
 //			NSLog(@"keyboard pc %i cc %i uc %i m %i",((sqKeyboardEvent *)evt)->pressCode,((sqKeyboardEvent *) evt)->charCode,((sqKeyboardEvent *) evt)->utf32Code,((sqKeyboardEvent *) evt)->modifiers);
 		}
@@ -146,13 +156,16 @@ static int buttonState=0;
 }
 
 - (void) pushEventToQueue: (sqInputEvent *) evt {	
-    NSMutableArray* data = [NSMutableArray arrayWithCapacity: 2];
-	[data addObject: @1];
+	NSMutableArray* data = [NSMutableArray new];
+
+//	NSLog(@"sqSqueakOSXApplication+events.m>>pushEventToQueue:");
+	[data addObject: [NSNumber numberWithInteger: 1]];
 	[data addObject: [NSData  dataWithBytes:(const void *) evt length: sizeof(sqInputEvent)]];
 	[eventQueue addItem: data];
+	[data release];	
 }
 
-- (void) recordCharEvent:(NSString *) unicodeString fromView: (sqSqueakOSXNSView *) mainView {
+- (void) recordCharEvent:(NSString *) unicodeString fromView: (NSView<sqSqueakOSXView> *) mainView {
 	sqKeyboardEvent evt;
 	unichar unicode;
 	unsigned char macRomanCharacter;
@@ -160,6 +173,7 @@ static int buttonState=0;
 	NSRange picker;
 	NSUInteger totaLength;
 	
+//	NSLog(@"sqSqueakOSXApplication+events>>recordCharEvent:fromView:");
 	evt.type = EventTypeKeyboard;
 	evt.timeStamp = (int) ioMSecs();
 	picker.location = 0;
@@ -170,9 +184,9 @@ static int buttonState=0;
 		
 		unicode = [unicodeString characterAtIndex: i];
 		
-		if (mainView.lastSeenKeyBoardStrokeDetails) {
-			evt.modifiers = [self translateCocoaModifiersToSqueakModifiers: mainView.lastSeenKeyBoardStrokeDetails.modifierFlags];
-			evt.charCode = mainView.lastSeenKeyBoardStrokeDetails.keyCode;
+		if ([mainView lastSeenKeyBoardStrokeDetails]) {
+			evt.modifiers = [self translateCocoaModifiersToSqueakModifiers: [[mainView lastSeenKeyBoardStrokeDetails] modifierFlags]];
+			evt.charCode = [[mainView lastSeenKeyBoardStrokeDetails] keyCode];
 		} else {
 			evt.modifiers = 0;
 			evt.charCode = 0;
@@ -188,12 +202,13 @@ static int buttonState=0;
 		NSString *lookupString = [[NSString alloc] initWithCharacters: &unicode length: 1];
 		[lookupString getBytes: &macRomanCharacter maxLength: 1 usedLength: NULL encoding: NSMacOSRomanStringEncoding
 					   options: 0 range: picker remainingRange: NULL];
+		[lookupString release];
 		
 		evt.pressCode = EventKeyDown;
 		unsigned short keyCodeRemembered = evt.charCode;
 		evt.utf32Code = 0;
 		evt.reserved1 = 0;
-		evt.windowIndex = (int)  mainView.windowLogic.windowIndex;
+		evt.windowIndex = (int)[[mainView windowLogic] windowIndex];
 		[self pushEventToQueue: (sqInputEvent *)&evt];
 		
 		evt.charCode =	macRomanCharacter;
@@ -203,7 +218,7 @@ static int buttonState=0;
 		
 		[self pushEventToQueue: (sqInputEvent *) &evt];
 		
-		if (i > 1 || !mainView.lastSeenKeyBoardStrokeDetails) {
+		if (i > 1 || ![mainView lastSeenKeyBoardStrokeDetails]) {
 			evt.pressCode = EventKeyUp;
 			evt.charCode = keyCodeRemembered;
 			evt.utf32Code = 0;
@@ -215,7 +230,23 @@ static int buttonState=0;
 
 }
 
-- (void) recordKeyUpEvent:(NSEvent *)theEvent fromView: (sqSqueakOSXNSView*) aView {
+- (void) recordKeyDownEvent:(NSEvent *)theEvent fromView: (NSView<sqSqueakOSXView>*) aView {
+	sqKeyboardEvent evt;
+	
+	evt.type = EventTypeKeyboard;
+	evt.timeStamp = (int) ioMSecs();
+	evt.charCode =	[theEvent keyCode];
+	evt.pressCode = EventKeyDown;
+	evt.modifiers = [self translateCocoaModifiersToSqueakModifiers: [theEvent modifierFlags]];
+	evt.utf32Code = 0;
+	evt.reserved1 = 0;
+	evt.windowIndex = (int)[[aView windowLogic] windowIndex];
+	[self pushEventToQueue: (sqInputEvent *) &evt];
+
+	interpreterProxy->signalSemaphoreWithIndex(gDelegateApp.squeakApplication.inputSemaphoreIndex);
+}
+
+- (void) recordKeyUpEvent:(NSEvent *)theEvent fromView: (NSView<sqSqueakOSXView>*) aView {
 	sqKeyboardEvent evt;
 	
 	evt.type = EventTypeKeyboard;
@@ -225,13 +256,13 @@ static int buttonState=0;
 	evt.modifiers = [self translateCocoaModifiersToSqueakModifiers: [theEvent modifierFlags]];
 	evt.utf32Code = 0;
 	evt.reserved1 = 0;
-	evt.windowIndex = (int) aView.windowLogic.windowIndex;
+	evt.windowIndex = (int)[[aView windowLogic] windowIndex];
 	[self pushEventToQueue: (sqInputEvent *) &evt];
 
 	interpreterProxy->signalSemaphoreWithIndex(gDelegateApp.squeakApplication.inputSemaphoreIndex);
 }
 
-- (void) recordMouseEvent:(NSEvent *)theEvent fromView: (sqSqueakOSXNSView *) aView{
+- (void) recordMouseEvent:(NSEvent *)theEvent fromView: (NSView<sqSqueakOSXView> *) aView{
 	sqMouseEvent evt;
 	
 	evt.type = EventTypeMouse;
@@ -245,29 +276,29 @@ static int buttonState=0;
 	int buttonAndModifiers = [self mapMouseAndModifierStateToSqueakBits: theEvent];
 	evt.buttons = buttonAndModifiers & 0x07;
 	evt.modifiers = buttonAndModifiers >> 3;
-#if COGVM
+#if COGVM | STACKVM
 	evt.nrClicks = 0;
 #else
 	evt.reserved1 = 0;
 #endif 
-	evt.windowIndex = (int) aView.windowLogic.windowIndex;
+	evt.windowIndex = (int) [[aView windowLogic] windowIndex];
 	
 	[self pushEventToQueue:(sqInputEvent *) &evt];
 //NSLog(@"mouse hit x %i y %i buttons %i mods %i",evt.x,evt.y,evt.buttons,evt.modifiers);
 	interpreterProxy->signalSemaphoreWithIndex(gDelegateApp.squeakApplication.inputSemaphoreIndex);
 }
 						   
-- (void) recordWheelEvent:(NSEvent *) theEvent fromView: (sqSqueakOSXNSView *) aView{
+- (void) recordWheelEvent:(NSEvent *) theEvent fromView: (NSView<sqSqueakOSXView> *) aView{
 		
 	[self recordMouseEvent: theEvent fromView: aView];
 	CGFloat x = [theEvent deltaX];
 	CGFloat y = [theEvent deltaY];
 
 	if (x != 0.0f) {
-		[self fakeMouseWheelKeyboardEventsKeyCode: (x < 0 ? 124 : 123) ascii: (x < 0 ? 29 : 28) windowIndex:  (int) aView.windowLogic.windowIndex];
+		[self fakeMouseWheelKeyboardEventsKeyCode: (x < 0 ? 124 : 123) ascii: (x < 0 ? 29 : 28) windowIndex:(int)[[aView windowLogic] windowIndex]];
 	}
 	if (y != 0.0f) {
-		[self fakeMouseWheelKeyboardEventsKeyCode: (y < 0 ? 125 : 126) ascii: (y < 0 ? 31 : 30) windowIndex: (int) aView.windowLogic.windowIndex];
+		[self fakeMouseWheelKeyboardEventsKeyCode: (y < 0 ? 125 : 126) ascii: (y < 0 ? 31 : 30) windowIndex:(int)[[aView windowLogic] windowIndex]];
 	}
 }
 		  
@@ -373,9 +404,11 @@ static int buttonState=0;
 	return buttonState;
 }
 
-- (void) recordDragEvent: (int) dragType numberOfFiles: (int) numFiles where: (NSPoint) local_point windowIndex: (sqInt) windowIndex {
+- (void) recordDragEvent:(int)dragType numberOfFiles:(int)numFiles where:(NSPoint)point windowIndex:(sqInt)windowIndex view:(NSView *)aView{
 	sqDragDropFilesEvent evt;
 	
+    NSPoint local_point = [aView convertPoint:point fromView:nil];
+    
 	evt.type= EventTypeDragDropFiles;
 	evt.timeStamp= (int) ioMSecs();
 	evt.dragType= dragType;

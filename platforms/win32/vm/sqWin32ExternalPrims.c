@@ -6,7 +6,6 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id$
 *
 *   NOTES:
 *     1) Currently, we're looking for DLLs named either sample.dll or sample32.dll
@@ -26,10 +25,12 @@ HANDLE tryLoading(TCHAR *prefix, TCHAR *baseName, TCHAR *postfix)
   lstrcat(libName,baseName);
   lstrcat(libName,postfix);
   h = LoadLibrary(libName);
-#ifndef NDEBUG
-  if(h == NULL)
-    printLastError(TEXT("LoadLibrary failed"));
+  if (h == NULL
+#ifdef NDEBUG /* in production ignore errors for non-existent modules */
+   && GetLastError() != ERROR_MOD_NOT_FOUND
 #endif
+      )
+    vprintLastError(TEXT("LoadLibrary(%s)"), libName);
   return h;
 }
 
@@ -60,14 +61,48 @@ void *ioLoadModule(char *pluginName)
 	return 0;
 }
 
-void *ioFindExternalFunctionIn(char *lookupName, void *moduleHandle)
+#if SPURVM
+void *
+ioFindExternalFunctionInAccessorDepthInto(char *lookupName, void *moduleHandle,
+											sqInt *accessorDepthPtr)
 {
-#ifdef UNICODE
-	return GetProcAddress((HANDLE)moduleHandle, toUnicode(lookupName));
-#else
-	return GetProcAddress((HANDLE)moduleHandle, lookupName);
-#endif
+	void *f;
+	char buffer[256];
+
+# ifdef UNICODE
+	f = GetProcAddress(moduleHandle, toUnicode(lookupName));
+# else
+	f = GetProcAddress(moduleHandle, lookupName);
+# endif
+	if (f && accessorDepthPtr) {
+		void *accessorDepthVarPtr;
+		snprintf(buffer,256,"%sAccessorDepth",lookupName);
+		accessorDepthVarPtr =
+# ifdef UNICODE
+		accessorDepthVarPtr = GetProcAddress(moduleHandle, toUnicode(buffer));
+# else
+		accessorDepthVarPtr = GetProcAddress(moduleHandle, buffer);
+# endif
+		/* The Slang machinery assumes accessor depth defaults to -1, which
+		 * means "no accessor depth".  It saves space not outputting -1 depths.
+		 */
+		*accessorDepthPtr = accessorDepthVarPtr
+								? *(signed char *)accessorDepthVarPtr
+								: -1;
+	}
+	return f;
 }
+#else /* SPURVM */
+void *
+ioFindExternalFunctionIn(char *lookupName, void *moduleHandle)
+{
+# ifdef UNICODE
+	return GetProcAddress((HANDLE)moduleHandle, toUnicode(lookupName));
+# else
+	return GetProcAddress((HANDLE)moduleHandle, lookupName);
+# endif
+}
+#endif /* SPURVM */
 
 sqInt ioFreeModule(void *moduleHandle)
 {

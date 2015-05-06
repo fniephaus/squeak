@@ -8,12 +8,12 @@
  *   
  *   This file is part of Unix Squeak.
  * 
- *   Permission is hereby granted, free of charge, to any person obtaining a copy
- *   of this software and associated documentation files (the "Software"), to deal
- *   in the Software without restriction, including without limitation the rights
- *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *   copies of the Software, and to permit persons to whom the Software is
- *   furnished to do so, subject to the following conditions:
+ *   Permission is hereby granted, free of charge, to any person obtaining a
+ *   copy of this software and associated documentation files (the "Software"),
+ *   to deal in the Software without restriction, including without limitation
+ *   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *   and/or sell copies of the Software, and to permit persons to whom the
+ *   Software is furnished to do so, subject to the following conditions:
  * 
  *   The above copyright notice and this permission notice shall be included in
  *   all copies or substantial portions of the Software.
@@ -22,14 +22,27 @@
  *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *   SOFTWARE.
- * 
- * Last edited: 2009-10-20 19:42:22 by piumarta on emilia-2.local
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *   DEALINGS IN THE SOFTWARE.
  */
 
-/* Note:
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+
+#include "sq.h"
+#include "sqMemoryAccess.h"
+#include "config.h"
+#include "debug.h"
+
+#if !SPURVM /* Spur uses sqUnixSpurMemory.c */
+void *uxAllocateMemory(usqInt minHeapSize, usqInt desiredHeapSize);
+
+/* Note: 
  * 
  *   The code allows memory to be overallocated; i.e., the initial
  *   block is reserved via mmap() and then the unused portion
@@ -47,21 +60,17 @@
  *   option to allocate a fixed size heap.
  */
 
+char *uxGrowMemoryBy(char *oldLimit, sqInt delta);
+char *uxShrinkMemoryBy(char *oldLimit, sqInt delta);
+sqInt uxMemoryExtraBytesLeft(sqInt includingSwap);
 
-#include "sq.h"
-#include "sqMemoryAccess.h"
-#include "config.h"
-#include "debug.h"
+static int	    pageSize = 0;
+static unsigned int pageMask = 0;
+int mmapErrno = 0;
 
 #if defined(HAVE_MMAP)
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/mman.h>
 #include <fcntl.h>
-#include <assert.h>
 
 #if !defined(MAP_ANON)
 # if defined(MAP_ANONYMOUS)
@@ -75,11 +84,12 @@
 #define MAP_FLAGS	(MAP_ANON | MAP_PRIVATE)
 
 extern int useMmap;
-
-void *uxAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize);
-char *uxGrowMemoryBy(char *oldLimit, sqInt delta);
-char *uxShrinkMemoryBy(char *oldLimit, sqInt delta);
-sqInt uxMemoryExtraBytesLeft(sqInt includingSwap);
+/* Since Cog needs to make memory executable via mprotect, and since mprotect
+ * only works on mmapped memory we must always use mmap in Cog.
+ */
+#if COGVM
+# define ALWAYS_USE_MMAP 1
+#endif
 
 #if defined(SQ_IMAGE32) && defined(SQ_HOST64)
 char *sqMemoryBase= (char *)-1;
@@ -93,9 +103,6 @@ static char *heap	=  0;
 static int   heapSize	=  0;
 static int   heapLimit	=  0;
 
-static int	    pageSize = 0;
-static unsigned int pageMask = 0;
-
 #define valign(x)	((x) & pageMask)
 
 static int min(int x, int y) { return (x < y) ? x : y; }
@@ -104,50 +111,58 @@ static int max(int x, int y) { return (x > y) ? x : y; }
 
 /* answer the address of (minHeapSize <= N <= desiredHeapSize) bytes of memory. */
 
-void *uxAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize)
+#if SPURVM
+void *
+uxAllocateMemory(usqInt minHeapSize, usqInt desiredHeapSize)
 {
+	if (heap) {
+		fprintf(stderr, "uxAllocateMemory: already called\n");
+		exit(1);
+	}
+	pageSize= getpagesize();
+	pageMask= ~(pageSize - 1);
+#else /* SPURVM */
+void *uxAllocateMemory(usqInt minHeapSize, usqInt desiredHeapSize)
+{
+# if !ALWAYS_USE_MMAP
   if (!useMmap)
     return malloc(desiredHeapSize);
+# endif
 
-  if (heap)
-    {
+  if (heap) {
       fprintf(stderr, "uxAllocateMemory: already called\n");
       exit(1);
-    }
+  }
   pageSize= getpagesize();
   pageMask= ~(pageSize - 1);
 
-  debugf(("uxAllocateMemory: pageSize 0x%x (%d), mask 0x%x\n", pageSize, pageSize, pageMask));
+  DPRINTF(("uxAllocateMemory: pageSize 0x%x (%d), mask 0x%x\n", pageSize, pageSize, pageMask));
 
-#if (!MAP_ANON)
-  if ((devZero= open("/dev/zero", O_RDWR)) < 0)
-    {
+# if (!MAP_ANON)
+  if ((devZero= open("/dev/zero", O_RDWR)) < 0) {
       perror("uxAllocateMemory: /dev/zero");
       return 0;
-    }
-#endif
+  }
+# endif
 
-  debugf(("uxAllocateMemory: /dev/zero descriptor %d\n", devZero));
-  debugf(("uxAllocateMemory: min heap %d, desired %d\n", minHeapSize, desiredHeapSize));
+  DPRINTF(("uxAllocateMemory: /dev/zero descriptor %d\n", devZero));
+  DPRINTF(("uxAllocateMemory: min heap %d, desired %d\n", minHeapSize, desiredHeapSize));
 
   heapLimit= valign(max(desiredHeapSize, useMmap));
 
-  while ((!heap) && (heapLimit >= minHeapSize))
-    {
-      debugf(("uxAllocateMemory: mapping 0x%08x bytes (%d Mbytes)\n", heapLimit, heapLimit >> 20));
-      if (MAP_FAILED == (heap= mmap(0, heapLimit, MAP_PROT, MAP_FLAGS, devZero, 0)))
-	{
+  while ((!heap) && (heapLimit >= minHeapSize)) {
+      DPRINTF(("uxAllocateMemory: mapping 0x%08x bytes (%d Mbytes)\n", heapLimit, heapLimit >> 20));
+      if (MAP_FAILED == (heap= mmap(0, heapLimit, MAP_PROT, MAP_FLAGS, devZero, 0))) {
 	  heap= 0;
 	  heapLimit= valign(heapLimit / 4 * 3);
 	}
-    }
+  }
 
-  if (!heap)
-    {
+  if (!heap) {
       fprintf(stderr, "uxAllocateMemory: failed to allocate at least %lld bytes)\n", (long long)minHeapSize);
       useMmap= 0;
       return malloc(desiredHeapSize);
-    }
+  }
 
   heapSize= heapLimit;
 
@@ -156,7 +171,11 @@ void *uxAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize)
 
   return heap;
 }
+#endif /* SPURVM */
 
+
+static int log_mem_delta = 0;
+#define MDPRINTF(foo) if (log_mem_delta) DPRINTF(foo); else 0
 
 /* grow the heap by delta bytes.  answer the new end of memory. */
 
@@ -166,22 +185,17 @@ char *uxGrowMemoryBy(char *oldLimit, sqInt delta)
     {
       int newSize=  min(valign(oldLimit - heap + delta), heapLimit);
       int newDelta= newSize - heapSize;
-      if (newSize < 0)
-	{
-	  /* requested size too large */
-	  return oldLimit;
-	}
-      debugf(("uxGrowMemory: %p By: %d(%d) (%d -> %d)\n", oldLimit, newDelta, delta, heapSize, newSize));
+      MDPRINTF(("uxGrowMemory: %p By: %d(%d) (%d -> %d)\n", oldLimit, newDelta, delta, heapSize, newSize));
       assert(0 == (newDelta & ~pageMask));
       assert(0 == (newSize  & ~pageMask));
       assert(newDelta >= 0);
       if (newDelta)
 	{
-	  debugf(("was: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
+	  MDPRINTF(("was: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
 	  if (overallocateMemory)
 	    {
 	      char *base= heap + heapSize;
-	      debugf(("remap: %p + 0x%x (%d)\n", base, newDelta, newDelta));
+	      MDPRINTF(("remap: %p + 0x%x (%d)\n", base, newDelta, newDelta));
 	      if (MAP_FAILED == mmap(base, newDelta, MAP_PROT, MAP_FLAGS | MAP_FIXED, devZero, heapSize))
 		{
 		  perror("mmap");
@@ -189,7 +203,7 @@ char *uxGrowMemoryBy(char *oldLimit, sqInt delta)
 		}
 	    }
 	  heapSize += newDelta;
-	  debugf(("now: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
+	  MDPRINTF(("now: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
 	  assert(0 == (heapSize  & ~pageMask));
 	}
       return heap + heapSize;
@@ -206,17 +220,17 @@ char *uxShrinkMemoryBy(char *oldLimit, sqInt delta)
     {
       int newSize=  max(0, valign((char *)oldLimit - heap - delta));
       int newDelta= heapSize - newSize;
-      debugf(("uxGrowMemory: %p By: %d(%d) (%d -> %d)\n", oldLimit, newDelta, delta, heapSize, newSize));
+      MDPRINTF(("uxGrowMemory: %p By: %d(%d) (%d -> %d)\n", oldLimit, newDelta, delta, heapSize, newSize));
       assert(0 == (newDelta & ~pageMask));
       assert(0 == (newSize  & ~pageMask));
       assert(newDelta >= 0);
       if (newDelta)
 	{
-	  debugf(("was: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
+	  MDPRINTF(("was: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
 	  if (overallocateMemory)
 	    {
 	      char *base= heap + heapSize - newDelta;
-	      debugf(("unmap: %p + 0x%x (%d)\n", base, newDelta, newDelta));
+	      MDPRINTF(("unmap: %p + 0x%x (%d)\n", base, newDelta, newDelta));
 	      if (munmap(base, newDelta) < 0)
 		{
 		  perror("unmap");
@@ -224,7 +238,7 @@ char *uxShrinkMemoryBy(char *oldLimit, sqInt delta)
 		}
 	    }
 	  heapSize -= newDelta;
-	  debugf(("now: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
+	  MDPRINTF(("now: %p %p %p = 0x%x (%d) bytes\n", heap, heap + heapSize, heap + heapLimit, heapSize, heapSize));
 	  assert(0 == (heapSize  & ~pageMask));
 	}
       return heap + heapSize;
@@ -241,20 +255,38 @@ sqInt uxMemoryExtraBytesLeft(sqInt includingSwap)
 }
 
 
-#else  /* !HAVE_MMAP */
+#else  /* HAVE_MMAP */
 
+# if COG
+void *
+uxAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize)
+{
+	if (pageMask) {
+		fprintf(stderr, "uxAllocateMemory: already called\n");
+		exit(1);
+	}
+	pageSize = getpagesize();
+	pageMask = ~(pageSize - 1);
+#	if SPURVM
+	return malloc(desiredHeapSize);
+#	else
+	return malloc(desiredHeapSize);
+#	endif
+}
+# else /* COG */
 void *uxAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize)	{ return malloc(desiredHeapSize); }
+# endif /* COG */
 char *uxGrowMemoryBy(char * oldLimit, sqInt delta)			{ return oldLimit; }
 char *uxShrinkMemoryBy(char *oldLimit, sqInt delta)			{ return oldLimit; }
 sqInt uxMemoryExtraBytesLeft(sqInt includingSwap)			{ return 0; }
 
-#endif
+#endif /* HAVE_MMAP */
 
 
 
 #if defined(SQ_IMAGE32) && defined(SQ_HOST64)
 
-sqInt sqAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize)
+usqInt sqAllocateMemory(usqInt minHeapSize, usqInt desiredHeapSize)
 {
   sqMemoryBase= uxAllocateMemory(minHeapSize, desiredHeapSize);
   if (!sqMemoryBase) return 0;
@@ -279,18 +311,46 @@ sqInt sqMemoryExtraBytesLeft(sqInt includingSwap)
 
 #else
 
-sqInt sqAllocateMemory(sqInt minHeapSize, sqInt desiredHeapSize)	{ return (sqInt)(long)uxAllocateMemory(minHeapSize, desiredHeapSize); }
+usqInt sqAllocateMemory(usqInt minHeapSize, usqInt desiredHeapSize)	{ return (sqInt)(long)uxAllocateMemory(minHeapSize, desiredHeapSize); }
 sqInt sqGrowMemoryBy(sqInt oldLimit, sqInt delta)			{ return (sqInt)(long)uxGrowMemoryBy((char *)(long)oldLimit, delta); }
 sqInt sqShrinkMemoryBy(sqInt oldLimit, sqInt delta)			{ return (sqInt)(long)uxShrinkMemoryBy((char *)(long)oldLimit, delta); }
 sqInt sqMemoryExtraBytesLeft(sqInt includingSwap)			{ return uxMemoryExtraBytesLeft(includingSwap); }
 
 #endif
 
+#define roundDownToPage(v) ((v)&pageMask)
+#define roundUpToPage(v) (((v)+pageSize-1)&pageMask)
+#if COGVM
+void
+sqMakeMemoryExecutableFromTo(unsigned long startAddr, unsigned long endAddr)
+{
+	unsigned long firstPage = roundDownToPage(startAddr);
+	if (mprotect((void *)firstPage,
+				 endAddr - firstPage + 1,
+				 PROT_READ | PROT_WRITE | PROT_EXEC) < 0)
+		perror("mprotect(x,y,PROT_READ | PROT_WRITE | PROT_EXEC)");
+}
 
+void
+sqMakeMemoryNotExecutableFromTo(unsigned long startAddr, unsigned long endAddr)
+{
+# if 0
+	unsigned long firstPage = roundDownToPage(startAddr);
+	/* Arguably this is pointless since allocated memory always does include
+	 * write permission.  Annoyingly the mprotect call fails on both linux &
+	 * mac os x.  So make the whole thing a nop.
+	 */
+	if (mprotect((void *)firstPage,
+				 endAddr - firstPage + 1,
+				 PROT_READ | PROT_WRITE) < 0)
+		perror("mprotect(x,y,PROT_READ | PROT_WRITE)");
+# endif
+}
+#endif /* COGVM */
 
-#if defined(TEST_MEMORY)
+# if defined(TEST_MEMORY)
 
-#define MBytes	*1024*1024
+# define MBytes	*1024*1024
 
 int main()
 {
@@ -305,4 +365,5 @@ int main()
   return 0;
 }
 
-#endif /* defined(TEST_MEMORY) */
+# endif /* defined(TEST_MEMORY) */
+#endif /* !SPURVM */

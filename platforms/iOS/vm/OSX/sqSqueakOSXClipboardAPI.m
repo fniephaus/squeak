@@ -45,22 +45,22 @@ extern SqueakOSXAppDelegate *gDelegateApp;
 
 /* Clipboard (cut/copy/paste). */
 sqInt clipboardSize(void) {
-	@autoreleasepool {
-		sqInt value = [(sqSqueakOSXApplication *)gDelegateApp.squeakApplication clipboardSize];
-		return value;
-	}
+	NSAutoreleasePool * pool = [NSAutoreleasePool new];
+	sqInt value = [(sqSqueakOSXApplication *)gDelegateApp.squeakApplication clipboardSize];
+	[pool drain];
+	return value;
 }
 
 sqInt clipboardReadIntoAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex){
-	@autoreleasepool {
-		[(sqSqueakOSXApplication *)gDelegateApp.squeakApplication clipboardRead: count into: (char *) pointerForOop((usqInt)byteArrayIndex)  startingAt: startIndex];
-	}
+	NSAutoreleasePool * pool = [NSAutoreleasePool new];
+	[(sqSqueakOSXApplication *)gDelegateApp.squeakApplication clipboardRead: count into: (char *) pointerForOop((usqInt)byteArrayIndex)  startingAt: startIndex];
+	[pool drain];
 	return 0;
 }
 
 sqInt clipboardWriteFromAt(sqInt count, sqInt byteArrayIndex, sqInt startIndex){
-	@autoreleasepool {
-		[(sqSqueakOSXApplication *)gDelegateApp.squeakApplication clipboardWrite: count from: (char *)pointerForOop((usqInt)byteArrayIndex)  startingAt: startIndex];
-	}
+	NSAutoreleasePool * pool = [NSAutoreleasePool new];
+	[(sqSqueakOSXApplication *)gDelegateApp.squeakApplication clipboardWrite: count from: (char *)pointerForOop((usqInt)byteArrayIndex)  startingAt: startIndex];
+	[pool drain];
 	return 0;
 }

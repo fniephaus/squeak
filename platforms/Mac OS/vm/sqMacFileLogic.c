@@ -6,7 +6,7 @@
 *   AUTHOR:  John McIntosh,Karl Goiser, and others.
 *   ADDRESS: 
 *   EMAIL:   johnmci@smalltalkconsulting.com
-*   RCSID:   $Id$
+*   RCSID:   $Id: sqMacFileLogic.c 1289 2006-01-09 04:03:26Z johnmci $
 *
 *   NOTES: See change log below.
 *	11/01/2001 JMM Consolidation of fsspec handling for os-x FSRef transition.
@@ -49,7 +49,7 @@ Also if you attempt to use Apple's StdClib it wants posix names, sigh...
 
 #include "sq.h"
 #include "sqVirtualMachine.h"
-#include "sqMacFileLogic.h"	
+#include "sqMacUnixFileInterface.h"	
 
 static void resolveLongName(short vRefNum, long parID, unsigned char *shortFileName,FSSpec *possibleSpec,Boolean isFolder,Str255 *name,squeakFileOffsetType *sizeOfFile);
 static int fetchFileSpec(FSSpec *spec,unsigned char *name,long *parentDirectory);

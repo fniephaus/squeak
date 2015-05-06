@@ -40,7 +40,7 @@ static struct SqDisplay	*dpy= 0;
 /* closeWindow: arg is int windowIndex. Fail (return 0) if anything goes wrong
  * - typically the windowIndex invalid or similar
  */
-sqInt closeWindow(sqInt index)
+int closeWindow(int index)
 {
   if (noDisplay)
     return 0;
@@ -55,8 +55,8 @@ sqInt closeWindow(sqInt index)
  * windows already extant (platform dependant), the specified size being
  * unreasonable etc.
  */
-sqInt createWindowWidthheightoriginXyattrlength(
-	sqInt w, sqInt h, sqInt x, sqInt y, char *list, sqInt attributeListLength)
+int createWindowWidthheightoriginXyattrlength(
+	int w, int h, int x, int y, char *list, int attributeListLength)
 {
   if (noDisplay)
     return 0;
@@ -88,7 +88,7 @@ sqInt ioShowDisplayOnWindow(
  * -1 is chosen since itwould correspond to a window size of 64k@64k which
  * I hope is unlikely for some time to come
  */
-sqInt ioSizeOfWindow(sqInt windowIndex)
+int ioSizeOfWindow(int windowIndex)
 {
   if (noDisplay)
     return -1;
@@ -101,7 +101,7 @@ sqInt ioSizeOfWindow(sqInt windowIndex)
  * width / height to make the window. Return the actual size the OS
  * produced in (width<<16 || height) format or -1 for failure as above.
  */
-sqInt ioSizeOfWindowSetxy(sqInt windowIndex, sqInt w, sqInt h)
+int ioSizeOfWindowSetxy(int windowIndex, int w, int h)
 {
   if (noDisplay)
     return -1;
@@ -114,7 +114,7 @@ sqInt ioSizeOfWindowSetxy(sqInt windowIndex, sqInt w, sqInt h)
  * window in (left<<16 || top) format like ioScreenSize.
  * Return -1 (as above) for failure - typically invalid windowIndex
  */
-sqInt ioPositionOfWindow(sqInt windowIndex)
+int ioPositionOfWindow(int windowIndex)
 {
   if (noDisplay)
     return -1;
@@ -127,7 +127,7 @@ sqInt ioPositionOfWindow(sqInt windowIndex)
  * origin x/y for the window. Return the actual origin the OS
  * produced in (left<<16 || top) format or -1 for failure, as above
  */
-sqInt ioPositionOfWindowSetxy(sqInt windowIndex, sqInt x, sqInt y)
+int ioPositionOfWindowSetxy(int windowIndex, int x, int y)
 {
   if (noDisplay)
     return -1;
@@ -140,7 +140,7 @@ sqInt ioPositionOfWindowSetxy(sqInt windowIndex, sqInt x, sqInt y)
  * int size of new title. Fail with -1 if windowIndex is invalid, string is too
  * long for platform etc. Leave previous title in place on failure
  */
-sqInt ioSetTitleOfWindow(sqInt windowIndex, char *newTitle, sqInt sizeOfTitle)
+int ioSetTitleOfWindow(int windowIndex, char *newTitle, int sizeOfTitle)
 {
   if (noDisplay)
     return -1;
@@ -153,7 +153,7 @@ sqInt ioSetTitleOfWindow(sqInt windowIndex, char *newTitle, sqInt sizeOfTitle)
  * Close all the windows that appear to be open.
  * No useful return value since we're getting out of Dodge anyway.
  */
-sqInt ioCloseAllWindows(void)
+int ioCloseAllWindows(void)
 {
   if (noDisplay)
     return 0;

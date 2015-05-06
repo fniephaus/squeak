@@ -3,8 +3,8 @@
 #include "sq.h"
 #include "../plugins/FilePlugin/FilePlugin.h"
 
-#ifdef DEBUG
-#define DPRINTF(x) printf x
+#ifdef DO_DPRINTF
+#define DPRINTF(x) DPRINTF x
 #else
 #define DPRINTF(x)
 #endif
@@ -19,23 +19,22 @@ DWORD g_WM_BROWSER_PIPE = 0; /* Browser pipe */
 DWORD g_WM_CLIENT_PIPE = 0;  /* Client pipe */
 
 
-int stackObjectValue(int);
-int stackIntegerValue(int);
-int isBytes(int);
-int byteSizeOf(int);
-void *firstIndexableField(int);
-int push(int);
-int pop(int);
-int positive32BitIntegerFor(int);
-int nilObject(void);
-int instantiateClassindexableSize(int, int);
-int classByteArray(void);
-int fileRecordSize(void);
-SQFile *fileValueOf(int);
-int failed(void);
-int pushBool(int);
-
-extern int fullScreenFlag;
+sqInt stackObjectValue(sqInt);
+sqInt stackIntegerValue(sqInt);
+sqInt isBytes(sqInt);
+sqInt byteSizeOf(sqInt);
+void *firstIndexableField(sqInt);
+sqInt push(sqInt);
+sqInt pop(sqInt);
+sqInt positive32BitIntegerFor(sqInt);
+sqInt nilObject(void);
+sqInt instantiateClassindexableSize(sqInt, sqInt);
+sqInt classByteArray(void);
+sqInt fileRecordSize(void);
+SQFile *fileValueOf(sqInt);
+sqInt failed(void);
+sqInt pushBool(sqInt);
+sqInt getFullScreenFlag(void);
 
 void pluginGetURLRequest(int id, void* urlIndex, int urlSize, 
 			 void* targetIndex, int targetSize);
@@ -66,7 +65,7 @@ static int isFileURL(int urlOop) {
     urlLen--;
   }
   if(urlLen < 5) return 0;
-  return strnicmp("file:", urlPtr, 5) == 0;
+  return _strnicmp("file:", urlPtr, 5) == 0;
 }
 
 /*
@@ -251,7 +250,7 @@ EXPORT(int) primitivePluginRequestFileHandle(void)
 #endif
     fileHandle = instantiateClassindexableSize(classByteArray(), fileRecordSize());
     fBrowserMode = false;
-    sqFileOpen(fileValueOf(fileHandle),(int)req->localName, strlen(req->localName), 0);
+    sqFileOpen(fileValueOf(fileHandle),req->localName,strlen(req->localName),0);
     fBrowserMode = true;
     if(failed()) return 0;
   }
@@ -480,7 +479,7 @@ void pluginHandleEvent(MSG *msg)
   /* Messages posted from a different process */
   if(msg->message == g_WM_QUIT_SESSION) exit(0);
   if(msg->message == g_WM_INVALIDATE) {
-    if(!fullScreenFlag && IsWindow(browserWindow)) {
+    if(!getFullScreenFlag() && IsWindow(browserWindow)) {
       /* adjust to size of browser window */
       RECT r;
       GetClientRect(browserWindow, &r);
@@ -490,7 +489,7 @@ void pluginHandleEvent(MSG *msg)
     InvalidateRect(stWindow, NULL, FALSE);
   } else if(msg->message == g_WM_BWND_SIZE) {
     /* Window position changed */
-    if(!fullScreenFlag) {
+    if(!getFullScreenFlag()) {
       SetWindowPos(stWindow, NULL, 0, 0, msg->wParam, msg->lParam, SWP_NOMOVE | SWP_NOZORDER);
     }
   } else if(msg->message == g_WM_RECEIVE_DATA) {

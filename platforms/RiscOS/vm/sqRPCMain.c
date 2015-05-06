@@ -321,12 +321,8 @@ sqInt ioBeep(void) {
 }
 
 sqInt ioExit(void) {
-	ioExitWithErrorCode(1);
-}
-
-sqInt ioExitWithErrorCode(int ec) {
-  exit(ec);
-  return ec;
+	exit(1);
+	return 1;
 }
 
 int ioAssertion(void) {

@@ -40,7 +40,6 @@ Some of this code was funded via a grant from the European Smalltalk User Group 
 #import "sqSqueakScreenAndWindow.h"
 #import "sqSqueakMainApplication+screen.h"
 #import "sqMacHostWindow.h"
-
 #ifdef BUILD_FOR_OSX
 #import "SqueakOSXAppDelegate.h"
 extern SqueakOSXAppDelegate *gDelegateApp;
@@ -65,12 +64,12 @@ void MyProviderReleaseData (
 @synthesize windowIndex;
 @synthesize blip,squeakUIFlushPrimaryDeferNMilliseconds,forceUpdateFlush,lastFlushTime,displayIsDirty;
 
-- (instancetype)init {
+- (id)init {
     self = [super init];
     if (self) {
         // Initialization code here.
 		squeakUIFlushPrimaryDeferNMilliseconds = 0.0f;
-		forceUpdateFlush = NO;
+		forceUpdateFlush = YES;
 		displayIsDirty = NO;
 	}
     return self;
@@ -103,27 +102,27 @@ void MyProviderReleaseData (
 	return 32;
 }
 
+
 - (sqInt) ioHasDisplayDepth: (sqInt) depth {
-	if (depth == 32) 
+	if (depth == 2 || depth ==  4 || depth == 8 || depth == 16 || depth == 32 ||
+        depth == -2 || depth ==  -4 || depth == -8 || depth == -16 || depth == -32) { 
 		return true;
-	return false;
+    } else {
+        return false;
+    }
 }
 
-- (void) ioForceDisplayUpdateActual {
+
+- (void) ioForceDisplayUpdate {
 	lastFlushTime = [NSDate timeIntervalSinceReferenceDate];
 	self.displayIsDirty = NO;
 	self.forceUpdateFlush = NO;
-    
-	[[self getMainView] preDrawThelayers];
-    
 
-    dispatch_async(dispatch_get_main_queue(), ^{
+	if ([NSThread isMainThread]) 
 		[[self getMainView] drawThelayers];
-    });
-}
-
-- (void) ioForceDisplayUpdate {
-	[self ioForceDisplayUpdateActual];
+	else {
+		[[self getMainView] performSelectorOnMainThread: @selector(drawThelayers) withObject: nil waitUntilDone: NO];
+	}
 }
 
 - (int)   ioShowDisplayOnWindowActual: (unsigned char*) dispBitsIndex
@@ -137,7 +136,6 @@ void MyProviderReleaseData (
 					windowIndex: (int) passedWindowIndex {
 	
 	static CGColorSpaceRef colorspace = NULL;
-	sqInt 		pitch;
 	windowDescriptorBlock *targetWindowBlock = windowBlockFromIndex(passedWindowIndex);	
 	
 	if (colorspace == NULL) {
@@ -158,7 +156,6 @@ void MyProviderReleaseData (
 	}
 	
 	
-	pitch = ((((width)*(depth) + 31) >> 5) << 2);
 		
 	CGRect clip = CGRectMake((CGFloat)affectedL,(CGFloat)(height-affectedB), (CGFloat)(affectedR-affectedL), (CGFloat)(affectedB-affectedT));
 	[gDelegateApp.mainView drawImageUsingClip: clip];
@@ -203,8 +200,6 @@ void MyProviderReleaseData (
 }
 
 - (void)dealloc {
-	if (blip) {
-		[blip invalidate];
-	}
+	[super dealloc];
 }
 @end

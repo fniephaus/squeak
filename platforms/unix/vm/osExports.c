@@ -1,8 +1,7 @@
-#include <stdio.h>
+#define XFN(export) {"", #export, (void*)export},
+#define XFND(export,depth) {"", #export "\000" depth, (void*)export},
 
-#define XFN(export) {"", #export, (void*)export}
-#define XFN2(plugin, export) {#plugin, #export, (void*)plugin##_##export}
-
+char * GetAttributeString(int id);
 #if !defined(HEADLESS)
 int   primitivePluginBrowserReady(void);
 int   primitivePluginRequestURLStream(void);
@@ -17,16 +16,17 @@ void *ioGetWindow(void);
 
 void *os_exports[][3]=
 {
+  XFN(GetAttributeString)
 #if !defined(HEADLESS)
-  XFN(primitivePluginBrowserReady),
-  XFN(primitivePluginRequestURLStream),
-  XFN(primitivePluginRequestURL),
-  XFN(primitivePluginPostURL),
-  XFN(primitivePluginRequestFileHandle),
-  XFN(primitivePluginDestroyRequest),
-  XFN(primitivePluginRequestState),
-  XFN(ioGetDisplay),
-  XFN(ioGetWindow),
+	XFND(primitivePluginBrowserReady,"\377")
+	XFND(primitivePluginRequestURLStream,"\001")
+	XFND(primitivePluginRequestURL,"\001")
+	XFND(primitivePluginPostURL,"\001")
+	XFND(primitivePluginRequestFileHandle,"\000")
+	XFND(primitivePluginDestroyRequest,"\000")
+	XFND(primitivePluginRequestState,"\000")
+	XFN(ioGetDisplay)
+	XFN(ioGetWindow)
 #endif
   { 0, 0, 0 }
 };

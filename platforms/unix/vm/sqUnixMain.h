@@ -1,9 +1,11 @@
 #ifndef __sqUnixMain_h
 #define __sqUnixMain_h
 
+extern char   imageName[];
 extern char   shortImageName[];
-extern int    inputEventSemaIndex;
+extern sqInt  inputEventSemaIndex;
 extern char   vmPath[];
+extern char  *exeName;
 extern char **argVec;
 
 extern int    fullScreenFlag;

@@ -1,8 +1,6 @@
 /* sqUnixFBDev.c -- display driver for the Linux framebuffer
  * 
  * Author: Ian Piumarta <ian.piumarta@squeakland.org>
- * 
- * Last edited: 2009-08-19 04:36:59 by piumarta on emilia-2.local
  */
 
 
@@ -12,17 +10,17 @@
  *	13271 Skislope Way, Truckee, CA 96161
  *	http://www.weatherdimensions.com
  *
- * Copyright (C) 2003-2007 Ian Piumarta
+ * Copyright (C) 2003-2005 Ian Piumarta
  * All Rights Reserved.
  * 
  * This file is part of Unix Squeak.
  * 
- *   Permission is hereby granted, free of charge, to any person obtaining a copy
- *   of this software and associated documentation files (the "Software"), to deal
- *   in the Software without restriction, including without limitation the rights
- *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *   copies of the Software, and to permit persons to whom the Software is
- *   furnished to do so, subject to the following conditions:
+ *   Permission is hereby granted, free of charge, to any person obtaining a
+ *   copy of this software and associated documentation files (the "Software"),
+ *   to deal in the Software without restriction, including without limitation
+ *   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *   and/or sell copies of the Software, and to permit persons to whom the
+ *   Software is furnished to do so, subject to the following conditions:
  * 
  *   The above copyright notice and this permission notice shall be included in
  *   all copies or substantial portions of the Software.
@@ -31,9 +29,13 @@
  *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *   SOFTWARE.
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *   DEALINGS IN THE SOFTWARE.
+ */
+
+/*
+ *   last update: 31 Jan 2012 13:38:32 CET; Michael J. Zeder
  */
 
 
@@ -68,7 +70,7 @@
 #endif
 
 
-static void debugf(const char *fmt, ...)
+static void DPRINTF(const char *fmt, ...)
 {
 #if (DEBUG)
   va_list ap;
@@ -149,9 +151,9 @@ static void closeFramebuffer(void)
 
 static void enqueueKeyboardEvent(int key, int up, int modifiers)
 {
-  debugf("KEY %3d %02x %c %s mod %02x\n",
-	 key, key, ((key > 32) && (key < 127)) ? key : ' ',
-	 up ? "UP" : "DOWN", modifiers);
+  DPRINTF("KEY %3d %02x %c %s mod %02x\n",
+	  key, key, ((key > 32) && (key < 127)) ? key : ' ',
+	  up ? "UP" : "DOWN", modifiers);
 
   modifierState= modifiers;
   if (up)
@@ -190,8 +192,8 @@ static void enqueueMouseEvent(int b, int dx, int dy)
   buttonState= b;
   mousePosition= fb->cursorPosition;
   if (b)
-    debugf("mouse %02x at %4d,%4d mod %02x\n",
-	   b, mousePosition.x, mousePosition.y, modifierState);
+    DPRINTF("mouse %02x at %4d,%4d mod %02x\n",
+	    b, mousePosition.x, mousePosition.y, modifierState);
   recordMouseEvent();
 }
 
@@ -223,7 +225,7 @@ static sqInt display_ioBeep(void)
 
 static sqInt display_ioRelinquishProcessorForMicroseconds(sqInt microSeconds)
 {
-  aioSleep(microSeconds);
+  aioSleepForUsecs(microSeconds);
   return 0;
 }
 
@@ -275,14 +277,14 @@ static sqInt display_ioShowDisplay(sqInt dispBitsIndex, sqInt width, sqInt heigh
 
 static sqInt display_ioHasDisplayDepth(sqInt i)
 {
-  debugf("hasDisplayDepth %d (%d) => %d\n", i, fb_depth(fb), (i == fb_depth(fb)));
+  DPRINTF("hasDisplayDepth %d (%d) => %d\n", i, fb_depth(fb), (i == fb_depth(fb)));
   return (i == fb_depth(fb));
 }
 
 
 static void openDisplay(void)
 {
-  debugf("openDisplay\n");
+  DPRINTF("openDisplay\n");
   openMouse();
   openKeyboard();
   openFramebuffer();
@@ -294,7 +296,7 @@ static void openDisplay(void)
 
 static void closeDisplay(void)
 {
-  debugf("closeDisplay\n");
+  DPRINTF("closeDisplay\n");
   closeFramebuffer();
   closeKeyboard();
   closeMouse();
@@ -323,7 +325,7 @@ static void display_winInit(void)
 }
 
 
-static void display_winOpen(void)
+static void display_winOpen(int argc, char *dropFiles[])
 {
   openDisplay();
 }
@@ -396,9 +398,9 @@ static int display_parseArgument(int argc, char **argv)
 }
 
 
-static sqInt  display_clipboardSize(void)									{ return 0; }
-static sqInt  display_clipboardWriteFromAt(sqInt n, sqInt ptr, sqInt off)					{ return 0; }
-static sqInt  display_clipboardReadIntoAt(sqInt n, sqInt ptr, sqInt off)					{ return 0; }
+static sqInt display_clipboardSize(void)									{ return 0; }
+static sqInt display_clipboardWriteFromAt(sqInt n, sqInt ptr, sqInt off)					{ return 0; }
+static sqInt display_clipboardReadIntoAt(sqInt n, sqInt ptr, sqInt off)					{ return 0; }
 static char **display_clipboardGetTypeNames(void)								{ return 0; }
 static sqInt  display_clipboardSizeWithType(char *typeName, int ntypeName)					{ return 0; }
 
@@ -406,16 +408,18 @@ static void  display_clipboardWriteWithType(char *data, size_t ndata, char *type
 
 static sqInt display_dndOutStart(char *types, int ntypes)	{ return 0; }
 static void  display_dndOutSend(char *bytes, int nbytes)	{ return  ; }
+/* UNUSED static void  display_dndLaunchFile(char *fileName)	{ return ; }  */
 static sqInt display_dndOutAcceptedType(char * buf, int nbuf)	{ return 0; }
+static sqInt display_dndReceived(char *fileName)	{ return 0; }
 
 static sqInt display_ioFormPrint(sqInt bits, sqInt w, sqInt h, sqInt d, double hs, double vs, sqInt l)	{ return 0; }
 static sqInt display_ioSetFullScreen(sqInt fullScreen)							{ return 0; }
 static sqInt display_ioForceDisplayUpdate(void)								{ return 0; }
-static sqInt display_ioSetDisplayMode(sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag)	{ return 0; }
-static void  display_winSetName(char *imageName)							{ return  ; }
-static void  display_winExit(void)									{ return  ; }
-static int   display_winImageFind(char *buf, int len)							{ return 0; }
-static void  display_winImageNotFound(void)								{ return  ; }
+static sqInt display_ioSetDisplayMode(sqInt width, sqInt height, sqInt depth, sqInt fullscreenFlag)		{ return 0; }
+static void display_winSetName(char *imageName)								{ return  ; }
+static void display_winExit(void)									{ return  ; }
+static long  display_winImageFind(char *buf, int len)							{ return 0; }
+static void display_winImageNotFound(void)								{ return  ; }
 
 
 //----------------------------------------------------------------
@@ -452,18 +456,31 @@ static sqInt display_primitivePluginRequestState()	{ return primitiveFail(); }
 // Host Windows
 
 #if (SqDisplayVersionMajor >= 1 && SqDisplayVersionMinor >= 2)
-static int display_hostWindowClose(int index)                                               { return 0; }
-static int display_hostWindowCreate(int w, int h, int x, int y,
-  char *list, int attributeListLength)                                                      { return 0; }
-static int display_hostWindowShowDisplay(unsigned *dispBitsIndex, int width, int height, int depth,
-  int affectedL, int affectedR, int affectedT, int affectedB, int windowIndex)              { return 0; }
-static int display_hostWindowGetSize(int windowIndex)                                       { return -1; }
-static int display_hostWindowSetSize(int windowIndex, int w, int h)                         { return -1; }
-static int display_hostWindowGetPosition(int windowIndex)                                   { return -1; }
-static int display_hostWindowSetPosition(int windowIndex, int x, int y)                     { return -1; }
-static int display_hostWindowSetTitle(int windowIndex, char *newTitle, int sizeOfTitle)     { return -1; }
-static int display_hostWindowCloseAll(void)                                                 { return 0; }
+static long display_hostWindowClose(long index)                                               { return 0; }
+static long display_hostWindowCreate(long w, long h, long x, long y,
+  char *list, long attributeListLength)                                                      { return 0; }
+static long display_hostWindowShowDisplay(unsigned *dispBitsIndex, long width, long height, long depth,
+  long affectedL, long affectedR, long affectedT, long affectedB, long windowIndex)              { return 0; }
+static long display_hostWindowGetSize(long windowIndex)                                       { return -1; }
+static long display_hostWindowSetSize(long windowIndex, long w, long h)                         { return -1; }
+static long display_hostWindowGetPosition(long windowIndex)                                   { return -1; }
+static long display_hostWindowSetPosition(long windowIndex, long x, long y)                     { return -1; }
+static long display_hostWindowSetTitle(long windowIndex, char *newTitle, long sizeOfTitle)     { return -1; }
+static long display_hostWindowCloseAll(void)                                                 { return 0; }
 #endif
+
+
+
+// new stubs for the CogVM
+long display_ioSetCursorPositionXY(long x, long y) { return 0; }
+long display_ioPositionOfScreenWorkArea (long windowIndex) { return -1; }
+long display_ioSizeOfScreenWorkArea (long windowIndex) { return -1; }
+void *display_ioGetWindowHandle() { return 0; }
+long display_ioPositionOfNativeDisplay(void *windowHandle) { return -1; }
+long display_ioSizeOfNativeDisplay(void *windowHandle) { return -1; }
+long display_ioPositionOfNativeWindow(void *windowHandle) { return -1; }
+long display_ioSizeOfNativeWindow(void *windowHandle) { return -1; }
+
 
 
 //----------------------------------------------------------------

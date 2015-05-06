@@ -1,8 +1,12 @@
 #include <stdio.h>
+#include "interp.h"
 
+char * GetAttributeString(int id);
+#if !NewspeakVM
 int win32JoystickDebugInfo(void);
 int win32JoystickDebugPrintRawValues(void);
 int win32JoystickDebugPrintAlternativeValues(void);
+#endif
 int win32DebugPrintSocketState(void);
 int primitivePluginBrowserReady(void);
 int primitivePluginRequestURLStream(void);
@@ -18,24 +22,30 @@ extern void* firstMessageHook;
 extern void* preMessageHook;
 extern int fUseOpenGL;
 
-void *os_exports[][3] = {
-  {"","win32JoystickDebugInfo", win32JoystickDebugInfo},
-  {"","win32JoystickDebugPrintRawValues", win32JoystickDebugPrintRawValues},
-  {"","win32JoystickDebugPrintAlternativeValues", win32JoystickDebugPrintAlternativeValues},
-  {"","win32DebugPrintSocketState", win32DebugPrintSocketState},
-  {"","primitivePluginBrowserReady", primitivePluginBrowserReady},
-  {"","primitivePluginRequestURLStream", primitivePluginRequestURLStream},
-  {"","primitivePluginRequestURL", primitivePluginRequestURL},
-  {"","primitivePluginPostURL", primitivePluginPostURL},
-  {"","primitivePluginRequestFileHandle", primitivePluginRequestFileHandle},
-  {"","primitivePluginDestroyRequest", primitivePluginDestroyRequest},
-  {"","primitivePluginRequestState", primitivePluginRequestState},
-  {"","primitiveDnsInfo", primitiveDnsInfo},
-  {"", "printf", printf},
-  {"","stWindow", &stWindow},
-  {"","firstMessageHook", &firstMessageHook},
-  {"","preMessageHook", &preMessageHook},
-  {"","fUseOpenGL", &fUseOpenGL},
-  {NULL,NULL, NULL}
-};
+#define XFN(export) {"", #export, (void*)export},
+#define XFND(export,depth) {"", #export "\000" depth, (void*)export},
+#define XVAR(export) {"", #export, &export},
 
+void *os_exports[][3] = {
+	XFN(GetAttributeString)
+#if !NewspeakVM
+	XFN(win32JoystickDebugInfo)
+	XFN(win32JoystickDebugPrintRawValues)
+	XFN(win32JoystickDebugPrintAlternativeValues)
+#endif
+	XFN(win32DebugPrintSocketState)
+	XFND(primitivePluginBrowserReady,"\377")
+	XFND(primitivePluginRequestURLStream,"\001")
+	XFND(primitivePluginRequestURL,"\001")
+	XFND(primitivePluginPostURL,"\001")
+	XFND(primitivePluginRequestFileHandle,"\000")
+	XFND(primitivePluginDestroyRequest,"\000")
+	XFND(primitivePluginRequestState,"\000")
+	XFND(primitiveDnsInfo,"\377")
+	XFN(printf)
+	XVAR(stWindow)
+	XVAR(firstMessageHook)
+	XVAR(preMessageHook)
+	XVAR(fUseOpenGL)
+	{NULL,NULL, NULL}
+};

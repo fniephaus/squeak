@@ -15,7 +15,6 @@
 # endif
 # if defined(_M_IX86) || defined(X86)
   /* x86 systems */
-#  define DOUBLE_WORD_ORDER
   /* Note: We include a generic sqWin32.h to override some settings */
 #  include "sqWin32.h"
 #  define SQ_CONFIG_DONE
@@ -30,3 +29,5 @@
 #if !defined(SQ_CONFIG_DONE)
 # error test for, and describe, your architecture here.
 #endif
+
+#define VMBIGENDIAN 0

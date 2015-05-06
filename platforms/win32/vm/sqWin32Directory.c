@@ -6,19 +6,12 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: University of Magdeburg, Germany
 *   EMAIL:   raab@isg.cs.uni-magdeburg.de
-*   RCSID:   $Id$
-*
-*   NOTES:
 *
 *****************************************************************************/
 #include <windows.h>
 #include "sq.h"
 
 extern struct VirtualMachine *interpreterProxy;
-
-#ifndef NO_RCSID
-  static char RCSID[]="$Id$";
-#endif
 
 /***
 	The interface to the directory primitive is path based.
@@ -274,6 +267,107 @@ int dir_Lookup(char *pathString, int pathLength, int index,
   }
   return ENTRY_FOUND;
 }
+
+int dir_EntryLookup(char *pathString, int pathLength, char* nameString, int nameStringLength,
+/* outputs: */ char *name, int *nameLength, int *creationDate, int *modificationDate,
+	       int *isDirectory, squeakFileOffsetType *sizeIfFile)
+{
+  /* Lookup a given file in a given named directory.
+     Set the name, name length, creation date,
+     creation time, directory flag, and file size (if the entry is a file).
+     Return:
+		0 	if found (a file or directory 'nameString' exists in directory 'pathString')
+		1	if the directory has no such entry
+		2	if the given path has bad syntax or does not reach a directory
+  */
+
+  HANDLE findHandle;
+  WIN32_FILE_ATTRIBUTE_DATA winAttrs;
+  WCHAR win32Path[MAX_PATH];
+  FILETIME fileTime;
+  SYSTEMTIME sysTime;
+  int i, sz, fsz;
+
+  /* default return values */
+  *name             = 0;
+  *nameLength       = 0;
+  *creationDate     = 0;
+  *modificationDate = 0;
+  *isDirectory      = false;
+  *sizeIfFile       = 0;
+
+#if !defined(_WIN32_WCE)
+  /* Like Unix, Windows CE does not have drive letters */
+  if (pathLength == 0) { 
+    /* we're at the top of the file system --- return possible drives */
+    char drive = toupper(nameString[0]);
+    int mask;
+    if (nameStringLength != 2 
+	|| (drive < 'A') || (drive > 'Z') 
+	|| (nameString[1] != ':')) {
+      return NO_MORE_ENTRIES;
+    }
+    mask = GetLogicalDrives();
+    if (mask & (1 << (drive - 'A'))) {
+      /* found the drive ! */
+      name[0]           = drive;
+      name[1]	        = ':';
+      *nameLength       = 2;
+      *creationDate     = 0;
+      *modificationDate = 0;
+      *isDirectory      = true;
+      *sizeIfFile       = 0;
+      return ENTRY_FOUND;
+    }
+    return NO_MORE_ENTRIES;
+  }
+#endif /* !defined(_WIN32_WCE) */
+
+  /* convert the path to a win32 string */
+  sz = MultiByteToWideChar(CP_UTF8, 0, pathString, pathLength, NULL, 0);
+  if (sz > MAX_PATH) return BAD_PATH;
+  MultiByteToWideChar(CP_UTF8, 0, pathString, pathLength, win32Path, sz);
+  win32Path[sz] = 0;
+
+  if (hasCaseSensitiveDuplicate(win32Path)) {
+    return BAD_PATH;
+  }
+  if(win32Path[sz-1] != '\\') {
+    win32Path[sz++] = '\\';
+  }
+
+  fsz = MultiByteToWideChar(CP_UTF8, 0, nameString, nameStringLength, NULL, 0);
+  if (fsz + sz > MAX_PATH) return BAD_PATH;
+  MultiByteToWideChar(CP_UTF8, 0, nameString, nameStringLength, &(win32Path[sz]), fsz);
+  sz = sz + fsz;
+  win32Path[sz] = 0;
+
+  if(!GetFileAttributesExW(win32Path, 0, &winAttrs)) {
+	return NO_MORE_ENTRIES;
+  }
+ 
+  memcpy(name, nameString, nameStringLength);
+  *nameLength = nameStringLength;
+
+  FileTimeToLocalFileTime(&winAttrs.ftCreationTime, &fileTime);
+  FileTimeToSystemTime(&fileTime, &sysTime);
+  *creationDate = convertToSqueakTime(sysTime);
+  FileTimeToLocalFileTime(&winAttrs.ftLastWriteTime, &fileTime);
+  FileTimeToSystemTime(&fileTime, &sysTime);
+  *modificationDate = convertToSqueakTime(sysTime);
+
+  if (winAttrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+    *isDirectory= true;
+  else {
+    win32FileOffset ofs;
+    ofs.dwLow = winAttrs.nFileSizeLow;
+    ofs.dwHigh = winAttrs.nFileSizeHigh;
+    *sizeIfFile = ofs.offset;
+  }
+
+  return ENTRY_FOUND;
+}
+
 
 dir_SetMacFileTypeAndCreator(char *filename, int filenameSize,
 			     char *fType, char *fCreator)

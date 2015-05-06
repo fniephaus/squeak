@@ -21,12 +21,12 @@
 #undef sqShrinkMemoryBy
 #undef sqMemoryExtraBytesLeft
 
-void *sqAllocateMemory(int minHeapSize, int desiredHeapSize);
+void *sqAllocateMemory(usqInt minHeapSize, usqInt desiredHeapSize);
+#define allocateMemoryMinimumImageFileHeaderSize(heapSize, minimumMemory, fileStream, headerSize) \
+sqAllocateMemory(minimumMemory, heapSize)
 int sqGrowMemoryBy(int oldLimit, int delta);
 int sqShrinkMemoryBy(int oldLimit, int delta);
 int sqMemoryExtraBytesLeft(int includingSwap);
-
-void sqReleaseMemory(void);
 
 #endif /* NO_VIRTUAL_MEMORY */
 #endif /* __SQ_WIN32_ALLOC_H */

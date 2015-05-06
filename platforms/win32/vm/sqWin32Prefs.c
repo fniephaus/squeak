@@ -6,7 +6,6 @@
 *   AUTHOR:  Andreas Raab (ar)
 *   ADDRESS: Walt Disney Imagineering, Glendale, CA
 *   EMAIL:   Andreas.Raab@disney.com
-*   RCSID:   $Id$
 *
 *   NOTES:
 *****************************************************************************/
@@ -85,6 +84,13 @@ void Set1ButtonMouse() {
 			    f1ButtonMouse ? U_ON : U_OFF,squeakIniName);
 }
 
+void SetUseDirectSound() {
+  CheckMenuItem(vmPrefsMenu, ID_DIRECTSOUND, MF_BYCOMMAND | 
+		(fUseDirectSound ? MF_CHECKED : MF_UNCHECKED));
+  WritePrivateProfileString(U_GLOBAL,TEXT("UseDirectSound"),
+			    fUseDirectSound ? U_ON : U_OFF,squeakIniName);
+}
+
 void SetAllowFileAccess() {
   CheckMenuItem(vmPrefsMenu, ID_FILEACCESS, MF_BYCOMMAND | 
 		(ioHasFileAccess() ? MF_CHECKED : MF_UNCHECKED));
@@ -125,6 +131,22 @@ void SetCaseSensitiveFileMode() {
   WritePrivateProfileString(U_GLOBAL,TEXT("CaseSensitiveFileMode"),
 			    caseSensitiveFileMode ? U_ON : U_OFF,squeakIniName);
 }
+
+int prefsEnableAltF4Quit(void) {
+  fEnableAltF4Quit   = 
+    GetPrivateProfileInt(U_GLOBAL,TEXT("EnableAltF4Quit"),
+			 fEnableAltF4Quit,squeakIniName);
+  return fEnableAltF4Quit;
+}
+
+int prefsEnableF2Menu(void) {
+  fEnableF2Menu   = 
+    GetPrivateProfileInt(U_GLOBAL,TEXT("EnableF2Menu"),
+			 fEnableF2Menu,squeakIniName);
+  return fEnableF2Menu;
+}
+
+
 
 #if 0 /* I don't think we need those in the menu */
 void SetEnableF2Menu() {
@@ -173,8 +195,13 @@ void LoadPreferences()
 
   /* get the window class name from the ini file */
   GetPrivateProfileString(U_GLOBAL, TEXT("WindowClassName"), 
-			  TEXT("SqueakWindowClass"), windowClassName, 
-			  MAX_PATH, squeakIniName);
+#if NewspeakVM
+				TEXT(VM_NAME"WindowClass"),
+#else
+				TEXT("SqueakWindowClass"),
+#endif
+				windowClassName, 
+				MAX_PATH, squeakIniName);
   fRunSingleApp =
     GetPrivateProfileInt(U_GLOBAL, TEXT("RunSingleApp"),
 			 fRunSingleApp, squeakIniName);
@@ -204,6 +231,9 @@ void LoadPreferences()
     GetPrivateProfileInt(U_GLOBAL,TEXT("PriorityBoost"),
 			 fPriorityBoost,squeakIniName);
 
+  fUseDirectSound   = 
+    GetPrivateProfileInt(U_GLOBAL,TEXT("UseDirectSound"),
+			 fUseDirectSound,squeakIniName);
   fUseOpenGL   = 
     GetPrivateProfileInt(U_GLOBAL,TEXT("B3DXUsesOpenGL"),
 			 fUseOpenGL,squeakIniName);
@@ -217,6 +247,26 @@ void LoadPreferences()
   fEnableF2Menu   = 
     GetPrivateProfileInt(U_GLOBAL,TEXT("EnableF2Menu"),
 			 fEnableF2Menu,squeakIniName);
+
+  fEnablePrefsMenu   = 
+    GetPrivateProfileInt(U_GLOBAL,TEXT("EnablePrefsMenu"),
+			 fEnablePrefsMenu,squeakIniName);
+# if STACKVM
+  { sqInt nStackPagesPref;
+    nStackPagesPref = GetPrivateProfileInt(U_GLOBAL,TEXT("SqueakNumStackPages"),0,squeakIniName);
+    if (nStackPagesPref) {
+		extern sqInt desiredNumStackPages;
+		desiredNumStackPages = nStackPagesPref;
+	}
+  }
+  { sqInt nEdenBytesPref;
+    nEdenBytesPref = GetPrivateProfileInt(U_GLOBAL,TEXT("SqueakEdenBytes"),0,squeakIniName);
+    if (nEdenBytesPref) {
+		extern sqInt desiredEdenBytes;
+		desiredEdenBytes = nEdenBytesPref;
+	}
+  }
+# endif
 #endif
 }
 
@@ -229,6 +279,7 @@ void SetAllPreferences() {
   SetReduceCPUInBackground();
   Set3ButtonMouse();
   Set1ButtonMouse();
+  SetUseDirectSound();
   SetAllowFileAccess();
   SetAllowImageWrite();
   SetAllowSocketAccess();
@@ -239,9 +290,14 @@ void SetAllPreferences() {
 }
 
 void CreatePrefsMenu(void) {
+#if COGVM
+extern sqInt recordPrimTraceFunc();
+#endif
   HMENU hMenu,pMenu;
 
-  pMenu = CreatePopupMenu();
+  vmPrefsMenu = pMenu = CreatePopupMenu();
+  if(!fEnablePrefsMenu) return;
+
   AppendMenu(pMenu,MF_STRING | MF_DISABLED, 0,
 	     TEXT("[VM Preferences]"));
   AppendMenu(pMenu,MF_SEPARATOR, 0,NULL);
@@ -266,6 +322,8 @@ void CreatePrefsMenu(void) {
   }
   { /* Create media related menu */
     hMenu = CreatePopupMenu();
+    AppendMenu(hMenu, MF_STRING | MF_UNCHECKED, ID_DIRECTSOUND, 
+	       TEXT("Use DirectSound"));
     AppendMenu(hMenu, MF_STRING | MF_UNCHECKED, ID_USEOPENGL,
 	       TEXT("Use OpenGL (instead of D3D)"));
     AppendMenu(hMenu,MF_STRING | MF_UNCHECKED, ID_DEFERUPDATES, 
@@ -311,6 +369,11 @@ void CreatePrefsMenu(void) {
 	       TEXT("Dump call stack"));
     AppendMenu(hMenu, MF_STRING | MF_UNCHECKED, ID_PRINTALLSTACKS,
 	       TEXT("Dump all processes"));
+#if COGVM
+    if (recordPrimTraceFunc())
+      AppendMenu(hMenu, MF_STRING | MF_UNCHECKED, ID_DUMPPRIMLOG,
+	       TEXT("Dump recent primitives"));
+#endif
     AppendMenu(pMenu, MF_STRING | MF_POPUP, (int)hMenu,
 	       TEXT("Debug Options"));
   }
@@ -318,7 +381,6 @@ void CreatePrefsMenu(void) {
   AppendMenu(pMenu,MF_SEPARATOR, 0,NULL);
   AppendMenu(pMenu,MF_STRING | MF_UNCHECKED , ID_ABOUT, 
 	     TEXT("Display version information"));
-  vmPrefsMenu = pMenu;
   hMenu = GetSystemMenu(stWindow,false);
   AppendMenu(hMenu,MF_SEPARATOR, 0,NULL);
   AppendMenu(hMenu, MF_POPUP, (UINT) pMenu, TEXT("&VM Preferences"));
@@ -335,7 +397,7 @@ void TrackPrefsMenu(void) {
 void HandlePrefsMenu(int cmd) {
   switch(cmd) {
   case ID_ABOUT: 
-    MessageBox(stWindow,VM_VERSION_INFO,
+    MessageBox(stWindow,VM_VERSION,
 	       TEXT("About " VM_NAME " on Win32"), MB_OK);
     break;
   case ID_DEFERUPDATES:
@@ -359,7 +421,7 @@ void HandlePrefsMenu(int cmd) {
     Set3ButtonMouse();
     break;
   case ID_DEFAULTPRINTER:
-    SetDefaultPrinter();
+    SetTheDefaultPrinter();
     break;
   case ID_REDUCEBACKGROUNDCPU:
     fReduceCPUInBackground = !fReduceCPUInBackground;
@@ -368,6 +430,10 @@ void HandlePrefsMenu(int cmd) {
   case ID_1BUTTONMOUSE:
     f1ButtonMouse = !f1ButtonMouse;
     Set1ButtonMouse();
+    break;
+  case ID_DIRECTSOUND:
+    fUseDirectSound = !fUseDirectSound;
+    SetUseDirectSound();
     break;
   case ID_FILEACCESS:
     _ioSetFileAccess(!ioHasFileAccess());
@@ -397,6 +463,13 @@ void HandlePrefsMenu(int cmd) {
     printf("Printing all processes:\n");
     printAllStacks();
     break;
+#if STACKVM
+  case ID_DUMPPRIMLOG: { extern void dumpPrimTraceLog(void);
+    printf("Printing recent primitives:\n");
+    dumpPrimTraceLog();
+    break;
+  }
+#endif
   case ID_PRIORITYBOOST:
     fPriorityBoost = !fPriorityBoost;
     SetPriorityBoost();

@@ -36,7 +36,6 @@
  such third-party acknowledgments.
  */
 
-//
 #import "sqSqueakAppDelegate.h"
 #import "sqSqueakEventsAPI.h"
 #import "sqSqueakMainApplication+events.h"
@@ -53,16 +52,13 @@ sqInt ioProcessEvents(void) {
 	
 	aioPoll(0);		
 	
-	if ([[NSThread currentThread] isCancelled]) {
-		gQuitNowRightNow = YES;
-		return 0;
-	}
-	
 	if ([getMainWindowDelegate() forceUpdateFlush]) {
 		[getMainWindowDelegate() ioForceDisplayUpdate];
 	}
 
-	if (interpreterProxy->methodPrimitiveIndex() != 0) {
+	if (interpreterProxy->methodPrimitiveIndex() == 0) {
+		[gDelegateApp.squeakApplication pumpRunLoopEventSendAndSignal:YES];
+    } else {
 		[gDelegateApp.squeakApplication pumpRunLoop];
 	}
 	

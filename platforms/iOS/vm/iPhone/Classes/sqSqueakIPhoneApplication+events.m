@@ -61,99 +61,132 @@ sqInt	windowActive=1;
 	}
 	
 	if ([event isKindOfClass: [NSArray class]]) {
-		if ([event[0] intValue] == 1) {
-			[self buildTouchEventComplexObject: event[2] forType:  event[1] placeIn: (sqComplexEvent *) evt];
+		if ([[event objectAtIndex: 0] intValue] == 1) {
+			[self buildTouchEventComplexObject: [event objectAtIndex: 2] forType:  [event objectAtIndex: 1] placeIn: (sqComplexEvent *) evt];
 			return;
 		}
-		if ([event[0] intValue] == 2) { // acceleration dataa
-			[self buildAccelerationEventComplexObject: event[1] placeIn: (sqComplexEvent *) evt];
+		if ([[event objectAtIndex: 0] intValue] == 2) { // acceleration dataa
+			[self buildAccelerationEventComplexObject: [event objectAtIndex: 1] placeIn: (sqComplexEvent *) evt];
 			return;
 		}
-		if ([event[0] intValue] == 3) { // location data error
+		if ([[event objectAtIndex: 0] intValue] == 3) { // location data error
 			[self buildLocationEventComplexObject: event placeIn: (sqComplexEvent *) evt];
 			return;
 		}
-		if ([event[0] intValue] == 4) { // location data 
+		if ([[event objectAtIndex: 0] intValue] == 4) { // location data 
 			[self buildLocationEventComplexObject: event placeIn: (sqComplexEvent *) evt];
 			return;
 		}
-		if ([event[0] intValue] == 5) { // memory warning  
+		if ([[event objectAtIndex: 0] intValue] == 5) { // memory warning  
 			[self buildApplicationEventComplexObject: event placeIn: (sqComplexEvent *) evt];
 			return;
 		}
-		if ([event[0] intValue] == 6) { // termination warning 
+		if ([[event objectAtIndex: 0] intValue] == 6) { // termination warning 
 			[self buildApplicationEventComplexObject: event placeIn: (sqComplexEvent *) evt];
 			return;
 		}
 		
-		if ([event[0] intValue] == 7) { // keyboard 
-			[(NSData *)event[1] getBytes: evt length: sizeof(sqInputEvent)];
+		if ([[event objectAtIndex: 0] intValue] == 7) { // keyboard 
+			[(NSData *)[event objectAtIndex: 1] getBytes: evt length: sizeof(sqInputEvent)];
 			return;
 		}
 
-		if ([event[0] intValue] == 8) { // window 
-			[(NSData *)event[1] getBytes: evt length: sizeof(sqWindowEvent)];
+		if ([[event objectAtIndex: 0] intValue] == 8) { // window 
+			[(NSData *)[event objectAtIndex: 1] getBytes: evt length: sizeof(sqWindowEvent)];
 			return;
 		}
 	}
 }
 
 - (void) recordTouchEvent:(NSSet *) touches type: (UITouchPhase) phase {
-    NSMutableArray* data = [NSMutableArray arrayWithCapacity: 3];
+	NSMutableArray* data = [NSMutableArray new];
 	
-	[data addObject: @1];
-	[data addObject: @((signed) phase)];
+	[data addObject: [NSNumber numberWithInteger: 1]];
+	[data addObject: [NSNumber numberWithInteger: (signed) phase]];
 	[data addObject: touches];
 	[eventQueue addItem: data];
+	[data release];
 	interpreterProxy->signalSemaphoreWithIndex(gDelegateApp.squeakApplication.inputSemaphoreIndex);
+}
+
+- (CGPoint)translateToSmalltalk:(CGPoint)position {
+    /*
+     * Moves current point to Smalltalk coordinates (Fourth quadrant) 
+     */
+
+    //CGSize size = [[UIScreen mainScreen] bounds].size;
+    //CGPoint newPosition = CGPointMake(position.x, size.height - position.y);
+    //NSLog(@"POS OLD: %f,%f NEW: %f,%f", position.x, position.y, newPosition.x, newPosition.y);
+    //NSLog(@"POS OLD: %f,%f", position.x, position.y);
+    
+    return position;
 }
 
 - (void) buildTouchEventComplexObject:(NSSet *) touches forType: (NSNumber *) aType placeIn: (sqComplexEvent *) evt {
 	
-	sqInt count = [touches count],arrayIndex=0,squeakMSTimeNow = ioMSecs(),action;
+	sqInt count = [touches count];
+    sqInt arrayIndex=0;
+    sqInt squeakMSTimeNow = ioMSecs();
+    sqInt action;
 	UITouch *touch;
-	sqInt  previousLocationInViewY,previousLocationInViewX,locationInViewX,locationInViewY,squeakMSTime, view, window, tapCount, phase,timeStamp,storageArea,containerArray,touchId;
+	sqInt previousLocationInViewX;
+    sqInt previousLocationInViewY;
+    sqInt locationInViewX;
+    sqInt locationInViewY;
+    sqInt squeakMSTime;
+    sqInt view;
+    sqInt window;
+    sqInt tapCount;
+    sqInt phase;
+    sqInt timeStamp;
+    sqInt storageArea;
+    sqInt containerArray;
+    sqInt touchId;
+    
 	interpreterProxy->pushRemappableOop(interpreterProxy->instantiateClassindexableSize(interpreterProxy->classArray(), count));
-		for (touch in touches) {
-			interpreterProxy->pushRemappableOop(interpreterProxy->instantiateClassindexableSize(interpreterProxy->classArray(), 11));
-			interpreterProxy->pushRemappableOop(interpreterProxy->integerObjectOf(squeakMSTimeNow));
-			interpreterProxy->pushRemappableOop(interpreterProxy->floatObjectOf([touch timestamp]));
-			interpreterProxy->pushRemappableOop(interpreterProxy->integerObjectOf((signed)[touch phase]));
-			interpreterProxy->pushRemappableOop(interpreterProxy->integerObjectOf((signed)[touch tapCount]));
-			interpreterProxy->pushRemappableOop(interpreterProxy->positive64BitIntegerFor((sqLong)[touch window]));
-			interpreterProxy->pushRemappableOop(interpreterProxy->positive64BitIntegerFor((sqLong)[touch view]));
-			interpreterProxy->pushRemappableOop(interpreterProxy->floatObjectOf([touch locationInView:[gDelegateApp mainView]].x));
-			interpreterProxy->pushRemappableOop(interpreterProxy->floatObjectOf([touch locationInView:[gDelegateApp mainView]].y));
-			interpreterProxy->pushRemappableOop(interpreterProxy->floatObjectOf([touch previousLocationInView:[gDelegateApp mainView]].x));
-			interpreterProxy->pushRemappableOop(interpreterProxy->floatObjectOf([touch previousLocationInView:[gDelegateApp mainView]].y));
-			interpreterProxy->pushRemappableOop(interpreterProxy->positive64BitIntegerFor((sqLong)touch));
-			touchId = interpreterProxy->popRemappableOop();
-			previousLocationInViewY = interpreterProxy->popRemappableOop();
-			previousLocationInViewX = interpreterProxy->popRemappableOop();
-			locationInViewY = interpreterProxy->popRemappableOop();
-			locationInViewX = interpreterProxy->popRemappableOop();
-			view = interpreterProxy->popRemappableOop();
-			window = interpreterProxy->popRemappableOop();
-			tapCount = interpreterProxy->popRemappableOop();
-			phase = interpreterProxy->popRemappableOop();
-			timeStamp = interpreterProxy->popRemappableOop();
-			squeakMSTime = interpreterProxy->popRemappableOop();
-			storageArea = interpreterProxy->popRemappableOop();
-			containerArray = interpreterProxy->popRemappableOop();
-			interpreterProxy->storePointerofObjectwithValue(0, storageArea, squeakMSTime);
-			interpreterProxy->storePointerofObjectwithValue(1, storageArea, timeStamp);
-			interpreterProxy->storePointerofObjectwithValue(2, storageArea, phase);
-			interpreterProxy->storePointerofObjectwithValue(3, storageArea, tapCount);
-			interpreterProxy->storePointerofObjectwithValue(4, storageArea, window);
-			interpreterProxy->storePointerofObjectwithValue(5, storageArea, view);
-			interpreterProxy->storePointerofObjectwithValue(6, storageArea, locationInViewX);
-			interpreterProxy->storePointerofObjectwithValue(7, storageArea, locationInViewY);
-			interpreterProxy->storePointerofObjectwithValue(8, storageArea, previousLocationInViewX);
-			interpreterProxy->storePointerofObjectwithValue(9, storageArea, previousLocationInViewY);
-			interpreterProxy->storePointerofObjectwithValue(10, storageArea, touchId);
-			interpreterProxy->storePointerofObjectwithValue(arrayIndex++, containerArray, storageArea);
-			interpreterProxy->pushRemappableOop(containerArray);
-		}
+    for (touch in touches) {
+        CGPoint location = [touch locationInView:[gDelegateApp mainView]];
+        CGPoint previousLocation = [touch previousLocationInView:[gDelegateApp mainView]];
+        
+        interpreterProxy->pushRemappableOop(interpreterProxy->instantiateClassindexableSize(interpreterProxy->classArray(), 11));
+        interpreterProxy->pushRemappableOop(interpreterProxy->integerObjectOf(squeakMSTimeNow));
+        interpreterProxy->pushRemappableOop(interpreterProxy->floatObjectOf([touch timestamp]));
+        interpreterProxy->pushRemappableOop(interpreterProxy->integerObjectOf((signed)[touch phase]));
+        interpreterProxy->pushRemappableOop(interpreterProxy->integerObjectOf((signed)[touch tapCount]));
+        interpreterProxy->pushRemappableOop(interpreterProxy->positive64BitIntegerFor((sqLong)[touch window]));
+        interpreterProxy->pushRemappableOop(interpreterProxy->positive64BitIntegerFor((sqLong)[touch view]));
+        interpreterProxy->pushRemappableOop(interpreterProxy->floatObjectOf(location.x));
+        interpreterProxy->pushRemappableOop(interpreterProxy->floatObjectOf(location.y));
+        interpreterProxy->pushRemappableOop(interpreterProxy->floatObjectOf(previousLocation.x));
+        interpreterProxy->pushRemappableOop(interpreterProxy->floatObjectOf(previousLocation.y));
+        interpreterProxy->pushRemappableOop(interpreterProxy->positive64BitIntegerFor((sqLong)touch));
+        touchId = interpreterProxy->popRemappableOop();
+        previousLocationInViewY = interpreterProxy->popRemappableOop();
+        previousLocationInViewX = interpreterProxy->popRemappableOop();
+        locationInViewY = interpreterProxy->popRemappableOop();
+        locationInViewX = interpreterProxy->popRemappableOop();
+        view = interpreterProxy->popRemappableOop();
+        window = interpreterProxy->popRemappableOop();
+        tapCount = interpreterProxy->popRemappableOop();
+        phase = interpreterProxy->popRemappableOop();
+        timeStamp = interpreterProxy->popRemappableOop();
+        squeakMSTime = interpreterProxy->popRemappableOop();
+        storageArea = interpreterProxy->popRemappableOop();
+        containerArray = interpreterProxy->popRemappableOop();
+        interpreterProxy->storePointerofObjectwithValue(0, storageArea, squeakMSTime);
+        interpreterProxy->storePointerofObjectwithValue(1, storageArea, timeStamp);
+        interpreterProxy->storePointerofObjectwithValue(2, storageArea, phase);
+        interpreterProxy->storePointerofObjectwithValue(3, storageArea, tapCount);
+        interpreterProxy->storePointerofObjectwithValue(4, storageArea, window);
+        interpreterProxy->storePointerofObjectwithValue(5, storageArea, view);
+        interpreterProxy->storePointerofObjectwithValue(6, storageArea, locationInViewX);
+        interpreterProxy->storePointerofObjectwithValue(7, storageArea, locationInViewY);
+        interpreterProxy->storePointerofObjectwithValue(8, storageArea, previousLocationInViewX);
+        interpreterProxy->storePointerofObjectwithValue(9, storageArea, previousLocationInViewY);
+        interpreterProxy->storePointerofObjectwithValue(10, storageArea, touchId);
+        interpreterProxy->storePointerofObjectwithValue(arrayIndex++, containerArray, storageArea);
+        interpreterProxy->pushRemappableOop(containerArray);
+    }
 	
 	evt->type = EventTypeComplex;  //This is read as an integer and converted to an oop by interp.c
 	

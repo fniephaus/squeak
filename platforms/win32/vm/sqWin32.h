@@ -58,10 +58,6 @@ int readableFormat(int imageVersion);
 #	error "Unknown Windows CE configuration"
 #endif
 
-#ifdef _MIPS_
-#	define  DOUBLE_WORD_ORDER
-#endif
-
 /* Remove subsystems we don't support on CE based devices */
 #define NO_JOYSTICK
 #define NO_PRINTER
@@ -153,14 +149,15 @@ int readableFormat(int imageVersion);
   /* Do not rely on stdio functions but rather pure Win32 stuff */
   #define WIN32_FILE_SUPPORT
   /* Take out the static strings */
-  #define NO_RCSID
   #define NO_WARNINGS
 #if 0
   /* Finally, override the warning functions containing static strings */
-  #undef printLastError
-  #define printLastError
   #undef warnPrintf
   #define warnPrintf
+  #undef printLastError
+  #define printLastError
+  #undef vprintLastError
+  #define vprintLastError
 #endif /* 0 */
 #endif /* MINIMAL */
 
@@ -177,7 +174,6 @@ void SetupKeymap();
 void SetupWindows();
 void SetupPixmaps();
 void SetupPrinter();
-void SetupTimer();
 void SetupPreferences();
 void SetupMIDI();
 
@@ -202,7 +198,6 @@ char *GetVMOption(int id);
 /* Misc functions                                       */
 /********************************************************/
 void SetWindowSize();
-void ReleaseTimer();
 int printUsage(int level);
 
 /********************************************************/
@@ -214,7 +209,7 @@ void sqServiceInstall(void);
 /* The main() function used by NT services */
 int sqServiceMain(void);
 /* The generic main() function for starting squeak */
-int sqMain(char *lpCmdLine, int nCmdShow);
+int sqMain(int argc, char *argv[]);
 #endif
 
 /********************************************************/
@@ -240,15 +235,8 @@ int sqMain(char *lpCmdLine, int nCmdShow);
 #define VERSION ""
 #endif
 
-/* Ensure that VM_VERSION (3.11.5 etc) is defined */
-#ifndef VM_VERSION
-#error "VM_VERSION is undefined"
-#endif
-#ifndef VM_NAME
-#error "VM_NAME is undefined"
-#endif
-
-#define VM_VERSION_INFO TEXT(VM_NAME) TEXT(VM_VERSION) TEXT(" from ") TEXT(__DATE__) \
+#define VM_VERSION TEXT("Cog VM 4.0.0 (release) from ") TEXT(__DATE__) \
+	TEXT("\n") TEXT("Compiler: ") TEXT(COMPILER) TEXT(VERSION)
 
 /********************************************************/
 /* image reversal functions                             */
@@ -294,12 +282,14 @@ extern BITMAPINFO *bmi8;	     /*	8 bit depth bitmap info */
 extern BITMAPINFO *bmi16;	     /*	16 bit depth bitmap info */
 extern BITMAPINFO *bmi32;	     /*	32 bit depth bitmap info */
 extern BOOL fWindows95;          /* Are we running on Win95 or NT? */
+extern BOOL fIsConsole;          /* Are we running as a console app? */
 
 /* Startup options */
 extern BOOL  fHeadlessImage; /* Do we run headless? */
 extern BOOL  fRunService;    /* Do we run as NT service? */
 extern BOOL  fBrowserMode;   /* Do we run in a web browser? */
 extern DWORD dwMemorySize;   /* How much memory do we use? */
+extern BOOL  fUseDirectSound;/* Do we use DirectSound?! */
 extern BOOL  fUseOpenGL;     /* Do we use OpenGL?! */
 extern BOOL fReduceCPUUsage; /* Should we reduce CPU usage? */
 extern BOOL fReduceCPUInBackground; /* reduce CPU usage when not active? */
@@ -309,9 +299,9 @@ extern BOOL  fShowAllocations; /* Show memory allocations */
 extern BOOL  fPriorityBoost; /* thread priority boost */
 extern BOOL  fEnableAltF4Quit; /* can we quit using Alt-F4? */
 extern BOOL  fEnableF2Menu;    /* can we get prefs menu via F2? */
+extern BOOL  fEnablePrefsMenu;    /* can we get prefs menu at all? */
 extern BOOL  fRunSingleApp;   /* do we only allow one instance? */
 
-extern HANDLE vmSemaphoreMutex;   /* the mutex for synchronization */
 extern HANDLE vmWakeUpEvent;      /* wakeup event for interpret() */
 
 /* variables for cached display */
@@ -366,9 +356,13 @@ int __cdecl warnPrintf(const TCHAR *fmt, ...);
 int __cdecl abortMessage(const TCHAR *fmt,...);
 #endif
 
-/* a neat little helper - print prefix and the GetLastError() meaning */
+/* neat little helpers - print prefix and the GetLastError() meaning */
 #ifndef printLastError
 void printLastError(TCHAR *prefix);
+#endif
+
+#ifndef vprintLastError
+void vprintLastError(TCHAR *fmt, ...);
 #endif
 
 /******************************************************/
@@ -452,5 +446,9 @@ extern DWORD ticksForBlitting; /* time needed for actual blts */
 #endif
 
 #endif /* _WINDOWS_ */
+
+#ifndef STACK_SIZE_PARAM_IS_A_RESERVATION
+#  define STACK_SIZE_PARAM_IS_A_RESERVATION 0x00010000
+#endif
 
 #endif /* SQ_WIN_32_H */
