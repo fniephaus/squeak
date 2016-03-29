@@ -1,0 +1,5 @@
+language: smalltalk
+
+script:
+  - cd build.linux32x86/squeak.cog.spur/build
+  - ./mvm
