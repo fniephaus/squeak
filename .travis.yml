@@ -42,7 +42,6 @@ matrix:
       script:
         - cd build.linux64x64/squeak.cog.spur/build
         - ./mvm
-        - cat config.log
     - os: osx
       script:
         - cd build.macos32x86/squeak.cog.spur
