@@ -8,7 +8,7 @@ addons:
       - lib32z1
       - lib32ncurses5
       - lib32bz2-1.0
-      - gvfs-daemons:i386
+      - gvfs-daemons
       # this are requirements for building the vm
       - cmake
       - zip
@@ -17,21 +17,21 @@ addons:
       - xz-utils
       - debhelper
       - devscripts
-      - libc6-dev:i386
+      - libc6-dev
       - libasound2
       # - libasound2:i386
       - libasound2-dev
       # - libasound2-dev:i386
-      - libssl-dev:i386
-      - libssl0.9.8:i386
-      - libfreetype6-dev:i386
-      - libx11-dev:i386
-      - libsm-dev:i386
-      - libice-dev:i386
-      - libgl1-mesa-glx:i386
-      - libgl1-mesa-dev:i386
-      - libxext-dev:i386
-      - libglapi-mesa:i386
+      - libssl-dev
+      - libssl0.9.8
+      - libfreetype6-dev
+      - libx11-dev
+      - libsm-dev
+      - libice-dev
+      - libgl1-mesa-glx
+      - libgl1-mesa-dev
+      - libxext-dev
+      - libglapi-mesa
       - build-essential
       - gcc-multilib
       - g++
