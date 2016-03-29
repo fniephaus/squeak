@@ -3,13 +3,37 @@ language: c
 addons:
   apt:
     packages:
+      # this are to be able to execute a VM downloaded from the internet during build
+      - lib32asound2
+      - lib32z1
+      - lib32ncurses5
+      - lib32bz2-1.0
+      - gvfs-daemons:i386
+      # this are requirements for building the vm
+      - cmake
+      - zip
+      - bash-completion
+      - git
+      - xz-utils
+      - debhelper
+      - devscripts
+      - libc6-dev:i386
+      - libasound2:i386
+      - libasound2-dev:i386
+      - libssl-dev:i386
+      - libssl0.9.8:i386
+      - libfreetype6-dev:i386
+      - libx11-dev:i386
+      - libsm-dev:i386
+      - libice-dev:i386
+      - libgl1-mesa-glx:i386
+      - libgl1-mesa-dev:i386
+      - libxext-dev:i386
+      - libglapi-mesa:i386
       - build-essential
-      - lib32asound2-dev
-      - libgl1-mesa-dev
-      - libglu1-mesa-dev
-      - libgd2-xpm
-      - libcairo2-dev   
-      - libpango1.0-dev
+      - gcc-multilib
+      - g++
+
 
 matrix:
   include:
