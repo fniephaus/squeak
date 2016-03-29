@@ -42,9 +42,13 @@ matrix:
   include:
     - os: linux
       script:
-        - cd build.linux64x64/squeak.cog.spur/build
-        - ./mvm
+        - cd build.linux64x64
+        - ./makeall
+        - tar czf coglinux64x64.tar.gz $TRAVIS_BUILD_DIR/products
+        - curl -T coglinux64x64.tar.gz -u "$DEPLOY_CREDENTIALS" https://www.hpi.uni-potsdam.de/hirschfeld/artefacts/cog/ || true
     - os: osx
       script:
-        - cd build.macos32x86/squeak.cog.spur
-        - ./mvm -a
+        - cd build.macos32x86
+        - ./makeall
+        - tar czf cogmacosx64x64.tar.gz Cocoa*.app
+        - curl -T cogmacosx64x64.tar.gz -u "$DEPLOY_CREDENTIALS" https://www.hpi.uni-potsdam.de/hirschfeld/artefacts/cog/ || true
