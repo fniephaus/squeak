@@ -11,6 +11,13 @@ addons:
       - libcairo2-dev   
       - libpango1.0-dev
 
-script:
-  - cd build.linux64x64/squeak.cog.spur/build
-  - ./mvm
+matrix:
+  include:
+    - os: linux
+      script:
+        - cd build.linux64x64/squeak.cog.spur/build
+        - ./mvm
+    - os: osx
+      script:
+        - cd build.macos32x86/squeak.cog.spur/build
+        - ./mvm -a
