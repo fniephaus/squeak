@@ -11,7 +11,7 @@ addons:
       - ia32-libs
       - ia32-libs-multiarch
       - gcc-multilib
-      - "g++multilib"
+      - g++-multilib
 
 script:
   - cd build.linux32x86/squeak.cog.spur/build
