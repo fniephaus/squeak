@@ -33,6 +33,7 @@ addons:
       - build-essential
       - gcc-multilib
       - g++
+      - uuid-dev
 
 
 matrix:
