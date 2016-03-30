@@ -4,7 +4,7 @@
 output_file="${TRAVIS_BUILD_DIR}/cog_${ARCH}_${FLAVOR}.tar.gz"
 
 export COGVREV="$(git describe --tags --always)"
-export COGVDATE="2016"  # "$(echo $(git show -s --format=%ci HEAD))"
+export COGVDATE="$(echo $(git show -s --format=%ci HEAD))"
 export COGVURL="$(git config --get remote.origin.url)"
 export COGVOPTS="-DCOGVREV=\"${COGVREV}\" -DCOGVDATE=\"${COGVDATE}\" -DCOGVURL=\"${COGVURL}\""
 
