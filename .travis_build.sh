@@ -10,7 +10,7 @@ case "$(uname -s)" in
     [[ ! -d "${build_directory}" ]] && exit 10
 
     pushd "${build_directory}"
-    ./mvm
+    echo n | ./mvm
     popd 
 
     tar czf "${output_file}" "./products"
