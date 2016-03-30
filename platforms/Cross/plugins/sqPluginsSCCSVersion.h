@@ -39,13 +39,13 @@ pluginsRepositoryURL()
 static char *
 pluginsRevisionAsString()
 {
-	return COGVREV;
+	return xstr(COGVREV);
 }
 
 static char *
 pluginsRepositoryURL()
 {
-	return COGVURL;
+	return xstr(COGVURL);
 }
 
 #else /* SUBVERSION */
