@@ -37,28 +37,6 @@ pluginsRepositoryURL()
 #elif GIT
 
 static char *
-cmdAsString(char* cmd)
-{
-	FILE *fp;
-	char res[256];
-
-	fp = popen(cmd, "r");
-	if (fp == NULL) {
-		printf("Failed to run command\n" );
-		exit(1);
-	}
-
-	if(fgets(res, sizeof(res)-1, fp) == NULL) 
-	{
-		res = "unknown";
-	}
-
-	pclose(fp);
-	
-	return res;
-}
-
-static char *
 pluginsRevisionAsString()
 {
 	return cmdAsString("git describe --tags --always");
