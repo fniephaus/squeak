@@ -25,68 +25,68 @@ matrix:
 
     # - os: linux
     #   env: CARCH="linux32x86" CFLAV="newspeak.cog.spur"
-    - os: linux
-      env: CARCH="linux32x86" CFLAV="squeak.cog.spur"
-      addons:
-        apt:
-          packages:
-            - cmake
-            - debhelper
-            - devscripts
-            - libc6-dev:i386
-            - libasound2:i386
-            - libasound2-dev:i386
-            - libssl-dev:i386
-            - libssl0.9.8:i386
-            - libfreetype6-dev:i386
-            - libx11-dev:i386
-            - libsm-dev:i386
-            - libice-dev:i386
-            - libgl1-mesa-glx:i386
-            - libgl1-mesa-dev:i386
-            - libxext-dev:i386
-            - libglapi-mesa:i386
-            - build-essential
-            - gcc-multilib
-            - uuid-dev:i386
-    - os: linux
-      env: CARCH="linux32x86" CFLAV="squeak.cog.v3"
-      addons:
-        apt:
-          packages:
-            - cmake
-            - debhelper
-            - devscripts
-            - libc6-dev:i386
-            - libasound2:i386
-            - libasound2-dev:i386
-            - libssl-dev:i386
-            - libssl0.9.8:i386
-            - libfreetype6-dev:i386
-            - libx11-dev:i386
-            - libsm-dev:i386
-            - libice-dev:i386
-            - libgl1-mesa-glx:i386
-            - libgl1-mesa-dev:i386
-            - libxext-dev:i386
-            - libglapi-mesa:i386
-            - build-essential
-            - gcc-multilib
-            - uuid-dev:i386
+    # - os: linux
+    #   env: CARCH="linux32x86" CFLAV="squeak.cog.spur"
+    #   addons:
+    #     apt:
+    #       packages:
+    #         - cmake
+    #         - debhelper
+    #         - devscripts
+    #         - libc6-dev:i386
+    #         - libasound2:i386
+    #         - libasound2-dev:i386
+    #         - libssl-dev:i386
+    #         - libssl0.9.8:i386
+    #         - libfreetype6-dev:i386
+    #         - libx11-dev:i386
+    #         - libsm-dev:i386
+    #         - libice-dev:i386
+    #         - libgl1-mesa-glx:i386
+    #         - libgl1-mesa-dev:i386
+    #         - libxext-dev:i386
+    #         - libglapi-mesa:i386
+    #         - build-essential
+    #         - gcc-multilib
+    #         - uuid-dev:i386
+    # - os: linux
+    #   env: CARCH="linux32x86" CFLAV="squeak.cog.v3"
+    #   addons:
+    #     apt:
+    #       packages:
+    #         - cmake
+    #         - debhelper
+    #         - devscripts
+    #         - libc6-dev:i386
+    #         - libasound2:i386
+    #         - libasound2-dev:i386
+    #         - libssl-dev:i386
+    #         - libssl0.9.8:i386
+    #         - libfreetype6-dev:i386
+    #         - libx11-dev:i386
+    #         - libsm-dev:i386
+    #         - libice-dev:i386
+    #         - libgl1-mesa-glx:i386
+    #         - libgl1-mesa-dev:i386
+    #         - libxext-dev:i386
+    #         - libglapi-mesa:i386
+    #         - build-essential
+    #         - gcc-multilib
+    #         - uuid-dev:i386
 
     # - os: osx
     #   env: CARCH="macos32x86" CFLAV="newspeak.cog.spur"
-    - os: osx
-      env: CARCH="macos32x86" CFLAV="pharo.cog.spur"
-    - os: osx
-      env: CARCH="macos32x86" CFLAV="squeak.cog.spur"
+    # - os: osx
+    #   env: CARCH="macos32x86" CFLAV="pharo.cog.spur"
+    # - os: osx
+    #   env: CARCH="macos32x86" CFLAV="squeak.cog.spur"
     - os: osx
       env: CARCH="macos32x86" CFLAV="squeak.cog.v3"
 
     # - os: osx
     #   env: CARCH="macos64x64" CFLAV="newspeak.cog.spur"
-    - os: osx
-      env: CARCH="macos64x64" CFLAV="pharo.cog.spur"
+    # - os: osx
+    #   env: CARCH="macos64x64" CFLAV="pharo.cog.spur"
     - os: osx
       env: CARCH="macos64x64" CFLAV="squeak.cog.spur"
 

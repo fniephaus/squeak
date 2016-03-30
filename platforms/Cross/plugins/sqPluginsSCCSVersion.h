@@ -34,6 +34,38 @@ pluginsRepositoryURL()
 }
 # undef PLUGINS_REV_START
 # undef URL_START
+#elif GIT
+
+static char *
+cmdAsString(char* cmd)
+{
+	FILE *fp;
+	char res[256];
+
+	fp = popen(cmd, "r");
+	if (fp == NULL) {
+		printf("Failed to run command\n" );
+		exit(1);
+	}
+
+	fgets(res, sizeof(res)-1, fp);
+	pclose(fp);
+	
+	return res;
+}
+
+static char *
+pluginsRevisionAsString()
+{
+	return cmdAsString("git describe --tags --always");
+}
+
+static char *
+pluginsRepositoryURL()
+{
+	return cmdAsString("git config --get remote.origin.url");
+}
+
 #else /* SUBVERSION */
 static char *
 pluginsRevisionAsString() { return "?"; }

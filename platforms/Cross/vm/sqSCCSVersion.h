@@ -16,11 +16,12 @@
 #define SCCS 0
 #define RCS 0
 #define CVS 0
-#define SUBVERSION 1
+#define SUBVERSION 0
 #define BAZAAR 0
 #define MERCURIAL 0
-#define GIT 0
+#define GIT 1
 
+#include <stdio.h>
 #include "../plugins/sqPluginsSCCSVersion.h"
 
 #if SUBVERSION
@@ -61,7 +62,45 @@ repositoryURL()
 }
 # undef REV_START
 # undef URL_START
-#else /* SUBVERSION */
+#elif GIT
+
+static char *
+cmdAsString(char* cmd)
+{
+	FILE *fp;
+	char res[256];
+
+	fp = popen(cmd, "r");
+	if (fp == NULL) {
+		printf("Failed to run command\n" );
+		exit(1);
+	}
+
+	fgets(res, sizeof(res)-1, fp);
+	pclose(fp);
+	
+	return res;
+}
+
+static char *
+revisionAsString()
+{
+	return cmdAsString("git describe --tags --always");
+}
+
+static char *
+revisionDateAsString()
+{
+	return cmdAsString("echo $(git show -s --format=%ci HEAD)");
+}
+
+static char *
+repositoryURL()
+{
+	return cmdAsString("git config --get remote.origin.url");
+}
+
+#else
 char *
 revisionAsString() { return "?"; }
 
