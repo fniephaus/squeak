@@ -1,11 +1,11 @@
-[[ -z "${COG_BUILD}" ]] && exit 2
-[[ -z "${COG_FLAVOR}" ]] && exit 3
+[[ -z "${COG_ARCH}" ]] && exit 2
+[[ -z "${COG_TYPE}" ]] && exit 3
 
-output_file="${TRAVIS_BUILD_DIR}/cog_${COG_BUILD}_${COG_FLAVOR}.tar.gz"
+output_file="${TRAVIS_BUILD_DIR}/cog_${COG_ARCH}_${COG_TYPE}.tar.gz"
 
 case "$(uname -s)" in
   "Linux")
-    build_directory="./build.${COG_BUILD}/${COG_FLAVOR}/build"
+    build_directory="./build.${COG_ARCH}/${COG_TYPE}/build"
 
     [[ ! -d "${build_directory}" ]] && exit 10
 
@@ -16,7 +16,7 @@ case "$(uname -s)" in
     tar czf "${output_file}" "./products"
     ;;
   "Darwin")
-    build_directory="./build.${COG_BUILD}/${COG_FLAVOR}"
+    build_directory="./build.${COG_ARCH}/${COG_TYPE}"
 
     [[ ! -d "${build_directory}" ]] && exit 50
 

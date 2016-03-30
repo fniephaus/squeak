@@ -16,18 +16,17 @@ addons:
       - gcc-multilib
       - uuid-dev
 
-
 matrix:
   include:
     # - os: linux
-    #   env: COG_BUILD="linux64x64" COG_FLAVOR="newspeak.cog.spur"
+    #   env: COG_ARCH="linux64x64" COG_TYPE="newspeak.cog.spur"
     - os: linux
-      env: COG_BUILD="linux64x64" COG_FLAVOR="squeak.cog.spur"
+      env: COG_ARCH="linux64x64" COG_TYPE="squeak.cog.spur"
 
     # - os: linux
-    #   env: COG_BUILD="linux32x86" COG_FLAVOR="newspeak.cog.spur"
+    #   env: COG_ARCH="linux32x86" COG_TYPE="newspeak.cog.spur"
     - os: linux
-      env: COG_BUILD="linux32x86" COG_FLAVOR="squeak.cog.spur"
+      env: COG_ARCH="linux32x86" COG_TYPE="squeak.cog.spur"
       addons:
         apt:
           packages:
@@ -51,7 +50,7 @@ matrix:
             - gcc-multilib
             - uuid-dev:i386
     - os: linux
-      env: COG_BUILD="linux32x86" COG_FLAVOR="squeak.cog.v3"
+      env: COG_ARCH="linux32x86" COG_TYPE="squeak.cog.v3"
       addons:
         apt:
           packages:
@@ -76,23 +75,23 @@ matrix:
             - uuid-dev:i386
 
     # - os: osx
-    #   env: COG_BUILD="macos32x86" COG_FLAVOR="newspeak.cog.spur"
+    #   env: COG_ARCH="macos32x86" COG_TYPE="newspeak.cog.spur"
     - os: osx
-      env: COG_BUILD="macos32x86" COG_FLAVOR="pharo.cog.spur"
+      env: COG_ARCH="macos32x86" COG_TYPE="pharo.cog.spur"
     - os: osx
-      env: COG_BUILD="macos32x86" COG_FLAVOR="squeak.cog.spur"
+      env: COG_ARCH="macos32x86" COG_TYPE="squeak.cog.spur"
     - os: osx
-      env: COG_BUILD="macos32x86" COG_FLAVOR="squeak.cog.v3"
+      env: COG_ARCH="macos32x86" COG_TYPE="squeak.cog.v3"
 
     # - os: osx
-    #   env: COG_BUILD="macos64x64" COG_FLAVOR="newspeak.cog.spur"
+    #   env: COG_ARCH="macos64x64" COG_TYPE="newspeak.cog.spur"
     - os: osx
-      env: COG_BUILD="macos64x64" COG_FLAVOR="pharo.cog.spur"
+      env: COG_ARCH="macos64x64" COG_TYPE="pharo.cog.spur"
     - os: osx
-      env: COG_BUILD="macos64x64" COG_FLAVOR="squeak.cog.spur"
+      env: COG_ARCH="macos64x64" COG_TYPE="squeak.cog.spur"
 
 script:
   - ./.travis_build.sh
 
 after_success:
-  - curl -T "cog_${COG_BUILD}_${COG_FLAVOR}.tar.gz" -u "$DEPLOY_CREDENTIALS" https://www.hpi.uni-potsdam.de/hirschfeld/artefacts/cog/
+  - curl -T "cog_${COG_ARCH}_${COG_TYPE}.tar.gz" -u "$DEPLOY_CREDENTIALS" https://www.hpi.uni-potsdam.de/hirschfeld/artefacts/cog/
