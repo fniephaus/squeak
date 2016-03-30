@@ -21,9 +21,6 @@
 #define MERCURIAL 0
 #define GIT 1
 
-#define xstr(s) str(s)
-#define str(s) #s
-
 #include <stdlib.h>
 #include "../plugins/sqPluginsSCCSVersion.h"
 
@@ -70,19 +67,19 @@ repositoryURL()
 static char *
 revisionAsString()
 {
-	return xstr(COGVREV);
+	return COGVREV;
 }
 
 static char *
 revisionDateAsString()
 {
-	return xstr(COGVDATE);
+	return COGVDATE;
 }
 
 static char *
 repositoryURL()
 {
-	return xstr(COGVURL);
+	return COGVURL;
 }
 
 #else
