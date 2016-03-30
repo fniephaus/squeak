@@ -106,6 +106,3 @@ matrix:
 
 script:
   - ./.travis_build.sh
-
-after_success:
-  - curl -T "cog_${ARCH}_${FLAVOR}.tar.gz" -u "$DEPLOY_CREDENTIALS" https://www.hpi.uni-potsdam.de/hirschfeld/artefacts/cog/
