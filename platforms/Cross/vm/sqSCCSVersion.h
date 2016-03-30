@@ -83,7 +83,7 @@ cmdAsString(char* cmd)
 
 	pclose(fp);
 	
-	return res;
+	return &res[0];
 }
 
 static char *
