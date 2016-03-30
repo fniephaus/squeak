@@ -1,7 +1,7 @@
-[[ -z "${CARCH}" ]] && exit 2
-[[ -z "${CFLAV}" ]] && exit 3
+[[ -z "${ARCH}" ]] && exit 2
+[[ -z "${FLAVOR}" ]] && exit 3
 
-output_file="${TRAVIS_BUILD_DIR}/cog_${CARCH}_${CFLAV}.tar.gz"
+output_file="${TRAVIS_BUILD_DIR}/cog_${ARCH}_${FLAVOR}.tar.gz"
 
 export COGVREV="$(git describe --tags --always)"
 export COGVDATE="$(echo $(git show -s --format=%ci HEAD))"
@@ -10,7 +10,7 @@ export COGVOPTS="-DCOGVREV=\"${COGVREV}\" -DCOGVDATE=\"${COGVDATE}\" -DCOGVURL=\
 
 case "$(uname -s)" in
   "Linux")
-    build_directory="./build.${CARCH}/${CFLAV}/build"
+    build_directory="./build.${ARCH}/${FLAVOR}/build"
 
     [[ ! -d "${build_directory}" ]] && exit 10
 
@@ -22,7 +22,7 @@ case "$(uname -s)" in
     tar czf "${output_file}" "./products"
     ;;
   "Darwin")
-    build_directory="./build.${CARCH}/${CFLAV}"
+    build_directory="./build.${ARCH}/${FLAVOR}"
 
     [[ ! -d "${build_directory}" ]] && exit 50
 
