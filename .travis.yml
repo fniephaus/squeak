@@ -19,14 +19,14 @@ addons:
 matrix:
   include:
     # - os: linux
-    #   env: COG_ARCH="linux64x64" COG_TYPE="newspeak.cog.spur"
+    #   env: CARCH="linux64x64" CFLAV="newspeak.cog.spur"
     - os: linux
-      env: COG_ARCH="linux64x64" COG_TYPE="squeak.cog.spur"
+      env: CARCH="linux64x64" CFLAV="squeak.cog.spur"
 
     # - os: linux
-    #   env: COG_ARCH="linux32x86" COG_TYPE="newspeak.cog.spur"
+    #   env: CARCH="linux32x86" CFLAV="newspeak.cog.spur"
     - os: linux
-      env: COG_ARCH="linux32x86" COG_TYPE="squeak.cog.spur"
+      env: CARCH="linux32x86" CFLAV="squeak.cog.spur"
       addons:
         apt:
           packages:
@@ -50,7 +50,7 @@ matrix:
             - gcc-multilib
             - uuid-dev:i386
     - os: linux
-      env: COG_ARCH="linux32x86" COG_TYPE="squeak.cog.v3"
+      env: CARCH="linux32x86" CFLAV="squeak.cog.v3"
       addons:
         apt:
           packages:
@@ -75,23 +75,23 @@ matrix:
             - uuid-dev:i386
 
     # - os: osx
-    #   env: COG_ARCH="macos32x86" COG_TYPE="newspeak.cog.spur"
+    #   env: CARCH="macos32x86" CFLAV="newspeak.cog.spur"
     - os: osx
-      env: COG_ARCH="macos32x86" COG_TYPE="pharo.cog.spur"
+      env: CARCH="macos32x86" CFLAV="pharo.cog.spur"
     - os: osx
-      env: COG_ARCH="macos32x86" COG_TYPE="squeak.cog.spur"
+      env: CARCH="macos32x86" CFLAV="squeak.cog.spur"
     - os: osx
-      env: COG_ARCH="macos32x86" COG_TYPE="squeak.cog.v3"
+      env: CARCH="macos32x86" CFLAV="squeak.cog.v3"
 
     # - os: osx
-    #   env: COG_ARCH="macos64x64" COG_TYPE="newspeak.cog.spur"
+    #   env: CARCH="macos64x64" CFLAV="newspeak.cog.spur"
     - os: osx
-      env: COG_ARCH="macos64x64" COG_TYPE="pharo.cog.spur"
+      env: CARCH="macos64x64" CFLAV="pharo.cog.spur"
     - os: osx
-      env: COG_ARCH="macos64x64" COG_TYPE="squeak.cog.spur"
+      env: CARCH="macos64x64" CFLAV="squeak.cog.spur"
 
 script:
   - ./.travis_build.sh
 
 after_success:
-  - curl -T "cog_${COG_ARCH}_${COG_TYPE}.tar.gz" -u "$DEPLOY_CREDENTIALS" https://www.hpi.uni-potsdam.de/hirschfeld/artefacts/cog/
+  - curl -T "cog_${CARCH}_${CFLAV}.tar.gz" -u "$DEPLOY_CREDENTIALS" https://www.hpi.uni-potsdam.de/hirschfeld/artefacts/cog/
