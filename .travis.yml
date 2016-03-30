@@ -4,7 +4,6 @@ addons:
   apt:
     packages:
       # this are requirements for building the vm
-      - cmake
       - debhelper
       - devscripts
       - libasound2-dev
@@ -12,7 +11,6 @@ addons:
       - libfreetype6-dev
       - libx11-dev
       - libxext-dev
-      - build-essential
       - gcc-multilib
       - uuid-dev
 
@@ -30,7 +28,6 @@ matrix:
     #   addons:
     #     apt:
     #       packages:
-    #         - cmake
     #         - debhelper
     #         - devscripts
     #         - libc6-dev:i386
@@ -46,7 +43,6 @@ matrix:
     #         - libgl1-mesa-dev:i386
     #         - libxext-dev:i386
     #         - libglapi-mesa:i386
-    #         - build-essential
     #         - gcc-multilib
     #         - uuid-dev:i386
     # - os: linux
@@ -54,7 +50,6 @@ matrix:
     #   addons:
     #     apt:
     #       packages:
-    #         - cmake
     #         - debhelper
     #         - devscripts
     #         - libc6-dev:i386
@@ -70,7 +65,6 @@ matrix:
     #         - libgl1-mesa-dev:i386
     #         - libxext-dev:i386
     #         - libglapi-mesa:i386
-    #         - build-essential
     #         - gcc-multilib
     #         - uuid-dev:i386
 
