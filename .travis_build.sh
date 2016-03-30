@@ -16,6 +16,7 @@ case "$(uname -s)" in
 
     pushd "${build_directory}"
     echo n | ./mvm
+    cat config.log
     popd 
 
     tar czf "${output_file}" "./products"
