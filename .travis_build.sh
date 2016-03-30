@@ -3,9 +3,10 @@
 
 output_file="${TRAVIS_BUILD_DIR}/cog_${CARCH}_${CFLAV}.tar.gz"
 
-COG_REV="$(git describe --tags --always)"
-COG_DATE="$(echo $(git show -s --format=%ci HEAD))"
-COG_URL="$(git config --get remote.origin.url)"
+export COGVREV="$(git describe --tags --always)"
+export COGVDATE="$(echo $(git show -s --format=%ci HEAD))"
+export COGVURL="$(git config --get remote.origin.url)"
+export COGVOPTS="-D'COGVREV=\"${COGVREV}\"' -D'COGVDATE=\"${COGVDATE}\"' -D'COGVURL=\"${COGVURL}\"'"
 
 case "$(uname -s)" in
   "Linux")
