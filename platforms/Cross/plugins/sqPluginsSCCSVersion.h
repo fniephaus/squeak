@@ -39,13 +39,13 @@ pluginsRepositoryURL()
 static char *
 pluginsRevisionAsString()
 {
-	return cmdAsString("git describe --tags --always");
+	return getenv("COG_REV");
 }
 
 static char *
 pluginsRepositoryURL()
 {
-	return cmdAsString("git config --get remote.origin.url");
+	return getenv("COG_URL");
 }
 
 #else /* SUBVERSION */

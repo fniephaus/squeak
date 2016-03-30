@@ -3,6 +3,10 @@
 
 output_file="${TRAVIS_BUILD_DIR}/cog_${CARCH}_${CFLAV}.tar.gz"
 
+COG_REV="$(git describe --tags --always)"
+COG_DATE="$(echo $(git show -s --format=%ci HEAD))"
+COG_URL="$(git config --get remote.origin.url)"
+
 case "$(uname -s)" in
   "Linux")
     build_directory="./build.${CARCH}/${CFLAV}/build"

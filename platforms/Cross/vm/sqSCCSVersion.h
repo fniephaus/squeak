@@ -21,7 +21,7 @@
 #define MERCURIAL 0
 #define GIT 1
 
-#include "sqSCCSVersionHelpers.h"
+#include <stdlib.h>
 #include "../plugins/sqPluginsSCCSVersion.h"
 
 #if SUBVERSION
@@ -67,19 +67,19 @@ repositoryURL()
 static char *
 revisionAsString()
 {
-	return cmdAsString("git describe --tags --always");
+	return getenv("COG_REV");
 }
 
 static char *
 revisionDateAsString()
 {
-	return cmdAsString("echo $(git show -s --format=%ci HEAD)");
+	return getenv("COG_DATE");
 }
 
 static char *
 repositoryURL()
 {
-	return cmdAsString("git config --get remote.origin.url");
+	return getenv("COG_URL");
 }
 
 #else
@@ -97,7 +97,7 @@ sourceVersionString(char separator)
 {
 	if (!sourceVersion) {
 #if 1 /* a) mingw32 doesn't have asprintf and b) on Mac OS it segfaults. */
-		char *fmt = "VM: %s %s Date: %s%cPlugins: r%s %s";
+		char *fmt = "VM: %s %s Date: %s%cPlugins: %s %s";
 		int len = strlen(fmt)
 				+ strlen(revisionAsString())
 				+ strlen(repositoryURL())
