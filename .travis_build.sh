@@ -6,7 +6,7 @@ output_file="${TRAVIS_BUILD_DIR}/cog_${CARCH}_${CFLAV}.tar.gz"
 export COGVREV="$(git describe --tags --always)"
 export COGVDATE="$(echo $(git show -s --format=%ci HEAD))"
 export COGVURL="$(git config --get remote.origin.url)"
-export COGVOPTS="-D'COGVREV=\"${COGVREV}\"' -D'COGVDATE=\"${COGVDATE}\"' -D'COGVURL=\"${COGVURL}\"'"
+export COGVOPTS="-D'COGVREV=${COGVREV}' -D'COGVDATE=${COGVDATE}' -D'COGVURL=${COGVURL}'"
 
 case "$(uname -s)" in
   "Linux")
@@ -16,7 +16,6 @@ case "$(uname -s)" in
 
     pushd "${build_directory}"
     echo n | ./mvm
-    cat config.log
     popd 
 
     tar czf "${output_file}" "./products"
