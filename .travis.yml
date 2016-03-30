@@ -69,6 +69,13 @@ matrix:
             - uuid-dev:i386
 
     - os: osx
+      env: ARCH="macos64x64" FLAVOR="newspeak.cog.spur"
+    - os: osx
+      env: ARCH="macos64x64" FLAVOR="pharo.cog.spur"
+    - os: osx
+      env: ARCH="macos64x64" FLAVOR="squeak.cog.spur"
+
+    - os: osx
       env: ARCH="macos32x86" FLAVOR="newspeak.cog.spur"
     - os: osx
       env: ARCH="macos32x86" FLAVOR="pharo.cog.spur"
@@ -76,13 +83,6 @@ matrix:
       env: ARCH="macos32x86" FLAVOR="squeak.cog.spur"
     - os: osx
       env: ARCH="macos32x86" FLAVOR="squeak.cog.v3"
-
-    - os: osx
-      env: ARCH="macos64x64" FLAVOR="newspeak.cog.spur"
-    - os: osx
-      env: ARCH="macos64x64" FLAVOR="pharo.cog.spur"
-    - os: osx
-      env: ARCH="macos64x64" FLAVOR="squeak.cog.spur"
 
 script:
   - ./.travis_build.sh
