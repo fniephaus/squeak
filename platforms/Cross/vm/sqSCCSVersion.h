@@ -78,11 +78,11 @@ cmdAsString(char* cmd)
 
 	if(fgets(res, sizeof(res)-1, fp) == NULL) 
 	{
-		res = "unknown";
+		pclose(fp);
+		return "unknown";
 	}
 
 	pclose(fp);
-	
 	return &res[0];
 }
 
