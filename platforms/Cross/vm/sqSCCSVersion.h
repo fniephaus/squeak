@@ -67,19 +67,19 @@ repositoryURL()
 static char *
 revisionAsString()
 {
-	return COGVREV;
+	return "COGVREV";
 }
 
 static char *
 revisionDateAsString()
 {
-	return COGVDATE;
+	return "COGVDATE";
 }
 
 static char *
 repositoryURL()
 {
-	return COGVURL;
+	return "COGVURL";
 }
 
 #else
