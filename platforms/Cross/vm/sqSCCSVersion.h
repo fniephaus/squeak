@@ -76,7 +76,11 @@ cmdAsString(char* cmd)
 		exit(1);
 	}
 
-	fgets(res, sizeof(res)-1, fp);
+	if(fgets(res, sizeof(res)-1, fp) == NULL) 
+	{
+		res = "unknown";
+	}
+
 	pclose(fp);
 	
 	return res;
@@ -115,7 +119,7 @@ sourceVersionString(char separator)
 {
 	if (!sourceVersion) {
 #if 1 /* a) mingw32 doesn't have asprintf and b) on Mac OS it segfaults. */
-		char *fmt = "VM: r%s %s Date: %s%cPlugins: r%s %s";
+		char *fmt = "VM: %s %s Date: %s%cPlugins: r%s %s";
 		int len = strlen(fmt)
 				+ strlen(revisionAsString())
 				+ strlen(repositoryURL())

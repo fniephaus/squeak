@@ -48,7 +48,11 @@ cmdAsString(char* cmd)
 		exit(1);
 	}
 
-	fgets(res, sizeof(res)-1, fp);
+	if(fgets(res, sizeof(res)-1, fp) == NULL) 
+	{
+		res = "unknown";
+	}
+
 	pclose(fp);
 	
 	return res;
