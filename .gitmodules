@@ -1,0 +1,4 @@
+[submodule "platforms/Cross/shared"]
+	path = platforms/Cross/shared
+	url = git@github.com:fniephaus/squeak.git
+	branch = shared
